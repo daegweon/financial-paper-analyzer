@@ -1,0 +1,11 @@
+.git
+.github
+frontend
+railway-function
+supabase
+backend/tests
+backend/.env
+backend/.env.*
+**/__pycache__
+**/*.pyc
+README.md
