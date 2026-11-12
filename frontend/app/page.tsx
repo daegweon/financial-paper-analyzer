@@ -238,7 +238,7 @@ export default function Home() {
       <p>분석 결과와 논문을 안전하게 보관하세요.</p>
       <form onSubmit={auth}>
         <label>이메일<input type="email" required value={email} onChange={event => setEmail(event.target.value)} placeholder="name@example.com"/></label>
-        <label>비밀번호<input type="password" required minLength={8} value={password} onChange={event => setPassword(event.target.value)} placeholder="8자 이상 입력"/></label>
+        <label>비밀번호<input type="password" required minLength={signup ? 8 : 1} value={password} onChange={event => setPassword(event.target.value)} placeholder="8자 이상 입력"/></label>
         <button className="primary">{signup ? "회원가입" : "로그인"} →</button>
       </form>
       <p className="note">{message}</p>
