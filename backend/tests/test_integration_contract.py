@@ -114,7 +114,11 @@ def test_authenticated_pdf_full_analysis_contract(monkeypatch):
         headers={"Authorization": "Bearer valid_test_jwt"},
     )
     assert res.status_code == 200, res.text
-    assert res.json() == {"status": "completed", "mode": "extractive", "page_count": 1}
+    assert res.json()["status"] == "completed"
+    assert res.json()["mode"] == "extractive"
+    assert res.json()["page_count"] == 1
+    assert res.json()["analysis_version"] == "extractive-v2"
+    assert res.json()["evidence_count"] == 1
     assert [method for method, _, _ in requests_seen] == [
         "GET", "GET", "GET", "POST", "PATCH"
     ]
