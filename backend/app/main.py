@@ -12,12 +12,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
 SUPABASE_KEY = os.getenv("SUPABASE_PUBLISHABLE_KEY", "")
-FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:3000").rstrip("/")
+FRONTEND_ORIGINS = [item.strip().rstrip("/") for item in os.getenv("FRONTEND_ORIGIN", "http://localhost:3000").split(",") if item.strip()]
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 log = logging.getLogger("papersignal")
 app = FastAPI(title="PaperSignal API", version="0.1.0")
-app.add_middleware(CORSMiddleware, allow_origins=[FRONTEND_ORIGIN], allow_methods=["GET", "POST"], allow_headers=["Authorization", "Content-Type"])
+app.add_middleware(CORSMiddleware, allow_origins=FRONTEND_ORIGINS, allow_methods=["GET", "POST"], allow_headers=["Authorization", "Content-Type"])
 MAX_BYTES = 30 * 1024 * 1024
 KEYWORDS = ["asset pricing", "portfolio", "factor", "volatility", "liquidity", "market risk", "interest rate", "exchange rate", "yield", "return", "regression", "causal", "panel data", "risk premium", "inflation", "credit risk", "금리", "환율", "변동성", "수익률"]
 
