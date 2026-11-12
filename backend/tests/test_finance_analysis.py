@@ -95,7 +95,7 @@ def _sample_model_output():
             ]}
         ],
         "keywords": ["monetary policy", "bank lending", "not-in-paper"],
-        "evidence": [],
+        "evidence": [{"page": 1, "quote": "This paper studies whether monetary policy shocks affect bank lending."}],
     }
 
 
@@ -104,6 +104,7 @@ def test_normalize_llm_result_keeps_only_verifiable_claims():
     result = module.normalize_llm_result(_sample_model_output(), 2, pages)
     assert result["mode"] == "llm"
     assert result["analysis_version"] == module.ANALYSIS_VERSION
+    assert "통화정책" in result["summary"]
     assert len(result["findings"]) == 1
     assert result["findings"][0]["estimate"] == "-0.12"
     assert len(result["robustness_checks"]) == 1
