@@ -340,11 +340,16 @@ def normalize_llm_result(
                 "evidence": evidence,
             })
 
+    summary_evidence = validate_evidence(raw.get("evidence"), pages)
+    summary = _clean_text(raw.get("summary")) if summary_evidence else "요약을 뒷받침하는 페이지 단위 원문 근거를 확인하지 못했습니다."
+    if not summary_evidence:
+        warnings.append("요약은 검증 가능한 직접 인용이 없어 일반 요약 대신 안내 문구를 표시했습니다.")
+
     result: dict[str, Any] = {
         "mode": "llm",
         "analysis_version": ANALYSIS_VERSION,
         "bibliographic": bibliographic,
-        "summary": _clean_text(raw.get("summary")),
+        "summary": summary,
         "research_question": research_question,
         "research_question_evidence": question_evidence,
         "hypotheses": _clean_claims(raw.get("hypotheses"), "text", pages),
@@ -355,7 +360,7 @@ def normalize_llm_result(
         "limitations": limitations,
         "implications": _clean_claims(raw.get("implications"), "text", pages),
         "keywords": [],
-        "evidence": [],
+        "evidence": summary_evidence,
         "page_count": page_count,
         "pages_analyzed": [page["page"] for page in pages],
         "warnings": warnings,
