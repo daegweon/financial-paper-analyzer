@@ -987,7 +987,7 @@ async def llm_result(count: int, pages: list[dict[str, Any]]) -> dict[str, Any]:
     # Spend a second model call only when the first pass omitted findings or
     # its numeric/significance screen found a concrete issue.
     needs_repair = (
-        provider == "gemini"
+        provider in ("gemini", "openai")
         and (
             not result["findings"]
             or any(item["verification"]["status"] == "review" for item in result["findings"])
