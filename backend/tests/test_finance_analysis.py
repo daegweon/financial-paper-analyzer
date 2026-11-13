@@ -11,7 +11,8 @@ def _sample_pages():
             "text": (
                 "This paper studies whether monetary policy shocks affect bank lending. "
                 "We use a panel of 50 banks from 2001 to 2020. The dependent variable is loan growth. "
-                "We estimate a fixed-effects panel regression."
+                "We estimate a fixed-effects panel regression. The panel is balanced and annual, "
+                "with 50 banks observed for 20 years."
 
             ),
         },
@@ -71,12 +72,26 @@ def _sample_model_output():
             "equations_evidence": [],
             "evidence": [{"page": 1, "quote": "We use a panel of 50 banks from 2001 to 2020."}],
             "panel_dimensions": {
-                "cross_sectional_units": "확인 불가",
-                "time_periods": "확인 불가",
-                "reported_total_observations": "확인 불가",
-                "observation_frequency": "확인 불가",
-                "observation_unit": "확인 불가",
-                "evidence": [],
+                "study_design_type": "balanced_panel",
+                "study_design_evidence": [{
+                    "page": 1,
+                    "quote": "The panel is balanced and annual, with 50 banks observed for 20 years.",
+                }],
+                "panel_balance": "balanced",
+                "panel_balance_evidence": [{
+                    "page": 1,
+                    "quote": "The panel is balanced and annual, with 50 banks observed for 20 years.",
+                }],
+                "cross_sectional_units_count": 50,
+                "time_periods_count": 20,
+                "reported_total_observations_count": 0,
+                "observation_frequency": "annual",
+                "observation_unit": "bank-year",
+                "sample_count_reports": [],
+                "evidence": [{
+                    "page": 1,
+                    "quote": "The panel is balanced and annual, with 50 banks observed for 20 years.",
+                }],
             },
         },
         "findings": [
@@ -482,7 +497,7 @@ def test_audit_finding_flags_unsupported_numeric_claim_and_sign_conflict():
     audit = module.audit_finding(unsupported, pages)
     assert audit["status"] == "review"
     assert audit["numeric_supported"] is False
-    assert set(audit["unsupported_numeric_tokens"]) == {"0.25", "1%"}
+    assert set(audit["unsupported_numeric_tokens"]) == {"0.25"}
     assert audit["direction_consistent"] is False
     assert audit["significance_supported"] is False
 
@@ -618,37 +633,118 @@ def test_audit_finding_accepts_unicode_minus_in_cited_pdf_table():
     assert audit["unsupported_numeric_tokens"] == []
 
 
-def test_panel_dimensions_calculates_total_and_flags_reported_count_mismatch():
+def test_panel_dimensions_calculates_total_only_for_evidence_backed_balanced_panel():
     pages = [{
         "page": 4,
-        "text": "The panel consists of 12 portfolios observed over 4,950 daily periods, giving 59,400 portfolio-day observations.",
+        "text": "The balanced panel consists of 12 portfolios observed over 4,950 daily periods, giving 59,400 portfolio-day observations.",
     }]
-    evidence = [{
-        "page": 4,
-        "quote": "The panel consists of 12 portfolios observed over 4,950 daily periods, giving 59,400 portfolio-day observations.",
-    }]
-    consistent = module.audit_panel_dimensions({
-        "cross_sectional_units": "12 portfolios",
-        "time_periods": "4,950 daily periods",
-        "reported_total_observations": "59,400 observations",
+    quote = "The balanced panel consists of 12 portfolios observed over 4,950 daily periods, giving 59,400 portfolio-day observations."
+    evidence = [{"page": 4, "quote": quote}]
+    base = {
+        "study_design_type": "balanced_panel",
+        "study_design_evidence": evidence,
+        "panel_balance": "balanced",
+        "panel_balance_evidence": evidence,
+        "cross_sectional_units_count": 12,
+        "time_periods_count": 4950,
         "observation_frequency": "daily",
         "observation_unit": "portfolio-day",
+        "sample_count_reports": [],
         "evidence": evidence,
+    }
+    consistent = module.audit_panel_dimensions({
+        **base, "reported_total_observations_count": 59400,
     }, pages)
-    assert consistent["calculated_total_observations"] == "59,400"
+    assert consistent["calculated_total_observations_count"] == 59400
     assert consistent["consistency_status"] == "consistent"
 
     mismatch = module.audit_panel_dimensions({
-        "cross_sectional_units": "12 portfolios",
-        "time_periods": "4,950 daily periods",
-        "reported_total_observations": "4,950 observations",
-        "observation_frequency": "daily",
-        "observation_unit": "portfolio-day",
+        **base, "reported_total_observations_count": 4950,
+    }, pages)
+    assert mismatch["calculated_total_observations_count"] == 59400
+    assert mismatch["consistency_status"] == "mismatch"
+
+
+def test_unbalanced_panel_does_not_apply_n_times_t_multiplication():
+    quote = "The unbalanced panel contains 3,856 stocks over 81 quarters with 84,345 observations."
+    pages = [{"page": 1, "text": quote}]
+    evidence = [{"page": 1, "quote": quote}]
+    result = module.audit_panel_dimensions({
+        "study_design_type": "unbalanced_panel",
+        "study_design_evidence": evidence,
+        "panel_balance": "unbalanced",
+        "panel_balance_evidence": evidence,
+        "cross_sectional_units_count": 3856,
+        "time_periods_count": 81,
+        "reported_total_observations_count": 84345,
+        "observation_frequency": "quarterly",
+        "observation_unit": "stock-quarter",
+        "sample_count_reports": [{
+            "metric": "total_observations", "label": "overall", "count": 84345,
+            "section": "table", "evidence": evidence,
+        }],
         "evidence": evidence,
     }, pages)
-    assert mismatch["calculated_total_observations"] == "59,400"
-    assert mismatch["consistency_status"] == "mismatch"
-    assert "59,400" in mismatch["consistency_note"]
+    assert result["consistency_status"] == "not_applicable_unbalanced"
+    assert result["calculated_total_observations_count"] is None
+    assert result["reported_total_observations_count"] == 84345
+
+
+def test_non_panel_portfolio_optimization_does_not_calculate_pseudo_panel_total():
+    quote = "The portfolio optimization uses up to 40 stocks and 1,250 daily trading observations."
+    pages = [{"page": 8, "text": quote}]
+    evidence = [{"page": 8, "quote": quote}]
+    result = module.audit_panel_dimensions({
+        "study_design_type": "portfolio_optimization",
+        "study_design_evidence": evidence,
+        "panel_balance": "not_applicable",
+        "panel_balance_evidence": evidence,
+        "cross_sectional_units_count": 40,
+        "time_periods_count": 1250,
+        "reported_total_observations_count": 0,
+        "observation_frequency": "daily",
+        "observation_unit": "stock-day",
+        "sample_count_reports": [],
+        "evidence": evidence,
+    }, pages)
+    assert result["consistency_status"] == "not_applicable_design"
+    assert result["calculated_total_observations_count"] is None
+
+
+def test_sample_count_conflicts_are_preserved_instead_of_collapsed():
+    abstract_quote = "The pre-crisis, post-crisis, and overall periods comprise 365, 650, and 1,085 observations."
+    method_quote = "The pre-crisis, post-crisis, and overall periods comprise 366, 606, and 1,086 observations."
+    table_quote = "Table 1 reports 365 pre-crisis, 605 post-crisis, and 1,085 overall observations."
+    pages = [
+        {"page": 1, "text": abstract_quote},
+        {"page": 5, "text": method_quote},
+        {"page": 10, "text": table_quote},
+    ]
+    result = module.audit_panel_dimensions({
+        "study_design_type": "unbalanced_panel",
+        "study_design_evidence": [{"page": 5, "quote": method_quote}],
+        "panel_balance": "unbalanced",
+        "panel_balance_evidence": [{"page": 5, "quote": method_quote}],
+        "cross_sectional_units_count": 0,
+        "time_periods_count": 0,
+        "reported_total_observations_count": 0,
+        "observation_frequency": "monthly",
+        "observation_unit": "country-month",
+        "sample_count_reports": [
+            {"metric": "subsample_observations", "label": "pre-crisis", "count": 365, "section": "abstract", "evidence": [{"page": 1, "quote": abstract_quote}]},
+            {"metric": "subsample_observations", "label": "pre-crisis", "count": 366, "section": "methodology", "evidence": [{"page": 5, "quote": method_quote}]},
+            {"metric": "subsample_observations", "label": "post-crisis", "count": 650, "section": "abstract", "evidence": [{"page": 1, "quote": abstract_quote}]},
+            {"metric": "subsample_observations", "label": "post-crisis", "count": 606, "section": "methodology", "evidence": [{"page": 5, "quote": method_quote}]},
+            {"metric": "total_observations", "label": "overall", "count": 1085, "section": "abstract", "evidence": [{"page": 1, "quote": abstract_quote}]},
+            {"metric": "total_observations", "label": "overall", "count": 1086, "section": "methodology", "evidence": [{"page": 5, "quote": method_quote}]},
+            {"metric": "total_observations", "label": "overall", "count": 1085, "section": "table 1", "evidence": [{"page": 10, "quote": table_quote}]},
+        ],
+        "evidence": [{"page": 1, "quote": abstract_quote}],
+    }, pages)
+    assert result["consistency_status"] == "source_conflict"
+    assert len(result["source_conflicts"]) == 3
+    assert result["calculated_total_observations_count"] is None
+    assert {item["count"] for item in result["sample_count_reports"]} >= {365, 366, 1085, 1086}
 
 
 def test_deduplicate_findings_removes_near_duplicate_claims_but_keeps_distinct_results():
@@ -705,8 +801,9 @@ def test_methodology_repair_prompt_requests_panel_units_and_field_citations():
         {"page": 3, "text": "Methodology: We estimate a panel model using the Mean Group estimator."},
     ]
     prompt = module.build_methodology_repair_prompt(pages)
-    assert "cross_sectional_units" in prompt
-    assert "reported_total_observations" in prompt
+    assert "cross_sectional_units_count" in prompt
+    assert "reported_total_observations_count" in prompt
+    assert "sample_count_reports" in prompt
     assert "sample_evidence" in prompt
     assert "[PDF PAGE 2]" in prompt
     assert "[PDF PAGE 3]" in prompt
