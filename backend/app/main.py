@@ -3,13 +3,14 @@ import json
 import logging
 import os
 import re
+from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import quote
 from uuid import UUID
 
 import fitz
 import httpx
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
@@ -483,7 +484,7 @@ def active_ai_model(provider: str) -> str:
 
 
 async def _generate_gemini(prompt: str) -> dict[str, Any]:
-    """Call Gemini Developer API using the documented generateContent REST shape."""
+    """Call Gemini with bounded retries and diagnostics; key remains server-side."""
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
     system_instruction = (
         "You are a strict evidence-first financial economics research analyst. "
@@ -498,13 +499,13 @@ async def _generate_gemini(prompt: str) -> dict[str, Any]:
             "responseMimeType": "application/json",
             "responseJsonSchema": ANALYSIS_SCHEMA,
             "thinkingConfig": {"thinkingLevel": "low"},
-            "maxOutputTokens": 7000,
+            "maxOutputTokens": 5000,
             "candidateCount": 1,
         },
     }
-    timeout = httpx.Timeout(150.0, connect=12.0)
+    timeout = httpx.Timeout(connect=12.0, read=90.0, write=30.0, pool=12.0)
     response = None
-    for attempt in range(3):
+    for attempt in range(2):
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(
@@ -515,23 +516,26 @@ async def _generate_gemini(prompt: str) -> dict[str, Any]:
                     },
                     json=request_body,
                 )
-        except (httpx.TimeoutException, httpx.TransportError):
-            if attempt < 2:
-                await asyncio.sleep(1.5 * (2 ** attempt))
+        except (httpx.TimeoutException, httpx.TransportError) as exc:
+            log.warning(
+                "Gemini transport failure attempt=%d model=%s error=%s",
+                attempt + 1, GEMINI_MODEL, type(exc).__name__,
+            )
+            if attempt == 0:
+                await asyncio.sleep(2)
                 continue
-            log.exception("Gemini transport failure after bounded retries")
             raise HTTPException(
                 status_code=503,
-                detail="Gemini 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.",
-            )
+                detail="Gemini 응답 시간이 초과됐습니다. 분석 작업에서 실패 상태를 확인한 뒤 다시 시도해 주세요.",
+            ) from exc
 
-        if response.status_code in (500, 502, 503, 504) and attempt < 2:
-            retry_after = response.headers.get("Retry-After")
-            try:
-                delay = min(max(float(retry_after), 0.5), 15.0) if retry_after else 1.5 * (2 ** attempt)
-            except ValueError:
-                delay = 1.5 * (2 ** attempt)
-            await asyncio.sleep(delay)
+        if response.status_code in (500, 502, 503, 504) and attempt == 0:
+            # Log only the provider's short error response; never log request text or API key.
+            log.warning(
+                "Gemini transient HTTP %d model=%s body=%s",
+                response.status_code, GEMINI_MODEL, response.text[:700],
+            )
+            await asyncio.sleep(2)
             continue
         break
 
@@ -550,13 +554,19 @@ async def _generate_gemini(prompt: str) -> dict[str, Any]:
             detail="Gemini API 키 또는 Google AI Studio 프로젝트 권한을 확인해 주세요.",
         )
     if response.status_code in (400, 404):
-        log.warning("Gemini request/model rejected (HTTP %d)", response.status_code)
+        log.warning(
+            "Gemini request/model rejected HTTP %d model=%s body=%s",
+            response.status_code, GEMINI_MODEL, response.text[:700],
+        )
         raise HTTPException(
             status_code=503,
             detail="Gemini 요청 형식 또는 모델 사용 가능 여부를 확인해 주세요.",
         )
     if response.status_code in (500, 502, 503, 504):
-        log.warning("Gemini service unavailable after retries (HTTP %d)", response.status_code)
+        log.warning(
+            "Gemini service unavailable after retry HTTP %d model=%s body=%s",
+            response.status_code, GEMINI_MODEL, response.text[:700],
+        )
         raise HTTPException(
             status_code=503,
             detail="Gemini 서비스가 일시적으로 혼잡합니다. 잠시 후 다시 시도해 주세요.",
@@ -688,9 +698,164 @@ async def health() -> dict[str, Any]:
     }
 
 
-@app.post("/api/analyze/{paper_id}")
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+async def _verify_user(client: httpx.AsyncClient, token: str) -> str:
+    response = await client.get(SUPABASE_URL + "/auth/v1/user", headers=supabase_headers(token))
+    if response.status_code != 200:
+        raise HTTPException(status_code=401, detail="세션이 만료됐습니다.")
+    user_id = response.json().get("id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="사용자를 확인할 수 없습니다.")
+    return user_id
+
+
+async def _patch_owned_row(
+    table: str,
+    row_id: str,
+    user_id: str,
+    token: str,
+    values: dict[str, Any],
+) -> None:
+    headers = {
+        **supabase_headers(token),
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal",
+    }
+    async with httpx.AsyncClient(timeout=25) as client:
+        response = await client.patch(
+            SUPABASE_URL + f"/rest/v1/{table}",
+            headers=headers,
+            params={"id": "eq." + row_id, "user_id": "eq." + user_id},
+            json=values,
+        )
+    if response.status_code >= 400:
+        log.error("Background update failed table=%s status=%d", table, response.status_code)
+        raise RuntimeError(f"{table} update failed")
+
+
+async def _process_analysis_job(
+    paper_id: str,
+    job_id: str,
+    user_id: str,
+    token: str,
+) -> None:
+    """Run long Gemini calls after the HTTP request has already returned 202."""
+    try:
+        await _patch_owned_row(
+            "analysis_jobs", job_id, user_id, token,
+            {"status": "processing", "stage": "pdf_download", "started_at": _utc_now(), "updated_at": _utc_now()},
+        )
+        await _patch_owned_row(
+            "papers", paper_id, user_id, token,
+            {"status": "processing"},
+        )
+        headers = supabase_headers(token)
+        async with httpx.AsyncClient(timeout=60) as client:
+            paper_response = await client.get(
+                SUPABASE_URL + "/rest/v1/papers",
+                headers=headers,
+                params={"id": "eq." + paper_id, "select": "id,user_id,storage_path"},
+            )
+            papers = await check_response(paper_response, "background paper lookup")
+            if not papers or papers[0]["user_id"] != user_id:
+                raise RuntimeError("논문을 찾을 수 없거나 접근 권한이 없습니다.")
+            storage_path = papers[0]["storage_path"]
+            if (
+                not isinstance(storage_path, str)
+                or not storage_path.startswith(user_id + "/")
+                or ".." in storage_path
+            ):
+                raise RuntimeError("PDF 파일 접근 권한이 없습니다.")
+            pdf_response = await client.get(
+                SUPABASE_URL + "/storage/v1/object/authenticated/papers/" + quote(storage_path, safe="/"),
+                headers=headers,
+            )
+            if pdf_response.status_code != 200:
+                raise RuntimeError("PDF 파일을 다운로드하지 못했습니다.")
+            if len(pdf_response.content) > MAX_BYTES:
+                raise RuntimeError("30MB 이하 PDF만 분석할 수 있습니다.")
+            page_count, pages = extract_pages(pdf_response.content)
+
+        await _patch_owned_row(
+            "analysis_jobs", job_id, user_id, token,
+            {"stage": "gemini_analysis", "updated_at": _utc_now()},
+        )
+        result = await llm_result(page_count, pages)
+        model_name = result.get("model", "extractive-v3") if result["mode"] == "llm" else "extractive-v3"
+        save_headers = {
+            **headers,
+            "Content-Type": "application/json",
+            "Prefer": "return=representation",
+        }
+        async with httpx.AsyncClient(timeout=45) as client:
+            save_response = await client.post(
+                SUPABASE_URL + "/rest/v1/analyses",
+                headers=save_headers,
+                json={
+                    "paper_id": paper_id,
+                    "user_id": user_id,
+                    "model": model_name,
+                    "status": "completed",
+                    "result": result,
+                },
+            )
+            saved = await check_response(save_response, "analysis insert")
+            analysis_id = saved[0].get("id") if isinstance(saved, list) and saved else None
+            update_response = await client.patch(
+                SUPABASE_URL + "/rest/v1/papers",
+                headers={**save_headers, "Prefer": "return=minimal"},
+                params={"id": "eq." + paper_id, "user_id": "eq." + user_id},
+                json={"status": "completed", "page_count": page_count},
+            )
+            await check_response(update_response, "paper update")
+        await _patch_owned_row(
+            "analysis_jobs", job_id, user_id, token,
+            {
+                "status": "completed",
+                "stage": "completed",
+                "analysis_id": analysis_id,
+                "updated_at": _utc_now(),
+                "completed_at": _utc_now(),
+                "error_message": None,
+            },
+        )
+        log.info(
+            "Analysis job completed job_id=%s paper_id=%s provider=%s model=%s pages=%d",
+            job_id, paper_id, result.get("provider", "extractive"), model_name, page_count,
+        )
+    except HTTPException as exc:
+        error_message = str(exc.detail)[:1200]
+        log.warning("Analysis job failed job_id=%s status=%d reason=%s", job_id, exc.status_code, error_message)
+        try:
+            await _patch_owned_row(
+                "analysis_jobs", job_id, user_id, token,
+                {"status": "failed", "stage": "failed", "error_message": error_message,
+                 "updated_at": _utc_now(), "completed_at": _utc_now()},
+            )
+            await _patch_owned_row("papers", paper_id, user_id, token, {"status": "failed"})
+        except Exception:
+            log.exception("Could not persist failed analysis job job_id=%s", job_id)
+    except Exception as exc:
+        log.exception("Analysis job crashed job_id=%s", job_id)
+        error_message = str(exc)[:1200] or "분석 중 서버 오류가 발생했습니다."
+        try:
+            await _patch_owned_row(
+                "analysis_jobs", job_id, user_id, token,
+                {"status": "failed", "stage": "failed", "error_message": error_message,
+                 "updated_at": _utc_now(), "completed_at": _utc_now()},
+            )
+            await _patch_owned_row("papers", paper_id, user_id, token, {"status": "failed"})
+        except Exception:
+            log.exception("Could not persist crashed analysis job job_id=%s", job_id)
+
+
+@app.post("/api/analyze/{paper_id}", status_code=202)
 async def analyze_paper(
     paper_id: UUID,
+    background_tasks: BackgroundTasks,
     authorization: str | None = Header(default=None),
 ) -> dict[str, Any]:
     if not SUPABASE_URL or not SUPABASE_KEY:
@@ -700,18 +865,12 @@ async def analyze_paper(
     token = authorization.split(" ", 1)[1].strip()
     if not token:
         raise HTTPException(status_code=401, detail="인증 토큰이 필요합니다.")
-    headers = supabase_headers(token)
-    async with httpx.AsyncClient(timeout=45) as client:
-        auth_response = await client.get(SUPABASE_URL + "/auth/v1/user", headers=headers)
-        if auth_response.status_code != 200:
-            raise HTTPException(status_code=401, detail="세션이 만료됐습니다.")
-        user_id = auth_response.json().get("id")
-        if not user_id:
-            raise HTTPException(status_code=401, detail="사용자를 확인할 수 없습니다.")
 
+    async with httpx.AsyncClient(timeout=25) as client:
+        user_id = await _verify_user(client, token)
         paper_response = await client.get(
             SUPABASE_URL + "/rest/v1/papers",
-            headers=headers,
+            headers=supabase_headers(token),
             params={"id": "eq." + str(paper_id), "select": "id,user_id,storage_path"},
         )
         papers = await check_response(paper_response, "paper lookup")
@@ -721,56 +880,79 @@ async def analyze_paper(
         if not isinstance(storage_path, str) or not storage_path.startswith(user_id + "/") or ".." in storage_path:
             raise HTTPException(status_code=403, detail="파일 접근 권한이 없습니다.")
 
-        pdf_response = await client.get(
-            SUPABASE_URL + "/storage/v1/object/authenticated/papers/" + quote(storage_path, safe="/"),
-            headers=headers,
+        active_response = await client.get(
+            SUPABASE_URL + "/rest/v1/analysis_jobs",
+            headers=supabase_headers(token),
+            params={
+                "paper_id": "eq." + str(paper_id),
+                "user_id": "eq." + user_id,
+                "status": "in.(queued,processing)",
+                "select": "id,status,stage",
+                "order": "created_at.desc",
+                "limit": "1",
+            },
         )
-        if pdf_response.status_code != 200:
-            raise HTTPException(status_code=502, detail="PDF 파일 다운로드에 실패했습니다.")
-        if len(pdf_response.content) > MAX_BYTES:
-            raise HTTPException(status_code=413, detail="30MB 이하 PDF만 처리할 수 있습니다.")
-        try:
-            page_count, pages = extract_pages(pdf_response.content)
-        except ValueError as exc:
-            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        active_jobs = await check_response(active_response, "active job lookup")
+        if active_jobs:
+            return {
+                "status": active_jobs[0]["status"],
+                "job_id": active_jobs[0]["id"],
+                "stage": active_jobs[0]["stage"],
+            }
 
-    try:
-        result = await llm_result(page_count, pages)
-    except (httpx.HTTPError, ValueError, KeyError, IndexError, json.JSONDecodeError) as exc:
-        log.exception("Analysis pipeline failed")
-        raise HTTPException(
-            status_code=502,
-            detail="논문 분석에 실패했습니다. AI API 설정 또는 원문 근거를 확인해 주세요.",
-        ) from exc
+        create_response = await client.post(
+            SUPABASE_URL + "/rest/v1/analysis_jobs",
+            headers={
+                **supabase_headers(token),
+                "Content-Type": "application/json",
+                "Prefer": "return=representation",
+            },
+            json={"paper_id": str(paper_id), "user_id": user_id, "status": "queued", "stage": "queued"},
+        )
+        created = await check_response(create_response, "analysis job insert")
+        if not isinstance(created, list) or not created:
+            raise HTTPException(status_code=502, detail="분석 작업을 등록하지 못했습니다.")
+        job_id = created[0]["id"]
 
-    model_name = result.get("model", "extractive-v3") if result["mode"] == "llm" else "extractive-v3"
-    payload = {
-        "paper_id": str(paper_id),
-        "user_id": user_id,
-        "model": model_name,
-        "status": "completed",
-        "result": result,
-    }
-    async with httpx.AsyncClient(timeout=45) as client:
-        save_response = await client.post(
-            SUPABASE_URL + "/rest/v1/analyses",
-            headers={**headers, "Content-Type": "application/json", "Prefer": "return=minimal"},
-            json=payload,
+    background_tasks.add_task(_process_analysis_job, str(paper_id), job_id, user_id, token)
+    log.info("Analysis job queued job_id=%s paper_id=%s", job_id, paper_id)
+    return {"status": "queued", "job_id": job_id, "stage": "queued"}
+
+
+@app.get("/api/analyze/{paper_id}/status")
+async def analysis_job_status(
+    paper_id: UUID,
+    job_id: UUID,
+    authorization: str | None = Header(default=None),
+) -> dict[str, Any]:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="로그인이 필요합니다.")
+    token = authorization.split(" ", 1)[1].strip()
+    if not token:
+        raise HTTPException(status_code=401, detail="인증 토큰이 필요합니다.")
+    async with httpx.AsyncClient(timeout=20) as client:
+        user_id = await _verify_user(client, token)
+        response = await client.get(
+            SUPABASE_URL + "/rest/v1/analysis_jobs",
+            headers=supabase_headers(token),
+            params={
+                "id": "eq." + str(job_id),
+                "paper_id": "eq." + str(paper_id),
+                "user_id": "eq." + user_id,
+                "select": "id,status,stage,error_message,analysis_id,created_at,updated_at,completed_at",
+                "limit": "1",
+            },
         )
-        await check_response(save_response, "analysis insert")
-        update_response = await client.patch(
-            SUPABASE_URL + "/rest/v1/papers",
-            headers={**headers, "Content-Type": "application/json", "Prefer": "return=minimal"},
-            params={"id": "eq." + str(paper_id)},
-            json={"status": "completed", "page_count": page_count},
-        )
-        await check_response(update_response, "paper update")
-    return {
-        "status": "completed",
-        "mode": result["mode"],
-        "provider": result.get("provider", "extractive"),
-        "model": model_name,
-        "analysis_version": result["analysis_version"],
-        "page_count": page_count,
-        "evidence_count": len(result.get("evidence", [])),
-    }
+        jobs = await check_response(response, "analysis job status")
+        if not jobs:
+            raise HTTPException(status_code=404, detail="분석 작업을 찾을 수 없습니다.")
+        job = jobs[0]
+        return {
+            "job_id": job["id"],
+            "status": job["status"],
+            "stage": job["stage"],
+            "error": job.get("error_message"),
+            "analysis_id": job.get("analysis_id"),
+            "updated_at": job.get("updated_at"),
+            "completed_at": job.get("completed_at"),
+        }
