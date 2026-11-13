@@ -33,3 +33,11 @@ def test_worker_rejects_legacy_key_without_publishable_key(monkeypatch):
     monkeypatch.setattr(worker, "SUPABASE_KEY", "")
     with __import__("pytest").raises(RuntimeError, match="SUPABASE_PUBLISHABLE_KEY"):
         worker.headers()
+
+def test_worker_accepts_new_secret_without_publishable_key(monkeypatch):
+    monkeypatch.setattr(worker, "SERVICE_ROLE_KEY", "sb_secret_test")
+    monkeypatch.setattr(worker, "SUPABASE_KEY", "")
+    assert worker.headers() == {
+        "apikey": "sb_secret_test",
+        "Content-Type": "application/json",
+    }
