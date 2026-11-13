@@ -2190,6 +2190,8 @@ async def _process_analysis_job(
                 "updated_at": _utc_now(),
                 "completed_at": _utc_now(),
                 "error_message": None,
+                "worker_id": None,
+                "lease_expires_at": None,
             },
         )
         log.info(
