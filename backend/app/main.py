@@ -153,10 +153,12 @@ PANEL_DIMENSIONS_SCHEMA = object_schema({
             "time_series", "cross_sectional", "portfolio_optimization", "other", "unknown",
         ],
     },
+    "study_design_evidence": EVIDENCE_LIST,
     "panel_balance": {
         "type": "string",
         "enum": ["balanced", "unbalanced", "not_applicable", "unknown"],
     },
+    "panel_balance_evidence": EVIDENCE_LIST,
     "cross_sectional_units_count": {"type": "integer"},
     "time_periods_count": {"type": "integer"},
     "reported_total_observations_count": {"type": "integer"},
@@ -368,7 +370,16 @@ def _normalize_sample_count_reports(raw_reports: Any, pages: list[dict[str, Any]
         count = _typed_count(item.get("count"))
         label = _clean_text(item.get("label"))
         evidence = validate_evidence(item.get("evidence"), pages)
-        if metric not in allowed_metrics or count is None or not evidence:
+        quoted_numbers = {
+            _numeric_key(token)
+            for token in _extract_numeric_tokens(" ".join(x["quote"] for x in evidence))
+        }
+        if (
+            metric not in allowed_metrics
+            or count is None
+            or not evidence
+            or _numeric_key(str(count)) not in quoted_numbers
+        ):
             continue
         reports.append({
             "metric": metric,
@@ -404,24 +415,45 @@ def audit_panel_dimensions(raw: Any, pages: list[dict[str, Any]]) -> dict[str, A
     """Audit sample counts only when the declared study design makes N×T valid."""
     raw = raw if isinstance(raw, dict) else {}
     evidence = validate_evidence(raw.get("evidence"), pages)
+    study_design_evidence = validate_evidence(raw.get("study_design_evidence"), pages)
+    panel_balance_evidence = validate_evidence(raw.get("panel_balance_evidence"), pages)
     study_design = str(raw.get("study_design_type", "unknown"))
-    if study_design not in _STUDY_DESIGN_TYPES:
+    if study_design not in _STUDY_DESIGN_TYPES or not study_design_evidence:
         study_design = "unknown"
     panel_balance = str(raw.get("panel_balance", "unknown"))
-    if panel_balance not in {"balanced", "unbalanced", "not_applicable", "unknown"}:
+    if panel_balance not in {"balanced", "unbalanced", "not_applicable", "unknown"} or not panel_balance_evidence:
         panel_balance = "unknown"
 
-    units_count = _typed_count(raw.get("cross_sectional_units_count"))
-    periods_count = _typed_count(raw.get("time_periods_count"))
-    reported_count = _typed_count(raw.get("reported_total_observations_count"))
     frequency = _clean_text(raw.get("observation_frequency"))
     observation_unit = _clean_text(raw.get("observation_unit"))
     reports = _normalize_sample_count_reports(raw.get("sample_count_reports"), pages)
     report_evidence = _merge_evidence_items(*[item["evidence"] for item in reports])
     evidence = _merge_evidence_items(evidence, report_evidence)
     conflicts = _find_sample_count_conflicts(reports)
+    all_quotes = " ".join(item["quote"] for item in evidence)
+    quoted_numbers = {
+        _numeric_key(token) for token in _extract_numeric_tokens(all_quotes)
+    }
 
-    if study_design == "balanced_panel" and panel_balance == "unbalanced":
+    def supported_count(value: Any, metric: str) -> int | None:
+        count = _typed_count(value)
+        if count is not None and _numeric_key(str(count)) in quoted_numbers:
+            return count
+        reported = {
+            item["count"] for item in reports
+            if item["metric"] == metric
+        }
+        return next(iter(reported)) if len(reported) == 1 else None
+
+    units_count = supported_count(raw.get("cross_sectional_units_count"), "cross_sectional_units")
+    periods_count = supported_count(raw.get("time_periods_count"), "time_periods")
+    reported_count = supported_count(raw.get("reported_total_observations_count"), "total_observations")
+
+    if not evidence:
+        status = "not_assessable"
+        calculated = None
+        note = "연구 설계와 표본 차원에 대한 페이지 단위 근거를 확인하지 못했습니다."
+    elif study_design == "balanced_panel" and panel_balance == "unbalanced":
         status = "design_conflict"
         calculated = None
         note = "연구 설계 유형은 균형 패널이지만 panel_balance는 불균형으로 표시되어 계산을 보류했습니다."
@@ -473,7 +505,9 @@ def audit_panel_dimensions(raw: Any, pages: list[dict[str, Any]]) -> dict[str, A
 
     return {
         "study_design_type": study_design,
+        "study_design_evidence": study_design_evidence,
         "panel_balance": panel_balance,
+        "panel_balance_evidence": panel_balance_evidence,
         "cross_sectional_units_count": units_count,
         "time_periods_count": periods_count,
         "reported_total_observations_count": reported_count,
