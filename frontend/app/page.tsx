@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { db } from "../lib/supabase";
 import { ResearchLibrary } from "../components/ResearchLibrary";
 import type { User } from "@supabase/supabase-js";
@@ -186,6 +186,7 @@ export default function Home() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [sourcePdf, setSourcePdf] = useState<{ paperId: string; url: string } | null>(null);
   const [sourcePdfError, setSourcePdfError] = useState("");
+  const openRequestId = useRef(0);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [engineMode, setEngineMode] = useState<"gemini" | "openai" | "extractive" | "unknown">("unknown");
@@ -215,9 +216,12 @@ export default function Home() {
   useEffect(() => {
     if (user) void refresh();
     else {
+      openRequestId.current += 1;
       setPapers([]);
       setSelected(null);
       setAnalysis(null);
+      setSourcePdf(null);
+      setSourcePdfError("");
     }
   }, [user]);
 
@@ -282,6 +286,7 @@ export default function Home() {
   }
 
   async function open(paper: Paper) {
+    const requestId = ++openRequestId.current;
     setSelected(paper);
     setAnalysis(null);
     setSourcePdf(null);
@@ -291,6 +296,7 @@ export default function Home() {
         .eq("paper_id", paper.id).order("created_at", { ascending: false }).limit(1),
       db().storage.from("papers").createSignedUrl(paper.storage_path, 3600),
     ]);
+    if (openRequestId.current !== requestId) return;
     if (result.error) setMessage(result.error.message);
     else if (result.data?.[0]) setAnalysis(result.data[0] as Analysis);
     if (signedPdf.error) setSourcePdfError("원문 PDF 링크를 만들지 못했습니다: " + signedPdf.error.message);
@@ -417,13 +423,13 @@ export default function Home() {
       </div>
     </div>
 
-    {selected && <div className="overlay" onClick={() => setSelected(null)}>
+    {selected && <div className="overlay" onClick={() => { openRequestId.current += 1; setSelected(null); setSourcePdf(null); setSourcePdfError(""); }}>
       <section className="details" onClick={event => event.stopPropagation()}>
         <div className="detail-toolbar no-print">
           {sourcePdf?.paperId === selected.id
             ? <a className="source-pdf-button" href={sourcePdf.url} target="_blank" rel="noreferrer">원문 PDF 열기 ↗</a>
             : <span className="source-pdf-status">{sourcePdfError || "원문 PDF 연결 준비 중..."}</span>}
-          <button className="close" onClick={() => setSelected(null)}>×</button>
+          <button className="close" onClick={() => { openRequestId.current += 1; setSelected(null); setSourcePdf(null); setSourcePdfError(""); }}>×</button>
         </div>
         <p className="eyebrow">PAPER INTELLIGENCE</p>
         <h2>{selected.title}</h2>
