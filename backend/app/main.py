@@ -713,6 +713,10 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
             significance_supported = False
         elif claims_non_significant and quote_significant:
             significance_supported = False
+        elif claims_significant and quote_significant:
+            significance_supported = True
+        elif claims_non_significant and quote_non_significant:
+            significance_supported = True
         else:
             threshold = _parse_significance_threshold(significance)
             explicit_p_values = _extract_explicit_p_values(cited_quote_text)
@@ -721,10 +725,6 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
             elif threshold is not None:
                 stars = "***" if "***" in cited_quote_text else "**" if "**" in cited_quote_text else "*" if "*" in cited_quote_text else ""
                 significance_supported = _legend_supports_significance(stars, threshold, legend_text)
-            elif claims_significant and quote_significant:
-                significance_supported = True
-            elif claims_non_significant and quote_non_significant:
-                significance_supported = True
 
     numeric_supported = not unsupported_numbers
     issues = bool(
@@ -1157,9 +1157,34 @@ def _merge_methodologies(
     repaired_panel = repaired.get("panel_dimensions", {})
     if repaired_panel.get("evidence") and (
         not original_panel.get("evidence")
-        or original_panel.get("consistency_status") in ("mismatch", "not_assessable")
+        or original_panel.get("study_design_type") == "unknown"
+        or original_panel.get("consistency_status") in ("mismatch", "not_assessable", "design_conflict")
     ):
-        merged["panel_dimensions"] = repaired_panel
+        panel = dict(repaired_panel)
+        reports = list(original_panel.get("sample_count_reports", []))
+        seen_reports = {
+            (x.get("metric"), _normalize_count_label(x.get("label", "")), x.get("count"),
+             tuple((int(e.get("page", -1)), str(e.get("quote", ""))) for e in x.get("evidence", [])))
+            for x in reports
+        }
+        for item in repaired_panel.get("sample_count_reports", []):
+            key = (
+                item.get("metric"), _normalize_count_label(item.get("label", "")), item.get("count"),
+                tuple((int(e.get("page", -1)), str(e.get("quote", ""))) for e in item.get("evidence", []))
+            )
+            if key not in seen_reports:
+                reports.append(item)
+                seen_reports.add(key)
+        panel["sample_count_reports"] = reports[:30]
+        conflicts = _find_sample_count_conflicts(panel["sample_count_reports"])
+        panel["source_conflicts"] = conflicts
+        panel["evidence"] = _merge_evidence_items(
+            original_panel.get("evidence", []), repaired_panel.get("evidence", [])
+        )
+        if conflicts:
+            panel["consistency_status"] = "source_conflict"
+            panel["consistency_note"] = "원문 내 표본 수 보고가 서로 달라 각 수치를 보존했습니다. 원문 섹션별 수치를 확인해야 합니다."
+        merged["panel_dimensions"] = panel
     return merged
 
 
@@ -1169,10 +1194,13 @@ def _methodology_needs_repair(methodology: dict[str, Any]) -> bool:
         not methodology.get("design_evidence")
         or not methodology.get("sample_evidence")
         or not methodology.get("period_evidence")
+        or not methodology.get("empirical_strategy_evidence")
         or methodology.get("design") in (None, "", "확인 불가")
         or methodology.get("sample") in (None, "", "확인 불가")
         or methodology.get("period") in (None, "", "확인 불가")
-        or panel.get("consistency_status") == "mismatch"
+        or methodology.get("empirical_strategy") in (None, "", "확인 불가")
+        or panel.get("study_design_type") == "unknown"
+        or panel.get("consistency_status") in ("mismatch", "not_assessable", "design_conflict")
     )
 
 
