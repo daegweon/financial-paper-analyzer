@@ -978,11 +978,15 @@ def normalize_llm_result(
     methodology, methodology_warnings = _normalize_methodology(methodology_raw, pages)
     warnings.extend(methodology_warnings)
 
-    findings = _normalize_findings(raw.get("findings"), pages)
+    normalized_findings = _normalize_findings(raw.get("findings"), pages)
+    findings, duplicate_findings_removed = _deduplicate_findings(normalized_findings, pages)
     if not findings:
         warnings.append("1차 분석에서 검증 가능한 실증 결과를 찾지 못해 2차 집중 검증이 필요합니다.")
     elif any(item["verification"]["status"] == "review" for item in findings):
         warnings.append("일부 실증 결과의 숫자·방향·유의수준이 인용 페이지와 완전히 일치하는지 추가 검토가 필요합니다.")
+
+    if methodology.get("panel_dimensions", {}).get("consistency_status") == "mismatch":
+        warnings.append(methodology["panel_dimensions"]["consistency_note"])
 
     robustness_checks = []
     for item in raw.get("robustness_checks", [])[:5] if isinstance(raw.get("robustness_checks"), list) else []:
@@ -1009,13 +1013,32 @@ def normalize_llm_result(
 
     summary_evidence = validate_evidence(raw.get("evidence"), pages)
     summary = _clean_text(raw.get("summary")) if summary_evidence else ""
+    summary_status = "model_summary"
+    summary_verification: dict[str, Any] = {"status": "not_assessable", "unsupported_numeric_tokens": []}
+    if summary_evidence:
+        summary_verification = audit_finding(
+            {"claim": summary, "estimate": "", "statistical_significance": "", "evidence": summary_evidence},
+            pages,
+        )
+        if summary_verification["status"] == "review":
+            summary = ""
+            summary_evidence = []
+            summary_status = "reconstructed_numeric_review"
     if not summary_evidence:
         summary, summary_evidence = _build_verified_summary(findings, methodology, research_question)
         if summary_evidence:
-            warnings.append("AI 요약의 직접 인용이 검증되지 않아, 검증된 방법론·실증 결과만으로 요약을 재구성했습니다.")
+            if summary_status != "reconstructed_numeric_review":
+                summary_status = "reconstructed_missing_citation"
+            warnings.append("AI 요약의 직접 인용 또는 수치 대조가 통과하지 않아, 검증된 방법론·실증 결과만으로 요약을 재구성했습니다.")
         else:
             summary = "요약을 뒷받침하는 페이지 단위 원문 근거를 확인하지 못했습니다."
+            summary_status = "unavailable"
             warnings.append("요약은 검증 가능한 직접 인용이 없어 안내 문구를 표시했습니다.")
+    summary_verification = {
+        **summary_verification,
+        "status": summary_status,
+        "unsupported_numeric_tokens": summary_verification.get("unsupported_numeric_tokens", []),
+    }
 
     result: dict[str, Any] = {
         "mode": "llm",
@@ -1027,7 +1050,10 @@ def normalize_llm_result(
         "hypotheses": _clean_claims(raw.get("hypotheses"), "text", pages),
         "contributions": _clean_claims(raw.get("contributions"), "text", pages),
         "methodology": methodology,
+        "methodology_verification": {"repair_attempted": False, "repair_status": "not_needed", "repair_model": None},
         "findings": findings,
+        "findings_deduplication": {"duplicates_removed": duplicate_findings_removed},
+        "summary_verification": summary_verification,
         "robustness_checks": robustness_checks,
         "limitations": limitations,
         "implications": _clean_claims(raw.get("implications"), "text", pages),
