@@ -2284,6 +2284,28 @@ async def analyze_paper(
             },
             json={"paper_id": str(paper_id), "user_id": user_id, "status": "queued", "stage": "queued"},
         )
+        if create_response.status_code == 409:
+            # A concurrent request may have won the partial unique-index race.
+            duplicate_response = await client.get(
+                SUPABASE_URL + "/rest/v1/analysis_jobs",
+                headers=supabase_headers(token),
+                params={
+                    "paper_id": "eq." + str(paper_id),
+                    "user_id": "eq." + user_id,
+                    "status": "in.(queued,processing)",
+                    "select": "id,status,stage",
+                    "order": "created_at.desc",
+                    "limit": "1",
+                },
+            )
+            duplicate_jobs = await check_response(duplicate_response, "duplicate active job lookup")
+            if duplicate_jobs:
+                return {
+                    "status": duplicate_jobs[0]["status"],
+                    "job_id": duplicate_jobs[0]["id"],
+                    "stage": duplicate_jobs[0]["stage"],
+                }
+
         created = await check_response(create_response, "analysis job insert")
         if not isinstance(created, list) or not created:
             raise HTTPException(status_code=502, detail="분석 작업을 등록하지 못했습니다.")
