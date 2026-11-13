@@ -41,21 +41,20 @@ When an OpenAI API key and billing are available, switch providers in Railway:
 
 No application data migration is required. Both providers return the same normalized analysis schema and use the same page-level evidence verification.
 
-## Analysis engine v6.1
+## Analysis engine v6.2
 
-New analyses use `finance-structured-v6.1`. The precision-validation pipeline adds:
-- field-level methodology citations and a conditional methodology-only repair pass;
-- Unicode minus / decimal normalization and a numeric/significance screen;
-- expanded result-page selection and a findings-only repair pass;
-- near-duplicate empirical finding removal;
-- panel dimensions and cross-sectional-units × time-periods consistency checks;
-- summary numeric screening and evidence-based reconstruction.
+New analyses use `finance-structured-v6.2`. The research-design-aware validation pipeline adds:
+- explicit classification of balanced/unbalanced panels, repeated cross-sections, time series, cross-sections and portfolio-optimization studies;
+- typed integer sample dimensions and source-level sample-count reports, preserving conflicting values across abstracts, methodology sections and tables;
+- N×T checks only for evidence-backed balanced panels; unbalanced and non-panel designs are not multiplied;
+- table/model/column context and separate regression-significance legend citations;
+- context-aware p-value, significance-star and summary-to-findings consistency screens.
 
-See [v6.1 architecture and limitations](docs/analysis-v6.1.md). The numeric screen is a triage aid, not a semantic proof; coefficient interpretation, table-column alignment and claim-to-citation entailment still require human review.
+See [v6.2 architecture and limitations](docs/analysis-v6.2.md). These checks are triage aids, not semantic proofs; table alignment, coefficient interpretation, sample definitions and claim-to-citation entailment still require researcher review.
 
 ## Analysis output
 
-Gemini output budgets are 16,384 tokens for the primary Flash-Lite model and 24,576 tokens for the fallback Flash model. If the primary response ends with `MAX_TOKENS`, the worker automatically retries with the fallback model. Results are kept concise and evidence lists are bounded to reduce truncation. Analysis schema v6.1 normalizes PDF typography and performs field-level evidence and numeric checks (Unicode ligatures, dash variants, and whitespace) when validating citations, then stores the matched excerpt from the original extracted page text. It also preserves individually evidenced variables when a section-level methodology citation is unavailable, and strengthens Korean output / empirical-findings instructions.
+Gemini output budgets are 16,384 tokens for the primary Flash-Lite model and 24,576 tokens for the fallback Flash model. If the primary response ends with `MAX_TOKENS`, the worker automatically retries with the fallback model. Results are kept concise and evidence lists are bounded to reduce truncation. Analysis schema v6.2 normalizes PDF typography, classifies study designs and performs field-level evidence, sample-count and table-significance checks (Unicode ligatures, dash variants, and whitespace) when validating citations, then stores the matched excerpt from the original extracted page text. It also preserves individually evidenced variables when a section-level methodology citation is unavailable, and strengthens Korean output / empirical-findings instructions.
 
 The structured financial-research report includes:
 
