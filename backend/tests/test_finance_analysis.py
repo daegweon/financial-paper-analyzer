@@ -10,7 +10,9 @@ def _sample_pages():
             "page": 1,
             "text": (
                 "This paper studies whether monetary policy shocks affect bank lending. "
-                "We use a panel of 50 banks from 2001 to 2020. The dependent variable is loan growth."
+                "We use a panel of 50 banks from 2001 to 2020. The dependent variable is loan growth. "
+                "We estimate a fixed-effects panel regression."
+
             ),
         },
         {
@@ -50,17 +52,32 @@ def _sample_model_output():
         ],
         "methodology": {
             "design": "은행 패널 분석",
+            "design_evidence": [{"page": 1, "quote": "We estimate a fixed-effects panel regression."}],
             "sample": "50개 은행",
+            "sample_evidence": [{"page": 1, "quote": "We use a panel of 50 banks from 2001 to 2020."}],
             "period": "2001~2020년",
+            "period_evidence": [{"page": 1, "quote": "We use a panel of 50 banks from 2001 to 2020."}],
             "data_sources": ["은행 패널 자료"],
+            "data_sources_evidence": [{"page": 1, "quote": "We use a panel of 50 banks from 2001 to 2020."}],
             "variables": [
                 {"name": "loan growth", "role": "종속변수", "definition": "대출 증가율",
                  "evidence": [{"page": 1, "quote": "The dependent variable is loan growth."}]}
             ],
             "empirical_strategy": "패널 회귀분석",
+            "empirical_strategy_evidence": [{"page": 1, "quote": "We estimate a fixed-effects panel regression."}],
             "identification_strategy": "확인 불가",
+            "identification_strategy_evidence": [],
             "equations": [],
+            "equations_evidence": [],
             "evidence": [{"page": 1, "quote": "We use a panel of 50 banks from 2001 to 2020."}],
+            "panel_dimensions": {
+                "cross_sectional_units": "확인 불가",
+                "time_periods": "확인 불가",
+                "reported_total_observations": "확인 불가",
+                "observation_frequency": "확인 불가",
+                "observation_unit": "확인 불가",
+                "evidence": [],
+            },
         },
         "findings": [
             {
@@ -420,6 +437,8 @@ def test_methodology_keeps_variables_when_section_level_quote_is_missing():
     pages = _sample_pages()
     raw = _sample_model_output()
     raw["methodology"]["evidence"] = []
+    for key in ("design", "sample", "period", "data_sources", "empirical_strategy", "identification_strategy", "equations"):
+        raw["methodology"][f"{key}_evidence"] = []
     result = module.normalize_llm_result(raw, 2, pages)
     assert result["methodology"]["design"] == "확인 불가"
     assert len(result["methodology"]["variables"]) == 1
@@ -698,6 +717,8 @@ def test_llm_result_runs_methodology_only_repair_when_section_evidence_is_missin
     first_output = _sample_model_output()
     first_output["methodology"]["evidence"] = []
     first_output["methodology"]["variables"] = []
+    for key in ("design", "sample", "period", "data_sources", "empirical_strategy", "identification_strategy", "equations"):
+        first_output["methodology"][f"{key}_evidence"] = []
     repair_output = {
         "methodology": {
             "design": "은행 패널 회귀분석",
