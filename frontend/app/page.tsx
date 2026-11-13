@@ -408,7 +408,7 @@ export default function Home() {
                       <div className="finding-meta">
                         <span>방향: {finding.direction}</span><span>추정치: {finding.estimate}</span><span>통계적 유의성: {finding.statistical_significance}</span>
                         {finding.verification && <span className={finding.verification.status === "screen_passed" ? "verification-ok" : "verification-review"}>
-                          수치 검증: {finding.verification.status === "screen_passed" ? "원문 대조 통과" : "연구자 확인 필요"}
+                          수치 검증: {finding.verification.status === "screen_passed" ? "수치 1차 대조 통과" : "연구자 확인 필요"}
                         </span>}
                       </div>
                       {finding.verification?.unsupported_numeric_tokens?.length ? <p className="warning">인용 페이지에서 확인되지 않은 숫자: {finding.verification.unsupported_numeric_tokens.join(", ")}</p> : null}
