@@ -644,7 +644,7 @@ def _legend_supports_significance(stars: str, threshold: float, legend_text: str
     if not stars or not legend_text:
         return None
     normalized = _normalize_numeric_text(legend_text).casefold()
-    exact_pattern = r"(?<!\\*)" + re.escape(stars) + r"(?!\\*)"
+    exact_pattern = r"(?<!\*)" + re.escape(stars) + r"(?!\*)"
     for match in re.finditer(exact_pattern, normalized):
         window = normalized[max(0, match.start() - 25):match.end() + 120]
         found = _parse_significance_threshold(window)
@@ -759,7 +759,7 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
             elif threshold is not None and quote_threshold is not None:
                 significance_supported = quote_threshold <= threshold
             elif threshold is not None:
-                stars = "***" if "***" in cited_quote_text else "**" if re.search(r"(?<!\\*)\\*{2}(?!\\*)", cited_quote_text) else "*" if re.search(r"(?<!\\*)\\*(?!\\*)", cited_quote_text) else ""
+                stars = "***" if "***" in cited_quote_text else "**" if re.search(r"(?<!\*)\*{2}(?!\*)", cited_quote_text) else "*" if re.search(r"(?<!\*)\*(?!\*)", cited_quote_text) else ""
                 significance_supported = _legend_supports_significance(stars, threshold, legend_text)
             elif claims_significant and quote_significant:
                 significance_supported = True
