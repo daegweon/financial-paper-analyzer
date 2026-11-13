@@ -383,13 +383,14 @@ def _are_duplicate_findings(left: dict[str, Any], right: dict[str, Any]) -> bool
     if not left_claim or not right_claim:
         return False
     similarity = SequenceMatcher(None, left_claim, right_claim).ratio()
-    if similarity < 0.72:
+    left_numbers = _finding_numeric_set(left)
+    right_numbers = _finding_numeric_set(right)
+    threshold = 0.56 if left_numbers and right_numbers else 0.82
+    if similarity < threshold:
         return False
     shared_pages = _finding_page_set(left) & _finding_page_set(right)
     if not shared_pages:
         return False
-    left_numbers = _finding_numeric_set(left)
-    right_numbers = _finding_numeric_set(right)
     if left_numbers and right_numbers and not (
         left_numbers.issubset(right_numbers) or right_numbers.issubset(left_numbers)
     ):
@@ -861,7 +862,7 @@ def _normalize_methodology(
         "panel_dimensions": panel_dimensions,
     }
     if not method_evidence and variables:
-        warnings.append("방법론 섹션 인용이 없어 변수별로 검증된 항목만 표시했습니다.")
+        warnings.append("방법론 섹션 인용은 없지만 변수별 원문 근거가 확인된 항목만 표시했습니다.")
     if panel_dimensions["consistency_status"] == "mismatch":
         warnings.append("패널의 횡단면 단위 수 × 기간 수와 원문 보고 총관측치가 일치하지 않습니다.")
     return methodology, warnings
