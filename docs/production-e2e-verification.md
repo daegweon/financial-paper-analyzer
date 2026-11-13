@@ -67,18 +67,20 @@ Sample synthetic PDF can be generated from `backend/tests/test_integration_contr
 - Retry/backoff, terminal failure after the configured attempt limit, lease renewal, stale-lease recovery and duplicate-active-job prevention were previously exercised.
 - Supabase checkpoint data is protected by RLS and an explicit `service_role`-only policy. New `sb_secret_*` keys are sent in the `apikey` header only.
 
+## Beta release gate update (2026-11-14)
+
+- Backend regression suite on the current branch: **63 passed, 1 skipped**. The skipped test is the opt-in live E2E scenario because disposable verified user credentials are not configured in this environment.
+- Live E2E harness: `backend/tests/test_live_e2e.py`. It verifies two distinct verified users, private PDF upload, real API/Worker completion, saved page evidence, and second-user denial. It deletes only its own test rows and Storage object after the job reaches a terminal state.
+- Manual workflow: GitHub Actions `workflow_dispatch` runs the live E2E job. Configure the documented disposable-user secrets first; the test is skipped when configuration is absent.
+- Release runbook: `docs/BETA_RELEASE_RUNBOOK.md`.
+- Checkpoint retention: a database trigger removes extracted page text and model-result checkpoints when a job completes or reaches terminal failure. Retryable failures retain checkpoints for resumption.
+- Current production deployment: API and Worker both use the durable checkpoint/idempotency code; all three Railway services are Online. Vercel Preview builds are READY.
+- GitHub Actions still reports `startup_failure` before creating jobs on this private repository. This is an account/repository runner provisioning issue rather than a test failure; the 63-test suite was executed independently in an isolated Python 3.12 environment.
+
 ## Known gaps
 
+- Full real-browser signup, verified-email flow, and live two-account E2E have not yet been executed because disposable verified test-account credentials are not configured. The automated test harness is ready.
+- Supabase Auth leaked-password protection remains disabled and must be enabled in Auth security settings before a broad public beta.
+- GitHub Actions runner provisioning remains unresolved; inspect repository Actions billing/usage and organization policy before relying on branch protection.
 - PDF extraction currently scans up to the first 50 pages; OCR for image-only PDFs is not implemented.
-- Full real-browser signup, verified-email upload, and cross-account isolation remain unverified. Do not disable email confirmation merely to pass this check.
-- GitHub Actions on this private repository have repeatedly returned `startup_failure` before jobs start. Python checks were executed independently; investigate runner quota / repository Actions configuration before enforcing branch protection.
-- Supabase Auth leaked-password protection is disabled and should be enabled in the Auth security settings.
-- Deletion/retention UX for papers, analyses and checkpoints still needs a product-level lifecycle policy.
-
-## Security notes
-
-- All user-owned tables have RLS policies.
-- Anonymous Data API SELECT of `papers` and `analyses` is denied.
-- Storage bucket `papers` is private.
-- Never expose Supabase service-role/secret keys, and never commit external AI API keys.
-- For regression tests, use an isolated environment with controlled test accounts instead of changing production email-confirmation settings.
+- Paper deletion and long-term retention UX still need a product-level lifecycle policy.
