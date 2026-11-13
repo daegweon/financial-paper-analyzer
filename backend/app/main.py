@@ -332,57 +332,164 @@ def _parse_count_value(value: str) -> int | None:
     return None
 
 
+_STUDY_DESIGN_TYPES = {
+    "balanced_panel", "unbalanced_panel", "repeated_cross_section",
+    "time_series", "cross_sectional", "portfolio_optimization", "other", "unknown",
+}
+
+
+def _typed_count(value: Any) -> int | None:
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        return None
+    return value
+
+
+def _normalize_count_label(value: str) -> str:
+    label = unicodedata.normalize("NFKC", value or "").casefold()
+    label = re.sub(r"[\s_\-–—]+", " ", label).strip()
+    aliases = {
+        "pre crisis": "pre_crisis", "precrisis": "pre_crisis", "위기 전": "pre_crisis", "금융위기 전": "pre_crisis",
+        "post crisis": "post_crisis", "postcrisis": "post_crisis", "위기 후": "post_crisis", "금융위기 후": "post_crisis",
+        "overall": "overall", "full sample": "overall", "전체": "overall", "전체 기간": "overall", "전체 표본": "overall",
+    }
+    return aliases.get(label, label)
+
+
+def _normalize_sample_count_reports(raw_reports: Any, pages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    reports: list[dict[str, Any]] = []
+    allowed_metrics = {
+        "cross_sectional_units", "time_periods", "total_observations",
+        "subsample_observations", "other",
+    }
+    for item in raw_reports[:30] if isinstance(raw_reports, list) else []:
+        if not isinstance(item, dict):
+            continue
+        metric = str(item.get("metric", "other"))
+        count = _typed_count(item.get("count"))
+        label = _clean_text(item.get("label"))
+        evidence = validate_evidence(item.get("evidence"), pages)
+        if metric not in allowed_metrics or count is None or not evidence:
+            continue
+        reports.append({
+            "metric": metric,
+            "label": label,
+            "count": count,
+            "section": _clean_text(item.get("section")),
+            "evidence": evidence,
+        })
+    return reports
+
+
+def _find_sample_count_conflicts(reports: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for report in reports:
+        key = (report["metric"], _normalize_count_label(report["label"]))
+        grouped.setdefault(key, []).append(report)
+    conflicts: list[dict[str, Any]] = []
+    for (metric, label), items in grouped.items():
+        values = sorted({item["count"] for item in items})
+        if len(values) <= 1:
+            continue
+        conflicts.append({
+            "metric": metric,
+            "label": label,
+            "reported_values": values,
+            "sections": list(dict.fromkeys(item["section"] for item in items)),
+            "evidence": _merge_evidence_items(*[item["evidence"] for item in items]),
+        })
+    return conflicts
+
+
 def audit_panel_dimensions(raw: Any, pages: list[dict[str, Any]]) -> dict[str, Any]:
+    """Audit sample counts only when the declared study design makes N×T valid."""
     raw = raw if isinstance(raw, dict) else {}
     evidence = validate_evidence(raw.get("evidence"), pages)
-    cross_units = _clean_text(raw.get("cross_sectional_units"))
-    time_periods = _clean_text(raw.get("time_periods"))
-    reported_total = _clean_text(raw.get("reported_total_observations"))
+    study_design = str(raw.get("study_design_type", "unknown"))
+    if study_design not in _STUDY_DESIGN_TYPES:
+        study_design = "unknown"
+    panel_balance = str(raw.get("panel_balance", "unknown"))
+    if panel_balance not in {"balanced", "unbalanced", "not_applicable", "unknown"}:
+        panel_balance = "unknown"
+
+    units_count = _typed_count(raw.get("cross_sectional_units_count"))
+    periods_count = _typed_count(raw.get("time_periods_count"))
+    reported_count = _typed_count(raw.get("reported_total_observations_count"))
     frequency = _clean_text(raw.get("observation_frequency"))
     observation_unit = _clean_text(raw.get("observation_unit"))
-    units_count = _parse_count_value(cross_units) if cross_units != "확인 불가" else None
-    periods_count = _parse_count_value(time_periods) if time_periods != "확인 불가" else None
-    reported_count = _parse_count_value(reported_total) if reported_total != "확인 불가" else None
-    calculated = units_count * periods_count if units_count is not None and periods_count is not None else None
-    if not evidence:
-        return {
-            "cross_sectional_units": "확인 불가",
-            "time_periods": "확인 불가",
-            "reported_total_observations": "확인 불가",
-            "calculated_total_observations": "확인 불가",
-            "observation_frequency": "확인 불가",
-            "observation_unit": "확인 불가",
-            "consistency_status": "not_assessable",
-            "consistency_note": "패널 차원에 대한 페이지 단위 근거를 확인하지 못했습니다.",
-            "evidence": [],
-        }
-    if calculated is None:
-        status = "not_assessable"
-        note = "횡단면 단위와 기간을 모두 정수로 확인할 수 없어 총관측치를 계산하지 않았습니다."
-    elif reported_count is None:
-        status = "calculated_only"
-        note = f"확인된 차원 기준 계산값은 {calculated:,}개입니다. 원문에 보고된 총관측치와 대조할 수 없습니다."
-    elif reported_count == calculated:
-        status = "consistent"
-        note = f"횡단면 {units_count:,} × 기간 {periods_count:,} = 보고 총관측치 {reported_count:,}개로 일치합니다."
-    else:
-        status = "mismatch"
+    reports = _normalize_sample_count_reports(raw.get("sample_count_reports"), pages)
+    report_evidence = _merge_evidence_items(*[item["evidence"] for item in reports])
+    evidence = _merge_evidence_items(evidence, report_evidence)
+    conflicts = _find_sample_count_conflicts(reports)
+
+    if study_design == "balanced_panel" and panel_balance == "unbalanced":
+        status = "design_conflict"
+        calculated = None
+        note = "연구 설계 유형은 균형 패널이지만 panel_balance는 불균형으로 표시되어 계산을 보류했습니다."
+    elif study_design == "unbalanced_panel" or panel_balance == "unbalanced":
+        status = "source_conflict" if conflicts else "not_applicable_unbalanced"
+        calculated = None
         note = (
-            f"횡단면 {units_count:,} × 기간 {periods_count:,} = {calculated:,}개이나, "
-            f"보고 총관측치는 {reported_count:,}개로 일치하지 않습니다."
+            "원문에 서로 다른 표본 수가 보고되어 각 수치를 보존했습니다. 불균형 패널에는 N×T 총관측치 검사를 적용하지 않습니다."
+            if conflicts else
+            "불균형 패널로 분류되어 횡단면 단위 수 × 전체 기간 수를 총관측치로 계산하지 않았습니다."
         )
+    elif study_design == "repeated_cross_section":
+        status = "source_conflict" if conflicts else "not_applicable_repeated_cross_section"
+        calculated = None
+        note = "반복 횡단면 자료이므로 동일 개체가 기간마다 유지된다는 가정의 N×T 검사를 적용하지 않습니다."
+    elif study_design in {"time_series", "cross_sectional", "portfolio_optimization", "other"} or panel_balance == "not_applicable":
+        status = "source_conflict" if conflicts else "not_applicable_design"
+        calculated = None
+        note = "이 연구 설계에는 패널의 N×T 총관측치 검사를 적용하지 않습니다."
+    elif study_design == "balanced_panel" or panel_balance == "balanced":
+        if units_count is None or periods_count is None:
+            status = "source_conflict" if conflicts else "not_assessable"
+            calculated = None
+            note = "균형 패널로 분류됐지만 횡단면 단위 수 또는 기간 수의 정수 근거가 부족해 계산하지 않았습니다."
+        else:
+            calculated = units_count * periods_count
+            if conflicts:
+                status = "source_conflict"
+                note = "원문 내 표본 수 보고가 서로 달라 각 값을 보존했으며 N×T 비교 결과만 참고값으로 제공합니다."
+            elif reported_count is None:
+                status = "calculated_only"
+                note = f"균형 패널 차원으로 계산한 값은 {calculated:,}개입니다. 원문 보고 총관측치는 확인되지 않았습니다."
+            elif reported_count == calculated:
+                status = "consistent"
+                note = f"횡단면 {units_count:,} × 기간 {periods_count:,} = 보고 총관측치 {reported_count:,}개로 일치합니다."
+            else:
+                status = "mismatch"
+                note = (
+                    f"균형 패널의 계산값 {calculated:,}개와 원문 보고 총관측치 "
+                    f"{reported_count:,}개가 일치하지 않습니다."
+                )
+    else:
+        status = "source_conflict" if conflicts else "not_assessable"
+        calculated = None
+        note = "연구 설계 또는 패널 균형 여부가 확인되지 않아 총관측치 계산을 적용하지 않았습니다."
+
+    def display_count(value: int | None) -> str:
+        return f"{value:,}" if value is not None else "확인 불가"
+
     return {
-        "cross_sectional_units": cross_units,
-        "time_periods": time_periods,
-        "reported_total_observations": reported_total,
-        "calculated_total_observations": f"{calculated:,}" if calculated is not None else "확인 불가",
+        "study_design_type": study_design,
+        "panel_balance": panel_balance,
+        "cross_sectional_units_count": units_count,
+        "time_periods_count": periods_count,
+        "reported_total_observations_count": reported_count,
+        "cross_sectional_units": display_count(units_count),
+        "time_periods": display_count(periods_count),
+        "reported_total_observations": display_count(reported_count),
+        "calculated_total_observations_count": calculated,
+        "calculated_total_observations": display_count(calculated),
         "observation_frequency": frequency,
         "observation_unit": observation_unit,
+        "sample_count_reports": reports,
+        "source_conflicts": conflicts,
         "consistency_status": status,
         "consistency_note": note,
         "evidence": evidence,
     }
-
 
 def _normalized_claim_key(value: str) -> str:
     value = unicodedata.normalize("NFKC", value or "").casefold()
