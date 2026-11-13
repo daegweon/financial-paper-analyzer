@@ -216,6 +216,7 @@ def main() -> None:
         "not_run_count": len(manifest["papers"]) - len(completed),
         "mean_gold_fact_coverage_screen": sum(auto_scores) / len(auto_scores) if auto_scores else None,
         "mean_human_score": sum(human_scores) / len(human_scores) if human_scores else None,
+        "out": str(args.out),
         "warning": "Alias coverage is not semantic accuracy. Human review against publisher PDFs is required.",
         "results": score_rows,
     }
