@@ -13,6 +13,19 @@ def headers():
 async def claim(client:httpx.AsyncClient)->dict[str,Any]|None:
  response=await client.post(SUPABASE_URL+'/rest/v1/rpc/claim_analysis_job',headers=headers(),json={'p_worker_id':WORKER_ID,'p_lease_seconds':LEASE_SECONDS})
  response.raise_for_status(); rows=response.json(); return rows[0] if isinstance(rows,list) and rows else None
+async def retry_failed(client:httpx.AsyncClient, job:dict[str,Any])->None:
+ response=await client.get(SUPABASE_URL+'/rest/v1/analysis_jobs',headers=headers(),params={'id':'eq.'+str(job['id']),'select':'attempts,max_attempts'})
+ response.raise_for_status(); rows=response.json()
+ if not rows or int(rows[0]['attempts'])>=int(rows[0]['max_attempts']): return
+ delay=min(300,15*(2**max(0,int(rows[0]['attempts'])-1)))
+ from datetime import datetime,timezone,timedelta
+ available=(datetime.now(timezone.utc)+timedelta(seconds=delay)).isoformat()
+ response=await client.patch(SUPABASE_URL+'/rest/v1/analysis_jobs',headers={**headers(),'Prefer':'return=minimal'},params={'id':'eq.'+str(job['id'])},json={'status':'queued','stage':'queued','available_at':available,'worker_id':None,'lease_expires_at':None,'error_message':'Previous attempt failed; retry scheduled.'})
+ response.raise_for_status()
+ response=await client.patch(SUPABASE_URL+'/rest/v1/papers',headers={**headers(),'Prefer':'return=minimal'},params={'id':'eq.'+str(job['paper_id'])},json={'status':'uploaded'})
+ response.raise_for_status()
+ log.warning('Retry scheduled job=%s attempt=%s delay=%ss',job['id'],rows[0]['attempts'],delay)
+
 async def run():
  if not SUPABASE_URL or not SUPABASE_KEY or not SERVICE_ROLE_KEY: raise RuntimeError('Supabase URL, publishable key and service role key are required')
  log.info('Worker started id=%s',WORKER_ID)
@@ -22,7 +35,7 @@ async def run():
     job=await claim(client)
     if not job: await asyncio.sleep(POLL_SECONDS); continue
     log.info('Claimed job=%s attempt=%s',job['id'],job['attempts'])
-    await _process_analysis_job(str(job['paper_id']),str(job['id']),str(job['user_id']),SERVICE_ROLE_KEY)
+    await _process_analysis_job(str(job['paper_id']),str(job['id']),str(job['user_id']),SERVICE_ROLE_KEY)\n    await retry_failed(client,job)
    except asyncio.CancelledError: raise
    except Exception: log.exception('Worker loop failed'); await asyncio.sleep(POLL_SECONDS)
 if __name__=='__main__': asyncio.run(run())
