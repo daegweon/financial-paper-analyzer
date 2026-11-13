@@ -428,7 +428,9 @@ def audit_panel_dimensions(raw: Any, pages: list[dict[str, Any]]) -> dict[str, A
     observation_unit = _clean_text(raw.get("observation_unit"))
     reports = _normalize_sample_count_reports(raw.get("sample_count_reports"), pages)
     report_evidence = _merge_evidence_items(*[item["evidence"] for item in reports])
-    evidence = _merge_evidence_items(evidence, report_evidence)
+    evidence = _merge_evidence_items(
+        evidence, study_design_evidence, panel_balance_evidence, report_evidence
+    )
     conflicts = _find_sample_count_conflicts(reports)
     all_quotes = " ".join(item["quote"] for item in evidence)
     quoted_numbers = {
@@ -893,7 +895,9 @@ def build_methodology_repair_prompt(
         "연구 설계, 표본, 기간, 데이터 출처, 종속·독립·통제변수, 추정 전략, 식별 전략, 방정식을 추출한다.\n"
         "각 항목은 반드시 해당 항목을 직접 뒷받침하는 실제 PDF 페이지 인용을 포함한다. "
         "전체 methodology evidence뿐 아니라 design_evidence, sample_evidence, period_evidence, "
-        "data_sources_evidence, empirical_strategy_evidence, identification_strategy_evidence, equations_evidence를 각각 채운다.\n"
+        "data_sources_evidence, empirical_strategy_evidence, identification_strategy_evidence, equations_evidence를 각각 채운다. "
+        "panel_dimensions에는 study_design_type, study_design_evidence, panel_balance, panel_balance_evidence, "
+        "정수형 표본 차원 및 sample_count_reports를 포함한다.\n"
         "연구 설계 유형을 balanced_panel, unbalanced_panel, repeated_cross_section, time_series, "
         "cross_sectional, portfolio_optimization, other, unknown 중 하나로 분류한다. "
         "패널 차원은 정수형 cross_sectional_units_count, time_periods_count, "
@@ -1133,8 +1137,8 @@ def _normalize_methodology(
     }
     if not method_evidence and variables:
         warnings.append("방법론 섹션 인용은 없지만 변수별 원문 근거가 확인된 항목만 표시했습니다.")
-    if panel_dimensions["consistency_status"] == "mismatch":
-        warnings.append("패널의 횡단면 단위 수 × 기간 수와 원문 보고 총관측치가 일치하지 않습니다.")
+    if panel_dimensions["consistency_status"] in ("mismatch", "source_conflict", "design_conflict"):
+        warnings.append(panel_dimensions["consistency_note"])
     return methodology, warnings
 
 
