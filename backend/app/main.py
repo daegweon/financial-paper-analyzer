@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
 SUPABASE_KEY = os.getenv("SUPABASE_PUBLISHABLE_KEY", "")
+SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 FRONTEND_ORIGINS = [
     item.strip().rstrip("/")
     for item in os.getenv("FRONTEND_ORIGIN", "http://localhost:3000").split(",")
@@ -2224,7 +2225,6 @@ async def _process_analysis_job(
 @app.post("/api/analyze/{paper_id}", status_code=202)
 async def analyze_paper(
     paper_id: UUID,
-    background_tasks: BackgroundTasks,
     authorization: str | None = Header(default=None),
 ) -> dict[str, Any]:
     if not SUPABASE_URL or not SUPABASE_KEY:
@@ -2283,7 +2283,6 @@ async def analyze_paper(
             raise HTTPException(status_code=502, detail="분석 작업을 등록하지 못했습니다.")
         job_id = created[0]["id"]
 
-    background_tasks.add_task(_process_analysis_job, str(paper_id), job_id, user_id, token)
     log.info("Analysis job queued job_id=%s paper_id=%s", job_id, paper_id)
     return {"status": "queued", "job_id": job_id, "stage": "queued"}
 
