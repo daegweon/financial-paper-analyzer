@@ -12,6 +12,14 @@ type Finding = {
   estimate: string;
   statistical_significance: string;
   evidence: Evidence[];
+  verification?: {
+    status: string;
+    numeric_supported: boolean;
+    unsupported_numeric_tokens: string[];
+    direction_consistent: boolean | null;
+    significance_supported: boolean | null;
+    method: string;
+  };
 };
 type Variable = { name: string; role: string; definition: string; evidence: Evidence[] };
 type Methodology = {
@@ -36,6 +44,7 @@ type Bibliographic = {
 type AnalysisResult = {
   mode: string;
   analysis_version?: string;
+  findings_verification?: { repair_attempted: boolean; repair_status: string; repair_model?: string | null };
   summary: string;
   bibliographic?: Bibliographic;
   research_question?: string;
@@ -390,6 +399,7 @@ export default function Home() {
               )}
               <section className="analysis-section">
                 <h3>주요 실증 결과 <small>{analysis.result.findings?.length ?? 0}</small></h3>
+                {analysis.result.findings_verification?.repair_attempted && <p className="muted">2차 실증 결과 검증: {analysis.result.findings_verification.repair_status === "recovered" ? "누락 결과 복구 완료" : analysis.result.findings_verification.repair_status === "reviewed" ? "기존 결과 재검토 완료" : analysis.result.findings_verification.repair_status === "no_supported_findings" ? "추가 근거 확인 불가" : "검증 미완료"}</p>}
                 {!analysis.result.findings?.length
                   ? <p className="muted">검증된 실증 결과가 없습니다.</p>
                   : analysis.result.findings.map((finding, index) =>
@@ -397,7 +407,13 @@ export default function Home() {
                       <p>{finding.claim}</p>
                       <div className="finding-meta">
                         <span>방향: {finding.direction}</span><span>추정치: {finding.estimate}</span><span>통계적 유의성: {finding.statistical_significance}</span>
+                        {finding.verification && <span className={finding.verification.status === "screen_passed" ? "verification-ok" : "verification-review"}>
+                          수치 검증: {finding.verification.status === "screen_passed" ? "원문 대조 통과" : "연구자 확인 필요"}
+                        </span>}
                       </div>
+                      {finding.verification?.unsupported_numeric_tokens?.length ? <p className="warning">인용 페이지에서 확인되지 않은 숫자: {finding.verification.unsupported_numeric_tokens.join(", ")}</p> : null}
+                      {finding.verification?.direction_consistent === false && <p className="warning">추정치의 부호와 결과 방향이 일치하지 않습니다.</p>}
+                      {finding.verification?.significance_supported === false && <p className="warning">통계적 유의성 표기가 인용 페이지에서 확인되지 않습니다.</p>}
                       <EvidenceList items={finding.evidence}/>
                     </article>
                   )}
