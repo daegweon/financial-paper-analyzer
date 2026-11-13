@@ -41,6 +41,16 @@ When an OpenAI API key and billing are available, switch providers in Railway:
 
 No application data migration is required. Both providers return the same normalized analysis schema and use the same page-level evidence verification.
 
+## Analysis engine v6
+
+New analyses use `finance-structured-v6`. The pipeline adds:
+- a deterministic numeric/significance screen for each empirical finding against its cited page;
+- a conditional findings-only second model pass when findings are missing or the numeric screen flags a problem;
+- a Korean evidence-based summary fallback built only from already validated methodology/findings citations;
+- UI labels that distinguish a preliminary numeric screen from semantic research verification.
+
+See [v6 architecture and limitations](docs/analysis-v6.md). The numeric screen is a triage aid, not a semantic proof; coefficient interpretation and claim-to-citation entailment still require human review.
+
 ## Analysis output
 
 Gemini output budgets are 16,384 tokens for the primary Flash-Lite model and 24,576 tokens for the fallback Flash model. If the primary response ends with `MAX_TOKENS`, the worker automatically retries with the fallback model. Results are kept concise and evidence lists are bounded to reduce truncation. Analysis schema v5 normalizes PDF typography (Unicode ligatures, dash variants, and whitespace) when validating citations, then stores the matched excerpt from the original extracted page text. It also preserves individually evidenced variables when a section-level methodology citation is unavailable, and strengthens Korean output / empirical-findings instructions.
