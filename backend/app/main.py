@@ -1,4 +1,5 @@
 import asyncio
+from difflib import SequenceMatcher
 import json
 import logging
 import os
@@ -27,7 +28,7 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-terra")
-ANALYSIS_VERSION = "finance-structured-v6"
+ANALYSIS_VERSION = "finance-structured-v6.1"
 log = logging.getLogger("papersignal")
 app = FastAPI(title="PaperSignal API", version="0.2.0")
 app.add_middleware(
@@ -131,16 +132,31 @@ BIBLIOGRAPHIC_SCHEMA = object_schema({
     "doi": {"type": "string"},
     "evidence": EVIDENCE_LIST,
 })
+PANEL_DIMENSIONS_SCHEMA = object_schema({
+    "cross_sectional_units": {"type": "string"},
+    "time_periods": {"type": "string"},
+    "reported_total_observations": {"type": "string"},
+    "observation_frequency": {"type": "string"},
+    "observation_unit": {"type": "string"},
+    "evidence": EVIDENCE_LIST,
+})
 METHODOLOGY_SCHEMA = object_schema({
     "design": {"type": "string"},
+    "design_evidence": EVIDENCE_LIST,
     "sample": {"type": "string"},
+    "sample_evidence": EVIDENCE_LIST,
     "period": {"type": "string"},
+    "period_evidence": EVIDENCE_LIST,
     "data_sources": TEXT_LIST,
+    "data_sources_evidence": EVIDENCE_LIST,
     "variables": array_schema(VARIABLE_SCHEMA),
     "empirical_strategy": {"type": "string"},
+    "empirical_strategy_evidence": EVIDENCE_LIST,
     "identification_strategy": {"type": "string"},
+    "identification_strategy_evidence": EVIDENCE_LIST,
     "equations": TEXT_LIST,
     "evidence": EVIDENCE_LIST,
+    "panel_dimensions": PANEL_DIMENSIONS_SCHEMA,
 })
 ANALYSIS_SCHEMA = object_schema({
     "bibliographic": BIBLIOGRAPHIC_SCHEMA,
@@ -160,6 +176,9 @@ ANALYSIS_SCHEMA = object_schema({
 
 FINDINGS_ONLY_SCHEMA = object_schema({
     "findings": array_schema(FINDING_SCHEMA),
+})
+METHODOLOGY_ONLY_SCHEMA = object_schema({
+    "methodology": METHODOLOGY_SCHEMA,
 })
 
 _EVIDENCE_TRANSLATION = str.maketrans({
