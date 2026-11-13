@@ -791,6 +791,11 @@ def test_methodology_schema_requires_field_level_evidence_and_panel_dimensions()
     assert "sample_evidence" in props
     assert "period_evidence" in props
     assert "panel_dimensions" in props
+    panel_props = module.PANEL_DIMENSIONS_SCHEMA["properties"]
+    assert panel_props["cross_sectional_units_count"]["type"] == "integer"
+    assert panel_props["time_periods_count"]["type"] == "integer"
+    assert "study_design_type" in panel_props
+    assert "sample_count_reports" in panel_props
     assert set(module.METHODOLOGY_ONLY_SCHEMA["required"]) == {"methodology"}
 
 
@@ -949,3 +954,91 @@ def test_overall_methodology_quote_does_not_substitute_for_sample_field_evidence
     assert result["methodology"]["sample"] == "확인 불가"
     assert result["methodology"]["sample_evidence"] == []
     assert module._methodology_needs_repair(result["methodology"])
+
+
+
+def test_significance_star_without_legend_is_not_misclassified_as_false():
+    quote = "ESG −0.0017 ***"
+    pages = [{"page": 7, "text": quote}]
+    finding = {
+        "claim": "ESG 점수 계수는 음(-)이다.",
+        "direction": "negative",
+        "estimate": "-0.0017",
+        "statistical_significance": "1% 수준에서 유의함",
+        "evidence": [{"page": 7, "quote": quote}],
+        "significance_legend_evidence": [],
+    }
+    audit = module.audit_finding(finding, pages)
+    assert audit["numeric_supported"] is True
+    assert audit["significance_supported"] is None
+    assert audit["status"] == "screen_passed"
+
+
+def test_significance_star_uses_separate_table_legend_evidence():
+    table_quote = "ESG −0.0017 ***"
+    legend_quote = "***, **, and * denote significance at the 1%, 5%, and 10% levels, respectively."
+    pages = [
+        {"page": 7, "text": table_quote},
+        {"page": 8, "text": legend_quote},
+    ]
+    finding = {
+        "claim": "ESG 점수 계수는 음(-)이다.",
+        "direction": "negative",
+        "estimate": "-0.0017",
+        "statistical_significance": "1% 수준에서 유의함",
+        "evidence": [{"page": 7, "quote": table_quote}],
+        "significance_legend_evidence": [{"page": 8, "quote": legend_quote}],
+    }
+    audit = module.audit_finding(finding, pages)
+    assert audit["significance_supported"] is True
+    assert audit["significance_legend_checked"] is True
+
+
+def test_significance_claim_stricter_than_source_level_is_flagged():
+    quote = "The coefficient is statistically significant at the 5 percent level."
+    pages = [{"page": 3, "text": quote}]
+    finding = {
+        "claim": "계수는 1% 수준에서 유의하다.",
+        "direction": "positive",
+        "estimate": "0.12",
+        "statistical_significance": "1% level",
+        "evidence": [{"page": 3, "quote": quote}],
+    }
+    audit = module.audit_finding(finding, pages)
+    assert audit["significance_supported"] is False
+    assert audit["status"] == "review"
+
+
+def test_explicit_p_value_is_compared_to_source_p_value():
+    quote = "The coefficient is negative with p = 0.0054."
+    pages = [{"page": 3, "text": quote}]
+    finding = {
+        "claim": "계수는 음(-)의 효과를 보인다.",
+        "direction": "negative",
+        "estimate": "-0.12",
+        "statistical_significance": "p = 0.0054",
+        "evidence": [{"page": 3, "quote": quote}],
+    }
+    audit = module.audit_finding(finding, pages)
+    assert audit["significance_supported"] is True
+
+
+def test_summary_consistency_flags_results_without_structured_findings():
+    result = module.audit_summary_consistency(
+        "분석 결과 변수 X는 수익률에 음(-)의 영향을 미치며 계수는 -0.12이다.",
+        [],
+        {"design": "패널 회귀분석", "sample": "50개 은행", "period": "2001~2020년", "panel_dimensions": {}},
+    )
+    assert result["status"] == "review"
+    assert "summary_mentions_empirical_results_but_findings_empty" in result["reasons"]
+    assert "-0.12" in result["unmatched_numeric_tokens"]
+
+
+def test_summary_consistency_accepts_numbers_present_in_findings_and_methodology():
+    result = module.audit_summary_consistency(
+        "분석 결과 계수는 -0.12이다. 표본은 50개 은행이며 기간은 2001~2020년이다.",
+        [{"claim": "계수는 -0.12이다.", "estimate": "-0.12", "statistical_significance": "확인 불가"}],
+        {"design": "패널 회귀분석", "sample": "50개 은행", "period": "2001~2020년", "panel_dimensions": {}},
+    )
+    assert result["status"] == "screen_passed"
+    assert result["unmatched_numeric_tokens"] == []
