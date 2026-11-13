@@ -867,8 +867,10 @@ def _select_result_pages(pages: list[dict[str, Any]], limit: int = 24) -> list[d
         "abstract", "result", "empirical", "regression", "coefficient", "estimate",
         "significant", "table", "robustness", "conclusion", "discussion",
         "findings", "we find", "our results", "results indicate", "panel a", "panel b",
-        "dependent variable", "standard error", "p-value", "t-statistic",
-        "결과", "실증", "추정", "회귀", "계수", "유의", "표 ",
+        "dependent variable", "standard error", "standard errors in parentheses", "p-value", "t-statistic",
+        "significance level", "statistical significance", "significance at", "notes:", "note:",
+        "stars denote", "stars indicate", "robust standard errors", "***", "**",
+        "결과", "실증", "추정", "회귀", "계수", "유의", "유의수준", "표 ", "주:", "별표",
         "강건성", "결론", "논의", "분석 결과", "통계적 유의",
     )
     return _select_ranked_pages(pages, terms, limit, early_pages=1)
@@ -952,7 +954,8 @@ def build_findings_repair_prompt(
         "모든 설명은 한국어로 작성한다. 원문 인용과 변수·모형명만 원어를 유지한다.\n"
         "결과표, 회귀표, 초록, 결과·논의·결론 페이지 및 표 하단 주석 페이지를 확인하고 실제 보고된 결과만 1~6개 반환한다.\n"
         "각 결과는 반드시 제공된 페이지에서 연속된 10~220자 인용을 포함해야 한다. "
-        "page는 실제 PDF 페이지 번호다. 인용을 새로 만들거나 서로 다른 페이지 문장을 합치지 않는다.\n"
+        "page는 실제 PDF 페이지 번호다. 인용을 새로 만들거나 서로 다른 페이지 문장을 합치지 않는다. "
+        "가능하면 table_reference와 model_or_column을 채우고, 별표 유의성은 significance_legend_evidence에 표 주석 인용을 별도로 제공한다.\n"
         "계수, 효과 방향, 표준오차, t/z 통계량, p-value, 유의수준은 원문에서 직접 확인된 경우에만 기재한다. "
         "수치가 표에 있지만 단위나 열 의미가 불명확하면 추정하지 말고 '확인 불가'로 둔다.\n"
         "가설을 실증 결과로 바꾸지 않는다. 상관관계와 인과효과를 혼동하지 않는다. "
