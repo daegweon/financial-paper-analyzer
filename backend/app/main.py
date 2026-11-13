@@ -579,11 +579,57 @@ def _deduplicate_findings(
     return deduplicated, removed
 
 
+def _parse_significance_threshold(value: str) -> float | None:
+    text = _normalize_numeric_text(value).casefold()
+    p_match = re.search(r"\bp\s*[<≤=]\s*([0-9]*\.?[0-9]+)", text)
+    if p_match:
+        try:
+            return float(p_match.group(1))
+        except ValueError:
+            return None
+    percent_match = re.search(r"(?<!\d)(1|5|10)\s*(?:%|percent|퍼센트)", text)
+    if percent_match:
+        return float(percent_match.group(1)) / 100
+    return None
+
+
+def _extract_explicit_p_values(value: str) -> list[float]:
+    text = _normalize_numeric_text(value).casefold()
+    values: list[float] = []
+    for match in re.finditer(r"\bp(?:-value)?\s*[=:]\s*([0-9]*\.?[0-9]+)", text):
+        try:
+            values.append(float(match.group(1)))
+        except ValueError:
+            continue
+    return values
+
+
+def _legend_supports_significance(stars: str, threshold: float, legend_text: str) -> bool | None:
+    if not stars or not legend_text:
+        return None
+    normalized = _normalize_numeric_text(legend_text).casefold()
+    for match in re.finditer(re.escape(stars), normalized):
+        window = normalized[max(0, match.start() - 25):match.end() + 120]
+        found = _parse_significance_threshold(window)
+        if found is not None:
+            return found <= threshold
+    # Common compact legend: "***, **, and * denote 1%, 5%, and 10% significance".
+    compact = re.search(
+        r"\*{3}.{0,25}?(1\s*%).{0,50}?\*{2}.{0,25}?(5\s*%).{0,50}?\*{1}.{0,25}?(10\s*%)",
+        normalized,
+    )
+    if compact:
+        star_thresholds = {"***": 0.01, "**": 0.05, "*": 0.10}
+        return star_thresholds.get(stars, 1.0) <= threshold
+    return None
+
+
 def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[str, Any]:
-    """Deterministic second-layer screen for numeric claims against cited pages."""
+    """Context-aware first-pass audit; absence of a table legend is not treated as contradiction."""
     page_map = {int(page["page"]): page["text"] for page in pages}
     cited_numbers: set[str] = set()
     cited_text_parts: list[str] = []
+    cited_quote_parts: list[str] = []
     for item in finding.get("evidence", []):
         try:
             page_number = int(item.get("page", -1))
@@ -592,13 +638,33 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
         page_text = page_map.get(page_number, "")
         if page_text:
             cited_text_parts.append(page_text)
+            cited_quote_parts.append(str(item.get("quote", "")))
             cited_numbers.update(_numeric_key(x) for x in _extract_numeric_tokens(page_text))
+    legend_evidence = finding.get("significance_legend_evidence", [])
+    legend_text_parts: list[str] = []
+    for item in legend_evidence:
+        try:
+            page_number = int(item.get("page", -1))
+        except (TypeError, ValueError):
+            continue
+        page_text = page_map.get(page_number, "")
+        if page_text:
+            legend_text_parts.append(page_text)
+            legend_text_parts.append(str(item.get("quote", "")))
     cited_text = " ".join(cited_text_parts).casefold()
+    cited_quote_text = " ".join(cited_quote_parts).casefold()
+    legend_text = " ".join(legend_text_parts).casefold()
 
-    numeric_fields = " ".join(
-        str(finding.get(key, ""))
-        for key in ("claim", "estimate", "statistical_significance")
+    claim = str(finding.get("claim", ""))
+    # Significance levels in prose are evaluated by the significance parser,
+    # not mistaken for unsupported effect-size numbers.
+    numeric_claim = re.sub(
+        r"(?:p\s*[<≤=]\s*[0-9]*\.?[0-9]+|(?:at\s+the\s+)?(?:1|5|10)\s*(?:%|percent)\s*(?:level|수준)?|(?:1|5|10)%\s*수준)",
+        " ",
+        claim,
+        flags=re.IGNORECASE,
     )
+    numeric_fields = " ".join((numeric_claim, str(finding.get("estimate", ""))))
     claimed_numbers = list(dict.fromkeys(_extract_numeric_tokens(numeric_fields)))
     unsupported_numbers = [
         token for token in claimed_numbers
@@ -606,16 +672,16 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
     ]
 
     direction = str(finding.get("direction", "")).casefold()
-    estimate = str(finding.get("estimate", "")).strip()
+    estimate = _normalize_numeric_text(str(finding.get("estimate", "")).strip())
     coefficient_match = re.match(
-        r"^(?:β|b|coef(?:ficient)?|계수)?\s*[:=]?\s*([+\-−]?\s*\d+(?:\.\d+)?)",
+        r"^(?:β|b|coef(?:ficient)?|계수)?\s*[:=]?\s*([+\-]?\s*\d+(?:\.\d+)?)",
         estimate,
         flags=re.IGNORECASE,
     )
     direction_consistent: bool | None = None
     if coefficient_match:
         try:
-            coefficient = float(coefficient_match.group(1).replace(" ", "").replace("−", "-"))
+            coefficient = float(coefficient_match.group(1).replace(" ", ""))
             negative_direction = any(word in direction for word in ("negative", "음", "감소", "하락"))
             positive_direction = any(word in direction for word in ("positive", "양", "증가", "상승"))
             if negative_direction and coefficient > 0:
@@ -627,32 +693,38 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
         except ValueError:
             direction_consistent = None
 
-    significance = str(finding.get("statistical_significance", "")).casefold()
-    significance_numbers = _extract_numeric_tokens(significance)
-    if not significance.strip() or significance in ("확인 불가", "not reported", "not available"):
-        significance_supported: bool | None = None
-    else:
-        if any(term in significance for term in ("not significant", "not statistically significant", "유의하지")):
-            phrase_supported = any(
-                term in cited_text for term in ("not significant", "not statistically significant", "유의하지")
-            )
-        elif any(term in significance for term in ("significant", "유의")):
-            phrase_supported = (
-                "significant" in cited_text
-                and "not significant" not in cited_text
-                and "not statistically significant" not in cited_text
-            ) or ("유의" in cited_text and "유의하지" not in cited_text)
-        else:
-            phrase_supported = None
-        numeric_significance_supported = all(
-            _numeric_key(token) in cited_numbers for token in significance_numbers
+    significance = str(finding.get("statistical_significance", "")).casefold().strip()
+    significance_supported: bool | None = None
+    if significance and significance not in ("확인 불가", "not reported", "not available"):
+        claims_non_significant = any(
+            term in significance for term in ("not significant", "not statistically significant", "유의하지")
         )
-        if phrase_supported is False or not numeric_significance_supported:
+        claims_significant = not claims_non_significant and any(
+            term in significance for term in ("significant", "유의")
+        )
+        quote_non_significant = any(
+            term in cited_quote_text for term in ("not significant", "not statistically significant", "유의하지")
+        )
+        quote_significant = (
+            ("significant" in cited_quote_text and not quote_non_significant)
+            or ("유의" in cited_quote_text and "유의하지" not in cited_quote_text)
+        )
+        if claims_significant and quote_non_significant:
             significance_supported = False
-        elif phrase_supported is True or significance_numbers:
-            significance_supported = True
+        elif claims_non_significant and quote_significant:
+            significance_supported = False
         else:
-            significance_supported = None
+            threshold = _parse_significance_threshold(significance)
+            explicit_p_values = _extract_explicit_p_values(cited_quote_text)
+            if threshold is not None and explicit_p_values:
+                significance_supported = any(p_value < threshold for p_value in explicit_p_values)
+            elif threshold is not None:
+                stars = "***" if "***" in cited_quote_text else "**" if "**" in cited_quote_text else "*" if "*" in cited_quote_text else ""
+                significance_supported = _legend_supports_significance(stars, threshold, legend_text)
+            elif claims_significant and quote_significant:
+                significance_supported = True
+            elif claims_non_significant and quote_non_significant:
+                significance_supported = True
 
     numeric_supported = not unsupported_numbers
     issues = bool(
@@ -666,9 +738,11 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
         "unsupported_numeric_tokens": unsupported_numbers,
         "direction_consistent": direction_consistent,
         "significance_supported": significance_supported,
-        "method": "cited_page_numeric_screen",
+        "table_reference": str(finding.get("table_reference", "")),
+        "model_or_column": str(finding.get("model_or_column", "")),
+        "significance_legend_checked": bool(legend_evidence),
+        "method": "context_aware_table_screen",
     }
-
 
 def _normalize_findings(items: Any, pages: list[dict[str, Any]]) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
@@ -683,6 +757,11 @@ def _normalize_findings(items: Any, pages: list[dict[str, Any]]) -> list[dict[st
                 "direction": _clean_text(item.get("direction")),
                 "estimate": _clean_text(item.get("estimate")),
                 "statistical_significance": _clean_text(item.get("statistical_significance")),
+                "table_reference": _clean_text(item.get("table_reference")),
+                "model_or_column": _clean_text(item.get("model_or_column")),
+                "significance_legend_evidence": validate_evidence(
+                    item.get("significance_legend_evidence"), pages
+                ),
                 "evidence": evidence,
             }
             finding["verification"] = audit_finding(finding, pages)
