@@ -801,9 +801,8 @@ def _normalize_methodology(
         overall_evidence,
         *field_evidence.values(),
         panel_dimensions["evidence"],
-        *[item["evidence"] for item in variables],
     )
-    if not method_evidence:
+    if not method_evidence and not variables:
         methodology = {
             "design": "확인 불가",
             "design_evidence": [],
@@ -860,8 +859,8 @@ def _normalize_methodology(
         "evidence": method_evidence,
         "panel_dimensions": panel_dimensions,
     }
-    if not overall_evidence and variables:
-        warnings.append("방법론 전체 인용은 없지만 변수별 인용이 확인된 항목만 표시했습니다.")
+    if not method_evidence and variables:
+        warnings.append("방법론 섹션 인용이 없어 변수별로 검증된 항목만 표시했습니다.")
     if panel_dimensions["consistency_status"] == "mismatch":
         warnings.append("패널의 횡단면 단위 수 × 기간 수와 원문 보고 총관측치가 일치하지 않습니다.")
     return methodology, warnings
