@@ -270,4 +270,4 @@ def test_gemini_retries_transient_503(monkeypatch):
     result = asyncio.run(module.llm_result(2, pages))
     assert result["provider"] == "gemini"
     assert len(requests) == 2
-    assert sleeps == [1.5]
+    assert sleeps == [2]
