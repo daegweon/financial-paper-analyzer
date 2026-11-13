@@ -1,0 +1,426 @@
+{
+  "benchmark_version": "1.0.0",
+  "report_version": "finance-structured-v6",
+  "generated_at": "2026-11-13",
+  "source": "Latest completed Supabase production analysis per benchmark paper",
+  "paper_count": 10,
+  "completed_count": 10,
+  "all_latest_analyses_v6": true,
+  "schema_version_distribution": {
+    "finance-structured-v6": 10
+  },
+  "model_distribution": {
+    "gemini-3.5-flash-lite": 8,
+    "gemini-3.6-flash": 2
+  },
+  "findings_repair_status_distribution": {
+    "recovered": 5,
+    "not_needed": 2,
+    "reviewed": 2,
+    "no_supported_findings": 1
+  },
+  "total_structured_findings": 31,
+  "total_findings_flagged_for_review": 9,
+  "total_page_validated_evidence_excerpts": 188,
+  "papers_with_methodology": 9,
+  "papers_with_methodology_section_evidence": 8,
+  "papers_with_findings": 9,
+  "papers_with_zero_findings": [
+    "B09"
+  ],
+  "papers_with_missing_methodology": [
+    "B10"
+  ],
+  "mean_gold_fact_coverage_screen": 0.875,
+  "mean_claim_evidence_coverage": 1,
+  "v5_to_v6_targeted_reanalysis_comparison": [
+    {
+      "paper_id": "B01",
+      "v5_findings": null,
+      "v6_findings": 2,
+      "v5_methodology": null,
+      "v6_methodology": true,
+      "v5_evidence": null,
+      "v6_evidence": 17
+    },
+    {
+      "paper_id": "B03",
+      "v5_findings": null,
+      "v6_findings": 5,
+      "v5_methodology": null,
+      "v6_methodology": true,
+      "v5_evidence": null,
+      "v6_evidence": 15
+    },
+    {
+      "paper_id": "B04",
+      "v5_findings": null,
+      "v6_findings": 3,
+      "v5_methodology": null,
+      "v6_methodology": true,
+      "v5_evidence": null,
+      "v6_evidence": 22
+    },
+    {
+      "paper_id": "B05",
+      "v5_findings": null,
+      "v6_findings": 8,
+      "v5_methodology": null,
+      "v6_methodology": true,
+      "v5_evidence": null,
+      "v6_evidence": 38
+    },
+    {
+      "paper_id": "B08",
+      "v5_findings": null,
+      "v6_findings": 4,
+      "v5_methodology": null,
+      "v6_methodology": true,
+      "v5_evidence": null,
+      "v6_evidence": 32
+    },
+    {
+      "paper_id": "B09",
+      "v5_findings": null,
+      "v6_findings": 0,
+      "v5_methodology": null,
+      "v6_methodology": true,
+      "v5_evidence": null,
+      "v6_evidence": 14
+    }
+  ],
+  "limitations": [
+    "Gold-fact coverage is lexical alias screening, not semantic accuracy; Korean paraphrases and formatting can be undercounted.",
+    "Claim-evidence coverage means a claim has at least one citation. It does not prove semantic entailment.",
+    "Page-level numeric screening is a preliminary heuristic. Unicode minus signs can cause false-positive numeric flags; this was observed in B08.",
+    "Page quotes are checked against extracted PDF page text, but table column alignment, units, p-values, and causal interpretation require human review."
+  ],
+  "results": [
+    {
+      "paper_id": "B01",
+      "analysis_id": "555e8aa5-ad31-42bf-8437-a8e5f8651ecc",
+      "analysis_version": "finance-structured-v6",
+      "model": "gemini-3.5-flash-lite",
+      "gold_fact_coverage_screen": 1,
+      "gold_fact_matches": [
+        "sample",
+        "frequency",
+        "source",
+        "factors",
+        "method",
+        "finding",
+        "panel_dimensions",
+        "estimator_comparison"
+      ],
+      "gold_fact_missing": [],
+      "findings_count": 2,
+      "findings_flagged_for_review": 1,
+      "unsupported_numeric_tokens": [
+        "-0.00013"
+      ],
+      "evidence_count": 17,
+      "methodology_present": true,
+      "methodology_section_evidence_count": 2,
+      "methodology_variable_count": 5,
+      "claim_evidence_coverage": 1,
+      "findings_repair_attempted": true,
+      "findings_repair_status": "recovered",
+      "findings_repair_model": "gemini-3.5-flash-lite",
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다."
+      ]
+    },
+    {
+      "paper_id": "B02",
+      "analysis_id": "905a9199-5929-4564-ad42-5b051d73bdc2",
+      "analysis_version": "finance-structured-v6",
+      "model": "gemini-3.5-flash-lite",
+      "gold_fact_coverage_screen": 1,
+      "gold_fact_matches": [
+        "sample",
+        "test_assets",
+        "method",
+        "foreign_factor",
+        "model_comparison"
+      ],
+      "gold_fact_missing": [],
+      "findings_count": 2,
+      "findings_flagged_for_review": 0,
+      "unsupported_numeric_tokens": [],
+      "evidence_count": 12,
+      "methodology_present": true,
+      "methodology_section_evidence_count": 1,
+      "methodology_variable_count": 1,
+      "claim_evidence_coverage": 1,
+      "findings_repair_attempted": false,
+      "findings_repair_status": "not_needed",
+      "findings_repair_model": null,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다."
+      ]
+    },
+    {
+      "paper_id": "B03",
+      "analysis_id": "ffdc175a-b932-4ab1-87e7-ea5e5ec9c03e",
+      "analysis_version": "finance-structured-v6",
+      "model": "gemini-3.5-flash-lite",
+      "gold_fact_coverage_screen": 1,
+      "gold_fact_matches": [
+        "sample",
+        "method",
+        "comparison",
+        "limitation"
+      ],
+      "gold_fact_missing": [],
+      "findings_count": 5,
+      "findings_flagged_for_review": 2,
+      "unsupported_numeric_tokens": [
+        "4",
+        "4",
+        "6"
+      ],
+      "evidence_count": 15,
+      "methodology_present": true,
+      "methodology_section_evidence_count": 0,
+      "methodology_variable_count": 2,
+      "claim_evidence_coverage": 1,
+      "findings_repair_attempted": true,
+      "findings_repair_status": "reviewed",
+      "findings_repair_model": "gemini-3.5-flash-lite",
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다.",
+        "방법론 전체를 뒷받침하는 인용은 없지만 변수별 원문 근거가 확인되어 확인된 항목만 표시했습니다."
+      ]
+    },
+    {
+      "paper_id": "B04",
+      "analysis_id": "27a50def-1504-412c-914c-8a9b0ae6a32e",
+      "analysis_version": "finance-structured-v6",
+      "model": "gemini-3.5-flash-lite",
+      "gold_fact_coverage_screen": 1,
+      "gold_fact_matches": [
+        "sample",
+        "regimes",
+        "method",
+        "duration",
+        "out_of_sample"
+      ],
+      "gold_fact_missing": [],
+      "findings_count": 3,
+      "findings_flagged_for_review": 3,
+      "unsupported_numeric_tokens": [
+        "0.01",
+        "-21",
+        "-4.492",
+        "-4.317",
+        "-4.421"
+      ],
+      "evidence_count": 22,
+      "methodology_present": true,
+      "methodology_section_evidence_count": 2,
+      "methodology_variable_count": 3,
+      "claim_evidence_coverage": 1,
+      "findings_repair_attempted": true,
+      "findings_repair_status": "recovered",
+      "findings_repair_model": "gemini-3.6-flash",
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다."
+      ]
+    },
+    {
+      "paper_id": "B05",
+      "analysis_id": "a0a94049-23cf-4f35-8811-36718342d036",
+      "analysis_version": "finance-structured-v6",
+      "model": "gemini-3.6-flash",
+      "gold_fact_coverage_screen": 1,
+      "gold_fact_matches": [
+        "sample",
+        "method",
+        "premium",
+        "regime"
+      ],
+      "gold_fact_missing": [],
+      "findings_count": 8,
+      "findings_flagged_for_review": 0,
+      "unsupported_numeric_tokens": [],
+      "evidence_count": 38,
+      "methodology_present": true,
+      "methodology_section_evidence_count": 3,
+      "methodology_variable_count": 9,
+      "claim_evidence_coverage": 1,
+      "findings_repair_attempted": true,
+      "findings_repair_status": "reviewed",
+      "findings_repair_model": "gemini-3.5-flash-lite",
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다."
+      ]
+    },
+    {
+      "paper_id": "B06",
+      "analysis_id": "227d5967-ac2a-4f33-85fe-c3bc4daf296b",
+      "analysis_version": "finance-structured-v6",
+      "model": "gemini-3.5-flash-lite",
+      "gold_fact_coverage_screen": 0.75,
+      "gold_fact_matches": [
+        "sample",
+        "method",
+        "asymmetry"
+      ],
+      "gold_fact_missing": [
+        "symmetry"
+      ],
+      "findings_count": 1,
+      "findings_flagged_for_review": 1,
+      "unsupported_numeric_tokens": [],
+      "evidence_count": 13,
+      "methodology_present": true,
+      "methodology_section_evidence_count": 1,
+      "methodology_variable_count": 2,
+      "claim_evidence_coverage": 1,
+      "findings_repair_attempted": true,
+      "findings_repair_status": "recovered",
+      "findings_repair_model": "gemini-3.5-flash-lite",
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다."
+      ]
+    },
+    {
+      "paper_id": "B07",
+      "analysis_id": "dd8ea705-cca8-475f-8607-222bcdfdcd97",
+      "analysis_version": "finance-structured-v6",
+      "model": "gemini-3.5-flash-lite",
+      "gold_fact_coverage_screen": 0.625,
+      "gold_fact_matches": [
+        "method",
+        "findings",
+        "limitation"
+      ],
+      "gold_fact_missing": [
+        "sample",
+        "out_of_sample"
+      ],
+      "findings_count": 2,
+      "findings_flagged_for_review": 0,
+      "unsupported_numeric_tokens": [],
+      "evidence_count": 13,
+      "methodology_present": true,
+      "methodology_section_evidence_count": 2,
+      "methodology_variable_count": 1,
+      "claim_evidence_coverage": 1,
+      "findings_repair_attempted": true,
+      "findings_repair_status": "recovered",
+      "findings_repair_model": "gemini-3.5-flash-lite",
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다.",
+        "연구 질문은 검증 가능한 직접 인용이 없어 표시하지 않았습니다.",
+        "AI 요약의 직접 인용이 검증되지 않아, 검증된 방법론·실증 결과만으로 요약을 재구성했습니다."
+      ]
+    },
+    {
+      "paper_id": "B08",
+      "analysis_id": "1343002a-e0fc-410f-a901-e6f6b9693d8d",
+      "analysis_version": "finance-structured-v6",
+      "model": "gemini-3.6-flash",
+      "gold_fact_coverage_screen": 1,
+      "gold_fact_matches": [
+        "sample",
+        "period",
+        "method",
+        "esg_returns",
+        "esg_volatility"
+      ],
+      "gold_fact_missing": [],
+      "findings_count": 4,
+      "findings_flagged_for_review": 2,
+      "unsupported_numeric_tokens": [
+        "-0.0017",
+        "-0.0019"
+      ],
+      "evidence_count": 32,
+      "methodology_present": true,
+      "methodology_section_evidence_count": 2,
+      "methodology_variable_count": 10,
+      "claim_evidence_coverage": 1,
+      "findings_repair_attempted": true,
+      "findings_repair_status": "recovered",
+      "findings_repair_model": "gemini-3.5-flash-lite",
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다."
+      ]
+    },
+    {
+      "paper_id": "B09",
+      "analysis_id": "6d0e4fff-e73f-4dd5-bc51-2f65b153feab",
+      "analysis_version": "finance-structured-v6",
+      "model": "gemini-3.5-flash-lite",
+      "gold_fact_coverage_screen": 1,
+      "gold_fact_matches": [
+        "sample",
+        "data_sources",
+        "vov",
+        "method",
+        "findings"
+      ],
+      "gold_fact_missing": [],
+      "findings_count": 0,
+      "findings_flagged_for_review": 0,
+      "unsupported_numeric_tokens": [],
+      "evidence_count": 14,
+      "methodology_present": true,
+      "methodology_section_evidence_count": 1,
+      "methodology_variable_count": 3,
+      "claim_evidence_coverage": 1,
+      "findings_repair_attempted": true,
+      "findings_repair_status": "no_supported_findings",
+      "findings_repair_model": "gemini-3.5-flash-lite",
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다.",
+        "1차 분석에서 검증 가능한 실증 결과를 찾지 못해 2차 집중 검증이 필요합니다.",
+        "2차 실증 결과 검증에서도 페이지 인용이 확인된 추가 결과를 찾지 못했습니다."
+      ]
+    },
+    {
+      "paper_id": "B10",
+      "analysis_id": "b175b42b-d65f-4d74-baa5-885f76ae43c9",
+      "analysis_version": "finance-structured-v6",
+      "model": "gemini-3.5-flash-lite",
+      "gold_fact_coverage_screen": 0.375,
+      "gold_fact_matches": [
+        "universe",
+        "scope"
+      ],
+      "gold_fact_missing": [
+        "method",
+        "comparison",
+        "results"
+      ],
+      "findings_count": 4,
+      "findings_flagged_for_review": 0,
+      "unsupported_numeric_tokens": [],
+      "evidence_count": 12,
+      "methodology_present": false,
+      "methodology_section_evidence_count": 0,
+      "methodology_variable_count": 0,
+      "claim_evidence_coverage": 1,
+      "findings_repair_attempted": false,
+      "findings_repair_status": "not_needed",
+      "findings_repair_model": null,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다.",
+        "연구 질문은 검증 가능한 직접 인용이 없어 표시하지 않았습니다.",
+        "방법론은 검증 가능한 직접 인용이 없어 세부 정보를 표시하지 않았습니다.",
+        "AI 요약의 직접 인용이 검증되지 않아, 검증된 방법론·실증 결과만으로 요약을 재구성했습니다."
+      ]
+    }
+  ]
+}
