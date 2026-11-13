@@ -43,6 +43,8 @@ No application data migration is required. Both providers return the same normal
 
 ## Analysis output
 
+Gemini output budgets are 16,384 tokens for the primary Flash-Lite model and 24,576 tokens for the fallback Flash model. If the primary response ends with `MAX_TOKENS`, the worker automatically retries with the fallback model. Results are kept concise and evidence lists are bounded to reduce truncation.
+
 The structured financial-research report includes:
 
 - Bibliographic metadata and executive summary
