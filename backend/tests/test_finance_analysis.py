@@ -386,3 +386,49 @@ def test_gemini_retries_with_fallback_when_primary_hits_output_cap(monkeypatch):
     assert len(requests) == 2
     assert requests[0][1]["json"]["generationConfig"]["maxOutputTokens"] == 16384
     assert requests[1][1]["json"]["generationConfig"]["maxOutputTokens"] == 24576
+
+
+
+def test_validate_evidence_normalizes_pdf_ligatures_and_dash_variants():
+    page_text = (
+        "The coefﬁcient is statistically signiﬁcant at the 5% level – "
+        "after the robustness adjustment."
+    )
+    accepted = module.validate_evidence(
+        [{
+            "page": 1,
+            "quote": "The coefficient is statistically significant at the 5% level - after the robustness adjustment.",
+        }],
+        [{"page": 1, "text": page_text}],
+    )
+    assert len(accepted) == 1
+    assert accepted[0]["quote"] in page_text
+    assert "coefﬁcient" in accepted[0]["quote"]
+
+
+def test_validate_evidence_normalizes_whitespace_but_returns_page_excerpt():
+    page_text = "The estimated coefficient\\n  is negative and statistically significant."
+    accepted = module.validate_evidence(
+        [{"page": 2, "quote": "The estimated coefficient is negative and statistically significant."}],
+        [{"page": 2, "text": page_text}],
+    )
+    assert len(accepted) == 1
+    assert accepted[0]["quote"] in page_text
+
+
+def test_methodology_keeps_variables_when_section_level_quote_is_missing():
+    pages = _sample_pages()
+    raw = _sample_model_output()
+    raw["methodology"]["evidence"] = []
+    result = module.normalize_llm_result(raw, 2, pages)
+    assert result["methodology"]["design"] == "은행 패널 분석"
+    assert len(result["methodology"]["variables"]) == 1
+    assert result["methodology"]["variables"][0]["name"] == "loan growth"
+    assert any("변수별 원문 근거" in warning for warning in result["warnings"])
+
+
+def test_analysis_prompt_requires_korean_findings_and_separates_hypotheses():
+    prompt = module.build_analysis_prompt(_sample_pages())
+    assert "findings 배열을 비워 두지 말고" in prompt
+    assert "가설(hypotheses)과 실제 검증 결과(findings)를 혼동하지 않는다" in prompt
+    assert "전체 답변하지 않는다" in prompt
