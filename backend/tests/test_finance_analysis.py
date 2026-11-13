@@ -816,6 +816,19 @@ def test_llm_result_runs_methodology_only_repair_when_section_evidence_is_missin
     first_output["methodology"]["variables"] = []
     for key in ("design", "sample", "period", "data_sources", "empirical_strategy", "identification_strategy", "equations"):
         first_output["methodology"][f"{key}_evidence"] = []
+    first_output["methodology"]["panel_dimensions"] = {
+        "study_design_type": "unknown",
+        "study_design_evidence": [],
+        "panel_balance": "unknown",
+        "panel_balance_evidence": [],
+        "cross_sectional_units_count": 0,
+        "time_periods_count": 0,
+        "reported_total_observations_count": 0,
+        "observation_frequency": "확인 불가",
+        "observation_unit": "확인 불가",
+        "sample_count_reports": [],
+        "evidence": [],
+    }
     repair_output = {
         "methodology": {
             "design": "은행 패널 회귀분석",
@@ -860,14 +873,25 @@ def test_llm_result_runs_methodology_only_repair_when_section_evidence_is_missin
                 "quote": "We use a panel of 50 banks from 2001 to 2020.",
             }],
             "panel_dimensions": {
-                "cross_sectional_units": "50 banks",
-                "time_periods": "확인 불가",
-                "reported_total_observations": "확인 불가",
-                "observation_frequency": "확인 불가",
-                "observation_unit": "bank",
+                "study_design_type": "balanced_panel",
+                "study_design_evidence": [{
+                    "page": 1,
+                    "quote": "The panel is balanced and annual, with 50 banks observed for 20 years.",
+                }],
+                "panel_balance": "balanced",
+                "panel_balance_evidence": [{
+                    "page": 1,
+                    "quote": "The panel is balanced and annual, with 50 banks observed for 20 years.",
+                }],
+                "cross_sectional_units_count": 50,
+                "time_periods_count": 20,
+                "reported_total_observations_count": 0,
+                "observation_frequency": "annual",
+                "observation_unit": "bank-year",
+                "sample_count_reports": [],
                 "evidence": [{
                     "page": 1,
-                    "quote": "We use a panel of 50 banks from 2001 to 2020.",
+                    "quote": "The panel is balanced and annual, with 50 banks observed for 20 years.",
                 }],
             },
         }
