@@ -92,7 +92,7 @@ export default function Home() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const [engineMode, setEngineMode] = useState<"openai" | "extractive" | "unknown">("unknown");
+  const [engineMode, setEngineMode] = useState<"gemini" | "openai" | "extractive" | "unknown">("unknown");
 
   useEffect(() => {
     const supabase = db();
@@ -112,7 +112,7 @@ export default function Home() {
     if (!api) return;
     void fetch(api.replace(/\/$/, "") + "/health")
       .then(response => response.ok ? response.json() : Promise.reject(new Error("API unavailable")))
-      .then(payload => setEngineMode(payload.analysis_mode === "openai" ? "openai" : "extractive"))
+      .then(payload => setEngineMode(payload.analysis_mode === "ai" ? (payload.ai_provider === "gemini" ? "gemini" : "openai") : "extractive"))
       .catch(() => setEngineMode("unknown"));
   }, []);
 
@@ -255,11 +255,12 @@ export default function Home() {
     </aside>
     <div className="content">
       <header>Workspace / <b>논문 라이브러리</b>
-        <span className={engineMode === "openai" ? "engine-ready" : "engine-pending"}>
-          ● {engineMode === "openai" ? "AI 분석 엔진 활성화" : engineMode === "extractive" ? "텍스트 추출 모드" : "API 상태 확인 중"}
+        <span className={engineMode === "gemini" || engineMode === "openai" ? "engine-ready" : "engine-pending"}>
+          ● {engineMode === "gemini" ? "Gemini AI 분석 활성화" : engineMode === "openai" ? "OpenAI 분석 활성화" : engineMode === "extractive" ? "텍스트 추출 모드" : "API 상태 확인 중"}
         </span>
       </header>
       <div className="body">
+        {engineMode === "gemini" && <div className="provider-notice"><b>Gemini 무료 티어 데이터 안내</b><p>현재 설정에서는 업로드한 논문에서 추출한 텍스트와 AI 응답이 Google 제품 개선에 사용되거나 사람 검토자가 처리할 수 있습니다. 공개·비기밀 논문만 업로드하고, 사내 미공개 자료나 개인정보가 포함된 문서는 올리지 마세요.</p></div>}
         <div className="heading">
           <div><p className="eyebrow">RESEARCH LIBRARY</p><h1>나의 연구 라이브러리</h1><p>금융 논문을 수집하고 근거 기반 인사이트를 축적하세요.</p></div>
           <label className="upload-button">＋ 논문 추가
@@ -299,9 +300,9 @@ export default function Home() {
         {!analysis
           ? <div className="prompt">
               <div>✧</div><h3>논문 분석 준비 완료</h3>
-              <p>{engineMode === "openai"
+              <p>{engineMode === "gemini" || engineMode === "openai"
                 ? "AI가 연구 질문, 계량 방법론, 실증 결과, 강건성 검증을 구조화하고 페이지별 인용을 확인합니다."
-                : "현재는 텍스트 추출 모드입니다. AI 분석 API 키가 연결되면 구조화된 금융 연구 분석이 활성화됩니다."}</p>
+                : "현재는 텍스트 추출 모드입니다. Railway에 선택한 AI 제공자의 API 키를 설정하면 구조화된 금융 연구 분석이 활성화됩니다."}</p>
               <button disabled={busy} className="primary" onClick={() => void analyze()}>{busy ? "분석 중..." : "분석 시작 →"}</button>
             </div>
           : <div className="result">
