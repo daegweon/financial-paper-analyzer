@@ -2041,6 +2041,10 @@ async def llm_result(count: int, pages: list[dict[str, Any]]) -> dict[str, Any]:
     return result
 
 def supabase_headers(token: str) -> dict[str, str]:
+    # Supabase's new sb_secret_* keys are opaque API keys, not JWTs.
+    # They must be sent as apikey only; legacy service_role keys remain JWTs.
+    if token.startswith("sb_secret_"):
+        return {"apikey": token}
     return {"apikey": SUPABASE_KEY, "Authorization": "Bearer " + token}
 
 
