@@ -47,7 +47,9 @@
             "2001–2020",
             "2001년부터 2020년",
             "4,950 time periods",
-            "T = 4950"
+            "T = 4950",
+            "2001년 1월부터 2020년 12월까지",
+            "총 4,950개 관측치"
           ]
         },
         {
@@ -58,7 +60,9 @@
             "daily frequency",
             "daily data",
             "일별 자료",
-            "일별 빈도"
+            "일별 빈도",
+            "일간 데이터",
+            "일간 빈도"
           ]
         },
         {
@@ -131,7 +135,9 @@
             "n = 12",
             "12개 포트폴리오",
             "59,400 observations",
-            "59400"
+            "59400",
+            "12개의 자산 포트폴리오",
+            "12개 자산 포트폴리오"
           ]
         },
         {
@@ -307,7 +313,9 @@
             "Carhart model has greater explanatory power",
             "Carhart 모형의 설명력이 더 높",
             "조정 R 제곱",
-            "adjusted R-squared"
+            "adjusted R-squared",
+            "C4F 모형이 FF3F 모형에 비해 설명력이 다소 우수",
+            "C4F model outperforms the FF3F model in four out of six portfolios"
           ]
         },
         {
@@ -319,7 +327,9 @@
             "limited ability to predict the cross-sections of returns",
             "cannot reliably anticipate the cross-sections",
             "횡단면 수익률을 신뢰성 있게 예측할 수 없다",
-            "설명력에 한계"
+            "설명력에 한계",
+            "수익률의 단면을 온전히 예측하는 데는 한계",
+            "수익률의 단면을 예측하는 데는 한계"
           ]
         }
       ],
@@ -750,7 +760,10 @@
             "ESG scores and stock returns are negatively related",
             "ESG 점수와 주식 수익률은 음",
             "ESG Momentum and returns are positively related",
-            "ESG 모멘텀과 수익률은 양"
+            "ESG 모멘텀과 수익률은 양",
+            "정태적 ESG 점수는 장기 주식 수익률과 음",
+            "ESG 모멘텀은 수익률과 양",
+            "ESG scores and stock returns and between ESG Momentum and volatility"
           ]
         },
         {
@@ -761,7 +774,11 @@
             "ESG Momentum and volatility are negatively related",
             "ESG 모멘텀과 변동성은 음",
             "ESG scores and volatility are positively related",
-            "ESG 점수와 변동성은 양"
+            "ESG 점수와 변동성은 양",
+            "ESG 모멘텀은 변동성을 감소시키는 효과",
+            "ESG scores and volatility",
+            "ESG Momentum and volatility",
+            "ESG 점수와 변동성"
           ]
         }
       ],
