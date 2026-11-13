@@ -153,20 +153,24 @@ function panelStatusLabel(value?: string) {
   return value ? labels[value] ?? value : "확인 불가";
 }
 
-function EvidenceList({ items }: { items?: Evidence[] }) {
+function EvidenceList({ items, sourcePdfUrl }: { items?: Evidence[]; sourcePdfUrl?: string }) {
   if (!items?.length) return null;
   return <div className="evidence-list">{items.map((item, index) =>
     <blockquote className="evidence" key={item.page + "-" + index}>
       <b>PAGE {item.page}</b><p>{item.quote}</p>
+      {sourcePdfUrl && Number.isInteger(item.page) && item.page > 0 &&
+        <a className="evidence-source-link" href={sourcePdfUrl + "#page=" + item.page} target="_blank" rel="noreferrer">
+          원문 p.{item.page} 확인 ↗
+        </a>}
     </blockquote>
   )}</div>;
 }
 
-function ClaimList({ items }: { items?: Claim[] }) {
+function ClaimList({ items, sourcePdfUrl }: { items?: Claim[]; sourcePdfUrl?: string }) {
   if (!items?.length) return <p className="muted">원문 근거가 확인된 항목이 없습니다.</p>;
   return <div className="analysis-cards">{items.map((item, index) =>
     <article className="analysis-card" key={index}>
-      <p>{item.text}</p><EvidenceList items={item.evidence}/>
+      <p>{item.text}</p><EvidenceList sourcePdfUrl={sourcePdfUrl} items={item.evidence}/>
     </article>
   )}</div>;
 }
@@ -180,6 +184,8 @@ export default function Home() {
   const [papers, setPapers] = useState<Paper[]>([]);
   const [selected, setSelected] = useState<Paper | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [sourcePdf, setSourcePdf] = useState<{ paperId: string; url: string } | null>(null);
+  const [sourcePdfError, setSourcePdfError] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [engineMode, setEngineMode] = useState<"gemini" | "openai" | "extractive" | "unknown">("unknown");
@@ -278,10 +284,17 @@ export default function Home() {
   async function open(paper: Paper) {
     setSelected(paper);
     setAnalysis(null);
-    const result = await db().from("analyses").select("result,model,created_at")
-      .eq("paper_id", paper.id).order("created_at", { ascending: false }).limit(1);
+    setSourcePdf(null);
+    setSourcePdfError("");
+    const [result, signedPdf] = await Promise.all([
+      db().from("analyses").select("result,model,created_at")
+        .eq("paper_id", paper.id).order("created_at", { ascending: false }).limit(1),
+      db().storage.from("papers").createSignedUrl(paper.storage_path, 3600),
+    ]);
     if (result.error) setMessage(result.error.message);
     else if (result.data?.[0]) setAnalysis(result.data[0] as Analysis);
+    if (signedPdf.error) setSourcePdfError("원문 PDF 링크를 만들지 못했습니다: " + signedPdf.error.message);
+    else if (signedPdf.data?.signedUrl) setSourcePdf({ paperId: paper.id, url: signedPdf.data.signedUrl });
   }
 
   async function analyze() {
@@ -406,7 +419,12 @@ export default function Home() {
 
     {selected && <div className="overlay" onClick={() => setSelected(null)}>
       <section className="details" onClick={event => event.stopPropagation()}>
-        <button className="close" onClick={() => setSelected(null)}>×</button>
+        <div className="detail-toolbar no-print">
+          {sourcePdf?.paperId === selected.id
+            ? <a className="source-pdf-button" href={sourcePdf.url} target="_blank" rel="noreferrer">원문 PDF 열기 ↗</a>
+            : <span className="source-pdf-status">{sourcePdfError || "원문 PDF 연결 준비 중..."}</span>}
+          <button className="close" onClick={() => setSelected(null)}>×</button>
+        </div>
         <p className="eyebrow">PAPER INTELLIGENCE</p>
         <h2>{selected.title}</h2>
         <p>연구 설계부터 실증 결과까지 원문 페이지 근거와 함께 검토하세요.</p>
@@ -423,12 +441,21 @@ export default function Home() {
               <p className="mode">{analysis.result.mode === "llm"
                 ? "AI 구조화 분석 · 인용 근거 검증"
                 : "텍스트 추출 분석 · AI 생성 아님"}</p>
+              <div className="report-toolbar no-print">
+                <div>
+                  <b>연구 분석 보고서</b>
+                  <span>인쇄 창에서 PDF로 저장을 선택하면 A4 보고서가 생성됩니다.</span>
+                </div>
+                <button type="button" className="report-button" onClick={() => window.print()}>
+                  PDF 보고서 저장 ↓
+                </button>
+              </div>
               {analysis.result.bibliographic && (
                 <section className="analysis-section">
                   <h3>논문 서지정보</h3>
                   <p><b>{analysis.result.bibliographic.title}</b></p>
                   <p>{analysis.result.bibliographic.authors?.join(", ") || "저자 확인 불가"} · {analysis.result.bibliographic.year} · {analysis.result.bibliographic.venue}</p>
-                  <EvidenceList items={analysis.result.bibliographic.evidence}/>
+                  <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} items={analysis.result.bibliographic.evidence}/>
                 </section>
               )}
               <section className="analysis-section">
@@ -444,10 +471,10 @@ export default function Home() {
               </section>
               <section className="analysis-section">
                 <h3>연구 질문</h3><p>{analysis.result.research_question || "확인 불가"}</p>
-                <EvidenceList items={analysis.result.research_question_evidence}/>
+                <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} items={analysis.result.research_question_evidence}/>
               </section>
-              <section className="analysis-section"><h3>연구 가설</h3><ClaimList items={analysis.result.hypotheses}/></section>
-              <section className="analysis-section"><h3>학술적 기여</h3><ClaimList items={analysis.result.contributions}/></section>
+              <section className="analysis-section"><h3>연구 가설</h3><ClaimList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} items={analysis.result.hypotheses}/></section>
+              <section className="analysis-section"><h3>학술적 기여</h3><ClaimList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} items={analysis.result.contributions}/></section>
               {analysis.result.methodology && (
                 <section className="analysis-section">
                   <h3>연구 방법론 및 데이터</h3>
@@ -483,7 +510,7 @@ export default function Home() {
                           <b>{conflict.label} · {conflict.metric}</b>
                           <p>원문 보고값: {conflict.reported_values.join(" / ")}</p>
                           <p>출처 위치: {conflict.sections.join(" · ")}</p>
-                          <EvidenceList items={conflict.evidence}/>
+                          <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} items={conflict.evidence}/>
                         </article>
                       )}
                     </>}
@@ -493,27 +520,27 @@ export default function Home() {
                         <article className="analysis-card" key={index}>
                           <b>{report.label} · {report.metric}</b>
                           <p>{report.count.toLocaleString()} · {report.section}</p>
-                          <EvidenceList items={report.evidence}/>
+                          <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} items={report.evidence}/>
                         </article>
                       )}
                     </>}
-                    <EvidenceList items={analysis.result.methodology.panel_dimensions.evidence}/>
-                    <EvidenceList items={analysis.result.methodology.panel_dimensions.study_design_evidence}/>
-                    <EvidenceList items={analysis.result.methodology.panel_dimensions.panel_balance_evidence}/>
+                    <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} items={analysis.result.methodology.panel_dimensions.evidence}/>
+                    <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} items={analysis.result.methodology.panel_dimensions.study_design_evidence}/>
+                    <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} items={analysis.result.methodology.panel_dimensions.panel_balance_evidence}/>
                   </>}
                   {!!analysis.result.methodology.variables?.length && <>
                     <h4>주요 변수</h4>
                     {analysis.result.methodology.variables.map((variable, index) =>
                       <article className="analysis-card" key={index}>
                         <b>{variable.name}</b><span className="tag">{variable.role}</span><p>{variable.definition}</p>
-                        <EvidenceList items={variable.evidence}/>
+                        <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} items={variable.evidence}/>
                       </article>
                     )}
                   </>}
                   {!!analysis.result.methodology.equations?.length && <>
                     <h4>모형 및 수식</h4>{analysis.result.methodology.equations.map((equation, index) => <pre className="equation" key={index}>{equation}</pre>)}
                   </>}
-                  <EvidenceList items={analysis.result.methodology.evidence}/>
+                  <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} items={analysis.result.methodology.evidence}/>
                 </section>
               )}
               <section className="analysis-section">
@@ -536,10 +563,10 @@ export default function Home() {
                       {finding.verification?.unsupported_numeric_tokens?.length ? <p className="warning">인용 페이지에서 확인되지 않은 숫자: {finding.verification.unsupported_numeric_tokens.join(", ")}</p> : null}
                       {finding.verification?.direction_consistent === false && <p className="warning">추정치의 부호와 결과 방향이 일치하지 않습니다.</p>}
                       {finding.verification?.significance_supported === false && <p className="warning">통계적 유의성 표기가 인용 페이지에서 확인되지 않습니다.</p>}
-                      <EvidenceList items={finding.evidence}/>
+                      <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} items={finding.evidence}/>
                       {!!finding.significance_legend_evidence?.length && <>
                         <p className="muted">통계적 유의성 표 주석</p>
-                        <EvidenceList items={finding.significance_legend_evidence}/>
+                        <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} items={finding.significance_legend_evidence}/>
                       </>}
                     </article>
                   )}
@@ -548,19 +575,19 @@ export default function Home() {
                 <h3>강건성 검증</h3>
                 {!analysis.result.robustness_checks?.length ? <p className="muted">본문에서 검증 가능한 강건성 검증을 찾지 못했습니다.</p>
                   : analysis.result.robustness_checks.map((item, index) =>
-                    <article className="analysis-card" key={index}><b>{item.test}</b><p>{item.result}</p><EvidenceList items={item.evidence}/></article>
+                    <article className="analysis-card" key={index}><b>{item.test}</b><p>{item.result}</p><EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} items={item.evidence}/></article>
                   )}
               </section>
               <section className="analysis-section">
                 <h3>연구 한계</h3>
                 {!analysis.result.limitations?.length ? <p className="muted">원문 근거가 확인된 한계가 없습니다.</p>
                   : analysis.result.limitations.map((item, index) =>
-                    <article className="analysis-card" key={index}><p>{item.description}</p><EvidenceList items={item.evidence}/></article>
+                    <article className="analysis-card" key={index}><p>{item.description}</p><EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} items={item.evidence}/></article>
                   )}
               </section>
-              <section className="analysis-section"><h3>금융·경제적 시사점</h3><ClaimList items={analysis.result.implications}/></section>
+              <section className="analysis-section"><h3>금융·경제적 시사점</h3><ClaimList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} items={analysis.result.implications}/></section>
               <section className="analysis-section"><h3>핵심 키워드</h3><div className="tags">{(analysis.result.keywords ?? []).map(keyword => <span key={keyword}>{keyword}</span>)}</div></section>
-              <section className="analysis-section"><h3>검증된 원문 근거 <small>{analysis.result.evidence?.length ?? 0}</small></h3><EvidenceList items={analysis.result.evidence}/></section>
+              <section className="analysis-section"><h3>검증된 원문 근거 <small>{analysis.result.evidence?.length ?? 0}</small></h3><EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} items={analysis.result.evidence}/></section>
               {(analysis.result.warnings ?? []).map((warning, index) => <p className="warning" key={index}>{warning}</p>)}
               <p className="muted">분석 모델: {analysis.model} · 버전: {analysis.result.analysis_version ?? "legacy"}</p>
               <button disabled={busy} className="primary" onClick={() => void analyze()}>{busy ? "분석 중..." : "다시 분석하기"}</button>
