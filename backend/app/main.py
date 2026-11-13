@@ -162,7 +162,7 @@ def validate_evidence(items: Any, pages: list[dict[str, Any]]) -> list[dict[str,
     mapping = {page["page"]: page["text"] for page in pages}
     accepted: list[dict[str, Any]] = []
     seen: set[tuple[int, str]] = set()
-    for item in items[:20] if isinstance(items, list) else []:
+    for item in items[:4] if isinstance(items, list) else []:
         if not isinstance(item, dict):
             continue
         try:
@@ -194,7 +194,7 @@ def _clean_claims(
     pages: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     output = []
-    for item in items[:20] if isinstance(items, list) else []:
+    for item in items[:6] if isinstance(items, list) else []:
         if not isinstance(item, dict):
             continue
         text = _clean_text(item.get(text_key), fallback="")
@@ -254,7 +254,7 @@ def normalize_llm_result(
     if bibliographic_evidence:
         bibliographic = {
             "title": _clean_text(bibliographic_raw.get("title")),
-            "authors": [str(x)[:160] for x in bibliographic_raw.get("authors", [])[:20]] if isinstance(bibliographic_raw.get("authors"), list) else [],
+            "authors": [str(x)[:160] for x in bibliographic_raw.get("authors", [])[:8]] if isinstance(bibliographic_raw.get("authors"), list) else [],
             "year": _clean_text(bibliographic_raw.get("year")),
             "venue": _clean_text(bibliographic_raw.get("venue")),
             "doi": _clean_text(bibliographic_raw.get("doi")),
@@ -275,7 +275,7 @@ def normalize_llm_result(
     methodology_raw = raw.get("methodology") if isinstance(raw.get("methodology"), dict) else {}
     methodology_evidence = validate_evidence(methodology_raw.get("evidence"), pages)
     variables = []
-    for item in methodology_raw.get("variables", [])[:30] if isinstance(methodology_raw.get("variables"), list) else []:
+    for item in methodology_raw.get("variables", [])[:12] if isinstance(methodology_raw.get("variables"), list) else []:
         if not isinstance(item, dict):
             continue
         evidence = validate_evidence(item.get("evidence"), pages)
@@ -291,11 +291,11 @@ def normalize_llm_result(
             "design": _clean_text(methodology_raw.get("design")),
             "sample": _clean_text(methodology_raw.get("sample")),
             "period": _clean_text(methodology_raw.get("period")),
-            "data_sources": [str(x)[:300] for x in methodology_raw.get("data_sources", [])[:15]] if isinstance(methodology_raw.get("data_sources"), list) else [],
+            "data_sources": [str(x)[:300] for x in methodology_raw.get("data_sources", [])[:8]] if isinstance(methodology_raw.get("data_sources"), list) else [],
             "variables": variables,
             "empirical_strategy": _clean_text(methodology_raw.get("empirical_strategy")),
             "identification_strategy": _clean_text(methodology_raw.get("identification_strategy")),
-            "equations": [str(x)[:500] for x in methodology_raw.get("equations", [])[:10]] if isinstance(methodology_raw.get("equations"), list) else [],
+            "equations": [str(x)[:500] for x in methodology_raw.get("equations", [])[:6]] if isinstance(methodology_raw.get("equations"), list) else [],
             "evidence": methodology_evidence,
         }
     else:
@@ -307,7 +307,7 @@ def normalize_llm_result(
         warnings.append("방법론은 검증 가능한 직접 인용이 없어 세부 정보를 표시하지 않았습니다.")
 
     findings = []
-    for item in raw.get("findings", [])[:20] if isinstance(raw.get("findings"), list) else []:
+    for item in raw.get("findings", [])[:8] if isinstance(raw.get("findings"), list) else []:
         if not isinstance(item, dict):
             continue
         evidence = validate_evidence(item.get("evidence"), pages)
@@ -324,7 +324,7 @@ def normalize_llm_result(
         warnings.append("검증 가능한 근거가 있는 실증 결과를 찾지 못했습니다.")
 
     robustness_checks = []
-    for item in raw.get("robustness_checks", [])[:15] if isinstance(raw.get("robustness_checks"), list) else []:
+    for item in raw.get("robustness_checks", [])[:5] if isinstance(raw.get("robustness_checks"), list) else []:
         if not isinstance(item, dict):
             continue
         evidence = validate_evidence(item.get("evidence"), pages)
@@ -336,7 +336,7 @@ def normalize_llm_result(
             })
 
     limitations = []
-    for item in raw.get("limitations", [])[:15] if isinstance(raw.get("limitations"), list) else []:
+    for item in raw.get("limitations", [])[:5] if isinstance(raw.get("limitations"), list) else []:
         if not isinstance(item, dict):
             continue
         evidence = validate_evidence(item.get("evidence"), pages)
@@ -375,7 +375,7 @@ def normalize_llm_result(
     if isinstance(raw.get("keywords"), list):
         result["keywords"] = [
             str(keyword)[:80]
-            for keyword in raw["keywords"][:20]
+            for keyword in raw["keywords"][:12]
             if isinstance(keyword, str) and keyword.strip() and keyword.casefold() in text_corpus
         ]
     result["evidence"] = _all_evidence(result)
@@ -457,7 +457,11 @@ def build_analysis_prompt(pages: list[dict[str, Any]]) -> str:
         "8. 강건성 검증은 실제 수행된 테스트만 기재한다. 저자가 언급하지 않은 테스트를 했다고 쓰지 않는다.\n"
         "9. 한계는 저자가 명시한 한계와 본문 근거로 확인되는 잠재적 한계를 구분해 표현한다.\n"
         "10. 투자 추천, 목표주가, 매매 신호를 만들지 않는다. 학술적·경제적 시사점만 제시한다.\n"
-        "11. 전체 텍스트가 일부 페이지에 한정될 수 있으므로 확인한 범위를 넘어서 논문 전체를 읽었다고 주장하지 않는다.\n\n"
+        "11. 전체 텍스트가 일부 페이지에 한정될 수 있으므로 확인한 범위를 넘어서 논문 전체를 읽었다고 주장하지 않는다.\n"
+        "12. 토큰 낭비를 막기 위해 간결하게 작성한다: 요약 3문장 이내, 가설 최대 3개, 기여 최대 3개, "
+        "변수 최대 12개, 실증 결과 최대 6개, 강건성 검증 최대 4개, 한계 최대 4개, 시사점 최대 4개, "
+        "키워드 최대 12개로 제한한다. 각 항목의 원문 인용은 핵심 문장 1~2개만 사용하고 중복 인용하지 않는다. "
+        "각 인용은 10~220자 범위로 유지한다.\n\n"
         "분석 목표:\n"
         "- 서지정보와 초록 수준의 핵심 요약\n"
         "- 연구 질문, 가설, 학술적 기여\n"
@@ -496,7 +500,7 @@ async def _generate_gemini(prompt: str) -> tuple[dict[str, Any], str]:
         model for model in (GEMINI_MODEL, GEMINI_FALLBACK_MODEL) if model
     ))
     failures: list[tuple[str, str, str]] = []
-    timeout = httpx.Timeout(connect=10.0, read=45.0, write=20.0, pool=10.0)
+    timeout = httpx.Timeout(connect=10.0, read=75.0, write=25.0, pool=10.0)
 
     for index, model_name in enumerate(models):
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
@@ -508,7 +512,7 @@ async def _generate_gemini(prompt: str) -> tuple[dict[str, Any], str]:
                 "responseMimeType": "application/json",
                 "responseJsonSchema": ANALYSIS_SCHEMA,
                 "thinkingConfig": {"thinkingLevel": thinking_level},
-                "maxOutputTokens": 4096,
+                "maxOutputTokens": 16384 if index == 0 else 24576,
             },
         }
         if index:
@@ -568,10 +572,32 @@ async def _generate_gemini(prompt: str) -> tuple[dict[str, Any], str]:
             raise ValueError("Gemini 응답 후보가 비어 있습니다.")
         candidate = candidates[0]
         finish_reason = candidate.get("finishReason")
+        usage = payload.get("usageMetadata", {})
+        log.info(
+            "Gemini usage model=%s finish=%s prompt_tokens=%s candidate_tokens=%s thought_tokens=%s total_tokens=%s",
+            model_name,
+            finish_reason,
+            usage.get("promptTokenCount"),
+            usage.get("candidatesTokenCount"),
+            usage.get("thoughtsTokenCount"),
+            usage.get("totalTokenCount"),
+        )
         if finish_reason == "MAX_TOKENS":
-            raise ValueError("Gemini 출력 토큰 한도에 도달해 분석이 완성되지 않았습니다.")
+            detail = (
+                f"candidate={usage.get('candidatesTokenCount')},"
+                f"thoughts={usage.get('thoughtsTokenCount')},"
+                f"total={usage.get('totalTokenCount')}"
+            )
+            log.warning(
+                "Gemini output cap reached model=%s cap=%d usage=%s; trying next model",
+                model_name, request_body["generationConfig"]["maxOutputTokens"], detail,
+            )
+            failures.append((model_name, "max_tokens", detail))
+            continue
         if finish_reason not in (None, "STOP"):
-            raise ValueError("Gemini가 분석 응답을 완료하지 못했습니다.")
+            log.warning("Gemini incomplete response model=%s finish=%s", model_name, finish_reason)
+            failures.append((model_name, "incomplete", str(finish_reason)))
+            continue
         parts = candidate.get("content", {}).get("parts", [])
         content = "".join(
             part.get("text", "")
@@ -580,9 +606,16 @@ async def _generate_gemini(prompt: str) -> tuple[dict[str, Any], str]:
         )
         if not content:
             raise ValueError("Gemini 응답 본문이 비어 있습니다.")
-        parsed = json.loads(content)
+        try:
+            parsed = json.loads(content)
+        except json.JSONDecodeError as exc:
+            log.warning("Gemini invalid JSON model=%s; trying next configured model", model_name)
+            failures.append((model_name, "invalid_json", str(exc)[:180]))
+            continue
         if not isinstance(parsed, dict):
-            raise ValueError("Gemini 응답 구조가 올바르지 않습니다.")
+            log.warning("Gemini response was not a JSON object model=%s", model_name)
+            failures.append((model_name, "invalid_json", "response_not_object"))
+            continue
         return parsed, model_name
 
     summary = "; ".join(f"{model}={status}" for model, status, _ in failures)
@@ -592,9 +625,14 @@ async def _generate_gemini(prompt: str) -> tuple[dict[str, Any], str]:
             status_code=429,
             detail="Gemini 무료 사용 한도에 도달했습니다. Google AI Studio의 모델별 사용량과 일일 한도를 확인해 주세요.",
         )
+    if failures and all(status == "max_tokens" for _, status, _ in failures):
+        raise HTTPException(
+            status_code=422,
+            detail="논문 분석 결과가 두 모델의 출력 한도를 초과했습니다. 분석 범위를 나누어 다시 시도해야 합니다.",
+        )
     raise HTTPException(
         status_code=503,
-        detail="기본 Gemini 모델과 대체 모델 모두 응답하지 않았습니다. 잠시 후 다시 시도해 주세요.",
+        detail="Gemini 기본 모델과 대체 모델이 모두 완전한 응답을 생성하지 못했습니다. 잠시 후 다시 시도해 주세요.",
     )
 
 async def _generate_openai(prompt: str) -> dict[str, Any]:
