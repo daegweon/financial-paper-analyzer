@@ -617,7 +617,7 @@ def _deduplicate_findings(
 
 def _parse_significance_threshold(value: str) -> float | None:
     text = _normalize_numeric_text(value).casefold()
-    p_match = re.search(r"\bp\s*[<≤=]\s*([0-9]*\.?[0-9]+)", text)
+    p_match = re.search(r"\bp\s*[<≤]\s*([0-9]*\.?[0-9]+)", text)
     if p_match:
         try:
             return float(p_match.group(1))
@@ -753,8 +753,14 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
         else:
             threshold = _parse_significance_threshold(significance)
             explicit_p_values = _extract_explicit_p_values(cited_quote_text)
+            claimed_p_values = _extract_explicit_p_values(significance)
             quote_threshold = _parse_significance_threshold(cited_quote_text)
-            if threshold is not None and explicit_p_values:
+            if claimed_p_values and explicit_p_values:
+                significance_supported = any(
+                    abs(claimed - cited) < 0.0000001
+                    for claimed in claimed_p_values for cited in explicit_p_values
+                )
+            elif threshold is not None and explicit_p_values:
                 significance_supported = any(p_value < threshold for p_value in explicit_p_values)
             elif threshold is not None and quote_threshold is not None:
                 significance_supported = quote_threshold <= threshold
