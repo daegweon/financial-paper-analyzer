@@ -705,7 +705,11 @@ def _build_verified_summary(
         if method_parts:
             parts.append(", ".join(method_parts) + ".")
             evidence.extend(method_evidence)
-    for finding in findings[:3]:
+    supported_findings = [
+        finding for finding in findings
+        if finding.get("verification", {}).get("status") == "screen_passed"
+    ]
+    for finding in supported_findings[:3]:
         claim = finding.get("claim", "").strip()
         if claim:
             parts.append("주요 실증 결과: " + claim)
