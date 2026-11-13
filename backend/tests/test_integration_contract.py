@@ -353,6 +353,55 @@ def test_legacy_service_role_jwt_keeps_bearer_compatibility(monkeypatch):
         "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.test.signature",
     }
 
+
+def test_enqueue_reuses_existing_active_job_without_duplicate_insert(monkeypatch):
+    user_id = "11111111-1111-4111-8111-111111111111"
+    paper_id = "22222222-2222-4222-8222-222222222222"
+    existing_job_id = "44444444-4444-4444-8444-444444444444"
+    calls = []
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *exc): return None
+        async def get(self, url, **kwargs):
+            calls.append(("GET", url, kwargs))
+            if url.endswith("/auth/v1/user"):
+                return httpx.Response(200, json={"id": user_id})
+            if url.endswith("/rest/v1/papers"):
+                return httpx.Response(200, json=[{
+                    "id": paper_id,
+                    "user_id": user_id,
+                    "storage_path": user_id + "/contract.pdf",
+                }])
+            if url.endswith("/rest/v1/analysis_jobs"):
+                assert kwargs["params"]["status"] == "in.(queued,processing)"
+                return httpx.Response(200, json=[{
+                    "id": existing_job_id,
+                    "status": "processing",
+                    "stage": "gemini_analysis",
+                }])
+            raise AssertionError("Unexpected GET " + url)
+        async def post(self, url, **kwargs):
+            raise AssertionError("An active job must be reused, not duplicated.")
+
+    monkeypatch.setattr(module, "SUPABASE_URL", "https://mock.supabase.test")
+    monkeypatch.setattr(module, "SUPABASE_KEY", "publishable_mock")
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+
+    response = TestClient(module.app).post(
+        "/api/analyze/" + paper_id,
+        headers={"Authorization": "Bearer valid_test_jwt"},
+    )
+    assert response.status_code == 202
+    assert response.json() == {
+        "status": "processing",
+        "job_id": existing_job_id,
+        "stage": "gemini_analysis",
+    }
+    assert len(calls) == 3
+
+
 def test_other_user_paper_returns_404(monkeypatch):
     other_id = "33333333-3333-4333-8333-333333333333"
     paper_id = "22222222-2222-4222-8222-222222222222"
