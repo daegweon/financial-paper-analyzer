@@ -26,7 +26,7 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-terra")
-ANALYSIS_VERSION = "finance-structured-v3"
+ANALYSIS_VERSION = "finance-structured-v4"
 log = logging.getLogger("papersignal")
 app = FastAPI(title="PaperSignal API", version="0.2.0")
 app.add_middleware(
