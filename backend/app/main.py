@@ -155,6 +155,7 @@ METHODOLOGY_SCHEMA = object_schema({
     "identification_strategy": {"type": "string"},
     "identification_strategy_evidence": EVIDENCE_LIST,
     "equations": TEXT_LIST,
+    "equations_evidence": EVIDENCE_LIST,
     "evidence": EVIDENCE_LIST,
     "panel_dimensions": PANEL_DIMENSIONS_SCHEMA,
 })
@@ -638,7 +639,7 @@ def build_methodology_repair_prompt(
         "연구 설계, 표본, 기간, 데이터 출처, 종속·독립·통제변수, 추정 전략, 식별 전략, 방정식을 추출한다.\n"
         "각 항목은 반드시 해당 항목을 직접 뒷받침하는 실제 PDF 페이지 인용을 포함한다. "
         "전체 methodology evidence뿐 아니라 design_evidence, sample_evidence, period_evidence, "
-        "data_sources_evidence, empirical_strategy_evidence, identification_strategy_evidence를 각각 채운다.\n"
+        "data_sources_evidence, empirical_strategy_evidence, identification_strategy_evidence, equations_evidence를 각각 채운다.\n"
         "패널 자료라면 panel_dimensions의 cross_sectional_units, time_periods, reported_total_observations, "
         "observation_frequency, observation_unit 필드를 구분해 채운다. 총관측치는 원문에 직접 보고된 경우에만 "
         "reported_total_observations에 기록한다. "
@@ -793,7 +794,7 @@ def _normalize_methodology(
         key: validate_evidence(raw.get(f"{key}_evidence"), pages)
         for key in (
             "design", "sample", "period", "data_sources",
-            "empirical_strategy", "identification_strategy",
+            "empirical_strategy", "identification_strategy", "equations",
         )
     }
     variables: list[dict[str, Any]] = []
@@ -838,37 +839,37 @@ def _normalize_methodology(
         return methodology, warnings
 
     def supported_text(key: str) -> str:
-        evidence = field_evidence.get(key, [])
-        if evidence or overall_evidence:
+        if field_evidence.get(key):
             return _clean_text(raw.get(key))
         return "확인 불가"
 
     data_sources = (
         [str(x)[:300] for x in raw.get("data_sources", [])[:8]]
         if isinstance(raw.get("data_sources"), list)
-        and (field_evidence["data_sources"] or overall_evidence)
+        and field_evidence["data_sources"]
         else []
     )
     equations = (
         [str(x)[:500] for x in raw.get("equations", [])[:6]]
-        if isinstance(raw.get("equations"), list) and overall_evidence
+        if isinstance(raw.get("equations"), list) and field_evidence["equations"]
         else []
     )
     methodology = {
         "design": supported_text("design"),
-        "design_evidence": field_evidence["design"] or overall_evidence,
+        "design_evidence": field_evidence["design"],
         "sample": supported_text("sample"),
-        "sample_evidence": field_evidence["sample"] or overall_evidence,
+        "sample_evidence": field_evidence["sample"],
         "period": supported_text("period"),
-        "period_evidence": field_evidence["period"] or overall_evidence,
+        "period_evidence": field_evidence["period"],
         "data_sources": data_sources,
-        "data_sources_evidence": field_evidence["data_sources"] or overall_evidence,
+        "data_sources_evidence": field_evidence["data_sources"],
         "variables": variables,
         "empirical_strategy": supported_text("empirical_strategy"),
-        "empirical_strategy_evidence": field_evidence["empirical_strategy"] or overall_evidence,
+        "empirical_strategy_evidence": field_evidence["empirical_strategy"],
         "identification_strategy": supported_text("identification_strategy"),
-        "identification_strategy_evidence": field_evidence["identification_strategy"] or overall_evidence,
+        "identification_strategy_evidence": field_evidence["identification_strategy"],
         "equations": equations,
+        "equations_evidence": field_evidence["equations"],
         "evidence": method_evidence,
         "panel_dimensions": panel_dimensions,
     }
@@ -890,7 +891,7 @@ def _merge_methodologies(
     evidence_fields = (
         "design_evidence", "sample_evidence", "period_evidence",
         "empirical_strategy_evidence", "identification_strategy_evidence",
-        "data_sources_evidence",
+        "data_sources_evidence", "equations_evidence",
     )
     for field in text_fields:
         original_evidence = original.get(f"{field}_evidence", [])
@@ -945,7 +946,9 @@ def _merge_methodologies(
 def _methodology_needs_repair(methodology: dict[str, Any]) -> bool:
     panel = methodology.get("panel_dimensions", {})
     return bool(
-        not methodology.get("evidence")
+        not methodology.get("design_evidence")
+        or not methodology.get("sample_evidence")
+        or not methodology.get("period_evidence")
         or methodology.get("design") in (None, "", "확인 불가")
         or methodology.get("sample") in (None, "", "확인 불가")
         or methodology.get("period") in (None, "", "확인 불가")
