@@ -1,46 +1,53 @@
-# PaperSignal benchmark quality review — 2026-11-13
+# PaperSignal reanalysis review — 2026-11-13
 
-## Executive result
+## Executive status
 
-- All 10/10 benchmark papers have a completed Gemini analysis saved in Supabase.
-- 165 unique evidence excerpts were stored after the backend page-level exact-text validator accepted them.
-- Weighted gold-fact alias coverage screening: **74.25%**.
-- Models: {"gemini-3.5-flash-lite":8,"gemini-3.6-flash":2}.
-- Analysis schema versions: {"finance-structured-v3":4,"finance-structured-v4":6}.
+All ten benchmark papers remain completed in Supabase. Six targeted papers (B01, B03, B04, B05, B08, B09) were reanalyzed with `finance-structured-v5`.
 
-**Important:** 74.25% is a lexical screening score, not a claim that the model is 74.25% accurate. Alias matching can undercount correct paraphrases and can overcount terms that appear in the wrong context. The backend checks that a quote exists on the cited extracted PDF page, but this alone does not prove that the quote semantically supports the associated claim.
+- Methodology is now present for **10/10** papers.
+- Structured findings are present for **9/10** papers.
+- The latest analyses contain **175** page-validated evidence excerpts and **24** structured findings.
+- Eight papers used Gemini Flash-Lite and two used Gemini Flash.
+- Lexical gold-fact coverage screening is **90.0%** after adding source-grounded Korean paraphrase aliases.
 
-## Cross-paper findings
+The coverage score is a lexical screening metric, not semantic accuracy. Because aliases were refined after the first scorecard, the current 90.0% must not be compared directly with the earlier 74.25%.
 
-1. **Structured findings are missing in three analyses:** B01, B04, and B08 have no entries in the `findings` array even though their summaries describe substantive empirical results.
-2. **Methodology sections are incomplete in three analyses:** B03, B05, and B09 were normalized to `확인 불가` because no methodology evidence passed validation.
-3. **Language consistency:** B05's summary and much of its analysis are in English despite the Korean output requirement.
-4. **Benchmark version consistency:** B01–B04 use `finance-structured-v3`; B05–B10 use `finance-structured-v4`. Scores are therefore not a fully controlled comparison of one fixed prompt/schema version.
-5. **Claim-to-quote semantic support needs human review:** for example, B10 includes company names in an implication claim while its attached quote speaks more generally about stock characteristics. The cited page may contain additional context, but the quote shown does not itself substantiate those names.
+## Targeted reanalysis comparison
 
-## Paper-level review
+| Paper | Previous method | Current method | Findings before → after | Evidence before → after |
+|---|---|---|---:|---:|
+| B01 | Present | Present | 0 → 3 | 13 → 18 |
+| B03 | Missing | Present | 2 → 1 | 10 → 9 |
+| B04 | Present | Present | 0 → 2 | 11 → 12 |
+| B05 | Missing | Present | 3 → 2 | 20 → 22 |
+| B08 | Present | Present | 0 → 0 | 15 → 8 |
+| B09 | Missing | Present | 1 → 4 | 10 → 20 |
 
-| Paper | Alias coverage | Verified excerpts | Findings | Methodology |
-|---|---:|---:|---:|---|
-| B01 | 58.3% | 13 | 0 | Present |
-| B02 | 100.0% | 15 | 2 | Present |
-| B03 | 50.0% | 10 | 2 | Incomplete |
-| B04 | 75.0% | 11 | 0 | Present |
-| B05 | 75.0% | 20 | 3 | Incomplete |
-| B06 | 75.0% | 13 | 1 | Present |
-| B07 | 75.0% | 36 | 6 | Present |
-| B08 | 80.0% | 15 | 0 | Present |
-| B09 | 66.7% | 10 | 1 | Incomplete |
-| B10 | 87.5% | 22 | 3 | Present |
+## What improved
 
-## Recommended improvements
+- B01: findings increased from 0 to 3; five variables now carry individual page citations. The summary still falls back to a no-verifiable-summary message.
+- B03: methodology is now present (OLS, 59 firms, 2008–2017 monthly sample, data sources, and variables). One structured finding remains.
+- B04: findings increased from 0 to 2; the Markov regime-switching design and latent regime interpretation are now represented.
+- B05: methodology is now present, including FE estimation, HAC standard errors, and a set of five control variables. Two findings are structured.
+- B09: methodology is now present with HDFE, sample, data sources, variables and four findings.
 
-1. Normalize PDF typography during citation matching (Unicode ligatures, dashes, and whitespace) while storing the matched excerpt from the actual extracted page text. This may recover legitimate methodology/findings citations currently rejected by strict string matching.
-2. Make the prompt require concise, separately cited empirical findings and distinguish hypotheses from realized results.
-3. Add a post-generation quality gate: warn or request a focused second pass when methodology is empty or when a substantive summary exists but the findings array is empty.
-4. Re-run B01–B04 with the current v4 engine if a version-controlled comparison is needed. This consumes additional Gemini quota.
-5. Human-review all material numeric results and the semantic relationship between every claim and its cited passage before using the benchmark score as a product-quality claim.
+## Outstanding defect: B08
 
-## Scope
+B08's v5 result has a complete panel-regression methodology and its summary describes the directions of ESG scores / ESG momentum against returns / volatility. Its page-1 abstract evidence also explicitly states these empirical relationships. However, the structured `findings` array is still empty and a warning says no verifiable empirical finding was found.
 
-This is the first automated screening report, not the final expert-validated benchmark. Exact PDF page text is available to the backend validator at analysis time; this report uses the stored validated-evidence counts. A separate human audit against all ten publisher PDFs remains outstanding.
+This is a real structured-output extraction defect, not merely an alias-screening issue. It should be fixed with a targeted findings-only extraction pass that uses the already extracted page text and requires one exact page quote per finding. Do not fabricate findings from the summary.
+
+## Other quality issue: B01 summary
+
+B01 now has three findings and methodology, but the summary field is a fallback message because the summary-specific evidence check did not pass. A future repair should construct a concise summary only from already validated findings and methodology evidence, or run a short summary-only pass.
+
+## Evaluation limitations
+
+- All stored evidence excerpts passed the backend's page-level citation validation at analysis time. This verifies that the quote is present on the cited extracted page, not that it semantically supports every associated claim.
+- The alias coverage score can miss paraphrases and cannot judge numerical correctness.
+- Coefficient signs, units, t-statistics, p-values, significance levels, causal interpretation, and claim-to-quote entailment still require human review against the publisher PDFs.
+- The ten analyses are not yet a fully controlled same-version experiment: B02 remains v3; B06, B07 and B10 remain v4; the six targeted reanalyses are v5.
+
+## Recommended next action
+
+Implement a small targeted findings-repair pass for B08 and a summary repair for B01, then re-run only those two papers. Afterward, perform a human audit of the most material numeric claims and citations before treating this benchmark as an accuracy claim.
