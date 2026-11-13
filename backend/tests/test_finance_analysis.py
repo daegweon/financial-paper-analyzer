@@ -240,6 +240,7 @@ def test_gemini_retries_transient_503(monkeypatch):
         def __init__(self, status_code):
             self.status_code = status_code
             self.headers = {}
+            self.text = "temporary overload" if status_code == 503 else ""
         def raise_for_status(self):
             if self.status_code >= 400:
                 raise AssertionError("unexpected HTTP error")
