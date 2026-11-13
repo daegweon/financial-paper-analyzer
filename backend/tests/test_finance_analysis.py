@@ -421,7 +421,7 @@ def test_methodology_keeps_variables_when_section_level_quote_is_missing():
     raw = _sample_model_output()
     raw["methodology"]["evidence"] = []
     result = module.normalize_llm_result(raw, 2, pages)
-    assert result["methodology"]["design"] == "은행 패널 분석"
+    assert result["methodology"]["design"] == "확인 불가"
     assert len(result["methodology"]["variables"]) == 1
     assert result["methodology"]["variables"][0]["name"] == "loan growth"
     assert any("변수별 원문 근거" in warning for warning in result["warnings"])
