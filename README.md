@@ -19,12 +19,14 @@ Set these variables on the Railway `papersignal-api` service:
 
 - `AI_PROVIDER=gemini`
 - `GEMINI_API_KEY=<secret>`
-- `GEMINI_MODEL=gemini-3.8-flash`
+- `GEMINI_MODEL=gemini-3.5-flash-lite`
+- `GEMINI_FALLBACK_MODEL=gemini-3.6-flash`
 
-Gemini 3.8 Flash is the current default. The Gemini Free Tier offers free input and output tokens subject to project-specific RPM, TPM and RPD limits. Check the actual limits in Google AI Studio. The free tier may use submitted prompts and responses to improve Google products and may involve human review. Do not submit sensitive, confidential, or personal information to unpaid Gemini services. For PaperSignal, restrict free-tier use to public or synthetic papers and show the in-app data-use notice.
+Gemini 3.5 Flash-Lite is the current primary model; Gemini 3.6 Flash is the fallback when the primary model is temporarily unavailable. The Gemini Free Tier offers free input and output tokens subject to project-specific RPM, TPM and RPD limits. Check the actual limits in Google AI Studio. The free tier may use submitted prompts and responses to improve Google products and may involve human review. Do not submit sensitive, confidential, or personal information to unpaid Gemini services. For PaperSignal, restrict free-tier use to public or synthetic papers and show the in-app data-use notice.
 
 Official references:
-- https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash
+- https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite
+- https://ai.google.dev/gemini-api/docs/models/gemini-3.6-flash
 - https://ai.google.dev/gemini-api/docs/pricing
 - https://ai.google.dev/gemini-api/docs/rate-limits
 - https://ai.google.dev/gemini-api/terms
@@ -112,4 +114,10 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-Database migration: `supabase/migrations/20261113000000_initial_schema.sql`
+Database migrations:
+- `supabase/migrations/20261113000000_initial_schema.sql`
+- `supabase/migrations/20261113010000_analysis_jobs.sql`
+
+## Finance paper quality benchmark
+
+A ten-paper open-access candidate set, source-grounded expected facts, human-review template, and screening evaluator are available in [`benchmark/`](benchmark/README.md). The benchmark has not yet been run on all ten PDFs. Alias coverage is a screening signal only; factual accuracy and page citations require human review against the publisher PDF.
