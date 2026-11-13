@@ -1424,83 +1424,195 @@ async def llm_result(count: int, pages: list[dict[str, Any]]) -> dict[str, Any]:
         raise ValueError("지원하지 않는 AI 제공자입니다.")
 
     result = normalize_llm_result(parsed, count, pages)
-    repair_attempted = False
-    repair_model: str | None = None
-    repair_status = "not_needed"
 
-    # Spend a second model call only when the first pass omitted findings or
-    # its numeric/significance screen found a concrete issue.
-    needs_repair = (
-        provider in ("gemini", "openai")
-        and (
-            not result["findings"]
-            or any(item["verification"]["status"] == "review" for item in result["findings"])
+    # Methodology is repaired independently from findings. This is triggered
+    # only when section-level evidence/design/sample/period is missing or panel
+    # dimensions are inconsistent.
+    methodology_repair_attempted = False
+    methodology_repair_model: str | None = None
+    methodology_repair_status = "not_needed"
+    if _methodology_needs_repair(result["methodology"]):
+        methodology_repair_attempted = True
+        methodology_repair_status = "attempted"
+        try:
+            methodology_prompt = build_methodology_repair_prompt(
+                pages, result["methodology"]
+            )
+            if provider == "gemini":
+                methodology_raw, methodology_repair_model = await _generate_gemini(
+                    methodology_prompt,
+                    response_schema=METHODOLOGY_ONLY_SCHEMA,
+                    output_token_limits=(8192, 8192),
+                )
+            else:
+                methodology_raw = await _generate_openai(
+                    methodology_prompt,
+                    response_schema=METHODOLOGY_ONLY_SCHEMA,
+                    max_output_tokens=8192,
+                )
+                methodology_repair_model = model_used
+            models_used.append(methodology_repair_model)
+            repaired_methodology, method_warnings = _normalize_methodology(
+                methodology_raw.get("methodology"), pages
+            )
+            has_repaired_method = bool(
+                repaired_methodology.get("evidence")
+                or repaired_methodology.get("variables")
+            )
+            if has_repaired_method:
+                had_section_evidence = bool(result["methodology"].get("evidence"))
+                result["methodology"] = _merge_methodologies(
+                    result["methodology"], repaired_methodology
+                )
+                methodology_repair_status = (
+                    "reviewed" if had_section_evidence
+                    else "recovered" if result["methodology"].get("evidence")
+                    else "partial"
+                )
+                result["warnings"] = [
+                    warning for warning in result["warnings"]
+                    if "방법론은 검증 가능한 직접 인용이 없어" not in warning
+                    and "방법론 섹션 인용이 없어" not in warning
+                    and "변수별 인용이 확인된 항목만 표시" not in warning
+                    and "횡단면 단위 수 × 기간 수" not in warning
+                ]
+                result["warnings"].extend(method_warnings)
+                panel_status = result["methodology"].get("panel_dimensions", {}).get("consistency_status")
+                if panel_status == "mismatch":
+                    result["warnings"].append(
+                        result["methodology"]["panel_dimensions"]["consistency_note"]
+                    )
+            else:
+                methodology_repair_status = "no_supported_methodology"
+                result["warnings"].append(
+                    "2차 방법론 검증에서도 페이지 인용으로 뒷받침되는 방법론 정보를 추가 확보하지 못했습니다."
+                )
+        except Exception as exc:
+            methodology_repair_status = "failed"
+            log.warning(
+                "Targeted methodology verification failed provider=%s error=%s",
+                provider, type(exc).__name__,
+            )
+            result["warnings"].append(
+                "2차 방법론 검증을 완료하지 못해 1차 추출 결과를 유지했습니다."
+            )
+
+    result["methodology_verification"] = {
+        "repair_attempted": methodology_repair_attempted,
+        "repair_status": methodology_repair_status,
+        "repair_model": methodology_repair_model,
+    }
+
+    # A focused findings pass uses a wider and more diverse set of result/table
+    # pages. It is called only when findings are absent or a numeric screen
+    # found a concrete mismatch.
+    findings_repair_attempted = False
+    findings_repair_model: str | None = None
+    findings_repair_status = "not_needed"
+    duplicate_count = int(result.get("findings_deduplication", {}).get("duplicates_removed", 0))
+    needs_findings_repair = (
+        not result["findings"]
+        or any(
+            item.get("verification", {}).get("status") == "review"
+            for item in result["findings"]
         )
     )
-    if needs_repair:
-        repair_attempted = True
-        repair_status = "attempted"
+    if needs_findings_repair:
+        findings_repair_attempted = True
+        findings_repair_status = "attempted"
         try:
-            repair_prompt = build_findings_repair_prompt(pages, result["findings"])
+            findings_prompt = build_findings_repair_prompt(
+                pages, result["findings"]
+            )
             if provider == "gemini":
-                repaired_raw, repair_model = await _generate_gemini(
-                    repair_prompt,
+                repaired_raw, findings_repair_model = await _generate_gemini(
+                    findings_prompt,
                     response_schema=FINDINGS_ONLY_SCHEMA,
                     output_token_limits=(8192, 8192),
                 )
             else:
                 repaired_raw = await _generate_openai(
-                    repair_prompt,
+                    findings_prompt,
                     response_schema=FINDINGS_ONLY_SCHEMA,
                     max_output_tokens=8192,
                 )
-                repair_model = model_used
-            models_used.append(repair_model)
-            repaired_findings = _normalize_findings(repaired_raw.get("findings"), pages)
+                findings_repair_model = model_used
+            models_used.append(findings_repair_model)
+            repaired_findings_raw = _normalize_findings(
+                repaired_raw.get("findings"), pages
+            )
+            repaired_findings, repair_duplicates = _deduplicate_findings(
+                repaired_findings_raw, pages
+            )
+            duplicate_count += repair_duplicates
             if repaired_findings:
                 original_passed = [
                     item for item in result["findings"]
-                    if item["verification"]["status"] == "screen_passed"
+                    if item.get("verification", {}).get("status") == "screen_passed"
                 ]
-                merged: list[dict[str, Any]] = []
-                seen: set[tuple[str, tuple[tuple[int, str], ...]]] = set()
-                for item in original_passed + repaired_findings:
-                    evidence_key = tuple(
-                        (int(ev["page"]), str(ev["quote"]))
-                        for ev in item.get("evidence", [])
-                    )
-                    key = (item["claim"].casefold(), evidence_key)
-                    if key not in seen:
-                        seen.add(key)
-                        merged.append(item)
+                merged, merge_duplicates = _deduplicate_findings(
+                    original_passed + repaired_findings, pages
+                )
+                duplicate_count += merge_duplicates
                 result["findings"] = merged[:8]
-                repair_status = "recovered" if not original_passed else "reviewed"
-                result["warnings"] = [
-                    warning for warning in result["warnings"]
-                    if "2차 집중 검증이 필요합니다" not in warning
-                    and "추가 검토가 필요합니다" not in warning
-                ]
+                findings_repair_status = (
+                    "recovered" if not original_passed else "reviewed"
+                )
+            elif result["findings"]:
+                findings_repair_status = "no_additional_supported_findings"
             else:
-                repair_status = "no_supported_findings"
-                result["warnings"].append("2차 실증 결과 검증에서도 페이지 인용이 확인된 추가 결과를 찾지 못했습니다.")
+                findings_repair_status = "no_supported_findings"
+                result["warnings"].append(
+                    "2차 실증 결과 검증에서도 페이지 인용이 확인된 추가 결과를 찾지 못했습니다."
+                )
         except Exception as exc:
-            repair_status = "failed"
+            findings_repair_status = "failed"
             log.warning(
                 "Targeted findings verification failed provider=%s error=%s",
                 provider, type(exc).__name__,
             )
-            result["warnings"].append("2차 실증 결과 검증을 완료하지 못해 1차 결과를 유지했습니다.")
+            result["warnings"].append(
+                "2차 실증 결과 검증을 완료하지 못해 1차 결과를 유지했습니다."
+            )
+
+    result["findings_deduplication"] = {"duplicates_removed": duplicate_count}
     result["findings_verification"] = {
-        "repair_attempted": repair_attempted,
-        "repair_status": repair_status,
-        "repair_model": repair_model,
+        "repair_attempted": findings_repair_attempted,
+        "repair_status": findings_repair_status,
+        "repair_model": findings_repair_model,
     }
+
+    # If the original summary was reconstructed, rebuild it after methodology
+    # and findings repairs so it reflects the final verified sections.
+    summary_status = result.get("summary_verification", {}).get("status")
+    if summary_status in (
+        "reconstructed_missing_citation",
+        "reconstructed_numeric_review",
+    ):
+        summary, summary_evidence = _build_verified_summary(
+            result["findings"], result["methodology"], result["research_question"]
+        )
+        if summary_evidence:
+            result["summary"] = summary
+            result["evidence"] = summary_evidence
+            result["summary_verification"] = {
+                "status": "reconstructed_after_targeted_verification",
+                "unsupported_numeric_tokens": [],
+            }
+
+    if not any(
+        item.get("verification", {}).get("status") == "review"
+        for item in result["findings"]
+    ):
+        result["warnings"] = [
+            warning for warning in result["warnings"]
+            if "일부 실증 결과의 숫자·방향·유의수준" not in warning
+        ]
     result["provider"] = provider
     result["model"] = model_used
     result["models_used"] = list(dict.fromkeys(models_used))
     result["evidence"] = _all_evidence(result)
     return result
-
 
 def supabase_headers(token: str) -> dict[str, str]:
     return {"apikey": SUPABASE_KEY, "Authorization": "Bearer " + token}
