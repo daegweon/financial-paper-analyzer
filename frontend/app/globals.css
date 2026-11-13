@@ -33,3 +33,6 @@
 .provider-notice p{font-size:11px;line-height:1.75;margin:0;color:#826d43}
 
 .analysis-progress{margin:16px 0;padding:12px;border-radius:8px;background:#edf7f5;color:#167c78;font-size:12px;line-height:1.7}
+
+.verification-ok{display:inline-block;border-radius:20px;background:#e9f6ef;color:#237a4b;padding:4px 8px;font-size:10px}
+.verification-review{display:inline-block;border-radius:20px;background:#fff4df;color:#98691b;padding:4px 8px;font-size:10px}
