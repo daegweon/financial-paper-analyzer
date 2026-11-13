@@ -226,4 +226,4 @@ def test_live_signup_upload_analysis_and_cross_user_isolation():
                 pytest.fail(
                     "E2E job did not reach a terminal state before timeout; "
                     "the disposable fixture was retained for safe recovery."
-                )                )
+                )
