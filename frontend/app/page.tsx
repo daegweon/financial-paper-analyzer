@@ -452,8 +452,7 @@ export default function Home() {
                 {!!analysis.result.summary_verification?.unsupported_numeric_tokens?.length && <p className="warning">요약에서 인용 페이지로 확인되지 않은 숫자: {analysis.result.summary_verification.unsupported_numeric_tokens.join(", ")}</p>}
                 {analysis.result.summary_consistency && <p className={analysis.result.summary_consistency.status === "review" ? "warning" : "verification-note"}>
                   요약·실증 결과 일관성: {analysis.result.summary_consistency.status === "review" ? "구조화 결과와 추가 대조 필요" : "1차 일관성 검사 통과"}
-                  {!!analysis.result.summary_consistency.unmatched_numeric_tokens.length && {" · 구조화 항목에서 찾지 못한 숫자: " + analysis.result.summary_consistency.unmatched_numeric_tokens.join(", ")}
-                  }
+                  {!!analysis.result.summary_consistency.unmatched_numeric_tokens.length && <span>{" · 구조화 항목에서 찾지 못한 숫자: " + analysis.result.summary_consistency.unmatched_numeric_tokens.join(", ")}</span>}
                 </p>}
               </section>
               <section className="analysis-section">
