@@ -14,6 +14,8 @@ from app.main import (
 )
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 log = logging.getLogger("papersignal.worker")
 POLL_SECONDS = max(2, int(os.getenv("WORKER_POLL_SECONDS", "5")))
 LEASE_SECONDS = max(300, int(os.getenv("WORKER_LEASE_SECONDS", "1200")))
