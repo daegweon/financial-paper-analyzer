@@ -201,9 +201,10 @@ def test_gemini_provider_uses_structured_json_and_server_side_key(monkeypatch):
     assert headers["x-goog-api-key"] == "test-gemini-key-not-used"
     assert "key=" not in requests[0][0]
     config = requests[0][1]["json"]["generationConfig"]
-    assert config["responseFormat"]["text"]["mimeType"] == "application/json"
-    assert config["responseFormat"]["text"]["schema"] == module.ANALYSIS_SCHEMA
+    assert config["responseMimeType"] == "application/json"
+    assert config["responseJsonSchema"] == module.ANALYSIS_SCHEMA
     assert config["thinkingConfig"]["thinkingLevel"] == "low"
+    assert config["candidateCount"] == 1
     assert requests[0][1]["json"]["contents"][0]["parts"][0]["text"].startswith("다음은")
 
 
@@ -226,3 +227,46 @@ def test_gemini_health_reports_free_tier_data_notice(monkeypatch):
     assert response.json()["ai_provider"] == "gemini"
     assert response.json()["model"] == "gemini-3.8-flash"
     assert response.json()["free_tier_data_notice"] is True
+
+
+
+def test_gemini_retries_transient_503(monkeypatch):
+    pages = _sample_pages()
+    model_output = _sample_model_output()
+    requests = []
+    sleeps = []
+
+    class FakeResponse:
+        def __init__(self, status_code):
+            self.status_code = status_code
+            self.headers = {}
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                raise AssertionError("unexpected HTTP error")
+        def json(self):
+            return {"candidates": [{
+                "finishReason": "STOP",
+                "content": {"parts": [{"text": json.dumps(model_output, ensure_ascii=False)}]},
+            }]}
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return None
+        async def post(self, url, **kwargs):
+            requests.append(url)
+            return FakeResponse(503 if len(requests) == 1 else 200)
+
+    async def fake_sleep(seconds):
+        sleeps.append(seconds)
+
+    monkeypatch.setattr(module, "AI_PROVIDER", "gemini")
+    monkeypatch.setattr(module, "GEMINI_API_KEY", "test-key-not-used")
+    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-3.8-flash")
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    monkeypatch.setattr(module.asyncio, "sleep", fake_sleep)
+
+    result = asyncio.run(module.llm_result(2, pages))
+    assert result["provider"] == "gemini"
+    assert len(requests) == 2
+    assert sleeps == [1.5]
