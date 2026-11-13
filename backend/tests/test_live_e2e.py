@@ -91,6 +91,7 @@ def test_live_signup_upload_analysis_and_cross_user_isolation():
     paper_id = None
     analysis_id = None
     job_id = None
+    job_terminal = False
 
     with httpx.Client(base_url=supabase_url, timeout=45) as supabase, httpx.Client(
         base_url=api_url, timeout=45
@@ -154,6 +155,7 @@ def test_live_signup_upload_analysis_and_cross_user_isolation():
                 response.raise_for_status()
                 status = response.json()
                 if status["status"] in {"completed", "failed"}:
+                    job_terminal = True
                     break
                 time.sleep(5)
 
@@ -197,7 +199,7 @@ def test_live_signup_upload_analysis_and_cross_user_isolation():
         finally:
             # Clean only the uniquely named E2E fixture and rows created above.
             admin = _admin_headers(service_key, publishable_key)
-            if paper_id:
+            if paper_id and job_terminal:
                 supabase.delete(
                     "/rest/v1/analyses",
                     params={"paper_id": "eq." + paper_id},
@@ -213,9 +215,15 @@ def test_live_signup_upload_analysis_and_cross_user_isolation():
                     params={"id": "eq." + paper_id},
                     headers=admin,
                 )
-            if object_path:
-                supabase.delete(
-                    "/storage/v1/object/papers",
-                    headers=admin,
-                    json={"prefixes": [object_path]},
-                )
+                if object_path:
+                    supabase.request(
+                        "DELETE",
+                        "/storage/v1/object/papers",
+                        headers=admin,
+                        json={"prefixes": [object_path]},
+                    )
+            elif paper_id:
+                pytest.fail(
+                    "E2E job did not reach a terminal state before timeout; "
+                    "the disposable fixture was retained for safe recovery."
+                )                )
