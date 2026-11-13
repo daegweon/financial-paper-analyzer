@@ -275,7 +275,7 @@ def _clean_claims(
 
 
 _NUMERIC_TOKEN_RE = re.compile(
-    r"(?<![\w.])[-+]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?%?(?![\w])"
+    r"(?<![\w.])[-+]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?%?"
 )
 
 
@@ -383,7 +383,7 @@ def _are_duplicate_findings(left: dict[str, Any], right: dict[str, Any]) -> bool
     if not left_claim or not right_claim:
         return False
     similarity = SequenceMatcher(None, left_claim, right_claim).ratio()
-    if similarity < 0.82:
+    if similarity < 0.72:
         return False
     shared_pages = _finding_page_set(left) & _finding_page_set(right)
     if not shared_pages:
@@ -627,8 +627,9 @@ def build_methodology_repair_prompt(
         "각 항목은 반드시 해당 항목을 직접 뒷받침하는 실제 PDF 페이지 인용을 포함한다. "
         "전체 methodology evidence뿐 아니라 design_evidence, sample_evidence, period_evidence, "
         "data_sources_evidence, empirical_strategy_evidence, identification_strategy_evidence를 각각 채운다.\n"
-        "패널 자료라면 panel_dimensions에 횡단면 단위 수, 시간 기간 수, 원문에 보고된 총관측치, "
-        "관측 빈도, 관측 단위를 구분해 적는다. 총관측치는 원문에 직접 보고된 경우에만 reported_total_observations에 기록한다. "
+        "패널 자료라면 panel_dimensions의 cross_sectional_units, time_periods, reported_total_observations, "
+        "observation_frequency, observation_unit 필드를 구분해 채운다. 총관측치는 원문에 직접 보고된 경우에만 "
+        "reported_total_observations에 기록한다. "
         "횡단면 단위 수 × 기간 수로 계산한 값과 원문 보고값을 혼동하지 않는다. "
         "패널이 아니거나 숫자를 확인할 수 없으면 해당 필드를 '확인 불가'로 둔다.\n"
         "인용은 제공된 페이지의 연속된 10~220자 원문이어야 하며 page는 실제 PDF 페이지 번호다. "
