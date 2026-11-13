@@ -24,8 +24,15 @@ WORKER_ID = os.getenv("WORKER_ID", socket.gethostname())
 def headers() -> dict[str, str]:
     if not SERVICE_ROLE_KEY:
         raise RuntimeError("SUPABASE_SERVICE_ROLE_KEY is required.")
+    if SERVICE_ROLE_KEY.startswith("sb_secret_"):
+        # New Supabase secret keys are opaque API keys, never JWT bearer tokens.
+        return {
+            "apikey": SERVICE_ROLE_KEY,
+            "Content-Type": "application/json",
+        }
     if not SUPABASE_KEY:
-        raise RuntimeError("SUPABASE_PUBLISHABLE_KEY is required.")
+        raise RuntimeError("SUPABASE_PUBLISHABLE_KEY is required for legacy service_role keys.")
+    # Backward compatibility for the legacy JWT-based service_role key.
     return {
         "apikey": SUPABASE_KEY,
         "Authorization": "Bearer " + SERVICE_ROLE_KEY,
