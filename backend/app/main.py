@@ -644,20 +644,21 @@ def _legend_supports_significance(stars: str, threshold: float, legend_text: str
     if not stars or not legend_text:
         return None
     normalized = _normalize_numeric_text(legend_text).casefold()
+    marker_matches = list(re.finditer(r"(?<!\*)\*{1,3}(?!\*)", normalized))
+    level_matches = list(re.finditer(r"(?<!\d)(1|5|10)\s*%", normalized))
+    if len(marker_matches) >= 3 and len(level_matches) >= 3:
+        marker_levels = {}
+        for marker, level in zip(marker_matches[:3], level_matches[:3]):
+            marker_levels[len(marker.group(0))] = float(level.group(1)) / 100
+        requested_level = marker_levels.get(len(stars))
+        if requested_level is not None:
+            return requested_level <= threshold
     exact_pattern = r"(?<!\*)" + re.escape(stars) + r"(?!\*)"
     for match in re.finditer(exact_pattern, normalized):
         window = normalized[max(0, match.start() - 25):match.end() + 120]
         found = _parse_significance_threshold(window)
         if found is not None:
             return found <= threshold
-    # Common compact legend: "***, **, and * denote 1%, 5%, and 10% significance".
-    compact = re.search(
-        r"\*{3}.{0,25}?(1\s*%).{0,50}?\*{2}.{0,25}?(5\s*%).{0,50}?\*{1}.{0,25}?(10\s*%)",
-        normalized,
-    )
-    if compact:
-        star_thresholds = {"***": 0.01, "**": 0.05, "*": 0.10}
-        return star_thresholds.get(stars, 1.0) <= threshold
     return None
 
 
