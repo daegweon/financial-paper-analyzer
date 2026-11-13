@@ -188,23 +188,25 @@ def test_gemini_provider_uses_structured_json_and_server_side_key(monkeypatch):
 
     monkeypatch.setattr(module, "AI_PROVIDER", "gemini")
     monkeypatch.setattr(module, "GEMINI_API_KEY", "test-gemini-key-not-used")
-    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-3.8-flash")
+    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-3.5-flash-lite")
+    monkeypatch.setattr(module, "GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
     monkeypatch.setattr(module, "OPENAI_API_KEY", "")
     monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
 
     result = asyncio.run(module.llm_result(2, pages))
     assert result["mode"] == "llm"
     assert result["provider"] == "gemini"
-    assert result["model"] == "gemini-3.8-flash"
-    assert requests[0][0].endswith("/v1beta/models/gemini-3.8-flash:generateContent")
+    assert result["model"] == "gemini-3.5-flash-lite"
+    assert requests[0][0].endswith("/v1beta/models/gemini-3.5-flash-lite:generateContent")
     headers = requests[0][1]["headers"]
     assert headers["x-goog-api-key"] == "test-gemini-key-not-used"
     assert "key=" not in requests[0][0]
     config = requests[0][1]["json"]["generationConfig"]
     assert config["responseMimeType"] == "application/json"
     assert config["responseJsonSchema"] == module.ANALYSIS_SCHEMA
-    assert config["thinkingConfig"]["thinkingLevel"] == "low"
-    assert config["candidateCount"] == 1
+    assert config["thinkingConfig"]["thinkingLevel"] == "minimal"
+    assert "candidateCount" not in config
+    assert config["maxOutputTokens"] == 4096
     assert requests[0][1]["json"]["contents"][0]["parts"][0]["text"].startswith("다음은")
 
 
@@ -213,24 +215,26 @@ def test_provider_selection_does_not_silently_fallback(monkeypatch):
     monkeypatch.setattr(module, "GEMINI_API_KEY", "")
     monkeypatch.setattr(module, "OPENAI_API_KEY", "an-openai-key")
     assert module.active_ai_provider() is None
-    assert module.active_ai_model("gemini") == "gemini-3.8-flash"
+    assert module.active_ai_model("gemini") == "gemini-3.5-flash-lite"
 
 
 def test_gemini_health_reports_free_tier_data_notice(monkeypatch):
     from fastapi.testclient import TestClient
     monkeypatch.setattr(module, "AI_PROVIDER", "gemini")
     monkeypatch.setattr(module, "GEMINI_API_KEY", "test-key")
-    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-3.8-flash")
+    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-3.5-flash-lite")
+    monkeypatch.setattr(module, "GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
     response = TestClient(module.app).get("/health")
     assert response.status_code == 200
     assert response.json()["analysis_mode"] == "ai"
     assert response.json()["ai_provider"] == "gemini"
-    assert response.json()["model"] == "gemini-3.8-flash"
+    assert response.json()["model"] == "gemini-3.5-flash-lite"
+    assert response.json()["fallback_model"] == "gemini-3.6-flash"
     assert response.json()["free_tier_data_notice"] is True
 
 
 
-def test_gemini_retries_transient_503(monkeypatch):
+def test_gemini_falls_back_to_flash_when_primary_returns_503(monkeypatch):
     pages = _sample_pages()
     model_output = _sample_model_output()
     requests = []
@@ -255,7 +259,7 @@ def test_gemini_retries_transient_503(monkeypatch):
         async def __aenter__(self): return self
         async def __aexit__(self, *args): return None
         async def post(self, url, **kwargs):
-            requests.append(url)
+            requests.append((url, kwargs))
             return FakeResponse(503 if len(requests) == 1 else 200)
 
     async def fake_sleep(seconds):
@@ -263,11 +267,58 @@ def test_gemini_retries_transient_503(monkeypatch):
 
     monkeypatch.setattr(module, "AI_PROVIDER", "gemini")
     monkeypatch.setattr(module, "GEMINI_API_KEY", "test-key-not-used")
-    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-3.8-flash")
+    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-3.5-flash-lite")
+    monkeypatch.setattr(module, "GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
     monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
     monkeypatch.setattr(module.asyncio, "sleep", fake_sleep)
 
     result = asyncio.run(module.llm_result(2, pages))
     assert result["provider"] == "gemini"
+    assert result["model"] == "gemini-3.6-flash"
     assert len(requests) == 2
-    assert sleeps == [2]
+    assert requests[0][0].endswith("/gemini-3.5-flash-lite:generateContent")
+    assert requests[1][0].endswith("/gemini-3.6-flash:generateContent")
+    assert requests[0][1]["json"]["generationConfig"]["thinkingConfig"]["thinkingLevel"] == "minimal"
+    assert requests[1][1]["json"]["generationConfig"]["thinkingConfig"]["thinkingLevel"] == "low"
+    assert sleeps == [1.0]
+
+
+def test_gemini_falls_back_when_primary_times_out(monkeypatch):
+    pages = _sample_pages()
+    model_output = _sample_model_output()
+    requests = []
+
+    class FakeResponse:
+        status_code = 200
+        headers = {}
+        text = ""
+        def raise_for_status(self): return None
+        def json(self):
+            return {"candidates": [{
+                "finishReason": "STOP",
+                "content": {"parts": [{"text": json.dumps(model_output, ensure_ascii=False)}]},
+            }]}
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return None
+        async def post(self, url, **kwargs):
+            requests.append(url)
+            if len(requests) == 1:
+                raise httpx.ReadTimeout("primary timed out")
+            return FakeResponse()
+
+    async def fake_sleep(seconds): return None
+
+    monkeypatch.setattr(module, "AI_PROVIDER", "gemini")
+    monkeypatch.setattr(module, "GEMINI_API_KEY", "test-key-not-used")
+    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-3.5-flash-lite")
+    monkeypatch.setattr(module, "GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    monkeypatch.setattr(module.asyncio, "sleep", fake_sleep)
+
+    result = asyncio.run(module.llm_result(2, pages))
+    assert result["provider"] == "gemini"
+    assert result["model"] == "gemini-3.6-flash"
+    assert len(requests) == 2
