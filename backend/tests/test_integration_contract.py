@@ -1,11 +1,11 @@
-import asyncio
-
 """Integration-contract tests for the PDF analysis endpoint.
 
 This simulates Supabase Auth, private Storage, and RLS-scoped Data API calls
 without creating users or documents in production.
 """
 from __future__ import annotations
+
+import asyncio
 
 import fitz
 import httpx
