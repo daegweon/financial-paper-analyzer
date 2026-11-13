@@ -316,25 +316,30 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
 
     significance = str(finding.get("statistical_significance", "")).casefold()
     significance_numbers = _extract_numeric_tokens(significance)
-    if significance.strip() and significance not in ("확인 불가", "not reported", "not available"):
-        if significance_numbers:
-            significance_supported: bool | None = all(
-                _numeric_key(token) in cited_numbers for token in significance_numbers
-            )
-        elif any(term in significance for term in ("not significant", "not statistically significant", "유의하지")):
-            significance_supported = any(
+    if not significance.strip() or significance in ("확인 불가", "not reported", "not available"):
+        significance_supported: bool | None = None
+    else:
+        if any(term in significance for term in ("not significant", "not statistically significant", "유의하지")):
+            phrase_supported = any(
                 term in cited_text for term in ("not significant", "not statistically significant", "유의하지")
             )
         elif any(term in significance for term in ("significant", "유의")):
-            significance_supported = (
+            phrase_supported = (
                 "significant" in cited_text
                 and "not significant" not in cited_text
                 and "not statistically significant" not in cited_text
-            ) or "유의" in cited_text and "유의하지" not in cited_text
+            ) or ("유의" in cited_text and "유의하지" not in cited_text)
+        else:
+            phrase_supported = None
+        numeric_significance_supported = all(
+            _numeric_key(token) in cited_numbers for token in significance_numbers
+        )
+        if phrase_supported is False or not numeric_significance_supported:
+            significance_supported = False
+        elif phrase_supported is True or significance_numbers:
+            significance_supported = True
         else:
             significance_supported = None
-    else:
-        significance_supported = None
 
     numeric_supported = not unsupported_numbers
     issues = bool(
