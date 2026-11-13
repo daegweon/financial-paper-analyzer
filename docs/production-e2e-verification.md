@@ -1,6 +1,6 @@
 # PaperSignal - Production Integration Verification
 
-**Run date:** 2026-11-13 (KST)  
+**Run date:** 2026-11-14 (KST)  
 **Target:** `https://financial-paper-analyzer.vercel.app`  
 **API:** `https://papersignal-api-production.up.railway.app`  
 **Database:** Supabase project `hwmtayrecsfxernhssro` (Seoul)
@@ -19,7 +19,7 @@
 | Supabase public `analyses` SELECT | HTTP 401, permission denied | PASS |
 | Deployed Next.js JavaScript includes expected API base URL | Yes | PASS |
 | Deployed Next.js JavaScript includes Supabase URL | Yes | PASS |
-| Supabase security advisor | No warnings | PASS |
+| Supabase checkpoint RLS policy | Explicit service_role-only policy | PASS |
 
 ## Python integration contract tests
 
@@ -57,13 +57,23 @@ Supabase Auth has `mailer_autoconfirm=false`, requiring email confirmation. Do n
 
 Sample synthetic PDF can be generated from `backend/tests/test_integration_contract.py` (fixture function `make_pdf`). It contains **no genuine financial research**.
 
+## Durable worker and recovery verification (2026-11-14)
+
+- Railway API and independent Worker are both online in production; extractive API remains online.
+- A synthetic two-page PDF completed through the real Supabase queue and Worker using `finance-structured-v6.2`.
+- A second real Worker execution persisted two checkpoints: `pdf_extracted` and `analysis_result`.
+- The completed job was deliberately re-queued to simulate a crash after result commit. The Worker detected the existing `job_id` result and completed the job without creating a second analysis row (one result row remained).
+- A disposable SQL integration probe verified checkpoint upsert uniqueness and analysis upsert idempotency. Test rows were removed afterward.
+- Retry/backoff, terminal failure after the configured attempt limit, lease renewal, stale-lease recovery and duplicate-active-job prevention were previously exercised.
+- Supabase checkpoint data is protected by RLS and an explicit `service_role`-only policy. New `sb_secret_*` keys are sent in the `apikey` header only.
+
 ## Known gaps
 
-- LLM-assisted interpretation is disabled until `OPENAI_API_KEY` is securely configured on Railway.
-- PDF processing is synchronous and scans the first 50 pages; OCR is not implemented.
-- The application currently supports neither deletion of paper records nor durable queued processing.
-- GitHub Actions workflows on this private repo have repeatedly returned `startup_failure` with no jobs. This is a CI/integration issue to investigate; the 10 tests were executed independently.
-- Full real-browser signup and authenticated PDF persistence remain unverified.
+- PDF extraction currently scans up to the first 50 pages; OCR for image-only PDFs is not implemented.
+- Full real-browser signup, verified-email upload, and cross-account isolation remain unverified. Do not disable email confirmation merely to pass this check.
+- GitHub Actions on this private repository have repeatedly returned `startup_failure` before jobs start. Python checks were executed independently; investigate runner quota / repository Actions configuration before enforcing branch protection.
+- Supabase Auth leaked-password protection is disabled and should be enabled in the Auth security settings.
+- Deletion/retention UX for papers, analyses and checkpoints still needs a product-level lifecycle policy.
 
 ## Security notes
 
