@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { db } from "../lib/supabase";
+import { ResearchLibrary } from "../components/ResearchLibrary";
 import type { User } from "@supabase/supabase-js";
 
 type Evidence = { page: number; quote: string };
@@ -398,21 +399,7 @@ export default function Home() {
           <div><p>완료된 분석</p><strong>{papers.filter(paper => paper.status === "completed").length.toString().padStart(2, "0")}</strong><small>근거 기반 결과</small></div>
           <div className="highlight"><p>RESEARCH INTELLIGENCE</p><h2>From papers<br/>to perspectives.</h2></div>
         </div>
-        <section className="library">
-          <h2>논문 라이브러리 <small>{papers.length}</small></h2>
-          <label className="drop">⇧　 PDF 파일을 선택하거나 여기에 놓으세요
-            <small>30 MB 이하 · 암호화된 PDF 제외</small>
-            <input type="file" accept=".pdf,application/pdf" disabled={busy} onChange={event => void upload(event.target.files?.[0])}/>
-          </label>
-          {papers.length === 0
-            ? <div className="empty">📄<h3>아직 등록된 논문이 없습니다</h3><p>첫 금융 연구 논문을 업로드해 주세요.</p></div>
-            : papers.map(paper =>
-              <button className={"paper " + (selected?.id === paper.id ? "active" : "")} key={paper.id} onClick={() => void open(paper)}>
-                <span>📕</span><div><b>{paper.title}</b><small>{new Date(paper.created_at).toLocaleDateString("ko-KR")} · {paper.page_count ?? "—"} pages</small></div>
-                <em>{paper.status === "completed" ? "분석 완료" : paper.status === "processing" ? "분석 중" : paper.status === "failed" ? "분석 오류" : "분석 대기"}</em><span>→</span>
-              </button>
-            )}
-        </section>
+        <ResearchLibrary papers={papers} busy={busy} onOpen={open} />
         {message && <div className="message" role="status">{message}</div>}
       </div>
     </div>
