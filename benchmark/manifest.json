@@ -46,8 +46,9 @@
             "January 2001 to December 2020",
             "2001–2020",
             "2001년부터 2020년",
-            "4,950 observations",
-            "4950개 관측치"
+            "4,950 time periods",
+            "T = 4950",
+            "49,50 periods"
           ]
         },
         {
@@ -98,8 +99,12 @@
             "MG estimator",
             "Common Correlated Effects",
             "CCE estimator",
+            "panel-based MG",
+            "CCE-MG",
+            "Giglio and Xiu",
+            "Giglio-Xiu",
             "누락 요인",
-            "omitted factors"
+            "omitted relevant factors"
           ]
         },
         {
@@ -107,16 +112,47 @@
           "category": "findings",
           "weight": 2,
           "aliases": [
+            "market and size factors",
             "market and SMB",
-            "시장 요인과 SMB",
-            "HML, IML, and WML",
-            "HML과 IML과 WML"
+            "시장 요인과 규모 요인",
+            "시장과 SMB",
+            "59,400 observations",
+            "59400 observations",
+            "CCE method",
+            "MSE criterion",
+            "평균제곱오차"
+          ]
+        },
+        {
+          "id": "panel_dimensions",
+          "category": "data",
+          "weight": 1,
+          "aliases": [
+            "12 portfolios",
+            "n = 12",
+            "12개 포트폴리오",
+            "59,400 observations",
+            "59400"
+          ]
+        },
+        {
+          "id": "estimator_comparison",
+          "category": "findings",
+          "weight": 1,
+          "aliases": [
+            "CCE method for all portfolios",
+            "CCE estimator",
+            "all portfolios",
+            "모든 포트폴리오",
+            "MSE criterion",
+            "평균제곱오차"
           ]
         }
       ],
       "critical_caveats": [
-        "Do not claim that all five factors are statistically significant under every estimator.",
-        "Do not present this as a randomized causal design."
+        "The panel has 12 portfolios and 4,950 daily periods (59,400 panel observations); do not call 4,950 the total panel observation count.",
+        "The MG estimator finds market and size factors significant; do not generalize that all factor coefficients are significant under CCE.",
+        "The Wald test indicates parameter differences between MG and CCE, consistent with omitted relevant factors."
       ]
     },
     {
@@ -213,7 +249,9 @@
       "slug": "morocco-carhart-fama-french",
       "title": "Pricing Ability of Carhart Four-Factor and Fama–French Three-Factor Models: Empirical Evidence from Morocco",
       "authors": [
-        "Author list to verify from publisher PDF"
+        "Mimoun Benali",
+        "Karima Lahboub",
+        "Abdelhamid El Bouhadi"
       ],
       "year": 2023,
       "publisher": "International Journal of Financial Studies (MDPI)",
@@ -236,27 +274,14 @@
           "category": "data",
           "weight": 2,
           "aliases": [
+            "59 of the 75 firms",
+            "59 firms",
+            "59개 기업",
             "January 2008 to December 2017",
             "2008–2017",
             "2008년부터 2017년",
-            "120 observations",
+            "monthly data",
             "월별 자료"
-          ]
-        },
-        {
-          "id": "portfolios",
-          "category": "data",
-          "weight": 1,
-          "aliases": [
-            "six portfolios",
-            "six size and book-to-market portfolios",
-            "6개 포트폴리오",
-            "SL",
-            "SM",
-            "SH",
-            "BL",
-            "BM",
-            "BH"
           ]
         },
         {
@@ -269,35 +294,40 @@
             "Carhart four-factor",
             "Carhart 4요인",
             "Fama-French three-factor",
-            "Fama-French 3요인"
+            "Fama-French 3요인",
+            "F-tests",
+            "adjusted R-squared"
           ]
         },
         {
-          "id": "finding",
+          "id": "comparison",
           "category": "findings",
           "weight": 2,
           "aliases": [
-            "all six portfolios",
-            "six portfolios",
-            "all portfolios",
-            "six F-tests",
-            "6개 포트폴리오"
+            "C4F model has somewhat greater explanatory power",
+            "Carhart model has greater explanatory power",
+            "Carhart 모형의 설명력이 더 높",
+            "조정 R 제곱",
+            "adjusted R-squared"
           ]
         },
         {
-          "id": "momentum",
-          "category": "variables",
-          "weight": 1,
+          "id": "limitation",
+          "category": "limitations",
+          "weight": 2,
           "aliases": [
-            "WML",
-            "momentum factor",
-            "모멘텀 요인"
+            "barely have a partial hold",
+            "limited ability to predict the cross-sections of returns",
+            "cannot reliably anticipate the cross-sections",
+            "횡단면 수익률을 신뢰성 있게 예측할 수 없다",
+            "설명력에 한계"
           ]
         }
       ],
       "critical_caveats": [
-        "Distinguish model-level F-test significance from the significance of every individual factor coefficient.",
-        "Do not generalize Moroccan-market estimates to all emerging markets."
+        "The study examines 59 of 75 Casablanca Stock Exchange firms over January 2008–December 2017.",
+        "The Carhart four-factor model has somewhat higher adjusted R-squared than FF3, but both models have limited explanatory/predictive ability for cross-sectional returns.",
+        "Do not infer that statistical significance of individual portfolio regressions means the model reliably prices the full cross-section."
       ]
     },
     {
