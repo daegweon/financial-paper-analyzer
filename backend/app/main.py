@@ -757,6 +757,190 @@ def _all_evidence(result: dict[str, Any]) -> list[dict[str, Any]]:
     return found[:40]
 
 
+def _merge_evidence_items(*groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    merged: list[dict[str, Any]] = []
+    seen: set[tuple[int, str]] = set()
+    for group in groups:
+        for item in group:
+            key = (int(item["page"]), str(item["quote"]))
+            if key not in seen:
+                seen.add(key)
+                merged.append(item)
+    return merged[:12]
+
+
+def _normalize_methodology(
+    raw: Any,
+    pages: list[dict[str, Any]],
+) -> tuple[dict[str, Any], list[str]]:
+    raw = raw if isinstance(raw, dict) else {}
+    warnings: list[str] = []
+    overall_evidence = validate_evidence(raw.get("evidence"), pages)
+    field_evidence = {
+        key: validate_evidence(raw.get(f"{key}_evidence"), pages)
+        for key in (
+            "design", "sample", "period", "data_sources",
+            "empirical_strategy", "identification_strategy",
+        )
+    }
+    variables: list[dict[str, Any]] = []
+    for item in raw.get("variables", [])[:12] if isinstance(raw.get("variables"), list) else []:
+        if not isinstance(item, dict):
+            continue
+        evidence = validate_evidence(item.get("evidence"), pages)
+        if evidence:
+            variables.append({
+                "name": _clean_text(item.get("name")),
+                "role": _clean_text(item.get("role")),
+                "definition": _clean_text(item.get("definition")),
+                "evidence": evidence,
+            })
+
+    panel_dimensions = audit_panel_dimensions(raw.get("panel_dimensions"), pages)
+    method_evidence = _merge_evidence_items(
+        overall_evidence,
+        *field_evidence.values(),
+        panel_dimensions["evidence"],
+        *[item["evidence"] for item in variables],
+    )
+    if not method_evidence:
+        methodology = {
+            "design": "확인 불가",
+            "design_evidence": [],
+            "sample": "확인 불가",
+            "sample_evidence": [],
+            "period": "확인 불가",
+            "period_evidence": [],
+            "data_sources": [],
+            "data_sources_evidence": [],
+            "variables": [],
+            "empirical_strategy": "확인 불가",
+            "empirical_strategy_evidence": [],
+            "identification_strategy": "확인 불가",
+            "identification_strategy_evidence": [],
+            "equations": [],
+            "evidence": [],
+            "panel_dimensions": panel_dimensions,
+        }
+        warnings.append("방법론은 검증 가능한 직접 인용이 없어 세부 정보를 표시하지 않았습니다.")
+        return methodology, warnings
+
+    def supported_text(key: str) -> str:
+        evidence = field_evidence.get(key, [])
+        if evidence or overall_evidence:
+            return _clean_text(raw.get(key))
+        return "확인 불가"
+
+    data_sources = (
+        [str(x)[:300] for x in raw.get("data_sources", [])[:8]]
+        if isinstance(raw.get("data_sources"), list)
+        and (field_evidence["data_sources"] or overall_evidence)
+        else []
+    )
+    equations = (
+        [str(x)[:500] for x in raw.get("equations", [])[:6]]
+        if isinstance(raw.get("equations"), list) and overall_evidence
+        else []
+    )
+    methodology = {
+        "design": supported_text("design"),
+        "design_evidence": field_evidence["design"] or overall_evidence,
+        "sample": supported_text("sample"),
+        "sample_evidence": field_evidence["sample"] or overall_evidence,
+        "period": supported_text("period"),
+        "period_evidence": field_evidence["period"] or overall_evidence,
+        "data_sources": data_sources,
+        "data_sources_evidence": field_evidence["data_sources"] or overall_evidence,
+        "variables": variables,
+        "empirical_strategy": supported_text("empirical_strategy"),
+        "empirical_strategy_evidence": field_evidence["empirical_strategy"] or overall_evidence,
+        "identification_strategy": supported_text("identification_strategy"),
+        "identification_strategy_evidence": field_evidence["identification_strategy"] or overall_evidence,
+        "equations": equations,
+        "evidence": method_evidence,
+        "panel_dimensions": panel_dimensions,
+    }
+    if not overall_evidence and variables:
+        warnings.append("방법론 전체 인용은 없지만 변수별 인용이 확인된 항목만 표시했습니다.")
+    if panel_dimensions["consistency_status"] == "mismatch":
+        warnings.append("패널의 횡단면 단위 수 × 기간 수와 원문 보고 총관측치가 일치하지 않습니다.")
+    return methodology, warnings
+
+
+def _merge_methodologies(
+    original: dict[str, Any],
+    repaired: dict[str, Any],
+) -> dict[str, Any]:
+    merged = dict(original)
+    text_fields = (
+        "design", "sample", "period", "empirical_strategy", "identification_strategy",
+    )
+    evidence_fields = (
+        "design_evidence", "sample_evidence", "period_evidence",
+        "empirical_strategy_evidence", "identification_strategy_evidence",
+        "data_sources_evidence",
+    )
+    for field in text_fields:
+        original_evidence = original.get(f"{field}_evidence", [])
+        repaired_evidence = repaired.get(f"{field}_evidence", [])
+        if (
+            original.get(field) in (None, "", "확인 불가")
+            or (not original_evidence and repaired_evidence)
+        ):
+            merged[field] = repaired.get(field, original.get(field, "확인 불가"))
+    for field in evidence_fields:
+        merged[field] = _merge_evidence_items(
+            original.get(field, []), repaired.get(field, [])
+        )
+    merged["data_sources"] = list(dict.fromkeys(
+        (original.get("data_sources") or []) + (repaired.get("data_sources") or [])
+    ))[:8]
+    variables = list(original.get("variables", []))
+    by_name = {_normalized_claim_key(str(x.get("name", ""))): i for i, x in enumerate(variables)}
+    for variable in repaired.get("variables", []):
+        key = _normalized_claim_key(str(variable.get("name", "")))
+        if not key:
+            continue
+        if key not in by_name:
+            by_name[key] = len(variables)
+            variables.append(variable)
+        else:
+            index = by_name[key]
+            existing = variables[index]
+            variables[index] = {
+                **existing,
+                "role": existing.get("role") if existing.get("role") != "확인 불가" else variable.get("role"),
+                "definition": existing.get("definition") if existing.get("definition") != "확인 불가" else variable.get("definition"),
+                "evidence": _merge_evidence_items(existing.get("evidence", []), variable.get("evidence", [])),
+            }
+    merged["variables"] = variables[:12]
+    merged["equations"] = list(dict.fromkeys(
+        (original.get("equations") or []) + (repaired.get("equations") or [])
+    ))[:6]
+    merged["evidence"] = _merge_evidence_items(
+        original.get("evidence", []), repaired.get("evidence", [])
+    )
+    original_panel = original.get("panel_dimensions", {})
+    repaired_panel = repaired.get("panel_dimensions", {})
+    if repaired_panel.get("evidence") and (
+        not original_panel.get("evidence")
+        or original_panel.get("consistency_status") in ("mismatch", "not_assessable")
+    ):
+        merged["panel_dimensions"] = repaired_panel
+    return merged
+
+
+def _methodology_needs_repair(methodology: dict[str, Any]) -> bool:
+    panel = methodology.get("panel_dimensions", {})
+    return bool(
+        not methodology.get("evidence")
+        or methodology.get("design") in (None, "", "확인 불가")
+        or methodology.get("sample") in (None, "", "확인 불가")
+        or methodology.get("period") in (None, "", "확인 불가")
+        or panel.get("consistency_status") == "mismatch"
+    )
+
+
 def normalize_llm_result(
     raw: dict[str, Any],
     page_count: int,
@@ -791,40 +975,8 @@ def normalize_llm_result(
         warnings.append("연구 질문은 검증 가능한 직접 인용이 없어 표시하지 않았습니다.")
 
     methodology_raw = raw.get("methodology") if isinstance(raw.get("methodology"), dict) else {}
-    methodology_evidence = validate_evidence(methodology_raw.get("evidence"), pages)
-    variables = []
-    for item in methodology_raw.get("variables", [])[:12] if isinstance(methodology_raw.get("variables"), list) else []:
-        if not isinstance(item, dict):
-            continue
-        evidence = validate_evidence(item.get("evidence"), pages)
-        if evidence:
-            variables.append({
-                "name": _clean_text(item.get("name")),
-                "role": _clean_text(item.get("role")),
-                "definition": _clean_text(item.get("definition")),
-                "evidence": evidence,
-            })
-    if methodology_evidence or variables:
-        if not methodology_evidence:
-            warnings.append("방법론 전체를 뒷받침하는 인용은 없지만 변수별 원문 근거가 확인되어 확인된 항목만 표시했습니다.")
-        methodology = {
-            "design": _clean_text(methodology_raw.get("design")),
-            "sample": _clean_text(methodology_raw.get("sample")),
-            "period": _clean_text(methodology_raw.get("period")),
-            "data_sources": [str(x)[:300] for x in methodology_raw.get("data_sources", [])[:8]] if isinstance(methodology_raw.get("data_sources"), list) else [],
-            "variables": variables,
-            "empirical_strategy": _clean_text(methodology_raw.get("empirical_strategy")),
-            "identification_strategy": _clean_text(methodology_raw.get("identification_strategy")),
-            "equations": [str(x)[:500] for x in methodology_raw.get("equations", [])[:6]] if isinstance(methodology_raw.get("equations"), list) else [],
-            "evidence": methodology_evidence,
-        }
-    else:
-        methodology = {
-            "design": "확인 불가", "sample": "확인 불가", "period": "확인 불가",
-            "data_sources": [], "variables": [], "empirical_strategy": "확인 불가",
-            "identification_strategy": "확인 불가", "equations": [], "evidence": [],
-        }
-        warnings.append("방법론은 검증 가능한 직접 인용이 없어 세부 정보를 표시하지 않았습니다.")
+    methodology, methodology_warnings = _normalize_methodology(methodology_raw, pages)
+    warnings.extend(methodology_warnings)
 
     findings = _normalize_findings(raw.get("findings"), pages)
     if not findings:
