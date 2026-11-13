@@ -111,6 +111,11 @@
     print-color-adjust: exact;
   }
   body * { visibility: hidden !important; }
+  .workspace {
+    display: block !important;
+    min-height: 0 !important;
+  }
+  .workspace > aside, .workspace > .content { display: none !important; }
   .overlay, .overlay * { visibility: visible !important; }
   .overlay {
     position: static !important;
