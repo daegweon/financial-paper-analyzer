@@ -88,7 +88,8 @@ Set secrets only in Railway's service Variables UI. Never commit them to GitHub 
 - PDF page count: 1–300
 - Text analysis scans the first 50 pages
 - Image-only/scanned PDFs require OCR, which is not included yet
-- Analysis currently runs synchronously in the API
+- Analysis requests return immediately with a job ID; the frontend polls the job status while FastAPI runs the model call in a background task.
+- Job status is stored in the RLS-protected `analysis_jobs` table. The current worker uses FastAPI in-process background tasks; a separate durable queue/worker is a future hardening step.
 
 ## Local development
 
