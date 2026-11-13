@@ -1208,6 +1208,74 @@ def _methodology_needs_repair(methodology: dict[str, Any]) -> bool:
     )
 
 
+def audit_summary_consistency(
+    summary: str,
+    findings: list[dict[str, Any]],
+    methodology: dict[str, Any],
+) -> dict[str, Any]:
+    summary_text = str(summary or "")
+    result_terms = (
+        "실증 결과", "분석 결과", "관계", "영향", "증가", "감소",
+        "수익률", "변동성", "공적분", "계수", "유의", "효과",
+        "we find", "results show", "results indicate", "is associated",
+    )
+    summary_mentions_results = any(term in summary_text.casefold() for term in result_terms)
+    missing_findings = not findings and summary_mentions_results
+
+    structured_parts: list[str] = []
+    for finding in findings:
+        structured_parts.extend([
+            str(finding.get("claim", "")),
+            str(finding.get("estimate", "")),
+            str(finding.get("statistical_significance", "")),
+        ])
+    for key in (
+        "design", "sample", "period", "empirical_strategy", "identification_strategy",
+    ):
+        structured_parts.append(str(methodology.get(key, "")))
+    panel = methodology.get("panel_dimensions", {})
+    for key in (
+        "cross_sectional_units_count", "time_periods_count",
+        "reported_total_observations_count", "calculated_total_observations_count",
+    ):
+        value = panel.get(key)
+        if isinstance(value, int) and value > 0:
+            structured_parts.append(str(value))
+    for report in panel.get("sample_count_reports", []):
+        structured_parts.append(str(report.get("count", "")))
+
+    structured_numbers = {
+        _numeric_key(token)
+        for token in _extract_numeric_tokens(" ".join(structured_parts))
+    }
+    summary_numbers = list(dict.fromkeys(_extract_numeric_tokens(summary_text)))
+    unmatched = []
+    for token in summary_numbers:
+        key = _numeric_key(token)
+        try:
+            numeric_value = float(key)
+        except ValueError:
+            numeric_value = None
+        if numeric_value is not None and 1900 <= numeric_value <= 2100:
+            continue
+        if key not in structured_numbers:
+            unmatched.append(token)
+
+    reasons = []
+    if missing_findings:
+        reasons.append("summary_mentions_empirical_results_but_findings_empty")
+    if unmatched:
+        reasons.append("summary_contains_numbers_not_in_structured_sections")
+    return {
+        "status": "review" if reasons else "screen_passed",
+        "summary_mentions_results": summary_mentions_results,
+        "findings_count": len(findings),
+        "unmatched_numeric_tokens": unmatched,
+        "reasons": reasons,
+        "method": "structured_summary_consistency_screen",
+    }
+
+
 def normalize_llm_result(
     raw: dict[str, Any],
     page_count: int,
@@ -1252,7 +1320,8 @@ def normalize_llm_result(
     elif any(item["verification"]["status"] == "review" for item in findings):
         warnings.append("일부 실증 결과의 숫자·방향·유의수준이 인용 페이지와 완전히 일치하는지 추가 검토가 필요합니다.")
 
-    if methodology.get("panel_dimensions", {}).get("consistency_status") == "mismatch":
+    panel_status = methodology.get("panel_dimensions", {}).get("consistency_status")
+    if panel_status in ("mismatch", "source_conflict", "design_conflict"):
         warnings.append(methodology["panel_dimensions"]["consistency_note"])
 
     robustness_checks = []
@@ -1321,6 +1390,7 @@ def normalize_llm_result(
         "findings": findings,
         "findings_deduplication": {"duplicates_removed": duplicate_findings_removed},
         "summary_verification": summary_verification,
+        "summary_consistency": audit_summary_consistency(summary, findings, methodology),
         "robustness_checks": robustness_checks,
         "limitations": limitations,
         "implications": _clean_claims(raw.get("implications"), "text", pages),
@@ -1787,6 +1857,7 @@ async def llm_result(count: int, pages: list[dict[str, Any]]) -> dict[str, Any]:
     duplicate_count = int(result.get("findings_deduplication", {}).get("duplicates_removed", 0))
     needs_findings_repair = (
         not result["findings"]
+        or result.get("summary_consistency", {}).get("status") == "review"
         or any(
             item.get("verification", {}).get("status") == "review"
             for item in result["findings"]
@@ -1875,6 +1946,14 @@ async def llm_result(count: int, pages: list[dict[str, Any]]) -> dict[str, Any]:
                 "status": "reconstructed_after_targeted_verification",
                 "unsupported_numeric_tokens": [],
             }
+
+    result["summary_consistency"] = audit_summary_consistency(
+        result.get("summary", ""), result["findings"], result["methodology"]
+    )
+    if result["summary_consistency"]["status"] == "review":
+        result["warnings"].append(
+            "요약의 실증 주장 또는 숫자가 구조화된 방법론·실증 결과와 일치하는지 추가 검토가 필요합니다."
+        )
 
     if not any(
         item.get("verification", {}).get("status") == "review"
