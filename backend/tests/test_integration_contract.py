@@ -157,12 +157,18 @@ def test_background_job_saves_analysis_and_completes(monkeypatch):
     job_id = "44444444-4444-4444-8444-444444444444"
     analysis_id = "55555555-5555-4555-8555-555555555555"
     pdf_data = make_pdf()
+    requests_seen = []
 
     class FakeClient:
         def __init__(self, *args, **kwargs): pass
         async def __aenter__(self): return self
         async def __aexit__(self, *exc): return None
         async def get(self, url, **kwargs):
+            requests_seen.append(("GET", url, kwargs))
+            if url.endswith("/rest/v1/analyses"):
+                return httpx.Response(200, json=[])
+            if url.endswith("/rest/v1/analysis_job_checkpoints"):
+                return httpx.Response(200, json=[])
             if url.endswith("/rest/v1/papers"):
                 return httpx.Response(200, json=[{
                     "id": paper_id, "user_id": user_id, "storage_path": user_id + "/contract.pdf"
@@ -171,14 +177,26 @@ def test_background_job_saves_analysis_and_completes(monkeypatch):
                 return httpx.Response(200, content=pdf_data)
             raise AssertionError("Unexpected GET " + url)
         async def post(self, url, **kwargs):
-            assert url.endswith("/rest/v1/analyses")
-            assert kwargs["json"]["paper_id"] == paper_id
-            assert kwargs["json"]["user_id"] == user_id
-            assert kwargs["json"]["result"]["mode"] == "extractive"
-            return httpx.Response(201, json=[{"id": analysis_id}])
+            requests_seen.append(("POST", url, kwargs))
+            if url.endswith("/rest/v1/analysis_job_checkpoints"):
+                assert kwargs["params"]["on_conflict"] == "job_id,stage"
+                return httpx.Response(201)
+            if url.endswith("/rest/v1/analyses"):
+                assert kwargs["params"]["on_conflict"] == "job_id"
+                assert kwargs["json"]["job_id"] == job_id
+                assert kwargs["json"]["paper_id"] == paper_id
+                assert kwargs["json"]["user_id"] == user_id
+                assert kwargs["json"]["result"]["mode"] == "extractive"
+                return httpx.Response(201, json=[{"id": analysis_id}])
+            raise AssertionError("Unexpected POST " + url)
         async def patch(self, url, **kwargs):
-            assert url.endswith("/rest/v1/analysis_jobs") or url.endswith("/rest/v1/papers")
+            requests_seen.append(("PATCH", url, kwargs))
+            assert url.endswith("/rest/v1/papers")
             return httpx.Response(204)
+
+    patched_rows = []
+    async def fake_patch_owned_row(table, row_id, owner_id, token, values):
+        patched_rows.append((table, row_id, owner_id, values))
 
     async def fake_llm_result(page_count, pages):
         return module.extractive_result(page_count, pages) | {
@@ -188,11 +206,152 @@ def test_background_job_saves_analysis_and_completes(monkeypatch):
     monkeypatch.setattr(module, "SUPABASE_URL", "https://mock.supabase.test")
     monkeypatch.setattr(module, "SUPABASE_KEY", "publishable_mock")
     monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    monkeypatch.setattr(module, "_patch_owned_row", fake_patch_owned_row)
     monkeypatch.setattr(module, "llm_result", fake_llm_result)
     asyncio.run(module._process_analysis_job(paper_id, job_id, user_id, "valid_test_jwt"))
 
+    checkpoint_stages = [
+        item[2]["json"]["stage"]
+        for item in requests_seen
+        if item[0] == "POST" and item[1].endswith("/rest/v1/analysis_job_checkpoints")
+    ]
+    assert checkpoint_stages == ["pdf_extracted", "analysis_result"]
+    assert any(
+        table == "analysis_jobs" and values.get("status") == "completed"
+        for table, _, _, values in patched_rows
+    )
 
 
+def test_process_job_recovers_existing_analysis_without_reinvoking_model(monkeypatch):
+    user_id = "11111111-1111-4111-8111-111111111111"
+    paper_id = "22222222-2222-4222-8222-222222222222"
+    job_id = "44444444-4444-4444-8444-444444444444"
+    analysis_id = "55555555-5555-4555-8555-555555555555"
+    requests_seen = []
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *exc): return None
+        async def get(self, url, **kwargs):
+            requests_seen.append(("GET", url, kwargs))
+            assert url.endswith("/rest/v1/analyses")
+            assert kwargs["params"]["job_id"] == "eq." + job_id
+            return httpx.Response(200, json=[{"id": analysis_id}])
+        async def patch(self, url, **kwargs):
+            requests_seen.append(("PATCH", url, kwargs))
+            assert url.endswith("/rest/v1/papers")
+            return httpx.Response(204)
+
+    patched_rows = []
+    async def fake_patch_owned_row(table, row_id, owner_id, token, values):
+        patched_rows.append((table, row_id, values))
+
+    async def forbidden_llm(*args, **kwargs):
+        raise AssertionError("Existing result must be reused; model must not run.")
+
+    monkeypatch.setattr(module, "SUPABASE_URL", "https://mock.supabase.test")
+    monkeypatch.setattr(module, "SUPABASE_KEY", "publishable_mock")
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    monkeypatch.setattr(module, "_patch_owned_row", fake_patch_owned_row)
+    monkeypatch.setattr(module, "llm_result", forbidden_llm)
+
+    asyncio.run(module._process_analysis_job(paper_id, job_id, user_id, "valid_test_jwt"))
+
+    assert len([item for item in requests_seen if item[0] == "GET"]) == 1
+    assert any(
+        table == "analysis_jobs" and values.get("analysis_id") == analysis_id
+        and values.get("status") == "completed"
+        for table, _, values in patched_rows
+    )
+
+
+def test_process_job_resumes_from_analysis_result_checkpoint(monkeypatch):
+    user_id = "11111111-1111-4111-8111-111111111111"
+    paper_id = "22222222-2222-4222-8222-222222222222"
+    job_id = "44444444-4444-4444-8444-444444444444"
+    analysis_id = "55555555-5555-4555-8555-555555555555"
+    cached_result = {
+        "mode": "extractive",
+        "analysis_version": "extractive-v3",
+        "summary": "cached summary",
+        "model": "extractive-v3",
+        "provider": "extractive",
+        "findings": [],
+        "evidence": [],
+    }
+    requests_seen = []
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *exc): return None
+        async def get(self, url, **kwargs):
+            requests_seen.append(("GET", url, kwargs))
+            if url.endswith("/rest/v1/analyses"):
+                return httpx.Response(200, json=[])
+            if url.endswith("/rest/v1/analysis_job_checkpoints"):
+                stage = kwargs["params"]["stage"]
+                if stage == "eq.pdf_extracted":
+                    return httpx.Response(200, json=[{"payload": {
+                        "page_count": 2,
+                        "pages": [{"page": 1, "text": "cached page"}],
+                    }}])
+                if stage == "eq.analysis_result":
+                    return httpx.Response(200, json=[{"payload": {
+                        "result": cached_result,
+                        "model_name": "extractive-v3",
+                    }}])
+            raise AssertionError("Unexpected GET " + url)
+        async def post(self, url, **kwargs):
+            requests_seen.append(("POST", url, kwargs))
+            assert url.endswith("/rest/v1/analyses")
+            assert kwargs["params"]["on_conflict"] == "job_id"
+            assert kwargs["json"]["job_id"] == job_id
+            assert kwargs["json"]["result"] == cached_result
+            return httpx.Response(201, json=[{"id": analysis_id}])
+        async def patch(self, url, **kwargs):
+            requests_seen.append(("PATCH", url, kwargs))
+            return httpx.Response(204)
+
+    patched_rows = []
+    async def fake_patch_owned_row(table, row_id, owner_id, token, values):
+        patched_rows.append((table, row_id, values))
+
+    async def forbidden_llm(*args, **kwargs):
+        raise AssertionError("Cached analysis result must be reused.")
+
+    monkeypatch.setattr(module, "SUPABASE_URL", "https://mock.supabase.test")
+    monkeypatch.setattr(module, "SUPABASE_KEY", "publishable_mock")
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    monkeypatch.setattr(module, "_patch_owned_row", fake_patch_owned_row)
+    monkeypatch.setattr(module, "llm_result", forbidden_llm)
+
+    asyncio.run(module._process_analysis_job(paper_id, job_id, user_id, "valid_test_jwt"))
+
+    assert any(
+        item[0] == "POST" and item[1].endswith("/rest/v1/analyses")
+        for item in requests_seen
+    )
+    assert any(
+        table == "analysis_jobs" and values.get("status") == "completed"
+        for table, _, values in patched_rows
+    )
+
+
+def test_supabase_secret_key_is_never_sent_as_bearer_token(monkeypatch):
+    monkeypatch.setattr(module, "SUPABASE_KEY", "sb_publishable_test")
+    headers = module.supabase_headers("sb_secret_test")
+    assert headers == {"apikey": "sb_secret_test"}
+
+
+def test_legacy_service_role_jwt_keeps_bearer_compatibility(monkeypatch):
+    monkeypatch.setattr(module, "SUPABASE_KEY", "legacy_anon_key")
+    headers = module.supabase_headers("eyJhbGciOiJIUzI1NiJ9.test.signature")
+    assert headers == {
+        "apikey": "legacy_anon_key",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.test.signature",
+    }
 
 def test_other_user_paper_returns_404(monkeypatch):
     other_id = "33333333-3333-4333-8333-333333333333"
