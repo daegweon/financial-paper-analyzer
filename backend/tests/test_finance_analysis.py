@@ -146,6 +146,7 @@ def test_llm_result_uses_structured_outputs(monkeypatch):
             requests.append((url, kwargs))
             return FakeResponse()
 
+    monkeypatch.setattr(module, "AI_PROVIDER", "openai")
     monkeypatch.setattr(module, "OPENAI_API_KEY", "test-key-not-used")
     monkeypatch.setattr(module, "OPENAI_MODEL", "gpt-5.6-terra")
     monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
@@ -156,3 +157,72 @@ def test_llm_result_uses_structured_outputs(monkeypatch):
     assert request_body["response_format"]["type"] == "json_schema"
     assert request_body["response_format"]["json_schema"]["strict"] is True
     assert request_body["model"] == "gpt-5.6-terra"
+
+
+
+def test_gemini_provider_uses_structured_json_and_server_side_key(monkeypatch):
+    pages = _sample_pages()
+    model_output = _sample_model_output()
+    requests = []
+
+    class FakeResponse:
+        status_code = 200
+        def raise_for_status(self):
+            return None
+        def json(self):
+            return {"candidates": [{
+                "finishReason": "STOP",
+                "content": {"parts": [{"text": json.dumps(model_output, ensure_ascii=False)}]},
+            }]}
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs):
+            self.timeout = kwargs.get("timeout")
+        async def __aenter__(self):
+            return self
+        async def __aexit__(self, *args):
+            return None
+        async def post(self, url, **kwargs):
+            requests.append((url, kwargs))
+            return FakeResponse()
+
+    monkeypatch.setattr(module, "AI_PROVIDER", "gemini")
+    monkeypatch.setattr(module, "GEMINI_API_KEY", "test-gemini-key-not-used")
+    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-3.8-flash")
+    monkeypatch.setattr(module, "OPENAI_API_KEY", "")
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+
+    result = asyncio.run(module.llm_result(2, pages))
+    assert result["mode"] == "llm"
+    assert result["provider"] == "gemini"
+    assert result["model"] == "gemini-3.8-flash"
+    assert requests[0][0].endswith("/v1beta/models/gemini-3.8-flash:generateContent")
+    headers = requests[0][1]["headers"]
+    assert headers["x-goog-api-key"] == "test-gemini-key-not-used"
+    assert "key=" not in requests[0][0]
+    config = requests[0][1]["json"]["generationConfig"]
+    assert config["responseFormat"]["text"]["mimeType"] == "application/json"
+    assert config["responseFormat"]["text"]["schema"] == module.ANALYSIS_SCHEMA
+    assert config["thinkingConfig"]["thinkingLevel"] == "low"
+    assert requests[0][1]["json"]["contents"][0]["parts"][0]["text"].startswith("다음은")
+
+
+def test_provider_selection_does_not_silently_fallback(monkeypatch):
+    monkeypatch.setattr(module, "AI_PROVIDER", "gemini")
+    monkeypatch.setattr(module, "GEMINI_API_KEY", "")
+    monkeypatch.setattr(module, "OPENAI_API_KEY", "an-openai-key")
+    assert module.active_ai_provider() is None
+    assert module.active_ai_model("gemini") == "gemini-3.8-flash"
+
+
+def test_gemini_health_reports_free_tier_data_notice(monkeypatch):
+    from fastapi.testclient import TestClient
+    monkeypatch.setattr(module, "AI_PROVIDER", "gemini")
+    monkeypatch.setattr(module, "GEMINI_API_KEY", "test-key")
+    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-3.8-flash")
+    response = TestClient(module.app).get("/health")
+    assert response.status_code == 200
+    assert response.json()["analysis_mode"] == "ai"
+    assert response.json()["ai_provider"] == "gemini"
+    assert response.json()["model"] == "gemini-3.8-flash"
+    assert response.json()["free_tier_data_notice"] is True
