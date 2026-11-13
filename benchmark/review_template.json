@@ -1,0 +1,90 @@
+{
+  "benchmark_version": "1.0.0",
+  "instructions": {
+    "fact_ratings": [
+      "correct",
+      "partial",
+      "missing",
+      "incorrect"
+    ],
+    "citation_ratings": [
+      "exact",
+      "partial",
+      "missing",
+      "wrong"
+    ],
+    "note": "Review each critical fact against the exact publisher PDF. Mark unsupported claims separately."
+  },
+  "reviews": {
+    "B01": {
+      "facts": {},
+      "citations": {},
+      "reviewed_claims": 0,
+      "unsupported_claims": 0,
+      "reviewer_notes": ""
+    },
+    "B02": {
+      "facts": {},
+      "citations": {},
+      "reviewed_claims": 0,
+      "unsupported_claims": 0,
+      "reviewer_notes": ""
+    },
+    "B03": {
+      "facts": {},
+      "citations": {},
+      "reviewed_claims": 0,
+      "unsupported_claims": 0,
+      "reviewer_notes": ""
+    },
+    "B04": {
+      "facts": {},
+      "citations": {},
+      "reviewed_claims": 0,
+      "unsupported_claims": 0,
+      "reviewer_notes": ""
+    },
+    "B05": {
+      "facts": {},
+      "citations": {},
+      "reviewed_claims": 0,
+      "unsupported_claims": 0,
+      "reviewer_notes": ""
+    },
+    "B06": {
+      "facts": {},
+      "citations": {},
+      "reviewed_claims": 0,
+      "unsupported_claims": 0,
+      "reviewer_notes": ""
+    },
+    "B07": {
+      "facts": {},
+      "citations": {},
+      "reviewed_claims": 0,
+      "unsupported_claims": 0,
+      "reviewer_notes": ""
+    },
+    "B08": {
+      "facts": {},
+      "citations": {},
+      "reviewed_claims": 0,
+      "unsupported_claims": 0,
+      "reviewer_notes": ""
+    },
+    "B09": {
+      "facts": {},
+      "citations": {},
+      "reviewed_claims": 0,
+      "unsupported_claims": 0,
+      "reviewer_notes": ""
+    },
+    "B10": {
+      "facts": {},
+      "citations": {},
+      "reviewed_claims": 0,
+      "unsupported_claims": 0,
+      "reviewer_notes": ""
+    }
+  }
+}
