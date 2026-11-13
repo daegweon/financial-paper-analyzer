@@ -73,7 +73,8 @@ Frontend (Vercel):
 Backend (Railway):
 - `AI_PROVIDER` (default `gemini`)
 - `GEMINI_API_KEY` (optional secret)
-- `GEMINI_MODEL` (default `gemini-3.8-flash`)
+- `GEMINI_MODEL` (default `gemini-3.5-flash-lite`, optimized for low-latency document parsing)
+- `GEMINI_FALLBACK_MODEL` (default `gemini-3.6-flash`, used on transient timeout/429/5xx or unavailable model responses)
 - `OPENAI_API_KEY` (optional secret for future provider switch)
 - `OPENAI_MODEL`
 - `SUPABASE_URL`
