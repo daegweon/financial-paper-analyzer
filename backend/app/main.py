@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -482,7 +483,7 @@ def active_ai_model(provider: str) -> str:
 
 
 async def _generate_gemini(prompt: str) -> dict[str, Any]:
-    """Call Gemini Developer API using REST; the key stays server-side."""
+    """Call Gemini Developer API using the documented generateContent REST shape."""
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
     system_instruction = (
         "You are a strict evidence-first financial economics research analyst. "
@@ -494,37 +495,71 @@ async def _generate_gemini(prompt: str) -> dict[str, Any]:
         "systemInstruction": {"parts": [{"text": system_instruction}]},
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
         "generationConfig": {
-            "responseFormat": {
-                "text": {
-                    "mimeType": "application/json",
-                    "schema": ANALYSIS_SCHEMA,
-                }
-            },
+            "responseMimeType": "application/json",
+            "responseJsonSchema": ANALYSIS_SCHEMA,
             "thinkingConfig": {"thinkingLevel": "low"},
             "maxOutputTokens": 7000,
+            "candidateCount": 1,
         },
     }
     timeout = httpx.Timeout(150.0, connect=12.0)
-    async with httpx.AsyncClient(timeout=timeout) as client:
-        response = await client.post(
-            url,
-            headers={
-                "x-goog-api-key": GEMINI_API_KEY,
-                "Content-Type": "application/json",
-            },
-            json=request_body,
-        )
+    response = None
+    for attempt in range(3):
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                response = await client.post(
+                    url,
+                    headers={
+                        "x-goog-api-key": GEMINI_API_KEY,
+                        "Content-Type": "application/json",
+                    },
+                    json=request_body,
+                )
+        except (httpx.TimeoutException, httpx.TransportError):
+            if attempt < 2:
+                await asyncio.sleep(1.5 * (2 ** attempt))
+                continue
+            log.exception("Gemini transport failure after bounded retries")
+            raise HTTPException(
+                status_code=503,
+                detail="Gemini 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.",
+            )
+
+        if response.status_code in (500, 502, 503, 504) and attempt < 2:
+            retry_after = response.headers.get("Retry-After")
+            try:
+                delay = min(max(float(retry_after), 0.5), 15.0) if retry_after else 1.5 * (2 ** attempt)
+            except ValueError:
+                delay = 1.5 * (2 ** attempt)
+            await asyncio.sleep(delay)
+            continue
+        break
+
+    if response is None:
+        raise HTTPException(status_code=503, detail="Gemini API에 연결하지 못했습니다.")
     if response.status_code == 429:
         log.warning("Gemini quota/rate limit reached (HTTP 429)")
         raise HTTPException(
             status_code=429,
-            detail="Gemini API 무료 사용 한도 또는 요청 속도 제한에 도달했습니다. 잠시 후 다시 시도하거나 Google AI Studio의 사용량을 확인해 주세요.",
+            detail="Gemini API 무료 사용 한도 또는 요청 속도 제한에 도달했습니다. Google AI Studio의 사용량을 확인해 주세요.",
         )
-    if response.status_code in (400, 403, 404):
-        log.warning("Gemini configuration/request rejected (HTTP %d)", response.status_code)
+    if response.status_code in (401, 403):
+        log.warning("Gemini API authentication/access rejected (HTTP %d)", response.status_code)
         raise HTTPException(
             status_code=503,
-            detail="Gemini API 키, 프로젝트 사용 가능 여부 또는 모델 설정을 확인해 주세요.",
+            detail="Gemini API 키 또는 Google AI Studio 프로젝트 권한을 확인해 주세요.",
+        )
+    if response.status_code in (400, 404):
+        log.warning("Gemini request/model rejected (HTTP %d)", response.status_code)
+        raise HTTPException(
+            status_code=503,
+            detail="Gemini 요청 형식 또는 모델 사용 가능 여부를 확인해 주세요.",
+        )
+    if response.status_code in (500, 502, 503, 504):
+        log.warning("Gemini service unavailable after retries (HTTP %d)", response.status_code)
+        raise HTTPException(
+            status_code=503,
+            detail="Gemini 서비스가 일시적으로 혼잡합니다. 잠시 후 다시 시도해 주세요.",
         )
     response.raise_for_status()
     payload = response.json()
@@ -552,7 +587,6 @@ async def _generate_gemini(prompt: str) -> dict[str, Any]:
     if not isinstance(parsed, dict):
         raise ValueError("Gemini 응답 구조가 올바르지 않습니다.")
     return parsed
-
 
 async def _generate_openai(prompt: str) -> dict[str, Any]:
     """Retained for a later provider switch; no OpenAI key is needed today."""
