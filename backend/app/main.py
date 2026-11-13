@@ -1149,7 +1149,7 @@ def _normalize_methodology(
         "evidence": method_evidence,
         "panel_dimensions": panel_dimensions,
     }
-    if not method_evidence and variables:
+    if not any(field_evidence.values()) and variables:
         warnings.append("방법론 섹션 인용은 없지만 변수별 원문 근거가 확인된 항목만 표시했습니다.")
     if panel_dimensions["consistency_status"] in ("mismatch", "source_conflict", "design_conflict"):
         warnings.append(panel_dimensions["consistency_note"])
