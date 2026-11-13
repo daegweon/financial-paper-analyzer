@@ -450,6 +450,11 @@ export default function Home() {
                   요약 검증: {analysis.result.summary_verification.status === "model_summary" ? "원문 수치 1차 대조 통과" : analysis.result.summary_verification.status.startsWith("reconstructed") ? "검증된 방법론·실증 결과로 재구성" : "원문 근거 확인 필요"}
                 </p>}
                 {!!analysis.result.summary_verification?.unsupported_numeric_tokens?.length && <p className="warning">요약에서 인용 페이지로 확인되지 않은 숫자: {analysis.result.summary_verification.unsupported_numeric_tokens.join(", ")}</p>}
+                {analysis.result.summary_consistency && <p className={analysis.result.summary_consistency.status === "review" ? "warning" : "verification-note"}>
+                  요약·실증 결과 일관성: {analysis.result.summary_consistency.status === "review" ? "구조화 결과와 추가 대조 필요" : "1차 일관성 검사 통과"}
+                  {!!analysis.result.summary_consistency.unmatched_numeric_tokens.length && {" · 구조화 항목에서 찾지 못한 숫자: " + analysis.result.summary_consistency.unmatched_numeric_tokens.join(", ")}
+                  }
+                </p>}
               </section>
               <section className="analysis-section">
                 <h3>연구 질문</h3><p>{analysis.result.research_question || "확인 불가"}</p>
@@ -511,14 +516,20 @@ export default function Home() {
                       <p>{finding.claim}</p>
                       <div className="finding-meta">
                         <span>방향: {finding.direction}</span><span>추정치: {finding.estimate}</span><span>통계적 유의성: {finding.statistical_significance}</span>
+                        {finding.table_reference && <span>표: {finding.table_reference}</span>}
+                        {finding.model_or_column && <span>모형·열: {finding.model_or_column}</span>}
                         {finding.verification && <span className={finding.verification.status === "screen_passed" ? "verification-ok" : "verification-review"}>
-                          수치 검증: {finding.verification.status === "screen_passed" ? "수치 1차 대조 통과" : "연구자 확인 필요"}
+                          수치·표 맥락: {finding.verification.status === "screen_passed" ? "1차 대조 통과" : "연구자 확인 필요"}
                         </span>}
                       </div>
                       {finding.verification?.unsupported_numeric_tokens?.length ? <p className="warning">인용 페이지에서 확인되지 않은 숫자: {finding.verification.unsupported_numeric_tokens.join(", ")}</p> : null}
                       {finding.verification?.direction_consistent === false && <p className="warning">추정치의 부호와 결과 방향이 일치하지 않습니다.</p>}
                       {finding.verification?.significance_supported === false && <p className="warning">통계적 유의성 표기가 인용 페이지에서 확인되지 않습니다.</p>}
                       <EvidenceList items={finding.evidence}/>
+                      {!!finding.significance_legend_evidence?.length && <>
+                        <p className="muted">통계적 유의성 표 주석</p>
+                        <EvidenceList items={finding.significance_legend_evidence}/>
+                      </>}
                     </article>
                   )}
               </section>
