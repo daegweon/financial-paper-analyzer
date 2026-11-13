@@ -1,0 +1,303 @@
+{
+  "benchmark_version": "1.0.0",
+  "generated_at": "2026-11-13",
+  "source": "Supabase production analyses joined to benchmark/manifest.json",
+  "paper_count": 10,
+  "completed_count": 10,
+  "not_run_count": 0,
+  "mean_gold_fact_coverage_screen": 0.7425,
+  "verified_evidence_count": 165,
+  "total_findings": 18,
+  "total_robustness_checks": 11,
+  "total_limitations": 15,
+  "model_distribution": {
+    "gemini-3.5-flash-lite": 8,
+    "gemini-3.6-flash": 2
+  },
+  "schema_version_distribution": {
+    "finance-structured-v3": 4,
+    "finance-structured-v4": 6
+  },
+  "limitations": [
+    "Gold-fact coverage is a lexical alias screening metric, not semantic accuracy.",
+    "Evidence excerpts were exact-page validated by the backend before persistence; this report does not independently re-parse the original PDFs.",
+    "Human review against the publisher PDFs is still required for coefficient signs, units, significance, and claim-to-quote semantic support."
+  ],
+  "results": [
+    {
+      "benchmark_id": "B01",
+      "analysis_id": "c6a68aa5-5692-495a-9a1e-78e5ca1c31f2",
+      "model": "gemini-3.5-flash-lite",
+      "analysis_version": "finance-structured-v3",
+      "gold_fact_coverage_screen": 0.5833333333333334,
+      "matched_facts": [
+        "frequency",
+        "source",
+        "factors",
+        "method",
+        "estimator_comparison"
+      ],
+      "missing_facts": [
+        "sample",
+        "finding",
+        "panel_dimensions"
+      ],
+      "verified_evidence_count": 13,
+      "findings_count": 0,
+      "robustness_count": 1,
+      "limitations_count": 0,
+      "methodology_complete": "패널 데이터 모델을 활용한 요인 누락 검정 및 주성분 분석(PCA)과 공통 상관 효과(CCE) 기반의 위험 프리미엄 추정치 비교",
+      "claims_with_evidence": 10,
+      "claim_count": 10,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다.",
+        "검증 가능한 근거가 있는 실증 결과를 찾지 못했습니다."
+      ]
+    },
+    {
+      "benchmark_id": "B02",
+      "analysis_id": "fe3bddd0-9577-4ab6-82b0-5fb89541a45e",
+      "model": "gemini-3.5-flash-lite",
+      "analysis_version": "finance-structured-v3",
+      "gold_fact_coverage_screen": 1,
+      "matched_facts": [
+        "sample",
+        "test_assets",
+        "method",
+        "foreign_factor",
+        "model_comparison"
+      ],
+      "missing_facts": [],
+      "verified_evidence_count": 15,
+      "findings_count": 2,
+      "robustness_count": 1,
+      "limitations_count": 1,
+      "methodology_complete": "Epstein-Zin 선호와 내구재 소비를 가정한 2국가 균형 자산가격결정 모형을 바탕으로 일반화적률법(GMM)을 이용한 선형 팩터 모형 계수 추정 및 Fama-French 3요인 모형과의 성능 비교",
+      "claims_with_evidence": 11,
+      "claim_count": 11,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다."
+      ]
+    },
+    {
+      "benchmark_id": "B03",
+      "analysis_id": "7bd6bcd7-7352-42a0-b0a2-c4e07f522729",
+      "model": "gemini-3.5-flash-lite",
+      "analysis_version": "finance-structured-v3",
+      "gold_fact_coverage_screen": 0.5,
+      "matched_facts": [
+        "method",
+        "limitation"
+      ],
+      "missing_facts": [
+        "sample",
+        "comparison"
+      ],
+      "verified_evidence_count": 10,
+      "findings_count": 2,
+      "robustness_count": 1,
+      "limitations_count": 1,
+      "methodology_complete": false,
+      "claims_with_evidence": 7,
+      "claim_count": 7,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다.",
+        "방법론은 검증 가능한 직접 인용이 없어 세부 정보를 표시하지 않았습니다."
+      ]
+    },
+    {
+      "benchmark_id": "B04",
+      "analysis_id": "a8c1dc26-edbd-4391-ba40-8e3a173253a4",
+      "model": "gemini-3.5-flash-lite",
+      "analysis_version": "finance-structured-v3",
+      "gold_fact_coverage_screen": 0.75,
+      "matched_facts": [
+        "sample",
+        "regimes",
+        "method"
+      ],
+      "missing_facts": [
+        "duration",
+        "out_of_sample"
+      ],
+      "verified_evidence_count": 11,
+      "findings_count": 0,
+      "robustness_count": 0,
+      "limitations_count": 1,
+      "methodology_complete": "마코프 국면전환(Markov Regime-Switching, MRS) 프레임워크를 활용한 시계열 및 패널 분석",
+      "claims_with_evidence": 7,
+      "claim_count": 7,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다.",
+        "검증 가능한 근거가 있는 실증 결과를 찾지 못했습니다."
+      ]
+    },
+    {
+      "benchmark_id": "B05",
+      "analysis_id": "f94e55cb-e41a-4055-9fc0-03dc63673d28",
+      "model": "gemini-3.5-flash-lite",
+      "analysis_version": "finance-structured-v4",
+      "gold_fact_coverage_screen": 0.75,
+      "matched_facts": [
+        "sample",
+        "premium",
+        "regime"
+      ],
+      "missing_facts": [
+        "method"
+      ],
+      "verified_evidence_count": 20,
+      "findings_count": 3,
+      "robustness_count": 2,
+      "limitations_count": 3,
+      "methodology_complete": false,
+      "claims_with_evidence": 17,
+      "claim_count": 17,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다.",
+        "방법론은 검증 가능한 직접 인용이 없어 세부 정보를 표시하지 않았습니다."
+      ]
+    },
+    {
+      "benchmark_id": "B06",
+      "analysis_id": "0a01bade-97a1-4a57-96ff-d120bcf6866e",
+      "model": "gemini-3.5-flash-lite",
+      "analysis_version": "finance-structured-v4",
+      "gold_fact_coverage_screen": 0.75,
+      "matched_facts": [
+        "sample",
+        "method",
+        "asymmetry"
+      ],
+      "missing_facts": [
+        "symmetry"
+      ],
+      "verified_evidence_count": 13,
+      "findings_count": 1,
+      "robustness_count": 3,
+      "limitations_count": 1,
+      "methodology_complete": "패널 데이터를 활용한 대칭적 및 비대칭적 ARDL(PMG 접근법) 모형 및 비대칭 Granger 인과관계 분석",
+      "claims_with_evidence": 12,
+      "claim_count": 12,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다."
+      ]
+    },
+    {
+      "benchmark_id": "B07",
+      "analysis_id": "d25aa706-56c0-4024-8fbe-04cd97ac774e",
+      "model": "gemini-3.6-flash",
+      "analysis_version": "finance-structured-v4",
+      "gold_fact_coverage_screen": 0.75,
+      "matched_facts": [
+        "out_of_sample",
+        "method",
+        "findings",
+        "limitation"
+      ],
+      "missing_facts": [
+        "sample"
+      ],
+      "verified_evidence_count": 36,
+      "findings_count": 6,
+      "robustness_count": 1,
+      "limitations_count": 4,
+      "methodology_complete": "기억력을 최대한 보존하는 고정폭 창 분수 차분(FFD) 시계열과 적응형 라쏘(adaptive lasso) 변수 선택 기법을 결합한 다변량 GARCH-MIDAS 모형을 활용한 empirical design.",
+      "claims_with_evidence": 26,
+      "claim_count": 26,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다."
+      ]
+    },
+    {
+      "benchmark_id": "B08",
+      "analysis_id": "87572df8-c1af-4a0e-b892-6bbcab70edba",
+      "model": "gemini-3.5-flash-lite",
+      "analysis_version": "finance-structured-v4",
+      "gold_fact_coverage_screen": 0.8,
+      "matched_facts": [
+        "sample",
+        "period",
+        "method",
+        "esg_returns"
+      ],
+      "missing_facts": [
+        "esg_volatility"
+      ],
+      "verified_evidence_count": 15,
+      "findings_count": 0,
+      "robustness_count": 0,
+      "limitations_count": 1,
+      "methodology_complete": "다중요인 모형(Multi-factor model)과 풀드 OLS, 고정효과(Fixed Effects), 확률효과(Random Effects) 패널 회귀분석",
+      "claims_with_evidence": 11,
+      "claim_count": 11,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다.",
+        "검증 가능한 근거가 있는 실증 결과를 찾지 못했습니다."
+      ]
+    },
+    {
+      "benchmark_id": "B09",
+      "analysis_id": "06ba4886-b831-47e2-b754-5168616bf869",
+      "model": "gemini-3.5-flash-lite",
+      "analysis_version": "finance-structured-v4",
+      "gold_fact_coverage_screen": 0.6666666666666666,
+      "matched_facts": [
+        "sample",
+        "vov",
+        "findings"
+      ],
+      "missing_facts": [
+        "data_sources",
+        "method"
+      ],
+      "verified_evidence_count": 10,
+      "findings_count": 1,
+      "robustness_count": 0,
+      "limitations_count": 1,
+      "methodology_complete": false,
+      "claims_with_evidence": 7,
+      "claim_count": 7,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다.",
+        "방법론은 검증 가능한 직접 인용이 없어 세부 정보를 표시하지 않았습니다."
+      ]
+    },
+    {
+      "benchmark_id": "B10",
+      "analysis_id": "1d5006b0-123f-495b-b95d-1b0894ac410c",
+      "model": "gemini-3.6-flash",
+      "analysis_version": "finance-structured-v4",
+      "gold_fact_coverage_screen": 0.875,
+      "matched_facts": [
+        "universe",
+        "method",
+        "comparison",
+        "results"
+      ],
+      "missing_facts": [
+        "scope"
+      ],
+      "verified_evidence_count": 22,
+      "findings_count": 3,
+      "robustness_count": 2,
+      "limitations_count": 2,
+      "methodology_complete": "기대수익률 제약 조건 하에서 분산(variance) 및 실현 변동성(realized volatility)을 각각 최소화하는 단일 목적 포트폴리오 최적화 모형 비교 실증 연구.",
+      "claims_with_evidence": 16,
+      "claim_count": 16,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다."
+      ]
+    }
+  ]
+}
