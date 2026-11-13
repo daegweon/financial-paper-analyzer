@@ -385,17 +385,28 @@ def _are_duplicate_findings(left: dict[str, Any], right: dict[str, Any]) -> bool
     similarity = SequenceMatcher(None, left_claim, right_claim).ratio()
     left_numbers = _finding_numeric_set(left)
     right_numbers = _finding_numeric_set(right)
-    threshold = 0.56 if left_numbers and right_numbers else 0.82
-    if similarity < threshold:
-        return False
+    left_evidence = {
+        (int(item.get("page", -1)), str(item.get("quote", "")))
+        for item in left.get("evidence", [])
+    }
+    right_evidence = {
+        (int(item.get("page", -1)), str(item.get("quote", "")))
+        for item in right.get("evidence", [])
+    }
+    shared_evidence = left_evidence & right_evidence
     shared_pages = _finding_page_set(left) & _finding_page_set(right)
     if not shared_pages:
         return False
-    if left_numbers and right_numbers and not (
+    numbers_compatible = not (left_numbers and right_numbers) or (
         left_numbers.issubset(right_numbers) or right_numbers.issubset(left_numbers)
-    ):
+    )
+    if not numbers_compatible:
         return False
-    return True
+    same_direction = str(left.get("direction", "")).casefold() == str(right.get("direction", "")).casefold()
+    if shared_evidence and numbers_compatible and same_direction:
+        return True
+    threshold = 0.72 if left_numbers and right_numbers else 0.86
+    return similarity >= threshold
 
 
 def _deduplicate_findings(
