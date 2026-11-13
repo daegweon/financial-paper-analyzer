@@ -817,3 +817,14 @@ def test_llm_result_runs_methodology_only_repair_when_section_evidence_is_missin
     assert result["methodology"]["design"] == "은행 패널 회귀분석"
     assert result["methodology"]["sample"] == "50개 은행"
     assert "gemini-3.5-flash-lite" in result["models_used"]
+
+
+
+def test_overall_methodology_quote_does_not_substitute_for_sample_field_evidence():
+    raw = _sample_model_output()
+    raw["methodology"]["sample_evidence"] = []
+    result = module.normalize_llm_result(raw, 2, _sample_pages())
+    assert result["methodology"]["design"] == "은행 패널 분석"
+    assert result["methodology"]["sample"] == "확인 불가"
+    assert result["methodology"]["sample_evidence"] == []
+    assert module._methodology_needs_repair(result["methodology"])
