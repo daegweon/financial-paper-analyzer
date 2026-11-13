@@ -1035,15 +1035,33 @@ def _all_evidence(result: dict[str, Any]) -> list[dict[str, Any]]:
         for item in result.get(key, []):
             if isinstance(item, dict):
                 add(item.get("evidence"))
+                add(item.get("significance_legend_evidence"))
     bibliographic = result.get("bibliographic", {})
     if isinstance(bibliographic, dict):
         add(bibliographic.get("evidence"))
     methodology = result.get("methodology", {})
     if isinstance(methodology, dict):
         add(methodology.get("evidence"))
+        for field in (
+            "design_evidence", "sample_evidence", "period_evidence",
+            "data_sources_evidence", "empirical_strategy_evidence",
+            "identification_strategy_evidence", "equations_evidence",
+        ):
+            add(methodology.get(field))
         for variable in methodology.get("variables", []):
             if isinstance(variable, dict):
                 add(variable.get("evidence"))
+        panel = methodology.get("panel_dimensions", {})
+        if isinstance(panel, dict):
+            add(panel.get("evidence"))
+            add(panel.get("study_design_evidence"))
+            add(panel.get("panel_balance_evidence"))
+            for report in panel.get("sample_count_reports", []):
+                if isinstance(report, dict):
+                    add(report.get("evidence"))
+            for conflict in panel.get("source_conflicts", []):
+                if isinstance(conflict, dict):
+                    add(conflict.get("evidence"))
     return found[:40]
 
 
@@ -1875,7 +1893,7 @@ async def llm_result(count: int, pages: list[dict[str, Any]]) -> dict[str, Any]:
                 ]
                 result["warnings"].extend(method_warnings)
                 panel_status = result["methodology"].get("panel_dimensions", {}).get("consistency_status")
-                if panel_status == "mismatch":
+                if panel_status in ("mismatch", "source_conflict", "design_conflict"):
                     result["warnings"].append(
                         result["methodology"]["panel_dimensions"]["consistency_note"]
                     )
