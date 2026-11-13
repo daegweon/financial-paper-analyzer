@@ -475,20 +475,45 @@ export default function Home() {
                   </div>
                   {!!analysis.result.methodology.data_sources?.length && <p><b>데이터 출처:</b> {analysis.result.methodology.data_sources.join(" · ")}</p>}
                   {analysis.result.methodology.panel_dimensions && analysis.result.methodology.panel_dimensions.evidence?.length > 0 && <>
-                    <h4>패널 표본 차원 검증</h4>
+                    <h4>연구 설계 및 표본 구조 검증</h4>
                     <div className="method-grid">
-                      <div><b>횡단면 단위</b><p>{analysis.result.methodology.panel_dimensions.cross_sectional_units}</p></div>
-                      <div><b>시간 기간 수</b><p>{analysis.result.methodology.panel_dimensions.time_periods}</p></div>
-                      <div><b>원문 보고 총관측치</b><p>{analysis.result.methodology.panel_dimensions.reported_total_observations}</p></div>
-                      <div><b>차원 곱 계산값</b><p>{analysis.result.methodology.panel_dimensions.calculated_total_observations}</p></div>
+                      <div><b>연구 설계 유형</b><p>{studyDesignLabel(analysis.result.methodology.panel_dimensions.study_design_type)}</p></div>
+                      <div><b>패널 균형 여부</b><p>{panelBalanceLabel(analysis.result.methodology.panel_dimensions.panel_balance)}</p></div>
+                      <div><b>횡단면 단위 수</b><p>{analysis.result.methodology.panel_dimensions.cross_sectional_units_count || analysis.result.methodology.panel_dimensions.cross_sectional_units}</p></div>
+                      <div><b>관측 기간 수</b><p>{analysis.result.methodology.panel_dimensions.time_periods_count || analysis.result.methodology.panel_dimensions.time_periods}</p></div>
+                      <div><b>원문 보고 총관측치</b><p>{analysis.result.methodology.panel_dimensions.reported_total_observations_count || analysis.result.methodology.panel_dimensions.reported_total_observations}</p></div>
+                      <div><b>계산 총관측치</b><p>{analysis.result.methodology.panel_dimensions.calculated_total_observations_count || analysis.result.methodology.panel_dimensions.calculated_total_observations}</p></div>
                       <div><b>관측 빈도</b><p>{analysis.result.methodology.panel_dimensions.observation_frequency}</p></div>
                       <div><b>관측 단위</b><p>{analysis.result.methodology.panel_dimensions.observation_unit}</p></div>
                     </div>
-                    <p className={analysis.result.methodology.panel_dimensions.consistency_status === "mismatch" ? "warning" : "verification-note"}>
-                      패널 일관성: {analysis.result.methodology.panel_dimensions.consistency_status === "consistent" ? "원문 보고값과 계산값 일치" : analysis.result.methodology.panel_dimensions.consistency_status === "mismatch" ? "관측치 불일치 — 연구자 확인 필요" : "계산값 참고 · 원문 총관측치 대조 불가"}
+                    <p className={["mismatch", "source_conflict", "design_conflict"].includes(analysis.result.methodology.panel_dimensions.consistency_status) ? "warning" : "verification-note"}>
+                      표본 구조 검사: {panelStatusLabel(analysis.result.methodology.panel_dimensions.consistency_status)}
                       {" · "}{analysis.result.methodology.panel_dimensions.consistency_note}
                     </p>
+                    {!!analysis.result.methodology.panel_dimensions.source_conflicts?.length && <>
+                      <h4>원문 내 표본 수 불일치</h4>
+                      {analysis.result.methodology.panel_dimensions.source_conflicts.map((conflict, index) =>
+                        <article className="analysis-card" key={index}>
+                          <b>{conflict.label} · {conflict.metric}</b>
+                          <p>원문 보고값: {conflict.reported_values.join(" / ")}</p>
+                          <p>출처 위치: {conflict.sections.join(" · ")}</p>
+                          <EvidenceList items={conflict.evidence}/>
+                        </article>
+                      )}
+                    </>}
+                    {!!analysis.result.methodology.panel_dimensions.sample_count_reports?.length && <>
+                      <h4>원문 표본 수 기록</h4>
+                      {analysis.result.methodology.panel_dimensions.sample_count_reports.map((report, index) =>
+                        <article className="analysis-card" key={index}>
+                          <b>{report.label} · {report.metric}</b>
+                          <p>{report.count.toLocaleString()} · {report.section}</p>
+                          <EvidenceList items={report.evidence}/>
+                        </article>
+                      )}
+                    </>}
                     <EvidenceList items={analysis.result.methodology.panel_dimensions.evidence}/>
+                    <EvidenceList items={analysis.result.methodology.panel_dimensions.study_design_evidence}/>
+                    <EvidenceList items={analysis.result.methodology.panel_dimensions.panel_balance_evidence}/>
                   </>}
                   {!!analysis.result.methodology.variables?.length && <>
                     <h4>주요 변수</h4>
