@@ -22,6 +22,17 @@ type Finding = {
   };
 };
 type Variable = { name: string; role: string; definition: string; evidence: Evidence[] };
+type PanelDimensions = {
+  cross_sectional_units: string;
+  time_periods: string;
+  reported_total_observations: string;
+  calculated_total_observations: string;
+  observation_frequency: string;
+  observation_unit: string;
+  consistency_status: string;
+  consistency_note: string;
+  evidence: Evidence[];
+};
 type Methodology = {
   design: string;
   sample: string;
@@ -32,6 +43,7 @@ type Methodology = {
   identification_strategy: string;
   equations: string[];
   evidence: Evidence[];
+  panel_dimensions?: PanelDimensions;
 };
 type Bibliographic = {
   title: string;
@@ -45,6 +57,9 @@ type AnalysisResult = {
   mode: string;
   analysis_version?: string;
   findings_verification?: { repair_attempted: boolean; repair_status: string; repair_model?: string | null };
+  methodology_verification?: { repair_attempted: boolean; repair_status: string; repair_model?: string | null };
+  findings_deduplication?: { duplicates_removed: number };
+  summary_verification?: { status: string; unsupported_numeric_tokens?: string[] };
   summary: string;
   bibliographic?: Bibliographic;
   research_question?: string;
@@ -364,7 +379,13 @@ export default function Home() {
                   <EvidenceList items={analysis.result.bibliographic.evidence}/>
                 </section>
               )}
-              <section className="analysis-section"><h3>핵심 요약</h3><p>{analysis.result.summary}</p></section>
+              <section className="analysis-section">
+                <h3>핵심 요약</h3><p>{analysis.result.summary}</p>
+                {analysis.result.summary_verification && <p className={analysis.result.summary_verification.status === "model_summary" ? "muted" : "verification-note"}>
+                  요약 검증: {analysis.result.summary_verification.status === "model_summary" ? "원문 수치 1차 대조 통과" : analysis.result.summary_verification.status.startsWith("reconstructed") ? "검증된 방법론·실증 결과로 재구성" : "원문 근거 확인 필요"}
+                </p>}
+                {!!analysis.result.summary_verification?.unsupported_numeric_tokens?.length && <p className="warning">요약에서 인용 페이지로 확인되지 않은 숫자: {analysis.result.summary_verification.unsupported_numeric_tokens.join(", ")}</p>}
+              </section>
               <section className="analysis-section">
                 <h3>연구 질문</h3><p>{analysis.result.research_question || "확인 불가"}</p>
                 <EvidenceList items={analysis.result.research_question_evidence}/>
@@ -374,6 +395,7 @@ export default function Home() {
               {analysis.result.methodology && (
                 <section className="analysis-section">
                   <h3>연구 방법론 및 데이터</h3>
+                  {analysis.result.methodology_verification?.repair_attempted && <p className="muted">2차 방법론 검증: {analysis.result.methodology_verification.repair_status === "recovered" ? "누락 방법론 복구 완료" : analysis.result.methodology_verification.repair_status === "reviewed" ? "기존 방법론 재검토 완료" : analysis.result.methodology_verification.repair_status === "partial" ? "일부 항목만 복구" : analysis.result.methodology_verification.repair_status === "no_supported_methodology" ? "추가 근거 확인 불가" : "검증 미완료"}</p>}
                   <div className="method-grid">
                     <div><b>연구 설계</b><p>{analysis.result.methodology.design}</p></div>
                     <div><b>표본</b><p>{analysis.result.methodology.sample}</p></div>
@@ -382,6 +404,22 @@ export default function Home() {
                     <div><b>식별 전략</b><p>{analysis.result.methodology.identification_strategy}</p></div>
                   </div>
                   {!!analysis.result.methodology.data_sources?.length && <p><b>데이터 출처:</b> {analysis.result.methodology.data_sources.join(" · ")}</p>}
+                  {analysis.result.methodology.panel_dimensions && analysis.result.methodology.panel_dimensions.evidence?.length > 0 && <>
+                    <h4>패널 표본 차원 검증</h4>
+                    <div className="method-grid">
+                      <div><b>횡단면 단위</b><p>{analysis.result.methodology.panel_dimensions.cross_sectional_units}</p></div>
+                      <div><b>시간 기간 수</b><p>{analysis.result.methodology.panel_dimensions.time_periods}</p></div>
+                      <div><b>원문 보고 총관측치</b><p>{analysis.result.methodology.panel_dimensions.reported_total_observations}</p></div>
+                      <div><b>차원 곱 계산값</b><p>{analysis.result.methodology.panel_dimensions.calculated_total_observations}</p></div>
+                      <div><b>관측 빈도</b><p>{analysis.result.methodology.panel_dimensions.observation_frequency}</p></div>
+                      <div><b>관측 단위</b><p>{analysis.result.methodology.panel_dimensions.observation_unit}</p></div>
+                    </div>
+                    <p className={analysis.result.methodology.panel_dimensions.consistency_status === "mismatch" ? "warning" : "verification-note"}>
+                      패널 일관성: {analysis.result.methodology.panel_dimensions.consistency_status === "consistent" ? "원문 보고값과 계산값 일치" : analysis.result.methodology.panel_dimensions.consistency_status === "mismatch" ? "관측치 불일치 — 연구자 확인 필요" : "계산값 참고 · 원문 총관측치 대조 불가"}
+                      {" · "}{analysis.result.methodology.panel_dimensions.consistency_note}
+                    </p>
+                    <EvidenceList items={analysis.result.methodology.panel_dimensions.evidence}/>
+                  </>}
                   {!!analysis.result.methodology.variables?.length && <>
                     <h4>주요 변수</h4>
                     {analysis.result.methodology.variables.map((variable, index) =>
@@ -399,6 +437,7 @@ export default function Home() {
               )}
               <section className="analysis-section">
                 <h3>주요 실증 결과 <small>{analysis.result.findings?.length ?? 0}</small></h3>
+                {!!analysis.result.findings_deduplication?.duplicates_removed && <p className="muted">유사·중복 결과 {analysis.result.findings_deduplication.duplicates_removed}개를 통합했습니다.</p>}
                 {analysis.result.findings_verification?.repair_attempted && <p className="muted">2차 실증 결과 검증: {analysis.result.findings_verification.repair_status === "recovered" ? "누락 결과 복구 완료" : analysis.result.findings_verification.repair_status === "reviewed" ? "기존 결과 재검토 완료" : analysis.result.findings_verification.repair_status === "no_supported_findings" ? "추가 근거 확인 불가" : "검증 미완료"}</p>}
                 {!analysis.result.findings?.length
                   ? <p className="muted">검증된 실증 결과가 없습니다.</p>
