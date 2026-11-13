@@ -206,7 +206,7 @@ def test_gemini_provider_uses_structured_json_and_server_side_key(monkeypatch):
     assert config["responseJsonSchema"] == module.ANALYSIS_SCHEMA
     assert config["thinkingConfig"]["thinkingLevel"] == "minimal"
     assert "candidateCount" not in config
-    assert config["maxOutputTokens"] == 4096
+    assert config["maxOutputTokens"] == 16384
     assert requests[0][1]["json"]["contents"][0]["parts"][0]["text"].startswith("다음은")
 
 
@@ -322,3 +322,67 @@ def test_gemini_falls_back_when_primary_times_out(monkeypatch):
     assert result["provider"] == "gemini"
     assert result["model"] == "gemini-3.6-flash"
     assert len(requests) == 2
+
+
+
+def test_gemini_retries_with_fallback_when_primary_hits_output_cap(monkeypatch):
+    pages = _sample_pages()
+    model_output = _sample_model_output()
+    requests = []
+
+    class FakeResponse:
+        def __init__(self, finish_reason):
+            self.status_code = 200
+            self.headers = {}
+            self.text = ""
+            self.finish_reason = finish_reason
+        def raise_for_status(self):
+            return None
+        def json(self):
+            if self.finish_reason == "MAX_TOKENS":
+                return {
+                    "candidates": [{"finishReason": "MAX_TOKENS", "content": {"parts": []}}],
+                    "usageMetadata": {
+                        "promptTokenCount": 12000,
+                        "candidatesTokenCount": 16384,
+                        "thoughtsTokenCount": 0,
+                        "totalTokenCount": 28384,
+                    },
+                }
+            return {
+                "candidates": [{
+                    "finishReason": "STOP",
+                    "content": {"parts": [{"text": json.dumps(model_output, ensure_ascii=False)}]},
+                }],
+                "usageMetadata": {
+                    "promptTokenCount": 12000,
+                    "candidatesTokenCount": 4500,
+                    "thoughtsTokenCount": 100,
+                    "totalTokenCount": 16600,
+                },
+            }
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return None
+        async def post(self, url, **kwargs):
+            requests.append((url, kwargs))
+            return FakeResponse("MAX_TOKENS" if len(requests) == 1 else "STOP")
+
+    async def fake_sleep(seconds):
+        return None
+
+    monkeypatch.setattr(module, "AI_PROVIDER", "gemini")
+    monkeypatch.setattr(module, "GEMINI_API_KEY", "test-key-not-used")
+    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-3.5-flash-lite")
+    monkeypatch.setattr(module, "GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    monkeypatch.setattr(module.asyncio, "sleep", fake_sleep)
+
+    result = asyncio.run(module.llm_result(2, pages))
+    assert result["provider"] == "gemini"
+    assert result["model"] == "gemini-3.6-flash"
+    assert len(requests) == 2
+    assert requests[0][1]["json"]["generationConfig"]["maxOutputTokens"] == 16384
+    assert requests[1][1]["json"]["generationConfig"]["maxOutputTokens"] == 24576
