@@ -306,7 +306,7 @@ def test_gemini_falls_back_when_primary_times_out(monkeypatch):
         async def post(self, url, **kwargs):
             requests.append(url)
             if len(requests) == 1:
-                raise httpx.ReadTimeout("primary timed out")
+                raise module.httpx.ReadTimeout("primary timed out")
             return FakeResponse()
 
     async def fake_sleep(seconds): return None
