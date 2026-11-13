@@ -550,3 +550,21 @@ def test_llm_result_runs_targeted_second_pass_when_findings_are_missing(monkeypa
     assert len(result["findings"]) == 1
     assert result["findings"][0]["verification"]["status"] == "screen_passed"
     assert "gemini-3.5-flash-lite" in result["models_used"]
+
+
+
+def test_audit_finding_does_not_confuse_significant_with_not_significant():
+    pages = [{
+        "page": 4,
+        "text": "The coefficient is not statistically significant at the 10 percent level.",
+    }]
+    finding = {
+        "claim": "계수는 통계적으로 유의하다.",
+        "direction": "positive",
+        "estimate": "0.03",
+        "statistical_significance": "statistically significant at 10% level",
+        "evidence": [{"page": 4, "quote": "The coefficient is not statistically significant at the 10 percent level."}],
+    }
+    audit = module.audit_finding(finding, pages)
+    assert audit["status"] == "review"
+    assert audit["significance_supported"] is False
