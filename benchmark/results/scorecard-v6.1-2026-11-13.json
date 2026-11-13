@@ -1,0 +1,501 @@
+{
+  "benchmark_version": "1.0.0",
+  "report_version": "finance-structured-v6.1",
+  "generated_at": "2026-11-13",
+  "source": "Latest completed Supabase production analysis per benchmark paper",
+  "paper_count": 10,
+  "completed_count": 10,
+  "latest_analysis_version_distribution": {
+    "finance-structured-v6.1": 6,
+    "finance-structured-v6": 4
+  },
+  "v61_reanalyzed_papers": [
+    "B01",
+    "B04",
+    "B06",
+    "B08",
+    "B09",
+    "B10"
+  ],
+  "v61_reanalysis_count": 6,
+  "v61_subset_metrics": {
+    "mean_gold_fact_coverage_screen": 0.8624999999999999,
+    "findings_count": 17,
+    "page_validated_evidence_count": 150,
+    "findings_flagged_for_review": 7,
+    "papers_with_methodology": 6,
+    "papers_with_findings": 6
+  },
+  "full_latest_benchmark_metrics": {
+    "mean_gold_fact_coverage_screen": 0.8800000000000001,
+    "mean_claim_evidence_coverage": 1,
+    "findings_count": 34,
+    "page_validated_evidence_count": 228,
+    "findings_flagged_for_review": 9,
+    "papers_with_methodology": 10,
+    "papers_with_findings": 10,
+    "panel_mismatches": [
+      "B06",
+      "B08"
+    ]
+  },
+  "model_distribution": {
+    "gemini-3.5-flash-lite": 9,
+    "gemini-3.6-flash": 1
+  },
+  "targeted_v6_to_v61_comparison": [
+    {
+      "paper_id": "B01",
+      "v6_findings": 2,
+      "v61_findings": 1,
+      "v6_evidence": 17,
+      "v61_evidence": 24,
+      "v6_flagged": 1,
+      "v61_flagged": 0,
+      "v6_methodology": true,
+      "v61_methodology": true
+    },
+    {
+      "paper_id": "B04",
+      "v6_findings": 3,
+      "v61_findings": 4,
+      "v6_evidence": 22,
+      "v61_evidence": 34,
+      "v6_flagged": 3,
+      "v61_flagged": 1,
+      "v6_methodology": true,
+      "v61_methodology": true
+    },
+    {
+      "paper_id": "B06",
+      "v6_findings": 1,
+      "v61_findings": 2,
+      "v6_evidence": 13,
+      "v61_evidence": 16,
+      "v6_flagged": 1,
+      "v61_flagged": 1,
+      "v6_methodology": true,
+      "v61_methodology": true
+    },
+    {
+      "paper_id": "B08",
+      "v6_findings": 4,
+      "v61_findings": 4,
+      "v6_evidence": 32,
+      "v61_evidence": 36,
+      "v6_flagged": 2,
+      "v61_flagged": 2,
+      "v6_methodology": true,
+      "v61_methodology": true
+    },
+    {
+      "paper_id": "B09",
+      "v6_findings": 0,
+      "v61_findings": 3,
+      "v6_evidence": 14,
+      "v61_evidence": 20,
+      "v6_flagged": 0,
+      "v61_flagged": 3,
+      "v6_methodology": true,
+      "v61_methodology": true
+    },
+    {
+      "paper_id": "B10",
+      "v6_findings": 4,
+      "v61_findings": 3,
+      "v6_evidence": 12,
+      "v61_evidence": 20,
+      "v6_flagged": 0,
+      "v61_flagged": 0,
+      "v6_methodology": false,
+      "v61_methodology": true
+    }
+  ],
+  "limitations": [
+    "The full ten-paper score aggregates six v6.1 analyses and four v6 analyses; it is not a same-version benchmark.",
+    "Gold-fact coverage is lexical alias screening, not semantic accuracy.",
+    "Claim-evidence coverage means each retained claim has at least one citation; it does not prove semantic entailment.",
+    "Panel-dimension multiplication assumes a balanced panel and is not valid for unbalanced panels or non-panel portfolio-optimization designs.",
+    "B06 contains inconsistent sample counts across its abstract, methodology text and descriptive table; this is a source-document inconsistency requiring explicit reporting rather than forced reconciliation.",
+    "Numerical screening is heuristic. Table significance stars, p-values and coefficient-column alignment require context-aware review."
+  ],
+  "results": [
+    {
+      "paper_id": "B01",
+      "analysis_id": "611a6d44-f951-4b96-9617-a32940696b5b",
+      "analysis_version": "finance-structured-v6.1",
+      "model": "gemini-3.5-flash-lite",
+      "gold_fact_coverage_screen": 1,
+      "matched_facts": [
+        "sample",
+        "frequency",
+        "source",
+        "factors",
+        "method",
+        "finding",
+        "panel_dimensions",
+        "estimator_comparison"
+      ],
+      "missing_facts": [],
+      "findings_count": 1,
+      "findings_flagged_for_review": 0,
+      "evidence_count": 24,
+      "methodology_present": true,
+      "methodology_design": "패널 데이터 구조를 활용한 이질적 패널 모형 추정 및 요인 누락 검정과, 주성분 분석 기반의 Giglio-Xiu 3단계 위험 프리미엄 추정법을 결합한 연구 설계",
+      "methodology_sample": "확인 불가",
+      "methodology_period": "2001년 1월부터 2020년 12월까지의 일별 데이터",
+      "methodology_empirical_strategy": "평균그룹 추정량(MG)과 공통상관효과 추정량(CCE)을 비교하는 왈드 검정과 주성분 분석 기반의 Giglio-Xiu 3단계 추정법",
+      "methodology_identification_strategy": "오차항에 미치는 잠재적 공통 요인 구조를 통제하기 위해 횡단면 평균을 대용변수로 사용하는 공통상관효과 추정법 및 주성분 분석을 활용한 식별 전략",
+      "methodology_section_evidence_count": 9,
+      "methodology_variable_count": 5,
+      "claim_evidence_coverage": 1,
+      "findings_repair_status": "not_needed",
+      "methodology_repair_status": "reviewed",
+      "panel_consistency": "consistent",
+      "panel_note": "횡단면 12 × 기간 4,950 = 보고 총관측치 59,400개로 일치합니다.",
+      "duplicates_removed": 0,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다."
+      ]
+    },
+    {
+      "paper_id": "B02",
+      "analysis_id": "905a9199-5929-4564-ad42-5b051d73bdc2",
+      "analysis_version": "finance-structured-v6",
+      "model": "gemini-3.5-flash-lite",
+      "gold_fact_coverage_screen": 1,
+      "matched_facts": [
+        "sample",
+        "test_assets",
+        "method",
+        "foreign_factor",
+        "model_comparison"
+      ],
+      "missing_facts": [],
+      "findings_count": 2,
+      "findings_flagged_for_review": 0,
+      "evidence_count": 12,
+      "methodology_present": true,
+      "methodology_design": "Epstein-Zin 선호와 내구재 소비를 결합한 2국가 선형 팩터 모형을 일반화자의법(GMM)을 통해 추정하고 Kan-Robotti-Shanken(KRS) 비중첩 모형 검정을 수행함.",
+      "methodology_sample": "한국거래소(KRX)에 상장된 비금융 KOSPI 및 KOSDAQ 기업으로 구성된 25개 Fama-French 포트폴리오 및 산업 포트폴리오",
+      "methodology_period": "2001년~2015년 (분기 데이터)",
+      "methodology_empirical_strategy": "2단계 일반화자의법(2-step GMM)을 사용하여 선형 팩터 모형의 리스크 가격을 추정하고, 결정계수(R2), 평균 절대 가격 오차(MAE), 그리고 Wald 검정을 통해 모형의 성과를 평가함.",
+      "methodology_identification_strategy": "미국 투자자가 한국 주식시장에서 지배적인 외국인 투자자 집단이라는 점에 착안하여, 시장 불완전성 하에서 미국 가계의 확률적 할인율(SDF)을 외국인 대표 SDF로 대입하고, 모형의 제약 가설에 대한 Wald 검정과 Kan-Robotti-Shanken(KRS) 비중첩 모형 검정을 활용함.",
+      "methodology_section_evidence_count": 1,
+      "methodology_variable_count": 1,
+      "claim_evidence_coverage": 1,
+      "findings_repair_status": "not_needed",
+      "methodology_repair_status": "not_available",
+      "panel_consistency": "not_available",
+      "panel_note": null,
+      "duplicates_removed": 0,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다."
+      ]
+    },
+    {
+      "paper_id": "B03",
+      "analysis_id": "ffdc175a-b932-4ab1-87e7-ea5e5ec9c03e",
+      "analysis_version": "finance-structured-v6",
+      "model": "gemini-3.5-flash-lite",
+      "gold_fact_coverage_screen": 1,
+      "matched_facts": [
+        "sample",
+        "method",
+        "comparison",
+        "limitation"
+      ],
+      "missing_facts": [],
+      "findings_count": 5,
+      "findings_flagged_for_review": 2,
+      "evidence_count": 15,
+      "methodology_present": true,
+      "methodology_design": "OLS 회귀분석을 이용한 선형 자산가격 결정 모형 검증",
+      "methodology_sample": "카사블랑카 증권거래소(CSE)에 상장된 75개 기업 중 선정된 59개 기업",
+      "methodology_period": "2008년 1월부터 2017년 12월까지의 월별 데이터 (총 120개월)",
+      "methodology_empirical_strategy": "Ordinary Least Squares (OLS) 회귀분석, F-통계량, p-value 및 수정된 결정계수(Adjusted R-squared) 분석",
+      "methodology_identification_strategy": "Fama and French (1993) 및 Carhart (1997)의 방법론을 따르며, 시장 및 규모·가치·모멘텀 요인 포트폴리오 구성을 통한 횡단면 회귀분석",
+      "methodology_section_evidence_count": 0,
+      "methodology_variable_count": 2,
+      "claim_evidence_coverage": 1,
+      "findings_repair_status": "reviewed",
+      "methodology_repair_status": "not_available",
+      "panel_consistency": "not_available",
+      "panel_note": null,
+      "duplicates_removed": 0,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다.",
+        "방법론 전체를 뒷받침하는 인용은 없지만 변수별 원문 근거가 확인되어 확인된 항목만 표시했습니다."
+      ]
+    },
+    {
+      "paper_id": "B04",
+      "analysis_id": "3d2f322f-9cdf-4fb2-bd1b-9231d76eb5a8",
+      "analysis_version": "finance-structured-v6.1",
+      "model": "gemini-3.5-flash-lite",
+      "gold_fact_coverage_screen": 1,
+      "matched_facts": [
+        "sample",
+        "regimes",
+        "method",
+        "duration",
+        "out_of_sample"
+      ],
+      "missing_facts": [],
+      "findings_count": 4,
+      "findings_flagged_for_review": 1,
+      "evidence_count": 34,
+      "methodology_present": true,
+      "methodology_design": "마르코프 국면전환(Markov regime-switching) 프레임워크를 활용하여 CAPM 및 Fama-French 3요인 모형의 시변 위험프리미엄과 시변 위험 부하를 추정하는 비선형 시계열 연구 설계.",
+      "methodology_sample": "상하이증권거래소(SSE)와 선전증권거래소(SZSE)에 상장된 전체 기업 중 12월 회계연도 말 데이터 및 36개월간의 주식 수익률 데이터가 가용한 표본.",
+      "methodology_period": "1995년 7월부터 2015년 3월까지의 월별 표본 기간 (표본 외 예측 기간: 2015년 4월 ~ 2017년 12월).",
+      "methodology_empirical_strategy": "Hamilton(1989, 1994)의 마르코프 국면전환(MRS) 알고리즘을 적용한 다변량 및 단변량 국면전환 모형 추정, 그리고 확장 윈도우(expanding window)를 이용한 표본 외 예측력 분석.",
+      "methodology_identification_strategy": "마르코프 체인에 따른 확률적 전이행렬(transition matrix)을 가정하여 경제적 국면(약세장과 강세장)의 내생적 전환을 포착하고, 각 국면별로 위험프리미엄과 베타 계수의 비대칭적 변화를 식별함.",
+      "methodology_section_evidence_count": 12,
+      "methodology_variable_count": 3,
+      "claim_evidence_coverage": 1,
+      "findings_repair_status": "reviewed",
+      "methodology_repair_status": "not_needed",
+      "panel_consistency": "calculated_only",
+      "panel_note": "확인된 차원 기준 계산값은 49,875개입니다. 원문에 보고된 총관측치와 대조할 수 없습니다.",
+      "duplicates_removed": 0,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다.",
+        "일부 실증 결과의 숫자·방향·유의수준이 인용 페이지와 완전히 일치하는지 추가 검토가 필요합니다."
+      ]
+    },
+    {
+      "paper_id": "B05",
+      "analysis_id": "a0a94049-23cf-4f35-8811-36718342d036",
+      "analysis_version": "finance-structured-v6",
+      "model": "gemini-3.6-flash",
+      "gold_fact_coverage_screen": 1,
+      "matched_facts": [
+        "sample",
+        "method",
+        "premium",
+        "regime"
+      ],
+      "missing_facts": [],
+      "findings_count": 8,
+      "findings_flagged_for_review": 0,
+      "evidence_count": 38,
+      "methodology_present": true,
+      "methodology_design": "개별 주식 수준 패널 데이터와 고정효과(Fixed Effects) 모형 및 이중차분법(DiD), 마르코프 전환(Markov-switching) 모형을 활용한 실증 분석",
+      "methodology_sample": "바르샤바 증권거래소(WSE)에 상장된 모든 보통주 패널 (최대 41,146개 주식-월 관측치)",
+      "methodology_period": "2001년 ~ 2016년",
+      "methodology_empirical_strategy": "개별 주식 패널 데이터에 고정효과(Fixed Effects) 회귀모형을 적용하고, Arellano HAC 표준오차를 사용하여 이종성 및 자기상관을 통제함. 국면 전환 분석을 위해 마르코프 전환 AR(1) 모형으로 강세장/약세장을 구분한 후 상호작용 변수를 추정함.",
+      "methodology_identification_strategy": "내생성 문제(역인과성)를 완화하기 위해 2013년 4월 도입된 신규 매매 시스템(UTP) 도입을 외생적 충격으로 활용하고 성향점수매칭(PSM)과 이중차분법(DiD)을 결합하여 식별함.",
+      "methodology_section_evidence_count": 3,
+      "methodology_variable_count": 9,
+      "claim_evidence_coverage": 1,
+      "findings_repair_status": "reviewed",
+      "methodology_repair_status": "not_available",
+      "panel_consistency": "not_available",
+      "panel_note": null,
+      "duplicates_removed": 0,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다."
+      ]
+    },
+    {
+      "paper_id": "B06",
+      "analysis_id": "e83bab06-7152-4ecf-a294-aa91b6003500",
+      "analysis_version": "finance-structured-v6.1",
+      "model": "gemini-3.5-flash-lite",
+      "gold_fact_coverage_screen": 0.75,
+      "matched_facts": [
+        "sample",
+        "method",
+        "asymmetry"
+      ],
+      "missing_facts": [
+        "symmetry"
+      ],
+      "findings_count": 2,
+      "findings_flagged_for_review": 1,
+      "evidence_count": 16,
+      "methodology_present": true,
+      "methodology_design": "패널 데이터를 활용하여 대칭적 PARDL 모형과 비대칭적 PNARDL 모형(PMG 접근법)을 추정하고, 비선형성을 검정하기 위해 BDS 검정과 Hatemi-J 비대칭 인과관계 검정을 적용하였다.",
+      "methodology_sample": "ASEAN-5 지역(태국, 싱가포르, 필리핀, 말레이시아, 인도네시아)의 국가별 주가지수 및 미국 달러 대비 자국 통화 환율 데이터",
+      "methodology_period": "2002년 1월부터 2020년 1월까지이며, 위기 전(2002년 1월~2008년 1월), 위기 후(2010년 1월~2020년 1월), 전체 기간으로 구분됨",
+      "methodology_empirical_strategy": "패널 NARDL 모형과 풀드 평균 그룹(PMG) 추정법, 그리고 해테미-제이(Hatemi-J) 비대칭 그레인저 인과관계 검정을 사용하였다.",
+      "methodology_identification_strategy": "확인 불가",
+      "methodology_section_evidence_count": 5,
+      "methodology_variable_count": 2,
+      "claim_evidence_coverage": 1,
+      "findings_repair_status": "recovered",
+      "methodology_repair_status": "reviewed",
+      "panel_consistency": "mismatch",
+      "panel_note": "횡단면 5 × 기간 365 = 1,825개이나, 보고 총관측치는 1,085개로 일치하지 않습니다.",
+      "duplicates_removed": 0,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다.",
+        "일부 실증 결과의 숫자·방향·유의수준이 인용 페이지와 완전히 일치하는지 추가 검토가 필요합니다.",
+        "횡단면 5 × 기간 365 = 1,825개이나, 보고 총관측치는 1,085개로 일치하지 않습니다.",
+        "패널의 횡단면 단위 수 × 기간 수와 원문 보고 총관측치가 일치하지 않습니다.",
+        "횡단면 5 × 기간 365 = 1,825개이나, 보고 총관측치는 1,085개로 일치하지 않습니다."
+      ]
+    },
+    {
+      "paper_id": "B07",
+      "analysis_id": "dd8ea705-cca8-475f-8607-222bcdfdcd97",
+      "analysis_version": "finance-structured-v6",
+      "model": "gemini-3.5-flash-lite",
+      "gold_fact_coverage_screen": 0.625,
+      "matched_facts": [
+        "method",
+        "findings",
+        "limitation"
+      ],
+      "missing_facts": [
+        "sample",
+        "out_of_sample"
+      ],
+      "findings_count": 2,
+      "findings_flagged_for_review": 0,
+      "evidence_count": 13,
+      "methodology_present": true,
+      "methodology_design": "다변량 GARCH-MIDAS 모형과 적응형 라소(adaptive lasso) 패널티 기법을 결합한 변수 선택 및 장기 변동성 예측 연구 설계",
+      "methodology_sample": "S&P South Korea BMI LargeMidCap, SmallCap, Growth, Value 및 11개 GICS 산업 지수",
+      "methodology_period": "2009년 1월부터 2022년 9월까지(표본 내 분석), 2022년 10월부터 2022년 12월까지(표본 외 예측)",
+      "methodology_empirical_strategy": "적응형 라소(adaptive lasso)와 일반화 정보 기준(GIC)을 활용한 고차원 변수 선택 및 GARCH-MIDAS 추정",
+      "methodology_identification_strategy": "다수의 거시경제 통제변수를 포함하고 최적 분수 차분 기법을 적용하여 누락된 변수로 인한 잠재적 내생성 문제를 최소화",
+      "methodology_section_evidence_count": 2,
+      "methodology_variable_count": 1,
+      "claim_evidence_coverage": 1,
+      "findings_repair_status": "recovered",
+      "methodology_repair_status": "not_available",
+      "panel_consistency": "not_available",
+      "panel_note": null,
+      "duplicates_removed": 0,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다.",
+        "연구 질문은 검증 가능한 직접 인용이 없어 표시하지 않았습니다.",
+        "AI 요약의 직접 인용이 검증되지 않아, 검증된 방법론·실증 결과만으로 요약을 재구성했습니다."
+      ]
+    },
+    {
+      "paper_id": "B08",
+      "analysis_id": "aae6adce-828d-4167-97c5-5fc4151fa488",
+      "analysis_version": "finance-structured-v6.1",
+      "model": "gemini-3.5-flash-lite",
+      "gold_fact_coverage_screen": 0.8,
+      "matched_facts": [
+        "sample",
+        "period",
+        "method",
+        "esg_returns"
+      ],
+      "missing_facts": [
+        "esg_volatility"
+      ],
+      "findings_count": 4,
+      "findings_flagged_for_review": 2,
+      "evidence_count": 36,
+      "methodology_present": true,
+      "methodology_design": "다중요인 모형을 적용하고 풀드 오디너리, 고정효과, 확률효과 패널 회귀분석 방법을 통해 검증하였다.",
+      "methodology_sample": "미국 거래소에 상장된 시가총액 2억 5천만 달러 이상의 3,856개 주식 표본",
+      "methodology_period": "2002년 12월부터 2022년 12월까지의 20년 분기별 데이터",
+      "methodology_empirical_strategy": "풀드 OLS, 고정효과, 확률효과 패널 회귀분석을 수행하고 하우스만 테스트를 통해 적합한 모형을 선정함.",
+      "methodology_identification_strategy": "패널 고정효과 모형을 통해 관측되지 않은 시간 불변의 개체별 이질성으로 인한 생략 변수 편의를 완화하고, 독립변수의 시차를 활용하여 동태적 내생성 문제를 점검함.",
+      "methodology_section_evidence_count": 12,
+      "methodology_variable_count": 11,
+      "claim_evidence_coverage": 1,
+      "findings_repair_status": "recovered",
+      "methodology_repair_status": "reviewed",
+      "panel_consistency": "mismatch",
+      "panel_note": "횡단면 3,856 × 기간 81 = 312,336개이나, 보고 총관측치는 84,345개로 일치하지 않습니다.",
+      "duplicates_removed": 0,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다.",
+        "1차 분석에서 검증 가능한 실증 결과를 찾지 못해 2차 집중 검증이 필요합니다.",
+        "패널의 횡단면 단위 수 × 기간 수와 원문 보고 총관측치가 일치하지 않습니다.",
+        "횡단면 3,856 × 기간 81 = 312,336개이나, 보고 총관측치는 84,345개로 일치하지 않습니다."
+      ]
+    },
+    {
+      "paper_id": "B09",
+      "analysis_id": "e1037e1e-92da-4be1-b6ec-e8b0ca083aa3",
+      "analysis_version": "finance-structured-v6.1",
+      "model": "gemini-3.5-flash-lite",
+      "gold_fact_coverage_screen": 1,
+      "matched_facts": [
+        "sample",
+        "data_sources",
+        "vov",
+        "method",
+        "findings"
+      ],
+      "missing_facts": [],
+      "findings_count": 3,
+      "findings_flagged_for_review": 3,
+      "evidence_count": 20,
+      "methodology_present": true,
+      "methodology_design": "고동태 패널 고정효과(HDFE) 회귀분석 및 퀸타일 소트 분석을 활용하여 기업 재무 정책과 VOV의 관계를 분석",
+      "methodology_sample": "IvyDB OptionMetrics 및 Compustat 데이터를 필터링한 6,023개 기업",
+      "methodology_period": "2000년 1월부터 2022년 12월까지",
+      "methodology_empirical_strategy": "확인 불가",
+      "methodology_identification_strategy": "확인 불가",
+      "methodology_section_evidence_count": 4,
+      "methodology_variable_count": 4,
+      "claim_evidence_coverage": 1,
+      "findings_repair_status": "recovered",
+      "methodology_repair_status": "not_needed",
+      "panel_consistency": "calculated_only",
+      "panel_note": "확인된 차원 기준 계산값은 12,046,000개입니다. 원문에 보고된 총관측치와 대조할 수 없습니다.",
+      "duplicates_removed": 0,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다.",
+        "1차 분석에서 검증 가능한 실증 결과를 찾지 못해 2차 집중 검증이 필요합니다."
+      ]
+    },
+    {
+      "paper_id": "B10",
+      "analysis_id": "fdd4918b-cdbc-44d2-a3d4-394f300f04df",
+      "analysis_version": "finance-structured-v6.1",
+      "model": "gemini-3.5-flash-lite",
+      "gold_fact_coverage_screen": 0.625,
+      "matched_facts": [
+        "universe",
+        "method",
+        "comparison"
+      ],
+      "missing_facts": [
+        "results",
+        "scope"
+      ],
+      "findings_count": 3,
+      "findings_flagged_for_review": 0,
+      "evidence_count": 20,
+      "methodology_present": true,
+      "methodology_design": "수학적 포트폴리오 최적화 모형을 통해 기대수익률 제약하에서 포트폴리오 리스크를 최소화하는 단일목적 최적화 문제 설계를 적용하고, 전통적인 분산 기반 모형과 실현 변동성 기반 모형의 성과를 비교 분석함",
+      "methodology_sample": "태국 증권거래소 SET50 지수에 상장된 주식 종목들",
+      "methodology_period": "2019년 10월부터 2024년 11월까지(5년간, 총 1250 거래일)",
+      "methodology_empirical_strategy": "확인 불가",
+      "methodology_identification_strategy": "공매도 금지 제약(0 이상 1 이하의 가중치) 및 가중치 합계 1 제약 하에서 목표 수익률을 고정하고 리스크(실현 변동성 또는 분산)를 최소화하는 단일목적 제약 최적화 구조를 통해 파레토 최적 효율적 투자선상의 포트폴리오를 식별함",
+      "methodology_section_evidence_count": 8,
+      "methodology_variable_count": 2,
+      "claim_evidence_coverage": 1,
+      "findings_repair_status": "not_needed",
+      "methodology_repair_status": "reviewed",
+      "panel_consistency": "calculated_only",
+      "panel_note": "확인된 차원 기준 계산값은 50,000개입니다. 원문에 보고된 총관측치와 대조할 수 없습니다.",
+      "duplicates_removed": 0,
+      "warnings": [
+        "AI가 작성한 해석입니다. 원문 인용은 페이지 단위로 대조했지만, 해석 자체의 정확성은 연구자가 검토해야 합니다.",
+        "논문에 보고된 상관관계와 인과효과를 구분했습니다. 식별전략이 명시되지 않으면 인과관계를 단정하지 않습니다.",
+        "연구 질문은 검증 가능한 직접 인용이 없어 표시하지 않았습니다."
+      ]
+    }
+  ]
+}
