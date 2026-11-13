@@ -122,16 +122,22 @@ async def process_job(client: httpx.AsyncClient, job: dict[str, Any]) -> None:
     finally:
         stop.set()
         await heartbeat
+        if not processing.done():
+            processing.cancel()
+            try:
+                await processing
+            except asyncio.CancelledError:
+                pass
 
     if await schedule_retry(client, job_id):
         log.warning("Failed job scheduled for retry job_id=%s", job_id)
 
 
 async def run() -> None:
-    if not SUPABASE_URL or not SUPABASE_KEY or not SERVICE_ROLE_KEY:
-        raise RuntimeError(
-            "SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY and SUPABASE_SERVICE_ROLE_KEY are required."
-        )
+    if not SUPABASE_URL or not SERVICE_ROLE_KEY:
+        raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.")
+    if not SERVICE_ROLE_KEY.startswith("sb_secret_") and not SUPABASE_KEY:
+        raise RuntimeError("SUPABASE_PUBLISHABLE_KEY is required for legacy service_role keys.")
     log.info(
         "Worker started id=%s poll=%ss lease=%ss",
         WORKER_ID,
