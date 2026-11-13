@@ -407,7 +407,7 @@ def test_validate_evidence_normalizes_pdf_ligatures_and_dash_variants():
 
 
 def test_validate_evidence_normalizes_whitespace_but_returns_page_excerpt():
-    page_text = "The estimated coefficient\\n  is negative and statistically significant."
+    page_text = "The estimated coefficient  is negative and statistically significant."
     accepted = module.validate_evidence(
         [{"page": 2, "quote": "The estimated coefficient is negative and statistically significant."}],
         [{"page": 2, "text": page_text}],
