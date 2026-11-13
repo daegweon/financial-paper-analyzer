@@ -223,10 +223,17 @@ export default function Home() {
       };
 
       for (let attempt = 0; attempt < 120; attempt++) {
-        const statusResponse = await fetch(
-          base + "/api/analyze/" + selected.id + "/status?job_id=" + encodeURIComponent(jobId),
-          { method: "GET", headers, cache: "no-store" },
-        );
+        let statusResponse: Response;
+        try {
+          statusResponse = await fetch(
+            base + "/api/analyze/" + selected.id + "/status?job_id=" + encodeURIComponent(jobId),
+            { method: "GET", headers, cache: "no-store" },
+          );
+        } catch {
+          setMessage("분석 서버의 진행 상태를 다시 확인하고 있습니다...");
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          continue;
+        }
         const state = await statusResponse.json().catch(() => ({}));
         if (!statusResponse.ok) {
           throw new Error(state.detail ?? "분석 상태를 조회하지 못했습니다.");
