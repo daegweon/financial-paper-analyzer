@@ -2110,65 +2110,142 @@ async def _patch_owned_row(
         raise RuntimeError(f"{table} update failed")
 
 
+async def _get_job_checkpoint(
+    client: httpx.AsyncClient,
+    job_id: str,
+    stage: str,
+    headers: dict[str, str],
+) -> dict[str, Any] | None:
+    response = await client.get(
+        SUPABASE_URL + "/rest/v1/analysis_job_checkpoints",
+        headers=headers,
+        params={"job_id": "eq." + job_id, "stage": "eq." + stage, "select": "payload", "limit": "1"},
+    )
+    rows = await check_response(response, "analysis checkpoint lookup")
+    return rows[0].get("payload") if rows else None
+
+
+async def _save_job_checkpoint(
+    client: httpx.AsyncClient,
+    job_id: str,
+    stage: str,
+    payload: dict[str, Any],
+    headers: dict[str, str],
+) -> None:
+    response = await client.post(
+        SUPABASE_URL + "/rest/v1/analysis_job_checkpoints",
+        headers={
+            **headers,
+            "Content-Type": "application/json",
+            "Prefer": "resolution=merge-duplicates,return=minimal",
+        },
+        params={"on_conflict": "job_id,stage"},
+        json={"job_id": job_id, "stage": stage, "payload": payload, "updated_at": _utc_now()},
+    )
+    await check_response(response, "analysis checkpoint save")
+
+
 async def _process_analysis_job(
     paper_id: str,
     job_id: str,
     user_id: str,
     token: str,
 ) -> None:
-    """Run long Gemini calls after the HTTP request has already returned 202."""
+    """Resume from durable checkpoints and make result persistence idempotent."""
+    headers = supabase_headers(token)
     try:
-        await _patch_owned_row(
-            "analysis_jobs", job_id, user_id, token,
-            {"status": "processing", "stage": "pdf_download", "started_at": _utc_now(), "updated_at": _utc_now()},
-        )
-        await _patch_owned_row(
-            "papers", paper_id, user_id, token,
-            {"status": "processing"},
-        )
-        headers = supabase_headers(token)
         async with httpx.AsyncClient(timeout=60) as client:
-            paper_response = await client.get(
-                SUPABASE_URL + "/rest/v1/papers",
+            # If a previous attempt committed the result but crashed before the
+            # job status update, complete the job without calling the model again.
+            existing_response = await client.get(
+                SUPABASE_URL + "/rest/v1/analyses",
                 headers=headers,
-                params={"id": "eq." + paper_id, "select": "id,user_id,storage_path"},
+                params={"job_id": "eq." + job_id, "select": "id", "limit": "1"},
             )
-            papers = await check_response(paper_response, "background paper lookup")
-            if not papers or papers[0]["user_id"] != user_id:
-                raise RuntimeError("논문을 찾을 수 없거나 접근 권한이 없습니다.")
-            storage_path = papers[0]["storage_path"]
-            if (
-                not isinstance(storage_path, str)
-                or not storage_path.startswith(user_id + "/")
-                or ".." in storage_path
-            ):
-                raise RuntimeError("PDF 파일 접근 권한이 없습니다.")
-            pdf_response = await client.get(
-                SUPABASE_URL + "/storage/v1/object/authenticated/papers/" + quote(storage_path, safe="/"),
-                headers=headers,
-            )
-            if pdf_response.status_code != 200:
-                raise RuntimeError("PDF 파일을 다운로드하지 못했습니다.")
-            if len(pdf_response.content) > MAX_BYTES:
-                raise RuntimeError("30MB 이하 PDF만 분석할 수 있습니다.")
-            page_count, pages = extract_pages(pdf_response.content)
+            existing = await check_response(existing_response, "idempotent analysis lookup")
+            if existing:
+                analysis_id = existing[0]["id"]
+                await client.patch(
+                    SUPABASE_URL + "/rest/v1/papers",
+                    headers={**headers, "Content-Type": "application/json"},
+                    params={"id": "eq." + paper_id, "user_id": "eq." + user_id},
+                    json={"status": "completed"},
+                )
+                await _patch_owned_row(
+                    "analysis_jobs", job_id, user_id, token,
+                    {"status": "completed", "stage": "completed", "analysis_id": analysis_id,
+                     "error_message": None, "updated_at": _utc_now(), "completed_at": _utc_now(),
+                     "worker_id": None, "lease_expires_at": None},
+                )
+                log.info("Recovered already-saved analysis job_id=%s analysis_id=%s", job_id, analysis_id)
+                return
 
-        await _patch_owned_row(
-            "analysis_jobs", job_id, user_id, token,
-            {"stage": "gemini_analysis", "updated_at": _utc_now()},
-        )
-        result = await llm_result(page_count, pages)
-        model_name = result.get("model", "extractive-v3") if result["mode"] == "llm" else "extractive-v3"
-        save_headers = {
-            **headers,
-            "Content-Type": "application/json",
-            "Prefer": "return=representation",
-        }
-        async with httpx.AsyncClient(timeout=45) as client:
+            await _patch_owned_row(
+                "analysis_jobs", job_id, user_id, token,
+                {"status": "processing", "stage": "pdf_download", "started_at": _utc_now(), "updated_at": _utc_now()},
+            )
+            await _patch_owned_row("papers", paper_id, user_id, token, {"status": "processing"})
+
+            extracted = await _get_job_checkpoint(client, job_id, "pdf_extracted", headers)
+            if extracted and isinstance(extracted.get("pages"), list) and extracted.get("page_count"):
+                page_count = int(extracted["page_count"])
+                pages = extracted["pages"]
+                log.info("Resuming from PDF checkpoint job_id=%s pages=%d", job_id, page_count)
+            else:
+                paper_response = await client.get(
+                    SUPABASE_URL + "/rest/v1/papers",
+                    headers=headers,
+                    params={"id": "eq." + paper_id, "select": "id,user_id,storage_path"},
+                )
+                papers = await check_response(paper_response, "background paper lookup")
+                if not papers or papers[0]["user_id"] != user_id:
+                    raise RuntimeError("논문을 찾을 수 없거나 접근 권한이 없습니다.")
+                storage_path = papers[0]["storage_path"]
+                if not isinstance(storage_path, str) or not storage_path.startswith(user_id + "/") or ".." in storage_path:
+                    raise RuntimeError("PDF 파일 접근 권한이 없습니다.")
+                pdf_response = await client.get(
+                    SUPABASE_URL + "/storage/v1/object/authenticated/papers/" + quote(storage_path, safe="/"),
+                    headers=headers,
+                )
+                if pdf_response.status_code != 200:
+                    raise RuntimeError("PDF 파일을 다운로드하지 못했습니다.")
+                if len(pdf_response.content) > MAX_BYTES:
+                    raise RuntimeError("30MB 이하 PDF만 분석할 수 있습니다.")
+                page_count, pages = extract_pages(pdf_response.content)
+                await _save_job_checkpoint(
+                    client, job_id, "pdf_extracted",
+                    {"page_count": page_count, "pages": pages}, headers,
+                )
+
+            cached_result = await _get_job_checkpoint(client, job_id, "analysis_result", headers)
+            if cached_result and isinstance(cached_result.get("result"), dict):
+                result = cached_result["result"]
+                model_name = cached_result.get("model_name") or (
+                    result.get("model", "extractive-v3") if result.get("mode") == "llm" else "extractive-v3"
+                )
+                log.info("Resuming from analysis-result checkpoint job_id=%s", job_id)
+            else:
+                await _patch_owned_row(
+                    "analysis_jobs", job_id, user_id, token,
+                    {"stage": "gemini_analysis", "updated_at": _utc_now()},
+                )
+                result = await llm_result(page_count, pages)
+                model_name = result.get("model", "extractive-v3") if result["mode"] == "llm" else "extractive-v3"
+                await _save_job_checkpoint(
+                    client, job_id, "analysis_result",
+                    {"result": result, "model_name": model_name}, headers,
+                )
+
             save_response = await client.post(
                 SUPABASE_URL + "/rest/v1/analyses",
-                headers=save_headers,
+                headers={
+                    **headers,
+                    "Content-Type": "application/json",
+                    "Prefer": "resolution=merge-duplicates,return=representation",
+                },
+                params={"on_conflict": "job_id"},
                 json={
+                    "job_id": job_id,
                     "paper_id": paper_id,
                     "user_id": user_id,
                     "model": model_name,
@@ -2176,28 +2253,32 @@ async def _process_analysis_job(
                     "result": result,
                 },
             )
-            saved = await check_response(save_response, "analysis insert")
+            saved = await check_response(save_response, "idempotent analysis upsert")
             analysis_id = saved[0].get("id") if isinstance(saved, list) and saved else None
+            if not analysis_id:
+                lookup = await client.get(
+                    SUPABASE_URL + "/rest/v1/analyses",
+                    headers=headers,
+                    params={"job_id": "eq." + job_id, "select": "id", "limit": "1"},
+                )
+                existing = await check_response(lookup, "saved analysis verification")
+                analysis_id = existing[0]["id"] if existing else None
+            if not analysis_id:
+                raise RuntimeError("분석 결과 저장 여부를 확인하지 못했습니다.")
+
             update_response = await client.patch(
                 SUPABASE_URL + "/rest/v1/papers",
-                headers={**save_headers, "Prefer": "return=minimal"},
+                headers={**headers, "Content-Type": "application/json"},
                 params={"id": "eq." + paper_id, "user_id": "eq." + user_id},
                 json={"status": "completed", "page_count": page_count},
             )
             await check_response(update_response, "paper update")
-        await _patch_owned_row(
-            "analysis_jobs", job_id, user_id, token,
-            {
-                "status": "completed",
-                "stage": "completed",
-                "analysis_id": analysis_id,
-                "updated_at": _utc_now(),
-                "completed_at": _utc_now(),
-                "error_message": None,
-                "worker_id": None,
-                "lease_expires_at": None,
-            },
-        )
+            await _patch_owned_row(
+                "analysis_jobs", job_id, user_id, token,
+                {"status": "completed", "stage": "completed", "analysis_id": analysis_id,
+                 "updated_at": _utc_now(), "completed_at": _utc_now(), "error_message": None,
+                 "worker_id": None, "lease_expires_at": None},
+            )
         log.info(
             "Analysis job completed job_id=%s paper_id=%s provider=%s model=%s pages=%d",
             job_id, paper_id, result.get("provider", "extractive"), model_name, page_count,
