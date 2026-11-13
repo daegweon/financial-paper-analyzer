@@ -11,6 +11,9 @@ type Finding = {
   direction: string;
   estimate: string;
   statistical_significance: string;
+  table_reference?: string;
+  model_or_column?: string;
+  significance_legend_evidence?: Evidence[];
   evidence: Evidence[];
   verification?: {
     status: string;
@@ -22,13 +25,37 @@ type Finding = {
   };
 };
 type Variable = { name: string; role: string; definition: string; evidence: Evidence[] };
+type SampleCountReport = {
+  metric: string;
+  label: string;
+  count: number;
+  section: string;
+  evidence: Evidence[];
+};
+type SampleCountConflict = {
+  metric: string;
+  label: string;
+  reported_values: number[];
+  sections: string[];
+  evidence: Evidence[];
+};
 type PanelDimensions = {
+  study_design_type?: string;
+  study_design_evidence?: Evidence[];
+  panel_balance?: string;
+  panel_balance_evidence?: Evidence[];
+  cross_sectional_units_count?: number | null;
+  time_periods_count?: number | null;
+  reported_total_observations_count?: number | null;
+  calculated_total_observations_count?: number | null;
   cross_sectional_units: string;
   time_periods: string;
   reported_total_observations: string;
   calculated_total_observations: string;
   observation_frequency: string;
   observation_unit: string;
+  sample_count_reports?: SampleCountReport[];
+  source_conflicts?: SampleCountConflict[];
   consistency_status: string;
   consistency_note: string;
   evidence: Evidence[];
@@ -60,6 +87,7 @@ type AnalysisResult = {
   methodology_verification?: { repair_attempted: boolean; repair_status: string; repair_model?: string | null };
   findings_deduplication?: { duplicates_removed: number };
   summary_verification?: { status: string; unsupported_numeric_tokens?: string[] };
+  summary_consistency?: { status: string; summary_mentions_results: boolean; findings_count: number; unmatched_numeric_tokens: string[]; reasons: string[]; method: string };
   summary: string;
   bibliographic?: Bibliographic;
   research_question?: string;
@@ -86,6 +114,43 @@ type Paper = {
   page_count: number | null;
 };
 type Analysis = { result: AnalysisResult; model: string; created_at?: string };
+
+function studyDesignLabel(value?: string) {
+  const labels: Record<string, string> = {
+    balanced_panel: "균형 패널",
+    unbalanced_panel: "불균형 패널",
+    repeated_cross_section: "반복 횡단면",
+    time_series: "시계열",
+    cross_sectional: "횡단면",
+    portfolio_optimization: "포트폴리오 최적화",
+    other: "기타",
+    unknown: "확인 불가",
+  };
+  return value ? labels[value] ?? value : "확인 불가";
+}
+function panelBalanceLabel(value?: string) {
+  const labels: Record<string, string> = {
+    balanced: "균형",
+    unbalanced: "불균형",
+    not_applicable: "해당 없음",
+    unknown: "확인 불가",
+  };
+  return value ? labels[value] ?? value : "확인 불가";
+}
+function panelStatusLabel(value?: string) {
+  const labels: Record<string, string> = {
+    consistent: "원문 보고값과 계산값 일치",
+    calculated_only: "균형 패널 계산값만 확인",
+    mismatch: "균형 패널 관측치 불일치",
+    source_conflict: "원문 내 표본 수 보고 불일치",
+    design_conflict: "연구 설계 분류 불일치",
+    not_applicable_unbalanced: "불균형 패널 — N×T 비교 미적용",
+    not_applicable_repeated_cross_section: "반복 횡단면 — N×T 비교 미적용",
+    not_applicable_design: "비패널 연구 설계 — N×T 비교 미적용",
+    not_assessable: "근거 부족으로 판정 불가",
+  };
+  return value ? labels[value] ?? value : "확인 불가";
+}
 
 function EvidenceList({ items }: { items?: Evidence[] }) {
   if (!items?.length) return null;
