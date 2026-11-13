@@ -644,7 +644,8 @@ def _legend_supports_significance(stars: str, threshold: float, legend_text: str
     if not stars or not legend_text:
         return None
     normalized = _normalize_numeric_text(legend_text).casefold()
-    for match in re.finditer(re.escape(stars), normalized):
+    exact_pattern = r"(?<!\\*)" + re.escape(stars) + r"(?!\\*)"
+    for match in re.finditer(exact_pattern, normalized):
         window = normalized[max(0, match.start() - 25):match.end() + 120]
         found = _parse_significance_threshold(window)
         if found is not None:
@@ -749,18 +750,21 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
             significance_supported = False
         elif claims_non_significant and quote_significant:
             significance_supported = False
-        elif claims_significant and quote_significant:
-            significance_supported = True
-        elif claims_non_significant and quote_non_significant:
-            significance_supported = True
         else:
             threshold = _parse_significance_threshold(significance)
             explicit_p_values = _extract_explicit_p_values(cited_quote_text)
+            quote_threshold = _parse_significance_threshold(cited_quote_text)
             if threshold is not None and explicit_p_values:
                 significance_supported = any(p_value < threshold for p_value in explicit_p_values)
+            elif threshold is not None and quote_threshold is not None:
+                significance_supported = quote_threshold <= threshold
             elif threshold is not None:
-                stars = "***" if "***" in cited_quote_text else "**" if "**" in cited_quote_text else "*" if "*" in cited_quote_text else ""
+                stars = "***" if "***" in cited_quote_text else "**" if re.search(r"(?<!\\*)\\*{2}(?!\\*)", cited_quote_text) else "*" if re.search(r"(?<!\\*)\\*(?!\\*)", cited_quote_text) else ""
                 significance_supported = _legend_supports_significance(stars, threshold, legend_text)
+            elif claims_significant and quote_significant:
+                significance_supported = True
+            elif claims_non_significant and quote_non_significant:
+                significance_supported = True
 
     numeric_supported = not unsupported_numbers
     issues = bool(
