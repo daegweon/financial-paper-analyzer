@@ -568,3 +568,231 @@ def test_audit_finding_does_not_confuse_significant_with_not_significant():
     audit = module.audit_finding(finding, pages)
     assert audit["status"] == "review"
     assert audit["significance_supported"] is False
+
+
+
+def test_numeric_tokenizer_normalizes_unicode_minus_and_does_not_treat_date_ranges_as_negative():
+    assert module._extract_numeric_tokens("ESG −0.0017 ***; period 2001–2020") == [
+        "-0.0017", "2001", "2020"
+    ]
+    assert module._numeric_key("−0.0017") == "-0.0017"
+
+
+def test_audit_finding_accepts_unicode_minus_in_cited_pdf_table():
+    pages = [{
+        "page": 8,
+        "text": "The ESG coefficient is −0.0017 *** and the momentum coefficient is −0.0019 ***.",
+    }]
+    finding = {
+        "claim": "ESG 점수는 주식 수익률과 음(-)의 관계를 보인다.",
+        "direction": "negative",
+        "estimate": "-0.0017",
+        "statistical_significance": "확인 불가",
+        "evidence": [{
+            "page": 8,
+            "quote": "The ESG coefficient is −0.0017 *** and the momentum coefficient is −0.0019 ***.",
+        }],
+    }
+    audit = module.audit_finding(finding, pages)
+    assert audit["status"] == "screen_passed"
+    assert audit["numeric_supported"] is True
+    assert audit["unsupported_numeric_tokens"] == []
+
+
+def test_panel_dimensions_calculates_total_and_flags_reported_count_mismatch():
+    pages = [{
+        "page": 4,
+        "text": "The panel consists of 12 portfolios observed over 4,950 daily periods, giving 59,400 portfolio-day observations.",
+    }]
+    evidence = [{
+        "page": 4,
+        "quote": "The panel consists of 12 portfolios observed over 4,950 daily periods, giving 59,400 portfolio-day observations.",
+    }]
+    consistent = module.audit_panel_dimensions({
+        "cross_sectional_units": "12 portfolios",
+        "time_periods": "4,950 daily periods",
+        "reported_total_observations": "59,400 observations",
+        "observation_frequency": "daily",
+        "observation_unit": "portfolio-day",
+        "evidence": evidence,
+    }, pages)
+    assert consistent["calculated_total_observations"] == "59,400"
+    assert consistent["consistency_status"] == "consistent"
+
+    mismatch = module.audit_panel_dimensions({
+        "cross_sectional_units": "12 portfolios",
+        "time_periods": "4,950 daily periods",
+        "reported_total_observations": "4,950 observations",
+        "observation_frequency": "daily",
+        "observation_unit": "portfolio-day",
+        "evidence": evidence,
+    }, pages)
+    assert mismatch["calculated_total_observations"] == "59,400"
+    assert mismatch["consistency_status"] == "mismatch"
+    assert "59,400" in mismatch["consistency_note"]
+
+
+def test_deduplicate_findings_removes_near_duplicate_claims_but_keeps_distinct_results():
+    pages = [{
+        "page": 9,
+        "text": (
+            "The amortized liquidity coefficient is positive and significant in all models. "
+            "The average liquidity premium is 0.019 percentage points monthly."
+        ),
+    }]
+    quote = "The amortized liquidity coefficient is positive and significant in all models."
+    first = {
+        "claim": "상각 유동성 계수는 모든 모형에서 양(+)이고 통계적으로 유의하다.",
+        "direction": "positive",
+        "estimate": "2.394 to 2.667",
+        "statistical_significance": "p < 0.01",
+        "evidence": [{"page": 9, "quote": quote}],
+    }
+    duplicate = {
+        "claim": "모든 모형에서 상각된 유동성 측정치의 계수는 양수이며 통계적으로 유의미하다.",
+        "direction": "positive",
+        "estimate": "2.394–2.667",
+        "statistical_significance": "p < 0.01",
+        "evidence": [{"page": 9, "quote": quote}],
+    }
+    distinct = {
+        "claim": "평균 총 유동성 프리미엄은 월 0.019%p이다.",
+        "direction": "positive",
+        "estimate": "0.019",
+        "statistical_significance": "확인 불가",
+        "evidence": [{
+            "page": 9,
+            "quote": "The average liquidity premium is 0.019 percentage points monthly.",
+        }],
+    }
+    result, removed = module._deduplicate_findings([first, duplicate, distinct], pages)
+    assert removed == 1
+    assert len(result) == 2
+
+
+def test_methodology_schema_requires_field_level_evidence_and_panel_dimensions():
+    props = module.METHODOLOGY_SCHEMA["properties"]
+    assert "design_evidence" in props
+    assert "sample_evidence" in props
+    assert "period_evidence" in props
+    assert "panel_dimensions" in props
+    assert set(module.METHODOLOGY_ONLY_SCHEMA["required"]) == {"methodology"}
+
+
+def test_methodology_repair_prompt_requests_panel_units_and_field_citations():
+    pages = [
+        {"page": 1, "text": "Abstract: We study asset pricing."},
+        {"page": 2, "text": "Data and sample: 12 portfolios are observed over 4,950 daily periods."},
+        {"page": 3, "text": "Methodology: We estimate a panel model using the Mean Group estimator."},
+    ]
+    prompt = module.build_methodology_repair_prompt(pages)
+    assert "cross_sectional_units" in prompt
+    assert "reported_total_observations" in prompt
+    assert "sample_evidence" in prompt
+    assert "[PDF PAGE 2]" in prompt
+    assert "[PDF PAGE 3]" in prompt
+
+
+def test_llm_result_runs_methodology_only_repair_when_section_evidence_is_missing(monkeypatch):
+    pages = _sample_pages()
+    first_output = _sample_model_output()
+    first_output["methodology"]["evidence"] = []
+    first_output["methodology"]["variables"] = []
+    repair_output = {
+        "methodology": {
+            "design": "은행 패널 회귀분석",
+            "design_evidence": [{
+                "page": 1,
+                "quote": "We use a panel of 50 banks from 2001 to 2020.",
+            }],
+            "sample": "50개 은행",
+            "sample_evidence": [{
+                "page": 1,
+                "quote": "We use a panel of 50 banks from 2001 to 2020.",
+            }],
+            "period": "2001년부터 2020년",
+            "period_evidence": [{
+                "page": 1,
+                "quote": "We use a panel of 50 banks from 2001 to 2020.",
+            }],
+            "data_sources": ["은행 패널 자료"],
+            "data_sources_evidence": [{
+                "page": 1,
+                "quote": "We use a panel of 50 banks from 2001 to 2020.",
+            }],
+            "variables": [{
+                "name": "loan growth",
+                "role": "종속변수",
+                "definition": "대출 증가율",
+                "evidence": [{
+                    "page": 1,
+                    "quote": "The dependent variable is loan growth.",
+                }],
+            }],
+            "empirical_strategy": "패널 회귀분석",
+            "empirical_strategy_evidence": [{
+                "page": 2,
+                "quote": "The estimated coefficient is -0.12 and statistically significant at the 5 percent level.",
+            }],
+            "identification_strategy": "확인 불가",
+            "identification_strategy_evidence": [],
+            "equations": [],
+            "evidence": [{
+                "page": 1,
+                "quote": "We use a panel of 50 banks from 2001 to 2020.",
+            }],
+            "panel_dimensions": {
+                "cross_sectional_units": "50 banks",
+                "time_periods": "확인 불가",
+                "reported_total_observations": "확인 불가",
+                "observation_frequency": "확인 불가",
+                "observation_unit": "bank",
+                "evidence": [{
+                    "page": 1,
+                    "quote": "We use a panel of 50 banks from 2001 to 2020.",
+                }],
+            },
+        }
+    }
+    requests = []
+
+    class FakeResponse:
+        status_code = 200
+        headers = {}
+        text = ""
+        def __init__(self, payload):
+            self.payload = payload
+        def raise_for_status(self):
+            return None
+        def json(self):
+            return {"candidates": [{
+                "finishReason": "STOP",
+                "content": {"parts": [{"text": json.dumps(self.payload, ensure_ascii=False)}]},
+            }]}
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return None
+        async def post(self, url, **kwargs):
+            requests.append((url, kwargs))
+            return FakeResponse(first_output if len(requests) == 1 else repair_output)
+
+    async def fake_sleep(seconds):
+        return None
+
+    monkeypatch.setattr(module, "AI_PROVIDER", "gemini")
+    monkeypatch.setattr(module, "GEMINI_API_KEY", "test-key-not-used")
+    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-3.5-flash-lite")
+    monkeypatch.setattr(module, "GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    monkeypatch.setattr(module.asyncio, "sleep", fake_sleep)
+
+    result = asyncio.run(module.llm_result(2, pages))
+    assert len(requests) == 2
+    assert requests[1][1]["json"]["generationConfig"]["responseJsonSchema"] == module.METHODOLOGY_ONLY_SCHEMA
+    assert result["methodology_verification"]["repair_attempted"] is True
+    assert result["methodology_verification"]["repair_status"] == "recovered"
+    assert result["methodology"]["design"] == "은행 패널 회귀분석"
+    assert result["methodology"]["sample"] == "50개 은행"
+    assert "gemini-3.5-flash-lite" in result["models_used"]
