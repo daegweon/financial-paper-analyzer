@@ -903,12 +903,17 @@ async def _generate_gemini(
         detail="Gemini 기본 모델과 대체 모델이 모두 완전한 응답을 생성하지 못했습니다. 잠시 후 다시 시도해 주세요.",
     )
 
-async def _generate_openai(prompt: str) -> dict[str, Any]:
+async def _generate_openai(
+    prompt: str,
+    *,
+    response_schema: dict[str, Any] | None = None,
+    max_output_tokens: int = 7000,
+) -> dict[str, Any]:
     """Retained for a later provider switch; no OpenAI key is needed today."""
     request_body = {
         "model": OPENAI_MODEL,
         "reasoning_effort": "low",
-        "max_completion_tokens": 7000,
+        "max_completion_tokens": max_output_tokens,
         "messages": [
             {
                 "role": "system",
@@ -926,7 +931,7 @@ async def _generate_openai(prompt: str) -> dict[str, Any]:
             "json_schema": {
                 "name": "financial_paper_analysis",
                 "strict": True,
-                "schema": ANALYSIS_SCHEMA,
+                "schema": response_schema or ANALYSIS_SCHEMA,
             },
         },
     }
@@ -993,11 +998,19 @@ async def llm_result(count: int, pages: list[dict[str, Any]]) -> dict[str, Any]:
         repair_status = "attempted"
         try:
             repair_prompt = build_findings_repair_prompt(pages, result["findings"])
-            repaired_raw, repair_model = await _generate_gemini(
-                repair_prompt,
-                response_schema=FINDINGS_ONLY_SCHEMA,
-                output_token_limits=(8192, 8192),
-            )
+            if provider == "gemini":
+                repaired_raw, repair_model = await _generate_gemini(
+                    repair_prompt,
+                    response_schema=FINDINGS_ONLY_SCHEMA,
+                    output_token_limits=(8192, 8192),
+                )
+            else:
+                repaired_raw = await _generate_openai(
+                    repair_prompt,
+                    response_schema=FINDINGS_ONLY_SCHEMA,
+                    max_output_tokens=8192,
+                )
+                repair_model = model_used
             models_used.append(repair_model)
             repaired_findings = _normalize_findings(repaired_raw.get("findings"), pages)
             if repaired_findings:
