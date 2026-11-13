@@ -28,7 +28,7 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-terra")
-ANALYSIS_VERSION = "finance-structured-v6.1"
+ANALYSIS_VERSION = "finance-structured-v6.2"
 log = logging.getLogger("papersignal")
 app = FastAPI(title="PaperSignal API", version="0.2.0")
 app.add_middleware(
@@ -113,6 +113,9 @@ FINDING_SCHEMA = object_schema({
     "direction": {"type": "string"},
     "estimate": {"type": "string"},
     "statistical_significance": {"type": "string"},
+    "table_reference": {"type": "string"},
+    "model_or_column": {"type": "string"},
+    "significance_legend_evidence": EVIDENCE_LIST,
     "evidence": EVIDENCE_LIST,
 })
 ROBUSTNESS_SCHEMA = object_schema({
@@ -132,12 +135,34 @@ BIBLIOGRAPHIC_SCHEMA = object_schema({
     "doi": {"type": "string"},
     "evidence": EVIDENCE_LIST,
 })
+SAMPLE_COUNT_REPORT_SCHEMA = object_schema({
+    "metric": {
+        "type": "string",
+        "enum": ["cross_sectional_units", "time_periods", "total_observations", "subsample_observations", "other"],
+    },
+    "label": {"type": "string"},
+    "count": {"type": "integer"},
+    "section": {"type": "string"},
+    "evidence": EVIDENCE_LIST,
+})
 PANEL_DIMENSIONS_SCHEMA = object_schema({
-    "cross_sectional_units": {"type": "string"},
-    "time_periods": {"type": "string"},
-    "reported_total_observations": {"type": "string"},
+    "study_design_type": {
+        "type": "string",
+        "enum": [
+            "balanced_panel", "unbalanced_panel", "repeated_cross_section",
+            "time_series", "cross_sectional", "portfolio_optimization", "other", "unknown",
+        ],
+    },
+    "panel_balance": {
+        "type": "string",
+        "enum": ["balanced", "unbalanced", "not_applicable", "unknown"],
+    },
+    "cross_sectional_units_count": {"type": "integer"},
+    "time_periods_count": {"type": "integer"},
+    "reported_total_observations_count": {"type": "integer"},
     "observation_frequency": {"type": "string"},
     "observation_unit": {"type": "string"},
+    "sample_count_reports": array_schema(SAMPLE_COUNT_REPORT_SCHEMA),
     "evidence": EVIDENCE_LIST,
 })
 METHODOLOGY_SCHEMA = object_schema({
