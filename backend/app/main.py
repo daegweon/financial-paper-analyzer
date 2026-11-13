@@ -588,14 +588,23 @@ def _select_ranked_pages(
         scored.append((score, index, page))
     selected = sorted(scored, key=lambda item: (-item[0], item[1]))[:limit]
     chosen = {item[1] for item in selected}
-    # Preserve early pages and the final page as useful structural anchors.
-    for index in list(range(min(early_pages, len(pages)))) + [len(pages) - 1]:
-        if len(chosen) < limit:
-            chosen.add(index)
+    score_by_index = {index: score for score, index, _ in scored}
+    anchors = set(range(min(early_pages, len(pages)))) | {0, len(pages) - 1}
+    for anchor in anchors:
+        if anchor in chosen:
+            continue
+        removable = [
+            index for index in chosen
+            if index not in anchors
+        ]
+        if removable:
+            lowest = min(removable, key=lambda index: score_by_index[index])
+            chosen.remove(lowest)
+            chosen.add(anchor)
     return [page for index, page in enumerate(pages) if index in chosen]
 
 
-def _select_result_pages(pages: list[dict[str, Any]], limit: int = 20) -> list[dict[str, Any]]:
+def _select_result_pages(pages: list[dict[str, Any]], limit: int = 24) -> list[dict[str, Any]]:
     """Prioritize abstracts, empirical results, regression tables and conclusions."""
     terms = (
         "abstract", "result", "empirical", "regression", "coefficient", "estimate",
@@ -608,7 +617,7 @@ def _select_result_pages(pages: list[dict[str, Any]], limit: int = 20) -> list[d
     return _select_ranked_pages(pages, terms, limit, early_pages=1)
 
 
-def _select_methodology_pages(pages: list[dict[str, Any]], limit: int = 16) -> list[dict[str, Any]]:
+def _select_methodology_pages(pages: list[dict[str, Any]], limit: int = 20) -> list[dict[str, Any]]:
     """Prioritize research design, sample/data description, variables and estimators."""
     terms = (
         "methodology", "method", "research design", "data and sample", "sample selection",
@@ -1160,7 +1169,8 @@ def build_analysis_prompt(pages: list[dict[str, Any]]) -> str:
         "6. 계수·효과크기·방향·표준오차·t/z 통계량·p-value·유의수준을 본문에서 찾을 수 있을 때만 보고한다. "
         "통계적 유의성과 경제적 크기를 혼동하지 않는다.\n"
         "7. 방법론에는 연구 설계, 표본·기간, 데이터 출처, 종속·독립·통제·도구변수, 추정 전략, "
-        "식별 전략 및 원문에 명시된 방정식을 포함한다.\n"
+        "식별 전략 및 원문에 명시된 방정식을 포함한다. 각 항목은 전용 evidence 필드로 개별 근거를 연결하고, "
+        "전체 방법론 인용 하나로 서로 다른 항목을 정당화하지 않는다.\n"
         "8. 강건성 검증은 실제 수행된 테스트만 기재한다. 저자가 언급하지 않은 테스트를 했다고 쓰지 않는다.\n"
         "9. 한계는 저자가 명시한 한계와 본문 근거로 확인되는 잠재적 한계를 구분해 표현한다.\n"
         "10. 투자 추천, 목표주가, 매매 신호를 만들지 않는다. 학술적·경제적 시사점만 제시한다.\n"
@@ -1600,6 +1610,7 @@ async def llm_result(count: int, pages: list[dict[str, Any]]) -> dict[str, Any]:
     if summary_status in (
         "reconstructed_missing_citation",
         "reconstructed_numeric_review",
+        "unavailable",
     ):
         summary, summary_evidence = _build_verified_summary(
             result["findings"], result["methodology"], result["research_question"]
