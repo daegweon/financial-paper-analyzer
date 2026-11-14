@@ -69,7 +69,7 @@ Sample synthetic PDF can be generated from `backend/tests/test_integration_contr
 
 ## Beta release gate update (2026-11-14)
 
-- Backend regression suite on the current branch: **63 passed, 1 skipped**. The skipped test is the opt-in live E2E scenario because disposable verified user credentials are not configured in this environment.
+- Backend regression suite on the current branch: **68 passed, 1 skipped**. The skipped test is the opt-in live E2E scenario because disposable verified user credentials are not configured in this environment.
 - Live E2E harness: `backend/tests/test_live_e2e.py`. It verifies two distinct verified users, private PDF upload, real API/Worker completion, saved page evidence, and second-user denial. It deletes only its own test rows and Storage object after the job reaches a terminal state.
 - Manual workflow: GitHub Actions `workflow_dispatch` runs the live E2E job. Configure the documented disposable-user secrets first; the test is skipped when configuration is absent.
 - Release runbook: `docs/BETA_RELEASE_RUNBOOK.md`.
@@ -77,7 +77,7 @@ Sample synthetic PDF can be generated from `backend/tests/test_integration_contr
 - Current production deployment: API and Worker both use the durable checkpoint/idempotency code; all three Railway services are Online. Vercel Preview builds are READY.
 - Production Worker E2E on the existing synthetic two-page QA paper: first attempt received Gemini HTTP 503 from both configured models; the job was retried automatically. Attempt 2 logged `Resuming from PDF checkpoint`, completed with `finance-structured-v6.2` using `gemini-3.5-flash-lite`, and saved one analysis row with eight page-level evidence items.
 - The terminal-state database trigger removed both temporary checkpoint payloads after completion. The disposable job and linked analysis row were then removed; the original synthetic paper and its pre-existing analysis were preserved.
-- GitHub Actions still reports `startup_failure` before creating jobs on this private repository. This is an account/repository runner provisioning issue rather than a test failure; the 63-test suite was executed independently in an isolated Python 3.12 environment.
+- GitHub Actions still reports `startup_failure` before creating jobs on this private repository. To avoid making backend release safety depend on that runner, the root Railway Dockerfile now has a mandatory BuildKit test stage: it installs the dev requirements, runs the complete backend suite, and only then allows the lean runtime image to be assembled. Vercel Preview builds continue to enforce the frontend Next.js/TypeScript build. The GitHub-hosted runner provisioning issue remains separately open.
 
 ## Known gaps
 
