@@ -31,7 +31,7 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-On an isolated Vercel sandbox, 10 tests passed (0 failed). They cover:
+On an isolated Python 3.12 Vercel sandbox, **68 tests passed and 1 opt-in live E2E test was skipped**. They cover:
 
 - Valid synthetic PDF text extraction and page-number provenance
 - Invalid signature and oversize rejection
@@ -44,18 +44,31 @@ On an isolated Vercel sandbox, 10 tests passed (0 failed). They cover:
 
 ## Outstanding live E2E scenario
 
-Supabase Auth has `mailer_autoconfirm=false`, requiring email confirmation. Do not disable this merely to pass tests. Use a real verified test account:
+The live test is in `backend/tests/test_live_e2e.py`. It provisions two
+unique, short-lived Supabase Auth users through the server-side Admin API,
+marks only those disposable QA users email-confirmed, and signs them in. It
+does not disable project-wide email confirmation and does not require stored
+test-account credentials.
 
-1. Open the Vercel URL; sign up and verify email.
-2. Sign in, upload the deliberately synthetic QA PDF.
-3. Open the document and click **분석 시작**.
-4. Confirm the result is `extractive`, shows two pages and page-numbered text excerpts.
-5. Confirm a new row exists in `papers` and `analyses` for the same authenticated user.
-6. Sign in as a second account and verify the first user's paper is invisible and inaccessible.
-7. Verify no exception or 5xx in Railway runtime logs and the browser console.
-8. Verify PDF document and analysis record can be re-opened after refreshing the page.
+To run it manually, set:
 
-Sample synthetic PDF can be generated from `backend/tests/test_integration_contract.py` (fixture function `make_pdf`). It contains **no genuine financial research**.
+- `PAPERSIGNAL_E2E_ENABLED=1`
+- `SUPABASE_URL`
+- `SUPABASE_PUBLISHABLE_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `PAPERSIGNAL_API_URL`
+
+The test then uploads a synthetic two-page PDF, runs the real API/Worker flow,
+checks saved analysis evidence, and verifies that a second user cannot read
+the first user's job, paper, analysis, or private PDF. It removes only its own
+rows, Storage object and temporary Auth users after the job reaches a terminal
+state. If a job remains active, it retains the fixture so the Worker does not
+lose its source document.
+
+**Not yet verified:** delivery of a real signup confirmation email and the
+user's inbox/link journey. Keep a manual signup-and-email-confirmation smoke
+test as a public-beta release gate; do not turn off email confirmation.
+
 
 ## Durable worker and recovery verification (2026-11-14)
 
