@@ -101,11 +101,14 @@ The application now exposes a Google sign-in button. It uses Supabase Auth
 deployment origin, requests account selection, and uses the PKCE flow with
 automatic URL code detection/exchange in the browser.
 
-**Provider activation is still pending:** no Google OAuth Client ID or Client
-Secret has been registered in Supabase yet. The button will return a clear
-configuration message until the provider is enabled.
+**Provider activation is complete and the Auth endpoint has been verified.**
+The Supabase public Auth settings endpoint reports `external.google=true`.
+OAuth authorization requests for both the production origin and the current
+Vercel Preview origin return HTTP 302 to Google's authorization endpoint with
+the configured Supabase callback URI. The full browser consent/session journey
+still requires a real Google account smoke test.
 
-Configure it once before testing:
+Configuration reference (already applied by the operator):
 
 1. In [Google Auth Platform](https://console.cloud.google.com/auth/overview),
    create a project/app and configure the OAuth consent screen for **PaperSignal**.
@@ -127,9 +130,9 @@ Configure it once before testing:
    - `https://financial-paper-analyzer.vercel.app/**`
    - `https://*-daegweonai-9583.vercel.app/**` (Vercel previews)
    - `http://localhost:3000/**` (local development only)
-7. Test a Google account in both the production origin and current Preview
-   origin. Confirm it returns to PaperSignal, creates an authenticated session,
-   and can open only that user's library.
+7. Complete a real browser smoke test with a Google account in both production
+   and Preview. Confirm Google consent returns to PaperSignal, the session is
+   created, and only that user's library is visible.
 
 ## Supabase Auth security setting — accepted Free-plan limitation
 

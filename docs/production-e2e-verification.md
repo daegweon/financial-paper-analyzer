@@ -80,10 +80,32 @@ test as a public-beta release gate; do not turn off email confirmation.
 - Retry/backoff, terminal failure after the configured attempt limit, lease renewal, stale-lease recovery and duplicate-active-job prevention were previously exercised.
 - Supabase checkpoint data is protected by RLS and an explicit `service_role`-only policy. New `sb_secret_*` keys are sent in the `apikey` header only.
 
+## Google OAuth verification (2026-11-14)
+
+- Supabase `/auth/v1/settings` returned HTTP 200 and `external.google=true`.
+- Supabase `/auth/v1/authorize?provider=google` returned HTTP 302 to
+  `accounts.google.com/o/oauth2/v2/auth` for both:
+  - Production: `https://financial-paper-analyzer.vercel.app`
+  - Preview: `https://financial-paper-analyzer-git-feat-resear-0de08f-daegweonai-9583.vercel.app`
+- The redirect included `prompt=select_account` and the expected Supabase
+  callback `https://hwmtayrecsfxernhssro.supabase.co/auth/v1/callback`.
+- These checks confirm provider activation, OAuth client registration and
+  redirect allow-list acceptance at the Auth endpoint. They do not complete
+  interactive Google consent, callback code exchange, session creation or
+  user-library access. A real browser/account smoke test remains outstanding.
+
+## Free-plan security decision (2026-11-14)
+
+- Supabase organization tier remains `tier_free`.
+- Leaked Password Protection remains disabled by explicit product decision.
+- The security advisor returns exactly one `WARN` finding for this feature.
+  This is an accepted residual risk, not a Pro-upgrade task. Do not upgrade
+  solely to clear this warning.
+
 ## Auth readiness update (2026-11-14)
 
 - Signup UI distinguishes pending email confirmation from a completed session and exposes a resend-confirmation action. It uses the Supabase project's configured Site URL.
-- Google sign-in UI is implemented using Supabase Auth OAuth with PKCE, automatic URL code exchange, current-origin redirects, and account selection. The Google provider is not yet active: a Google Web OAuth Client ID/Secret must be created and entered in Supabase Auth settings. See `docs/BETA_RELEASE_RUNBOOK.md`.
+- Google sign-in UI is implemented using Supabase Auth OAuth with PKCE, automatic URL code exchange, current-origin redirects, and account selection. Supabase Auth reports `external.google=true`; production and Preview authorization requests both return HTTP 302 to Google with the expected Supabase callback. Interactive Google consent and session creation still need a real browser/account smoke test. See `docs/BETA_RELEASE_RUNBOOK.md`.
 - Google callback URI for Google Cloud: `https://hwmtayrecsfxernhssro.supabase.co/auth/v1/callback`. Supabase's Site URL and redirect allow list must include the production, Vercel Preview, and local origins documented in the runbook.
 - The actual email inbox confirmation journey remains unverified. The Supabase organization stays on Free; its built-in SMTP is restricted to organization team-member addresses. Configure custom SMTP and test an accessible external inbox before public beta.
 - Leaked Password Protection remains disabled by explicit product decision: keep the Supabase organization on Free and do not upgrade to Pro solely for this feature. Its single security-advisor `WARN` is accepted and documented; no separate `ERROR` or `CRITICAL` findings should remain.
