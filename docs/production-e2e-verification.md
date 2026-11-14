@@ -80,6 +80,22 @@ test as a public-beta release gate; do not turn off email confirmation.
 - Retry/backoff, terminal failure after the configured attempt limit, lease renewal, stale-lease recovery and duplicate-active-job prevention were previously exercised.
 - Supabase checkpoint data is protected by RLS and an explicit `service_role`-only policy. New `sb_secret_*` keys are sent in the `apikey` header only.
 
+## Auth readiness update (2026-11-14)
+
+- Signup UI now distinguishes the pending-email-confirmation state from a completed session and exposes a resend-confirmation action. It uses the Supabase project's configured Site URL rather than assuming a preview origin is on the redirect allow list.
+- The actual inbox confirmation journey remains unverified. The Supabase organization is on the Free plan, whose built-in SMTP is restricted to organization team-member addresses. Configure custom SMTP and test with an accessible external inbox before public beta.
+- The production Site URL and redirect allow list still need an operator check in Supabase Auth URL Configuration. Expected production URL: `https://financial-paper-analyzer.vercel.app`.
+- Supabase Auth leaked-password protection is disabled. The organization is on the Free plan, while this feature is available on Pro and above. No plan upgrade has been performed.
+- Vercel Preview for the auth UI + runbook branch is READY. Railway API and Worker remain Online; the latest API/Worker image builds execute the backend test stage before packaging.
+
+## GitHub Actions incident update (2026-11-14)
+
+- A fresh failed run has `name=""`, `path="BuildFailed"`, `conclusion="startup_failure"`, and `workflow_id=416243347`.
+- The run jobs endpoint returns `total_count=0`, and the run timing API returns an empty `billable` object. This confirms the failure occurs before a runner/job is created.
+- The repository is private, the connected account has repository admin permission, and `.github/workflows/checks.yml` exists on the base `main` branch.
+- The connector cannot inspect account-level billing or all repository Actions settings. Check GitHub billing/payment authorization and Settings → Actions → General; if still failing, provide the run ID and synthetic workflow ID to GitHub Support.
+- This is not evidence of a failure in the Python/Node test commands. Railway's BuildKit gate remains active.
+
 ## Beta release gate update (2026-11-14)
 
 - Backend regression suite on the current branch: **68 passed, 1 skipped**. The skipped test is the opt-in live E2E scenario because disposable verified user credentials are not configured in this environment.
