@@ -91,6 +91,9 @@ test as a public-beta release gate; do not turn off email confirmation.
 - Production Worker E2E on the existing synthetic two-page QA paper: first attempt received Gemini HTTP 503 from both configured models; the job was retried automatically. Attempt 2 logged `Resuming from PDF checkpoint`, completed with `finance-structured-v6.2` using `gemini-3.5-flash-lite`, and saved one analysis row with eight page-level evidence items.
 - The terminal-state database trigger removed both temporary checkpoint payloads after completion. The disposable job and linked analysis row were then removed; the original synthetic paper and its pre-existing analysis were preserved.
 - GitHub Actions still reports `startup_failure` before creating jobs on this private repository. To avoid making backend release safety depend on that runner, the root Railway Dockerfile now has a mandatory BuildKit test stage: it installs the dev requirements, runs the complete backend suite, and only then allows the lean runtime image to be assembled. Vercel Preview builds continue to enforce the frontend Next.js/TypeScript build. The GitHub-hosted runner provisioning issue remains separately open.
+- Railway production API and Worker Docker builds both executed the mandatory BuildKit test stage successfully: **68 passed, 1 skipped** on each image build. The runtime image remains lean; pytest is not copied into the final image.
+- The first attempt exposed that `.dockerignore` excluded `backend/tests`; this was corrected with explicit Docker ignore exceptions. The subsequent API and Worker deployments both built successfully and are Online.
+
 
 ## Known gaps
 
