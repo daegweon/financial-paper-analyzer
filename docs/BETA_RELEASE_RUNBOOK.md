@@ -51,12 +51,36 @@ The test is skipped by default and cannot mutate a project unless explicitly
 enabled. Cleanup runs in a `finally` block and is scoped to the unique test
 paper ID and object path.
 
+## Real email signup and confirmation
+
+The application now displays a confirmation-pending state and supports resending
+a signup confirmation email. It intentionally relies on Supabase's configured
+Site URL when sending the email; it does not invent a redirect URL that may not
+be on the project's allow list.
+
+Before testing:
+
+1. In [Supabase Auth URL Configuration](https://supabase.com/dashboard/project/hwmtayrecsfxernhssro/auth/url-configuration), set the Site URL to
+   `https://financial-paper-analyzer.vercel.app`.
+2. Add `https://financial-paper-analyzer.vercel.app/**` to the redirect URL allow list.
+3. Keep email confirmation enabled.
+4. Configure a custom SMTP provider in [Supabase Auth SMTP settings](https://supabase.com/dashboard/project/hwmtayrecsfxernhssro/auth/smtp) before sending to arbitrary external test inboxes.
+5. Run a signup with a mailbox that the tester can access, open the confirmation link, verify that the browser returns to PaperSignal and the user is signed in, then test sign-out/sign-in and resend behavior.
+
+**Current provider limitation:** the Supabase organization is on the Free plan.
+Supabase's built-in SMTP is for testing only and sends only to organization team
+member addresses; it is not suitable for an external beta audience. Configure
+custom SMTP (for example Resend, AWS SES, Postmark, SendGrid or Brevo) before
+public signup. Never disable email confirmation to bypass delivery limits.
+
 ## Supabase Auth security setting
 
-Before public beta, enable **Leaked Password Protection** for the Email provider
-in the [PaperSignal Supabase Auth settings](https://supabase.com/dashboard/project/hwmtayrecsfxernhssro/auth/providers?provider=Email).
-The current Supabase security advisor still reports this control as disabled.
-Re-run the Supabase security advisor after enabling it and record a clean result.
+The security advisor currently reports **Leaked Password Protection disabled**.
+The Supabase organization is on the Free plan, while this Supabase feature is
+available on Pro and above. It therefore cannot be enabled on the current plan.
+To clear this release gate, upgrade the Supabase organization to Pro and enable
+the control in [PaperSignal Supabase Auth settings](https://supabase.com/dashboard/project/hwmtayrecsfxernhssro/auth/providers?provider=Email),
+then rerun the security advisor. No plan upgrade has been performed.
 
 ## Release gate
 
@@ -64,8 +88,8 @@ A beta release is not marked ready until:
 
 1. Backend tests pass.
 2. Frontend lint and production build pass.
-3. The live E2E test passes using disposable, verified accounts.
+3. The live E2E test passes using disposable Auth accounts, and a real external mailbox completes signup confirmation through custom SMTP.
 4. A second user cannot read the first user's paper, PDF, analysis or job.
 5. Railway API and Worker are online with no active failures.
-6. Supabase Auth leaked-password protection is enabled and the Supabase security advisor has no unresolved high-severity findings.
+6. Supabase Auth leaked-password protection is enabled on a plan that supports it, and the Supabase security advisor has no unresolved high-severity findings.
 7. Production Vercel deployment is READY and the production URL is smoke-tested.
