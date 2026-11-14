@@ -4,33 +4,24 @@
 
 - Backend unit and contract suite: run with `cd backend && pytest`.
 - The opt-in live E2E test is in `backend/tests/test_live_e2e.py`.
-- It uses two distinct, pre-verified disposable Supabase Auth users.
-- It uploads a synthetic two-page PDF, starts the real Railway API/Worker flow,
-  waits for the durable job to complete, checks the saved analysis and page
-  evidence, verifies cross-user isolation, then removes only its own test rows
-  and Storage object.
-
-## Disposable account preparation
-
-1. Create two separate QA-only accounts through the normal PaperSignal sign-up screen.
-2. Complete the email confirmation link for both accounts using the configured mail provider.
-3. Confirm each account can sign in normally; do not turn off Supabase email confirmation or use employee/customer accounts.
-4. Store the two test account credentials only as GitHub Actions secrets. Never commit them or put them in source files.
-5. Trigger the `Checks` workflow manually. If any required secret is missing, the live E2E test is skipped.
+- It creates two unique, short-lived QA-only Supabase Auth users through the Admin API.
+- Those test-only accounts are marked email-confirmed by the Admin API; the test does not disable project-wide email confirmation.
+- It signs in both accounts, uploads a synthetic two-page PDF as user A, starts the real Railway API/Worker flow, and waits for durable analysis completion.
+- It verifies the saved analysis and page evidence, then confirms user B cannot enqueue the paper, read its job, paper metadata, analysis, or private PDF.
+- After the job reaches a terminal state, it removes only its own analysis/job/paper rows, Storage object, and two temporary Auth users. If the job remains active after timeout, it deliberately retains the fixture so the Worker does not lose its source PDF.
 
 ## Required CI secrets
 
-Configure these as GitHub Actions repository secrets before running the live test:
+Configure only these GitHub Actions repository secrets:
 
 - `SUPABASE_URL`
 - `SUPABASE_PUBLISHABLE_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY` (or the new `sb_secret_*` key; server-side only)
 - `PAPERSIGNAL_API_URL`
-- `E2E_USER_A_EMAIL`, `E2E_USER_A_PASSWORD`
-- `E2E_USER_B_EMAIL`, `E2E_USER_B_PASSWORD`
 
-Both users must be separate, email-confirmed, disposable QA accounts in the
-intended E2E Supabase project. Do not use employee or customer accounts.
+No reusable QA account credentials are needed. The test generates random addresses and passwords for each run and deletes the accounts after a terminal job.
+
+**Scope note:** this test verifies authenticated sessions, tenant isolation, upload and analysis. It does not test outbound email delivery or the user's inbox confirmation-link journey. Keep a separate manual smoke test for a real signup and email confirmation before public beta; never disable email confirmation to make the E2E test pass.
 
 ## Manual execution
 
