@@ -51,6 +51,13 @@ The test is skipped by default and cannot mutate a project unless explicitly
 enabled. Cleanup runs in a `finally` block and is scoped to the unique test
 paper ID and object path.
 
+## Supabase Auth security setting
+
+Before public beta, enable **Leaked Password Protection** for the Email provider
+in the [PaperSignal Supabase Auth settings](https://supabase.com/dashboard/project/hwmtayrecsfxernhssro/auth/providers?provider=Email).
+The current Supabase security advisor still reports this control as disabled.
+Re-run the Supabase security advisor after enabling it and record a clean result.
+
 ## Release gate
 
 A beta release is not marked ready until:
@@ -60,5 +67,5 @@ A beta release is not marked ready until:
 3. The live E2E test passes using disposable, verified accounts.
 4. A second user cannot read the first user's paper, PDF, analysis or job.
 5. Railway API and Worker are online with no active failures.
-6. Supabase security advisors contain no unresolved high-severity findings.
+6. Supabase Auth leaked-password protection is enabled and the Supabase security advisor has no unresolved high-severity findings.
 7. Production Vercel deployment is READY and the production URL is smoke-tested.
