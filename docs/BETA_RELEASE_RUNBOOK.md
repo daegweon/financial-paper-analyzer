@@ -87,10 +87,12 @@ Before testing:
 5. Run a signup with a mailbox that the tester can access, open the confirmation link, verify that the browser returns to PaperSignal and the user is signed in, then test sign-out/sign-in and resend behavior.
 
 **Current provider limitation:** the Supabase organization is on the Free plan.
-Supabase's built-in SMTP is for testing only and sends only to organization team
-member addresses; it is not suitable for an external beta audience. Configure
-custom SMTP (for example Resend, AWS SES, Postmark, SendGrid or Brevo) before
-public signup. Never disable email confirmation to bypass delivery limits.
+Supabase's built-in SMTP is for testing only: it sends only to organization team
+member addresses and is limited to 2 messages per hour across the project while
+email confirmation is enabled. It is not suitable for an external beta audience.
+Configure custom SMTP (for example Resend, AWS SES, Postmark, SendGrid or Brevo),
+verify SPF/DKIM/DMARC for the sending domain, and test delivery before public
+signup. Never disable email confirmation to bypass delivery limits.
 
 ## Supabase Auth security setting
 
