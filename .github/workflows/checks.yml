@@ -46,10 +46,6 @@ jobs:
       SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       PAPERSIGNAL_API_URL: ${{ secrets.PAPERSIGNAL_API_URL }}
-      E2E_USER_A_EMAIL: ${{ secrets.E2E_USER_A_EMAIL }}
-      E2E_USER_A_PASSWORD: ${{ secrets.E2E_USER_A_PASSWORD }}
-      E2E_USER_B_EMAIL: ${{ secrets.E2E_USER_B_EMAIL }}
-      E2E_USER_B_PASSWORD: ${{ secrets.E2E_USER_B_PASSWORD }}
       E2E_TIMEOUT_SECONDS: "900"
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
