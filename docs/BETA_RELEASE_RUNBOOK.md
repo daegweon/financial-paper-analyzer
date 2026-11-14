@@ -10,6 +10,22 @@
 - It verifies the saved analysis and page evidence, then confirms user B cannot enqueue the paper, read its job, paper metadata, analysis, or private PDF.
 - After the job reaches a terminal state, it removes only its own analysis/job/paper rows, Storage object, and two temporary Auth users. If the job remains active after timeout, it deliberately retains the fixture so the Worker does not lose its source PDF.
 
+## Deployment-time CI fallback
+
+GitHub Actions is configured for pull requests and manual E2E runs, but the
+repository currently has a runner provisioning issue (`startup_failure`
+before jobs are created). Backend release safety no longer depends on that
+runner:
+
+- The root Railway Dockerfile has a BuildKit test stage that installs
+  `backend/requirements-dev.txt` and runs `pytest -q` before producing the
+  lean runtime image.
+- Both the API and Worker production builds must pass that stage.
+- The final runtime image copies only a test-pass marker; pytest and test-only
+  packages are not installed into production.
+- Vercel Preview builds execute the Next.js production build, including its
+  TypeScript checks.
+
 ## Required CI secrets
 
 Configure only these GitHub Actions repository secrets:
