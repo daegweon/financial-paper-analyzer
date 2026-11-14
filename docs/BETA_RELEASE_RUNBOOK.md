@@ -10,6 +10,25 @@
 - It verifies the saved analysis and page evidence, then confirms user B cannot enqueue the paper, read its job, paper metadata, analysis, or private PDF.
 - After the job reaches a terminal state, it removes only its own analysis/job/paper rows, Storage object, and two temporary Auth users. If the job remains active after timeout, it deliberately retains the fixture so the Worker does not lose its source PDF.
 
+## GitHub Actions runner incident
+
+The current GitHub run signature is `name=""`, `path="BuildFailed"`,
+`conclusion=startup_failure`, zero jobs, and an empty billable timing result.
+The base-branch workflow file exists and the connected GitHub account has
+repository admin permission, so this is not currently attributable to a
+pytest, Node.js, or YAML step failure.
+
+Before asking GitHub Support to repair the repository's workflow registration,
+check:
+
+1. [GitHub account billing and payment settings](https://github.com/settings/billing/summary) for an account-level billing lock, failed payment authorization, or Actions spending limit.
+2. Repository **Settings → Actions → General** to confirm Actions are enabled and allowed actions/workflow permissions are not restricted.
+3. If the same zero-job signature persists, give GitHub Support the failing run URL and synthetic workflow ID `416243347`; request inspection of the `BuildFailed` workflow registration/dispatcher record.
+
+Do not keep changing application code to address a failure that occurs before
+GitHub creates a job. The Railway BuildKit gate remains the independent backend
+release gate until GitHub Actions runs normally again.
+
 ## Deployment-time CI fallback
 
 GitHub Actions is configured for pull requests and manual E2E runs, but the
