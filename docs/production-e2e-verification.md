@@ -75,6 +75,8 @@ Sample synthetic PDF can be generated from `backend/tests/test_integration_contr
 - Release runbook: `docs/BETA_RELEASE_RUNBOOK.md`.
 - Checkpoint retention: a database trigger removes extracted page text and model-result checkpoints when a job completes or reaches terminal failure. Retryable failures retain checkpoints for resumption.
 - Current production deployment: API and Worker both use the durable checkpoint/idempotency code; all three Railway services are Online. Vercel Preview builds are READY.
+- Production Worker E2E on the existing synthetic two-page QA paper: first attempt received Gemini HTTP 503 from both configured models; the job was retried automatically. Attempt 2 logged `Resuming from PDF checkpoint`, completed with `finance-structured-v6.2` using `gemini-3.5-flash-lite`, and saved one analysis row with eight page-level evidence items.
+- The terminal-state database trigger removed both temporary checkpoint payloads after completion. The disposable job and linked analysis row were then removed; the original synthetic paper and its pre-existing analysis were preserved.
 - GitHub Actions still reports `startup_failure` before creating jobs on this private repository. This is an account/repository runner provisioning issue rather than a test failure; the 63-test suite was executed independently in an isolated Python 3.12 environment.
 
 ## Known gaps
