@@ -181,6 +181,8 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [signup, setSignup] = useState(false);
+  const [confirmationPending, setConfirmationPending] = useState(false);
+  const [resendingConfirmation, setResendingConfirmation] = useState(false);
   const [papers, setPapers] = useState<Paper[]>([]);
   const [selected, setSelected] = useState<Paper | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -237,12 +239,60 @@ export default function Home() {
     event.preventDefault();
     setMessage("");
     try {
-      const result = signup
-        ? await db().auth.signUp({ email, password })
-        : await db().auth.signInWithPassword({ email, password });
-      setMessage(result.error?.message ?? (signup ? "가입 확인 메일을 확인해 주세요." : ""));
+      if (signup) {
+        const { data, error } = await db().auth.signUp({
+          email: email.trim(),
+          password,
+        });
+        if (error) throw error;
+        if (data.session) {
+          setConfirmationPending(false);
+          setMessage("회원가입과 이메일 인증이 완료됐습니다.");
+        } else {
+          setConfirmationPending(true);
+          setMessage("가입 요청을 받았습니다. 받은 편지함에서 인증 메일을 열어 이메일 인증을 완료해 주세요.");
+        }
+        return;
+      }
+
+      const { error } = await db().auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (error) {
+        if ((error as { code?: string }).code === "email_not_confirmed") {
+          setConfirmationPending(true);
+          setMessage("이메일 인증이 아직 완료되지 않았습니다. 인증 메일을 다시 보내 주세요.");
+          return;
+        }
+        throw error;
+      }
+      setConfirmationPending(false);
+      setMessage("");
     } catch (error) {
       setMessage((error as Error).message);
+    }
+  }
+
+  async function resendConfirmation() {
+    if (!email.trim()) {
+      setMessage("인증 메일을 받을 이메일 주소를 먼저 입력해 주세요.");
+      return;
+    }
+    setResendingConfirmation(true);
+    setMessage("");
+    try {
+      const { error } = await db().auth.resend({
+        type: "signup",
+        email: email.trim(),
+      });
+      if (error) throw error;
+      setConfirmationPending(true);
+      setMessage("인증 메일 재전송을 요청했습니다. 받은 편지함과 스팸함을 확인해 주세요.");
+    } catch (error) {
+      setMessage((error as Error).message);
+    } finally {
+      setResendingConfirmation(false);
     }
   }
 
@@ -383,12 +433,18 @@ export default function Home() {
       <h2>{signup ? "연구 공간 만들기" : "다시 만나서 반갑습니다."}</h2>
       <p>분석 결과와 논문을 안전하게 보관하세요.</p>
       <form onSubmit={auth}>
-        <label>이메일<input type="email" required value={email} onChange={event => setEmail(event.target.value)} placeholder="name@example.com"/></label>
+        <label>이메일<input type="email" required value={email} onChange={event => { setEmail(event.target.value); setConfirmationPending(false); }} placeholder="name@example.com"/></label>
         <label>비밀번호<input type="password" required minLength={signup ? 8 : 1} value={password} onChange={event => setPassword(event.target.value)} placeholder="8자 이상 입력"/></label>
         <button className="primary">{signup ? "회원가입" : "로그인"} →</button>
       </form>
       <p className="note">{message}</p>
-      <p className="toggle"><button onClick={() => setSignup(!signup)}>{signup ? "로그인으로 돌아가기" : "계정이 없나요? 회원가입"}</button></p>
+      <p className="toggle"><button type="button" onClick={() => { setSignup(!signup); setConfirmationPending(false); setMessage(""); }}>{signup ? "로그인으로 돌아가기" : "계정이 없나요? 회원가입"}</button></p>
+      {confirmationPending && <div className="auth-confirmation" role="status">
+        <p>인증 메일 링크를 열면 이메일 확인 후 PaperSignal 연구 공간으로 돌아옵니다.</p>
+        <button type="button" className="resend" disabled={resendingConfirmation} onClick={() => void resendConfirmation()}>
+          {resendingConfirmation ? "재전송 요청 중..." : "인증 메일 다시 보내기"}
+        </button>
+      </div>}
     </div></section>
   </main>;
 
