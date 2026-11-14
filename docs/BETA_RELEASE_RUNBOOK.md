@@ -10,6 +10,14 @@
   evidence, verifies cross-user isolation, then removes only its own test rows
   and Storage object.
 
+## Disposable account preparation
+
+1. Create two separate QA-only accounts through the normal PaperSignal sign-up screen.
+2. Complete the email confirmation link for both accounts using the configured mail provider.
+3. Confirm each account can sign in normally; do not turn off Supabase email confirmation or use employee/customer accounts.
+4. Store the two test account credentials only as GitHub Actions secrets. Never commit them or put them in source files.
+5. Trigger the `Checks` workflow manually. If any required secret is missing, the live E2E test is skipped.
+
 ## Required CI secrets
 
 Configure these as GitHub Actions repository secrets before running the live test:
