@@ -116,6 +116,17 @@ type Paper = {
 };
 type Analysis = { result: AnalysisResult; model: string; created_at?: string };
 
+function authErrorMessage(error: unknown) {
+  const authError = error as { code?: string; message?: string };
+  if (authError.code === "email_address_not_authorized") {
+    return "현재 Supabase 기본 이메일 발송은 조직 구성원 주소만 허용합니다. 외부 주소 인증에는 Custom SMTP 설정이 필요합니다.";
+  }
+  if (authError.code === "over_email_send_rate_limit") {
+    return "이메일 발송 한도에 도달했습니다. 잠시 후 다시 시도하거나 Custom SMTP를 설정해 주세요.";
+  }
+  return authError.message || "인증 요청을 처리하지 못했습니다.";
+}
+
 function studyDesignLabel(value?: string) {
   const labels: Record<string, string> = {
     balanced_panel: "균형 패널",
@@ -270,7 +281,7 @@ export default function Home() {
       setConfirmationPending(false);
       setMessage("");
     } catch (error) {
-      setMessage((error as Error).message);
+      setMessage(authErrorMessage(error));
     }
   }
 
@@ -290,7 +301,7 @@ export default function Home() {
       setConfirmationPending(true);
       setMessage("인증 메일 재전송을 요청했습니다. 받은 편지함과 스팸함을 확인해 주세요.");
     } catch (error) {
-      setMessage((error as Error).message);
+      setMessage(authErrorMessage(error));
     } finally {
       setResendingConfirmation(false);
     }
