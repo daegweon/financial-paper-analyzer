@@ -118,13 +118,21 @@ type Analysis = { result: AnalysisResult; model: string; created_at?: string };
 
 function authErrorMessage(error: unknown) {
   const authError = error as { code?: string; message?: string };
+  const message = authError.message || "";
+  const normalized = message.toLowerCase();
   if (authError.code === "email_address_not_authorized") {
     return "현재 Supabase 기본 이메일 발송은 조직 구성원 주소만 허용합니다. 외부 주소 인증에는 Custom SMTP 설정이 필요합니다.";
   }
   if (authError.code === "over_email_send_rate_limit") {
     return "이메일 발송 한도에 도달했습니다. 잠시 후 다시 시도하거나 Custom SMTP를 설정해 주세요.";
   }
-  return authError.message || "인증 요청을 처리하지 못했습니다.";
+  if (normalized.includes("provider is not enabled") || normalized.includes("unsupported provider")) {
+    return "Google 로그인이 아직 Supabase에서 활성화되지 않았습니다. Supabase Auth의 Google 공급자에 OAuth Client ID와 Client Secret을 등록해 주세요.";
+  }
+  if (normalized.includes("redirect") && normalized.includes("url")) {
+    return "로그인 복귀 주소가 Supabase Auth의 Redirect URL 허용 목록에 없습니다. 현재 PaperSignal 주소를 허용 목록에 추가해 주세요.";
+  }
+  return message || "인증 요청을 처리하지 못했습니다.";
 }
 
 function studyDesignLabel(value?: string) {
@@ -194,6 +202,7 @@ export default function Home() {
   const [signup, setSignup] = useState(false);
   const [confirmationPending, setConfirmationPending] = useState(false);
   const [resendingConfirmation, setResendingConfirmation] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
   const [papers, setPapers] = useState<Paper[]>([]);
   const [selected, setSelected] = useState<Paper | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -248,6 +257,7 @@ export default function Home() {
 
   async function auth(event: React.FormEvent) {
     event.preventDefault();
+    setAuthLoading(true);
     setMessage("");
     try {
       if (signup) {
@@ -282,6 +292,26 @@ export default function Home() {
       setMessage("");
     } catch (error) {
       setMessage(authErrorMessage(error));
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  async function googleAuth() {
+    setAuthLoading(true);
+    setMessage("");
+    try {
+      const { error } = await db().auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+          queryParams: { prompt: "select_account" },
+        },
+      });
+      if (error) throw error;
+    } catch (error) {
+      setMessage(authErrorMessage(error));
+      setAuthLoading(false);
     }
   }
 
@@ -446,8 +476,13 @@ export default function Home() {
       <form onSubmit={auth}>
         <label>이메일<input type="email" required value={email} onChange={event => { setEmail(event.target.value); setConfirmationPending(false); }} placeholder="name@example.com"/></label>
         <label>비밀번호<input type="password" required minLength={signup ? 8 : 1} value={password} onChange={event => setPassword(event.target.value)} placeholder="8자 이상 입력"/></label>
-        <button className="primary">{signup ? "회원가입" : "로그인"} →</button>
+        <button className="primary" disabled={authLoading}>{authLoading ? "인증 처리 중..." : signup ? "회원가입" : "로그인"} →</button>
       </form>
+      <div className="auth-divider"><span>또는</span></div>
+      <button type="button" className="google-button" disabled={authLoading} onClick={() => void googleAuth()}>
+        <span className="google-mark" aria-hidden="true">G</span>
+        {authLoading ? "Google 계정 연결 중..." : "Google로 계속하기"}
+      </button>
       <p className="note">{message}</p>
       <p className="toggle"><button type="button" onClick={() => { setSignup(!signup); setConfirmationPending(false); setMessage(""); }}>{signup ? "로그인으로 돌아가기" : "계정이 없나요? 회원가입"}</button></p>
       {confirmationPending && <div className="auth-confirmation" role="status">

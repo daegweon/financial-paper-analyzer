@@ -94,14 +94,59 @@ Configure custom SMTP (for example Resend, AWS SES, Postmark, SendGrid or Brevo)
 verify SPF/DKIM/DMARC for the sending domain, and test delivery before public
 signup. Never disable email confirmation to bypass delivery limits.
 
-## Supabase Auth security setting
+## Google OAuth login
 
-The security advisor currently reports **Leaked Password Protection disabled**.
-The Supabase organization is on the Free plan, while this Supabase feature is
-available on Pro and above. It therefore cannot be enabled on the current plan.
-To clear this release gate, upgrade the Supabase organization to Pro and enable
-the control in [PaperSignal Supabase Auth settings](https://supabase.com/dashboard/project/hwmtayrecsfxernhssro/auth/providers?provider=Email),
-then rerun the security advisor. No plan upgrade has been performed.
+The application now exposes a Google sign-in button. It uses Supabase Auth
+`signInWithOAuth({ provider: "google" })`, redirects back to the current
+deployment origin, requests account selection, and uses the PKCE flow with
+automatic URL code detection/exchange in the browser.
+
+**Provider activation is still pending:** no Google OAuth Client ID or Client
+Secret has been registered in Supabase yet. The button will return a clear
+configuration message until the provider is enabled.
+
+Configure it once before testing:
+
+1. In [Google Auth Platform](https://console.cloud.google.com/auth/overview),
+   create a project/app and configure the OAuth consent screen for **PaperSignal**.
+   If the consent screen is in Testing mode, add the Google accounts used for QA
+   as test users.
+2. Create an OAuth Client ID of type **Web application**.
+3. Add these exact **Authorized JavaScript origins**:
+   - `https://financial-paper-analyzer.vercel.app`
+   - `https://financial-paper-analyzer-git-feat-resear-0de08f-daegweonai-9583.vercel.app`
+   - `http://localhost:3000` (local development only)
+4. Add this exact **Authorized redirect URI** in Google:
+   `https://hwmtayrecsfxernhssro.supabase.co/auth/v1/callback`
+5. In [Supabase Auth → Sign In / Providers → Google](https://supabase.com/dashboard/project/hwmtayrecsfxernhssro/auth/providers?provider=Google),
+   enable Google and enter the Google Web Client ID and Client Secret. Keep the
+   secret in Supabase Auth settings only; do not add it to Vercel or browser
+   environment variables.
+6. In [Supabase Auth URL Configuration](https://supabase.com/dashboard/project/hwmtayrecsfxernhssro/auth/url-configuration),
+   set Site URL to `https://financial-paper-analyzer.vercel.app` and allow:
+   - `https://financial-paper-analyzer.vercel.app/**`
+   - `https://*-daegweonai-9583.vercel.app/**` (Vercel previews)
+   - `http://localhost:3000/**` (local development only)
+7. Test a Google account in both the production origin and current Preview
+   origin. Confirm it returns to PaperSignal, creates an authenticated session,
+   and can open only that user's library.
+
+## Supabase Auth security setting — accepted Free-plan limitation
+
+The Supabase security advisor reports one `WARN` finding:
+**Leaked Password Protection disabled**. This is an intentional, accepted
+limitation under the product's cost decision:
+
+- Keep the Supabase organization on the **Free** plan.
+- Do not upgrade to Pro solely to enable this feature.
+- Leave Leaked Password Protection disabled; no configuration change is needed.
+- Record the advisor warning as an accepted residual risk, not as an unresolved
+  release blocker. Re-check the advisor after future Auth configuration changes
+  and ensure no separate `ERROR` or `CRITICAL` findings are present.
+
+This decision does not disable email confirmation, password verification,
+RLS, or the existing API authorization checks. Users should still choose
+unique, strong passwords.
 
 ## Release gate
 
@@ -110,7 +155,8 @@ A beta release is not marked ready until:
 1. Backend tests pass.
 2. Frontend lint and production build pass.
 3. The live E2E test passes using disposable Auth accounts, and a real external mailbox completes signup confirmation through custom SMTP.
-4. A second user cannot read the first user's paper, PDF, analysis or job.
-5. Railway API and Worker are online with no active failures.
-6. Supabase Auth leaked-password protection is enabled on a plan that supports it, and the Supabase security advisor has no unresolved high-severity findings.
-7. Production Vercel deployment is READY and the production URL is smoke-tested.
+4. Google OAuth is enabled in Supabase and a real Google sign-in smoke test succeeds on the production origin.
+5. A second user cannot read the first user's paper, PDF, analysis or job.
+6. Railway API and Worker are online with no active failures.
+7. The leaked-password-protection `WARN` is recorded as the accepted Free-plan limitation; no separate `ERROR` or `CRITICAL` security findings remain. Do not upgrade to Pro solely for this setting.
+8. Production Vercel deployment is READY and the production URL is smoke-tested.

@@ -82,11 +82,12 @@ test as a public-beta release gate; do not turn off email confirmation.
 
 ## Auth readiness update (2026-11-14)
 
-- Signup UI now distinguishes the pending-email-confirmation state from a completed session and exposes a resend-confirmation action. It uses the Supabase project's configured Site URL rather than assuming a preview origin is on the redirect allow list.
-- The actual inbox confirmation journey remains unverified. The Supabase organization is on the Free plan, whose built-in SMTP is restricted to organization team-member addresses. Configure custom SMTP and test with an accessible external inbox before public beta.
-- The production Site URL and redirect allow list still need an operator check in Supabase Auth URL Configuration. Expected production URL: `https://financial-paper-analyzer.vercel.app`.
-- Supabase Auth leaked-password protection is disabled. The organization is on the Free plan, while this feature is available on Pro and above. No plan upgrade has been performed.
-- Vercel Preview for the auth UI + runbook branch is READY. Railway API and Worker remain Online; the latest API/Worker image builds execute the backend test stage before packaging.
+- Signup UI distinguishes pending email confirmation from a completed session and exposes a resend-confirmation action. It uses the Supabase project's configured Site URL.
+- Google sign-in UI is implemented using Supabase Auth OAuth with PKCE, automatic URL code exchange, current-origin redirects, and account selection. The Google provider is not yet active: a Google Web OAuth Client ID/Secret must be created and entered in Supabase Auth settings. See `docs/BETA_RELEASE_RUNBOOK.md`.
+- Google callback URI for Google Cloud: `https://hwmtayrecsfxernhssro.supabase.co/auth/v1/callback`. Supabase's Site URL and redirect allow list must include the production, Vercel Preview, and local origins documented in the runbook.
+- The actual email inbox confirmation journey remains unverified. The Supabase organization stays on Free; its built-in SMTP is restricted to organization team-member addresses. Configure custom SMTP and test an accessible external inbox before public beta.
+- Leaked Password Protection remains disabled by explicit product decision: keep the Supabase organization on Free and do not upgrade to Pro solely for this feature. Its single security-advisor `WARN` is accepted and documented; no separate `ERROR` or `CRITICAL` findings should remain.
+- Latest Vercel Preview for the auth UI is READY. Railway API and Worker remain Online; the latest API/Worker image builds execute the backend test stage before packaging.
 
 ## GitHub Actions incident update (2026-11-14)
 
