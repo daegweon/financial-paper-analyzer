@@ -9,6 +9,7 @@
 - Added explicit findings_coverage states: supported, review_required, incomplete, not_assessable.
 - Added rescue attempt/model/status metadata and user-visible findings quality status.
 - Added five focused v6.3 tests.
+- Added user-visible findings completeness status to the analysis detail view; corrected a duplicate TypeScript interface property after the first Preview build failed.
 - Latest Railway API and Worker BuildKit stages each reported 78 passed, 1 skipped.
 - v6.3 has not yet been used to reanalyze the three Google-user papers; that is the next validation task.
 

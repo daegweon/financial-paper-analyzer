@@ -145,12 +145,11 @@ The application now exposes a Google sign-in button. It uses Supabase Auth
 deployment origin, requests account selection, and uses the PKCE flow with
 automatic URL code detection/exchange in the browser.
 
-**Google provider activation is confirmed, but callback login is not yet working.**
-The public Auth settings report `external.google=true` and both origins
-return an HTTP 302 toward Google. Actual callback attempts failed because
-Supabase holds an invalid Google OAuth Client Secret; error callbacks also
-landed on a stale localhost Site URL. Follow the incident fix above.
-Do not treat the HTTP 302 as a completed OAuth login.
+**Google OAuth is active and real login has been verified.**
+After the operator replaced the Google Client Secret and corrected the
+Supabase Site URL, Supabase Auth recorded Google `user_signedup`, a PKCE
+`/token` exchange HTTP 200, and a subsequent `/user` lookup HTTP 200.
+A real Google user returned to PaperSignal successfully.
 
 Configuration reference (already applied by the operator):
 
@@ -246,3 +245,20 @@ The latest Vercel Preview build is READY.
 two produced summary/methodology/evidence but an empty structured
 `findings` array. Job completion is not equivalent to full extraction
 quality; those two papers need a separate finding-level quality review.
+
+
+## Current project checkpoint — 2026-11-16
+
+- Analysis engine development is at v6.3. New analyses add a conditional
+  table-first third Findings pass and a separate findings-coverage status.
+- Latest Railway API and Worker Docker BuildKit test stages each report
+  **78 passed, 1 skipped**. The skipped test is the opt-in live E2E.
+- Three Google-account papers completed under v6.2. Two of the three had
+  empty structured Findings arrays; these are the initial v6.3 validation
+  targets and have not yet been reanalyzed on v6.3.
+- Google OAuth login and RLS tenant separation have been verified.
+- Keep Supabase on Free and keep Leaked Password Protection disabled as the
+  explicitly accepted WARN. Do not upgrade to Pro for this setting.
+- Durable cross-session project handoff is maintained in
+  `docs/PROJECT_STATE.md`, `docs/PROJECT_DECISIONS.md`, and
+  `docs/PROJECT_CHANGELOG.md`. Read them before starting a new session.

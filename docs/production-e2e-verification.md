@@ -226,3 +226,25 @@ transfer of papers, Storage objects, analyses and jobs.
 - Quality caveat: the two empty `findings` arrays are a content-extraction
   completeness gap despite successful jobs. Do not treat those two papers as
   fully verified finding-extraction benchmarks until separately reviewed.
+
+
+## v6.3 and project continuity checkpoint (2026-11-16)
+
+- Analysis version bumped to `finance-structured-v6.3`.
+- Added conditional table-first third Findings pass after the first two passes
+  return no supported findings and conservative empirical-result signals
+  exist in the extracted pages.
+- Added findings_coverage statuses: supported, review_required, incomplete,
+  not_assessable. Frontend renders extraction quality separately from job
+  completion.
+- Five focused v6.3 regression tests added. Railway API and Worker BuildKit
+  stages each reported **78 passed, 1 skipped**.
+- A Vercel Preview build for the initial UI type update failed because the
+  findings_verification TypeScript property was declared twice. The duplicate
+  declaration was consolidated in commit
+  `27833e00f10ee7babb8a3d8bd06b688d8ddc5a57`; the follow-up Preview build
+  is pending verification.
+- Durable project handoff is stored in PROJECT_STATE.md,
+  PROJECT_DECISIONS.md and PROJECT_CHANGELOG.md at repository root docs/.
+- The Google user's three papers remain v6.2 analysis rows. Do not overwrite
+  their history; v6.3 reanalysis should create new versioned result rows.

@@ -49,8 +49,8 @@ Do not raise these percentages without new verified evidence.
 - v6.3: conditional table-first third-pass recovery for papers whose first two findings passes return no supported claims.
 - v6.3 adds findings_coverage: supported / review_required / incomplete / not_assessable.
 - Frontend displays findings coverage and rescue status.
-- Latest UI commit: 264d79a0c062cee74581241526e8fcd4dbf571f5. Verify Vercel Preview build for this commit.
-- Latest backend v6.3 commit: f30698cfa46766d3b8f96da4eeb9a14f9bbdee59.
+- Latest UI commit: 27833e00f10ee7babb8a3d8bd06b688d8ddc5a57. An earlier Preview failed due to a duplicate TypeScript property; the duplicate was consolidated. Verify the new Preview build.
+- Latest backend v6.3 commit: f30698cfa46766d3b8f96da4eeb9a14f9bbdee59. Latest project docs commit before this checkpoint: ad5fc4d08a70f7b9af0fbb16d5bacf4df39194b7.
 - The three previously analyzed PDFs are v6.2 results; they have NOT yet been reanalyzed with v6.3. Reanalysis should be done only after preview/production deployment and should create a new analysis version without deleting v6.2 history.
 
 ## Known remaining work
