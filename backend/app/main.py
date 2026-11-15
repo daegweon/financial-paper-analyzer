@@ -2595,7 +2595,49 @@ async def _process_analysis_job(
                     "analysis_jobs", job_id, user_id, token,
                     {"stage": "gemini_analysis", "updated_at": _utc_now()},
                 )
-                result = sanitize_json_payload(await llm_result(page_count, pages))
+                prior_findings: list[dict[str, Any]] = []
+                try:
+                    prior_response = await client.get(
+                        SUPABASE_URL + "/rest/v1/analyses",
+                        headers=headers,
+                        params={
+                            "paper_id": "eq." + paper_id,
+                            "user_id": "eq." + user_id,
+                            "status": "eq.completed",
+                            "select": "result",
+                            "order": "created_at.desc",
+                            "limit": "3",
+                        },
+                    )
+                    prior_rows = await check_response(
+                        prior_response, "prior analysis lookup"
+                    )
+                    for prior_row in prior_rows if isinstance(prior_rows, list) else []:
+                        prior_result = (
+                            prior_row.get("result")
+                            if isinstance(prior_row, dict) else None
+                        )
+                        prior_items = (
+                            prior_result.get("findings", [])
+                            if isinstance(prior_result, dict) else []
+                        )
+                        if isinstance(prior_items, list):
+                            prior_findings.extend(
+                                item for item in prior_items if isinstance(item, dict)
+                            )
+                        if len(prior_findings) >= 24:
+                            break
+                except Exception as exc:
+                    # Historical evidence is an optional quality boost. A failed
+                    # lookup must never prevent a fresh analysis from completing.
+                    log.warning(
+                        "Prior analysis lookup skipped paper_id=%s error=%s",
+                        paper_id, type(exc).__name__,
+                    )
+
+                result = sanitize_json_payload(
+                    await llm_result(page_count, pages, prior_findings=prior_findings[:24])
+                )
                 model_name = result.get("model", "extractive-v3") if result["mode"] == "llm" else "extractive-v3"
                 await _save_job_checkpoint(
                     client, job_id, "analysis_result",
