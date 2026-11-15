@@ -622,6 +622,26 @@ def test_merge_prior_findings_revalidates_quotes_and_prefers_supported_duplicate
     assert {item["page"] for item in merged[0]["evidence"]} == {9, 10}
 
 
+def test_cross_page_dedup_does_not_merge_different_variables_with_same_estimate():
+    left = {
+        "claim": "AR_Amihud 유동성 위험 계수는 음(-)이다.",
+        "direction": "negative",
+        "estimate": "-0.154",
+        "table_reference": "Table 9",
+        "model_or_column": "Column (1)",
+        "evidence": [{"page": 9, "quote": "AR_Amihud coefficient -0.154"}],
+    }
+    right = {
+        "claim": "CDS 스프레드 계수는 음(-)이다.",
+        "direction": "negative",
+        "estimate": "-0.154",
+        "table_reference": "Table 9",
+        "model_or_column": "Column (1)",
+        "evidence": [{"page": 10, "quote": "CDS spread coefficient -0.154"}],
+    }
+    assert module._are_duplicate_findings(left, right) is False
+
+
 def test_findings_rescue_prompt_uses_prior_candidates_as_untrusted_hints():
     pages = [{"page": 7, "text": "Table 3 CDS 0.024∗∗∗ (0.008)."}]
     prompt = module.build_findings_rescue_prompt(
@@ -1386,7 +1406,7 @@ def test_llm_result_runs_table_first_rescue_when_findings_only_need_review(monke
     assert {item["page"] for item in result["findings"][0]["evidence"]} == {11, 12}
 
 
-def test_llm_result_rescues_review_findings_even_when_supported_findings_exist(monkeypatch):
+def test_llm_result_skips_third_pass_when_supported_findings_remain(monkeypatch):
     pages = _sample_pages() + [
         {
             "page": 11,
@@ -1487,12 +1507,16 @@ def test_llm_result_rescues_review_findings_even_when_supported_findings_exist(m
     monkeypatch.setattr(module.asyncio, "sleep", fake_sleep)
 
     result = asyncio.run(module.llm_result(12, pages))
-    assert len(requests) == 3
-    assert result["findings_verification"]["rescue_attempted"] is True
-    assert result["findings_verification"]["rescue_reason"] == "mixed_findings_review"
-    assert result["findings_verification"]["rescue_status"] == "recovered"
-    assert result["findings_coverage"]["supported_findings_count"] == 2
-    assert all(item["verification"]["status"] == "screen_passed" for item in result["findings"])
+    # The focused repair pass has already run. Do not pay for a third full
+    # table-first model call while at least one supported finding remains.
+    assert len(requests) == 2
+    assert result["findings_verification"]["rescue_attempted"] is False
+    assert result["findings_verification"]["rescue_status"] == "not_needed"
+    assert result["findings_coverage"]["supported_findings_count"] == 1
+    assert result["findings_coverage"]["review_findings_count"] == 1
+    assert sorted(item["verification"]["status"] for item in result["findings"]) == [
+        "review", "screen_passed"
+    ]
 
 
 def test_llm_result_marks_findings_incomplete_if_table_first_rescue_still_empty(monkeypatch):
