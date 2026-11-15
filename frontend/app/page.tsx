@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { db } from "../lib/supabase";
 import { ResearchLibrary } from "../components/ResearchLibrary";
+import { authCallbackError, cleanAuthErrorUrl } from "../lib/auth-feedback";
 import type { User } from "@supabase/supabase-js";
 
 type Evidence = { page: number; quote: string };
@@ -214,6 +215,14 @@ export default function Home() {
   const [engineMode, setEngineMode] = useState<"gemini" | "openai" | "extractive" | "unknown">("unknown");
 
   useEffect(() => {
+    // Failed social OAuth callbacks can carry duplicate, URL-encoded errors.
+    // Explain the failure and remove stale error parameters from the address bar.
+    const error = authCallbackError(window.location.search, window.location.hash);
+    if (error) {
+      setMessage(error);
+      const clean = cleanAuthErrorUrl(window.location.href);
+      if (clean) window.history.replaceState(window.history.state, "", clean);
+    }
     const supabase = db();
     void supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
@@ -304,7 +313,7 @@ export default function Home() {
       const { error } = await db().auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: window.location.origin + "/",
           queryParams: { prompt: "select_account" },
         },
       });
