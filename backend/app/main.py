@@ -60,6 +60,32 @@ KEYWORDS = [
     "회귀분석", "통화정책", "채권", "주식", "옵션", "파생상품",
 ]
 
+def sanitize_pdf_text(value: str) -> str:
+    """Remove characters PostgreSQL JSONB cannot store from extracted PDF text."""
+    return "".join(
+        char
+        for char in value
+        if char in "\\t\\n\\r"
+        or unicodedata.category(char) not in {"Cc", "Cs"}
+    )
+
+
+def sanitize_json_payload(value: Any) -> Any:
+    """Recursively sanitize model/PDF strings before persisting JSONB."""
+    if isinstance(value, str):
+        return sanitize_pdf_text(value)
+    if isinstance(value, list):
+        return [sanitize_json_payload(item) for item in value]
+    if isinstance(value, tuple):
+        return [sanitize_json_payload(item) for item in value]
+    if isinstance(value, dict):
+        return {
+            sanitize_pdf_text(str(key)): sanitize_json_payload(item)
+            for key, item in value.items()
+        }
+    return value
+
+
 def extract_pages(data: bytes) -> tuple[int, list[dict[str, Any]]]:
     if not data.startswith(b"%PDF-") or len(data) > MAX_BYTES:
         raise ValueError("유효한 30MB 이하 PDF가 아닙니다.")
@@ -2238,7 +2264,7 @@ async def _process_analysis_job(
                     "analysis_jobs", job_id, user_id, token,
                     {"stage": "gemini_analysis", "updated_at": _utc_now()},
                 )
-                result = await llm_result(page_count, pages)
+                result = sanitize_json_payload(await llm_result(page_count, pages))
                 model_name = result.get("model", "extractive-v3") if result["mode"] == "llm" else "extractive-v3"
                 await _save_job_checkpoint(
                     client, job_id, "analysis_result",
