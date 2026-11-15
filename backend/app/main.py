@@ -99,7 +99,7 @@ def extract_pages(data: bytes) -> tuple[int, list[dict[str, Any]]]:
             pages = [
                 {
                     "page": index + 1,
-                    "text": re.sub(r"\s+", " ", document[index].get_text("text")).strip()[:MAX_PAGE_CHARS],
+                    "text": re.sub(r"\s+", " ", sanitize_pdf_text(document[index].get_text("text"))).strip()[:MAX_PAGE_CHARS],
                 }
                 for index in range(min(count, MAX_PAGES_TO_SCAN))
             ]
