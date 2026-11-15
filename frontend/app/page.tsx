@@ -85,7 +85,6 @@ type Bibliographic = {
 type AnalysisResult = {
   mode: string;
   analysis_version?: string;
-  findings_verification?: { repair_attempted: boolean; repair_status: string; repair_model?: string | null };
   methodology_verification?: { repair_attempted: boolean; repair_status: string; repair_model?: string | null };
   findings_deduplication?: { duplicates_removed: number };
   findings_coverage?: {
