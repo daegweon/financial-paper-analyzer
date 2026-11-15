@@ -1111,7 +1111,7 @@ def test_llm_result_runs_table_first_rescue_only_after_empty_findings(monkeypatc
         async def __aenter__(self): return self
         async def __aexit__(self, *args): return None
         async def post(self, url, **kwargs):
-            requests.append(kwargs)
+            requests.append({**kwargs, "url": url})
             payload = first_output if len(requests) == 1 else empty_repair if len(requests) == 2 else rescue_output
             return FakeResponse(payload)
 
@@ -1128,6 +1128,7 @@ def test_llm_result_runs_table_first_rescue_only_after_empty_findings(monkeypatc
     result = asyncio.run(module.llm_result(2, pages))
     assert len(requests) == 3
     assert requests[2]["json"]["generationConfig"]["responseJsonSchema"] == module.FINDINGS_ONLY_SCHEMA
+    assert "gemini-3.6-flash" in requests[2]["url"]
     assert result["findings_verification"]["rescue_attempted"] is True
     assert result["findings_verification"]["rescue_status"] == "recovered"
     assert result["findings_coverage"]["status"] == "supported"
