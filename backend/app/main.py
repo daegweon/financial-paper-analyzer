@@ -29,7 +29,7 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-terra")
-ANALYSIS_VERSION = "finance-structured-v6.3.1"
+ANALYSIS_VERSION = "finance-structured-v6.3.2"
 log = logging.getLogger("papersignal")
 app = FastAPI(title="PaperSignal API", version="0.2.0")
 # Production origins are configured explicitly in FRONTEND_ORIGIN.
@@ -723,8 +723,13 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
             continue
         page_text = page_map.get(page_number, "")
         if page_text:
-            legend_text_parts.append(page_text)
-            legend_text_parts.append(str(item.get("quote", "")))
+            # Only the separately validated legend excerpt is used here.
+            # The full page may contain many unrelated table stars/thresholds
+            # and can cause the parser to associate a coefficient's stars with
+            # the wrong significance note.
+            legend_quote = str(item.get("quote", ""))
+            if legend_quote:
+                legend_text_parts.append(legend_quote)
     cited_text = " ".join(cited_text_parts).casefold()
     cited_quote_text = " ".join(cited_quote_parts).casefold()
     legend_text = " ".join(legend_text_parts).casefold()

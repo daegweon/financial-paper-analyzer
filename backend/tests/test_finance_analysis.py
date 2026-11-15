@@ -1178,3 +1178,30 @@ def test_llm_result_marks_findings_incomplete_if_table_first_rescue_still_empty(
     assert result["findings_verification"]["rescue_status"] == "no_supported_findings"
     assert result["findings_coverage"]["status"] == "incomplete"
     assert any("실증 결과 추출은 불완전" in warning for warning in result["warnings"])
+
+
+
+def test_significance_legend_uses_validated_excerpt_not_unrelated_page_stars():
+    table_quote = "NIBDepRat*SFFR 0.000615*** (0.000)"
+    legend_quote = "p values in parentheses * p < 0.10, ** p < 0.05, *** p < 0.01"
+    pages = [
+        {"page": 7, "text": table_quote},
+        {
+            "page": 8,
+            "text": (
+                "Table 1 unrelated results * p < 0.10 ** p < 0.05 "
+                "Table 2 other model *** p < 0.05. Notes: " + legend_quote
+            ),
+        },
+    ]
+    finding = {
+        "claim": "무이자예금 교호항은 양(+)이며 1% 수준에서 유의하다.",
+        "direction": "positive",
+        "estimate": "0.000615",
+        "statistical_significance": "p < 0.01",
+        "evidence": [{"page": 7, "quote": table_quote}],
+        "significance_legend_evidence": [{"page": 8, "quote": legend_quote}],
+    }
+    audit = module.audit_finding(finding, pages)
+    assert audit["significance_supported"] is True
+    assert audit["status"] == "screen_passed"
