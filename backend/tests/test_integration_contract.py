@@ -198,7 +198,7 @@ def test_background_job_saves_analysis_and_completes(monkeypatch):
     async def fake_patch_owned_row(table, row_id, owner_id, token, values):
         patched_rows.append((table, row_id, owner_id, values))
 
-    async def fake_llm_result(page_count, pages):
+    async def fake_llm_result(page_count, pages, prior_findings=None):
         return module.extractive_result(page_count, pages) | {
             "analysis_version": "extractive-v3"
         }
