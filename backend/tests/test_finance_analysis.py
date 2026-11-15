@@ -530,6 +530,115 @@ def test_audit_finding_requires_numeric_estimate_inside_direct_quote():
     assert audit["unsupported_numeric_tokens"] == ["-0.154"]
 
 
+def test_audit_finding_supports_unicode_operator_star_legend():
+    pages = [{
+        "page": 7,
+        "text": (
+            "Table 3 CDS 0.024∗∗∗ (0.008). "
+            "Note: ∗∗∗, ∗∗, and ∗ indicate significance at 1%, 5%, and 10%."
+        ),
+    }]
+    finding = {
+        "claim": "CDS 스프레드는 R-spread와 양(+)의 관계를 보인다.",
+        "direction": "positive",
+        "estimate": "0.024",
+        "statistical_significance": "1% level",
+        "table_reference": "Table 3",
+        "model_or_column": "Column (1)",
+        "evidence": [{
+            "page": 7,
+            "quote": "Table 3 CDS 0.024∗∗∗ (0.008)",
+        }],
+        "significance_legend_evidence": [{
+            "page": 7,
+            "quote": "∗∗∗, ∗∗, and ∗ indicate significance at 1%, 5%, and 10%.",
+        }],
+    }
+    audit = module.audit_finding(finding, pages)
+    assert audit["status"] == "screen_passed"
+    assert audit["numeric_supported"] is True
+    assert audit["significance_supported"] is True
+
+
+def test_merge_prior_findings_revalidates_quotes_and_prefers_supported_duplicate():
+    pages = [
+        {
+            "page": 9,
+            "text": (
+                "The results in Table 9 show that unexpected liquidity risk is "
+                "negatively related to excess stock returns."
+            ),
+        },
+        {
+            "page": 10,
+            "text": (
+                "Table 9 AR_Amihud −0.154∗∗∗ (0.048). "
+                "Note: ∗∗∗, ∗∗, and ∗ indicate significance at 1%, 5%, and 10%."
+            ),
+        },
+    ]
+    claim = "AR_Amihud 계수는 음(-)이며 1% 수준에서 유의하다."
+    current_review = {
+        "claim": claim,
+        "direction": "negative",
+        "estimate": "-0.154",
+        "statistical_significance": "1% level",
+        "table_reference": "Table 9",
+        "model_or_column": "Column (1) AR_Amihud",
+        "evidence": [{
+            "page": 9,
+            "quote": (
+                "The results in Table 9 show that unexpected liquidity risk is "
+                "negatively related to excess stock returns."
+            ),
+        }],
+    }
+    prior_supported = {
+        **current_review,
+        "model_or_column": "Columns (1), (2), and (3)",
+        "evidence": [{
+            "page": 10,
+            "quote": "Table 9 AR_Amihud −0.154∗∗∗ (0.048)",
+        }],
+        "significance_legend_evidence": [{
+            "page": 10,
+            "quote": "∗∗∗, ∗∗, and ∗ indicate significance at 1%, 5%, and 10%.",
+        }],
+    }
+    invalid_prior = {
+        **prior_supported,
+        "estimate": "-0.999",
+    }
+
+    current = module._normalize_findings([current_review], pages)
+    merged, revalidated, _ = module._merge_prior_findings(
+        current, [prior_supported, invalid_prior], pages
+    )
+    assert len(revalidated) == 1
+    assert len(merged) == 1
+    assert merged[0]["verification"]["status"] == "screen_passed"
+    assert merged[0]["verification"]["numeric_supported"] is True
+    assert merged[0]["verification"]["significance_supported"] is True
+    assert {item["page"] for item in merged[0]["evidence"]} == {9, 10}
+
+
+def test_findings_rescue_prompt_uses_prior_candidates_as_untrusted_hints():
+    pages = [{"page": 7, "text": "Table 3 CDS 0.024∗∗∗ (0.008)."}]
+    prompt = module.build_findings_rescue_prompt(
+        pages,
+        [{
+            "claim": "CDS 스프레드는 R-spread와 양(+)의 관계를 보인다.",
+            "estimate": "0.024",
+            "table_reference": "Table 3",
+            "model_or_column": "Column (1)",
+            "evidence": [{"page": 7, "quote": "Table 3 CDS 0.024∗∗∗ (0.008)"}],
+        }],
+    )
+    assert "Table 3" in prompt
+    assert "탐색 힌트일 뿐 정답이 아니다" in prompt
+    assert "0.024" in prompt
+
+
 def test_summary_falls_back_to_only_page_verified_methodology_and_findings():
     raw = _sample_model_output()
     raw["evidence"] = []
