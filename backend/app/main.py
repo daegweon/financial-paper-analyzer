@@ -65,7 +65,7 @@ def sanitize_pdf_text(value: str) -> str:
     return "".join(
         char
         for char in value
-        if char in "\\t\\n\\r"
+        if char in (chr(9), chr(10), chr(13))
         or unicodedata.category(char) not in {"Cc", "Cs"}
     )
 
