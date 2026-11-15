@@ -29,7 +29,7 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-terra")
-ANALYSIS_VERSION = "finance-structured-v6.3.2"
+ANALYSIS_VERSION = "finance-structured-v6.3.3"
 log = logging.getLogger("papersignal")
 app = FastAPI(title="PaperSignal API", version="0.2.0")
 # Production origins are configured explicitly in FRONTEND_ORIGIN.
@@ -637,12 +637,31 @@ def _deduplicate_findings(
             if key not in seen and len(merged_evidence) < 4:
                 merged_evidence.append(item)
                 seen.add(key)
-        preferred = finding if (
-            len(str(finding.get("claim", ""))) + len(str(finding.get("estimate", "")))
-            > len(str(existing.get("claim", ""))) + len(str(existing.get("estimate", "")))
-        ) else existing
+
+        merged_legend_evidence = list(existing.get("significance_legend_evidence", []))
+        seen_legends = {
+            (int(x["page"]), str(x["quote"])) for x in merged_legend_evidence
+        }
+        for item in finding.get("significance_legend_evidence", []):
+            key = (int(item["page"]), str(item["quote"]))
+            if key not in seen_legends and len(merged_legend_evidence) < 4:
+                merged_legend_evidence.append(item)
+                seen_legends.add(key)
+
+        existing_passed = existing.get("verification", {}).get("status") == "screen_passed"
+        finding_passed = finding.get("verification", {}).get("status") == "screen_passed"
+        if finding_passed and not existing_passed:
+            preferred = finding
+        elif existing_passed and not finding_passed:
+            preferred = existing
+        else:
+            preferred = finding if (
+                len(str(finding.get("claim", ""))) + len(str(finding.get("estimate", "")))
+                > len(str(existing.get("claim", ""))) + len(str(existing.get("estimate", "")))
+            ) else existing
         merged = dict(preferred)
         merged["evidence"] = merged_evidence
+        merged["significance_legend_evidence"] = merged_legend_evidence
         if merged.get("estimate") in ("", "확인 불가") and existing.get("estimate") not in ("", "확인 불가"):
             merged["estimate"] = existing["estimate"]
         merged["verification"] = audit_finding(merged, pages)
@@ -732,8 +751,13 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
         page_text = page_map.get(page_number, "")
         if page_text:
             cited_text_parts.append(page_text)
-            cited_quote_parts.append(str(item.get("quote", "")))
-            cited_numbers.update(_numeric_key(x) for x in _extract_numeric_tokens(page_text))
+            quote_text = str(item.get("quote", ""))
+            cited_quote_parts.append(quote_text)
+            # A number must appear in the exact cited excerpt, not merely elsewhere
+            # on the same PDF page (which may contain adjacent model columns).
+            cited_numbers.update(
+                _numeric_key(x) for x in _extract_numeric_tokens(quote_text)
+            )
     legend_evidence = finding.get("significance_legend_evidence", [])
     legend_text_parts: list[str] = []
     for item in legend_evidence:
@@ -1051,6 +1075,8 @@ def build_findings_rescue_prompt(
         "실제 보고된 서로 다른 결과를 최대 8개 반환한다. 가설을 결과로 바꾸지 않고 상관관계를 인과효과로 바꾸지 않는다. "
         "원문에 명시된 결과가 없으면 빈 배열을 반환한다. 빈 배열을 채우기 위해 추정·상식·초록의 재서술을 하지 않는다.\n"
         "각 finding의 evidence는 제공된 PDF 페이지에서 연속된 10~220자 원문이어야 한다. page는 실제 PDF 페이지 번호다. "
+        "estimate에 숫자를 기재할 경우 해당 숫자 자체가 evidence 인용문 안에 포함되어야 한다. "
+        "같은 페이지의 다른 표·열에만 존재하는 숫자를 근거로 사용하지 않는다. "
         "claim은 한국어로 작성하고 원문 변수명·모형명은 유지한다. estimate와 statistical_significance는 원문에서 "
         "직접 확인되는 경우에만 작성한다. table_reference와 model_or_column을 가능한 경우 기재한다.\n\n"
         "결과 및 표 중심 원문 페이지:\n" + paper_text
@@ -1091,6 +1117,8 @@ def build_findings_repair_prompt(
         "page는 실제 PDF 페이지 번호다. 인용을 새로 만들거나 서로 다른 페이지 문장을 합치지 않는다. "
         "가능하면 table_reference와 model_or_column을 채우고, 별표 유의성은 significance_legend_evidence에 표 주석 인용을 별도로 제공한다.\n"
         "계수, 효과 방향, 표준오차, t/z 통계량, p-value, 유의수준은 원문에서 직접 확인된 경우에만 기재한다. "
+        "estimate에 숫자를 기재하려면 그 숫자가 evidence의 직접 인용문 안에 그대로 포함되어야 한다. "
+        "같은 페이지의 다른 표·열에만 존재하는 숫자는 근거로 인정하지 않는다. "
         "수치가 표에 있지만 단위나 열 의미가 불명확하면 추정하지 말고 '확인 불가'로 둔다.\n"
         "가설을 실증 결과로 바꾸지 않는다. 상관관계와 인과효과를 혼동하지 않는다. "
         "원문에서 실제 결과를 찾을 수 없다면 findings 배열을 비운다.\n"
@@ -2134,8 +2162,18 @@ async def llm_result(count: int, pages: list[dict[str, Any]]) -> dict[str, Any]:
     findings_rescue_attempted = False
     findings_rescue_model: str | None = None
     findings_rescue_status = "not_needed"
-    if not result["findings"] and _has_empirical_result_signals(pages):
+    findings_rescue_reason: str | None = None
+    has_supported_findings = any(
+        item.get("verification", {}).get("status") == "screen_passed"
+        for item in result["findings"]
+    )
+    # A non-empty Findings array is not enough: if every candidate still needs
+    # review, run the same table-first recovery used for completely empty arrays.
+    if not has_supported_findings and _has_empirical_result_signals(pages):
         findings_rescue_attempted = True
+        findings_rescue_reason = (
+            "review_only_findings" if result["findings"] else "empty_findings"
+        )
         findings_rescue_status = "attempted"
         try:
             rescue_prompt = build_findings_rescue_prompt(pages)
@@ -2158,9 +2196,22 @@ async def llm_result(count: int, pages: list[dict[str, Any]]) -> dict[str, Any]:
             rescue_findings, rescue_duplicates = _deduplicate_findings(rescue_findings, pages)
             duplicate_count += rescue_duplicates
             if rescue_findings:
-                result["findings"] = rescue_findings[:8]
-                findings_rescue_status = "recovered"
-                findings_repair_status = "recovered_by_rescue"
+                merged_findings, merge_duplicates = _deduplicate_findings(
+                    result["findings"] + rescue_findings, pages
+                )
+                duplicate_count += merge_duplicates
+                result["findings"] = merged_findings[:8]
+                if any(
+                    item.get("verification", {}).get("status") == "screen_passed"
+                    for item in result["findings"]
+                ):
+                    findings_rescue_status = "recovered"
+                    findings_repair_status = "recovered_by_rescue"
+                else:
+                    findings_rescue_status = "no_supported_findings"
+                    result["warnings"].append(
+                        "결과표 중심 3차 검증에서도 계수·유의수준을 직접 뒷받침하는 인용을 확보하지 못했습니다. 기존 결과는 검토 필요 상태로 유지합니다."
+                    )
             else:
                 findings_rescue_status = "no_supported_findings"
                 result["warnings"].append(
@@ -2189,6 +2240,7 @@ async def llm_result(count: int, pages: list[dict[str, Any]]) -> dict[str, Any]:
         "repair_model": findings_repair_model,
         "rescue_attempted": findings_rescue_attempted,
         "rescue_status": findings_rescue_status,
+        "rescue_reason": findings_rescue_reason,
         "rescue_model": findings_rescue_model,
     }
     result["findings_coverage"] = findings_coverage
