@@ -633,7 +633,7 @@ def _are_duplicate_findings(left: dict[str, Any], right: dict[str, Any]) -> bool
         and left_table == right_table
         and bool(left_model)
         and bool(right_model)
-        and bool(left_columns & right_columns)
+        and same_model
         and bool(left_numbers & right_numbers)
     )
     return (
