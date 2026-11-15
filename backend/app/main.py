@@ -600,18 +600,33 @@ def _are_duplicate_findings(left: dict[str, Any], right: dict[str, Any]) -> bool
     }
     shared_evidence = left_evidence & right_evidence
     shared_pages = _finding_page_set(left) & _finding_page_set(right)
-    if not shared_pages:
-        return False
     numbers_compatible = not (left_numbers and right_numbers) or (
         left_numbers.issubset(right_numbers) or right_numbers.issubset(left_numbers)
     )
     if not numbers_compatible:
         return False
     same_direction = str(left.get("direction", "")).casefold() == str(right.get("direction", "")).casefold()
-    if shared_evidence and numbers_compatible and same_direction:
+    left_table = str(left.get("table_reference", "")).casefold().strip()
+    right_table = str(right.get("table_reference", "")).casefold().strip()
+    left_model = str(left.get("model_or_column", "")).casefold().strip()
+    right_model = str(right.get("model_or_column", "")).casefold().strip()
+    same_table = not left_table or not right_table or left_table == right_table
+    same_model = not left_model or not right_model or left_model == right_model
+    if not same_table or not same_model:
+        return False
+    if shared_evidence and same_direction:
         return True
     threshold = 0.72 if left_numbers and right_numbers else 0.86
-    return similarity >= threshold
+    if shared_pages:
+        return similarity >= threshold
+    # A table-first rescue often cites a different page than the initial prose
+    # finding. Merge only near-identical claims with compatible estimates and
+    # matching table/model identifiers across those pages.
+    return (
+        similarity >= 0.96
+        and same_direction
+        and bool(left_table or left_model)
+    )
 
 
 def _deduplicate_findings(
