@@ -1042,3 +1042,138 @@ def test_summary_consistency_accepts_numbers_present_in_findings_and_methodology
     )
     assert result["status"] == "screen_passed"
     assert result["unmatched_numeric_tokens"] == []
+
+
+
+def test_findings_coverage_marks_result_bearing_paper_incomplete_when_empty():
+    pages = [
+        {"page": 1, "text": "Abstract and research question."},
+        {"page": 8, "text": "Table 4. Regression results. Estimated coefficient is statistically significant."},
+    ]
+    coverage = module.assess_findings_coverage(pages, [])
+    assert coverage["status"] == "incomplete"
+    assert coverage["empirical_result_signals_detected"] is True
+
+
+def test_findings_coverage_does_not_invent_missing_results_for_non_empirical_paper():
+    pages = [{"page": 1, "text": "This paper proposes a theoretical framework."}]
+    coverage = module.assess_findings_coverage(pages, [])
+    assert coverage["status"] == "not_assessable"
+    assert coverage["empirical_result_signals_detected"] is False
+
+
+def test_findings_rescue_prompt_prioritizes_tables_and_does_not_infer_results():
+    pages = [
+        {"page": 1, "text": "Abstract and introduction."},
+        {"page": 2, "text": "Table 2. Regression results. Coefficient and standard errors."},
+    ]
+    prompt = module.build_findings_rescue_prompt(pages)
+    assert "표 중심 추출 전문가" in prompt
+    assert "[PDF PAGE 2]" in prompt
+    assert "빈 배열을 채우기 위해 추정" in prompt
+
+
+def test_llm_result_runs_table_first_rescue_only_after_empty_findings(monkeypatch):
+    pages = _sample_pages()
+    first_output = _sample_model_output()
+    first_output["findings"] = []
+    empty_repair = {"findings": []}
+    rescue_output = {
+        "findings": [{
+            "claim": "추정계수는 -0.12이며 5% 수준에서 유의하다.",
+            "direction": "negative",
+            "estimate": "-0.12",
+            "statistical_significance": "5% level",
+            "evidence": [{
+                "page": 2,
+                "quote": "The estimated coefficient is -0.12 and statistically significant at the 5 percent level."
+            }],
+        }]
+    }
+    requests = []
+
+    class FakeResponse:
+        status_code = 200
+        headers = {}
+        text = ""
+        def __init__(self, payload):
+            self.payload = payload
+        def raise_for_status(self):
+            return None
+        def json(self):
+            return {"candidates": [{
+                "finishReason": "STOP",
+                "content": {"parts": [{"text": json.dumps(self.payload, ensure_ascii=False)}]},
+            }]}
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return None
+        async def post(self, url, **kwargs):
+            requests.append(kwargs)
+            payload = first_output if len(requests) == 1 else empty_repair if len(requests) == 2 else rescue_output
+            return FakeResponse(payload)
+
+    async def fake_sleep(seconds):
+        return None
+
+    monkeypatch.setattr(module, "AI_PROVIDER", "gemini")
+    monkeypatch.setattr(module, "GEMINI_API_KEY", "test-key-not-used")
+    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-3.5-flash-lite")
+    monkeypatch.setattr(module, "GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    monkeypatch.setattr(module.asyncio, "sleep", fake_sleep)
+
+    result = asyncio.run(module.llm_result(2, pages))
+    assert len(requests) == 3
+    assert requests[2]["json"]["generationConfig"]["responseJsonSchema"] == module.FINDINGS_ONLY_SCHEMA
+    assert result["findings_verification"]["rescue_attempted"] is True
+    assert result["findings_verification"]["rescue_status"] == "recovered"
+    assert result["findings_coverage"]["status"] == "supported"
+    assert len(result["findings"]) == 1
+
+
+def test_llm_result_marks_findings_incomplete_if_table_first_rescue_still_empty(monkeypatch):
+    pages = _sample_pages()
+    first_output = _sample_model_output()
+    first_output["findings"] = []
+    requests = []
+
+    class FakeResponse:
+        status_code = 200
+        headers = {}
+        text = ""
+        def __init__(self, payload):
+            self.payload = payload
+        def raise_for_status(self):
+            return None
+        def json(self):
+            return {"candidates": [{
+                "finishReason": "STOP",
+                "content": {"parts": [{"text": json.dumps(self.payload, ensure_ascii=False)}]},
+            }]}
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return None
+        async def post(self, url, **kwargs):
+            requests.append(kwargs)
+            return FakeResponse(first_output if len(requests) == 1 else {"findings": []})
+
+    async def fake_sleep(seconds):
+        return None
+
+    monkeypatch.setattr(module, "AI_PROVIDER", "gemini")
+    monkeypatch.setattr(module, "GEMINI_API_KEY", "test-key-not-used")
+    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-3.5-flash-lite")
+    monkeypatch.setattr(module, "GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    monkeypatch.setattr(module.asyncio, "sleep", fake_sleep)
+
+    result = asyncio.run(module.llm_result(2, pages))
+    assert len(requests) == 3
+    assert result["findings_verification"]["rescue_status"] == "no_supported_findings"
+    assert result["findings_coverage"]["status"] == "incomplete"
+    assert any("실증 결과 추출은 불완전" in warning for warning in result["warnings"])
