@@ -680,21 +680,41 @@ def _legend_supports_significance(stars: str, threshold: float, legend_text: str
     if not stars or not legend_text:
         return None
     normalized = _normalize_numeric_text(legend_text).casefold()
-    marker_matches = list(re.finditer(r"(?<!\*)\*{1,3}(?!\*)", normalized))
-    level_matches = list(re.finditer(r"(?<!\d)(1|5|10)\s*%", normalized))
+    expected_star_count = len(stars)
+
+    # Prefer the threshold explicitly adjacent to the exact star marker in the
+    # separately cited legend. Do not let unrelated stars elsewhere on the page
+    # determine the result.
+    marker_pattern = r"(?<!\*)\*{1,3}(?!\*)"
+    for match in re.finditer(marker_pattern, normalized):
+        if len(match.group(0)) != expected_star_count:
+            continue
+        window = normalized[match.end():match.end() + 100]
+        threshold_match = re.search(r"\bp\s*[<≤]\s*([0-9]*\.?[0-9]+)", window)
+        if threshold_match:
+            try:
+                return float(threshold_match.group(1)) <= threshold
+            except ValueError:
+                continue
+        percent_match = re.search(r"(?<!\d)(1|5|10)\s*(?:%|percent|퍼센트)", window)
+        if percent_match:
+            try:
+                return float(percent_match.group(1)) / 100 <= threshold
+            except ValueError:
+                continue
+
+    # Some papers state a compact ordered legend without repeating p-value
+    # syntax beside each marker. Use the conventional explicit 1/5/10% mapping
+    # only when all three marker and percentage levels are present in order.
+    marker_matches = list(re.finditer(marker_pattern, normalized))
+    level_matches = list(re.finditer(r"(?<!\d)(1|5|10)\s*(?:%|percent|퍼센트)", normalized))
     if len(marker_matches) >= 3 and len(level_matches) >= 3:
-        marker_levels = {}
         for marker, level in zip(marker_matches[:3], level_matches[:3]):
-            marker_levels[len(marker.group(0))] = float(level.group(1)) / 100
-        requested_level = marker_levels.get(len(stars))
-        if requested_level is not None:
-            return requested_level <= threshold
-    exact_pattern = r"(?<!\*)" + re.escape(stars) + r"(?!\*)"
-    for match in re.finditer(exact_pattern, normalized):
-        window = normalized[max(0, match.start() - 25):match.end() + 120]
-        found = _parse_significance_threshold(window)
-        if found is not None:
-            return found <= threshold
+            if len(marker.group(0)) == expected_star_count:
+                try:
+                    return float(level.group(1)) / 100 <= threshold
+                except ValueError:
+                    return None
     return None
 
 
