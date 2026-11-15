@@ -672,6 +672,33 @@ def test_merge_prior_findings_revalidates_quotes_and_prefers_supported_duplicate
     assert {item["page"] for item in merged[0]["evidence"]} == {9, 10}
 
 
+def test_dedup_merges_same_evidence_across_korean_and_english_directions():
+    quote = "L.NIBDepRat*SFFR 0.000702*** 0.000749*** 0.000321** 0.000615***"
+    current = {
+        "claim": "무이자 예금 비중이 높은 은행은 통화정책 긴축 시 위험 감수를 덜 줄인다.",
+        "direction": "양(+)의 방향",
+        "estimate": "0.000615",
+        "table_reference": "Table 3",
+        "model_or_column": "Column (4)",
+        "evidence": [{"page": 7, "quote": quote}],
+    }
+    prior = {
+        "claim": (
+            "대손충당금 비율(LLPRat)을 종속변수로 한 회귀분석에서 "
+            "L.NIBDepRat*SFFR 계수는 0.000615로 양(+)이다."
+        ),
+        "direction": "positive",
+        "estimate": "0.000615",
+        "table_reference": "Table 3",
+        "model_or_column": "(4)",
+        "evidence": [{"page": 7, "quote": quote}],
+    }
+    assert module._are_duplicate_findings(current, prior) is True
+
+    contradictory = {**prior, "direction": "negative"}
+    assert module._are_duplicate_findings(current, contradictory) is False
+
+
 def test_cross_page_dedup_does_not_merge_different_variables_with_same_estimate():
     left = {
         "claim": "AR_Amihud 유동성 위험 계수는 음(-)이다.",
