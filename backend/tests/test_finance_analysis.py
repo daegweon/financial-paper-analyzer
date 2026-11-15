@@ -1270,8 +1270,11 @@ def test_llm_result_runs_table_first_rescue_when_findings_only_need_review(monke
     assert result["findings_verification"]["rescue_reason"] == "review_only_findings"
     assert result["findings_verification"]["rescue_status"] == "recovered"
     assert result["findings_coverage"]["status"] == "supported"
+    assert len(result["findings"]) == 1
+    assert result["findings"][0]["verification"]["status"] == "screen_passed"
     assert result["findings"][0]["verification"]["numeric_supported"] is True
     assert result["findings"][0]["verification"]["significance_supported"] is True
+    assert {item["page"] for item in result["findings"][0]["evidence"]} == {11, 12}
 
 
 def test_llm_result_marks_findings_incomplete_if_table_first_rescue_still_empty(monkeypatch):
