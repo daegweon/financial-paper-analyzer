@@ -197,3 +197,32 @@ transfer of papers, Storage objects, analyses and jobs.
 - GitHub Actions runner provisioning remains unresolved; inspect repository Actions billing/usage and organization policy before relying on branch protection.
 - PDF extraction currently scans up to the first 50 pages; OCR for image-only PDFs is not implemented.
 - Paper deletion and long-term retention UX still need a product-level lifecycle policy.
+
+
+## Google-user upload and analysis E2E (2026-11-15)
+
+- Three PDFs uploaded under the Google Auth user's own Storage prefix and
+  paper rows. All initially failed before analysis-job creation.
+- Railway HTTP logs showed browser analysis `OPTIONS` requests returned 400
+  because the Vercel Preview origin was not accepted by the API CORS policy.
+- Added a narrowly scoped Vercel Preview origin regex for this PaperSignal
+  project/team. Regression tests allow PaperSignal preview origins and reject
+  unrelated Vercel applications.
+- The 60-page NBER PDF then exposed a PostgreSQL JSONB `22P05` error caused
+  by control characters in extracted PDF text. Added PDF/model JSON
+  sanitization and regression tests.
+- All three existing uploaded PDFs were reprocessed without re-uploading:
+  * Asset Pricing with Liquidity Risk: 60 pages total, 50 analyzed,
+    21 evidence quotes, 6 structured findings.
+  * Bank funding constraints and stock liquidity: 17 pages analyzed,
+    26 evidence quotes, structured findings array empty.
+  * Monetary policy, funding cost and banks’ risk-taking: 20 pages analyzed,
+    40 evidence quotes, structured findings array empty.
+- All results use `finance-structured-v6.2` and
+  `gemini-3.5-flash-lite`. Each job completed and each paper has one
+  analysis row. The checkpoint table has zero leftover rows.
+- Latest Railway API and Worker builds: **73 passed, 1 skipped** each.
+  API health check HTTP 200; both services Online. Latest Vercel Preview READY.
+- Quality caveat: the two empty `findings` arrays are a content-extraction
+  completeness gap despite successful jobs. Do not treat those two papers as
+  fully verified finding-extraction benchmarks until separately reviewed.

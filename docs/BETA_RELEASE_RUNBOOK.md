@@ -207,3 +207,42 @@ A beta release is not marked ready until:
 6. Railway API and Worker are online with no active failures.
 7. The leaked-password-protection `WARN` is recorded as the accepted Free-plan limitation; no separate `ERROR` or `CRITICAL` security findings remain. Do not upgrade to Pro solely for this setting.
 8. Production Vercel deployment is READY and the production URL is smoke-tested.
+
+
+## Google-user three-paper analysis incident — 2026-11-15
+
+Three PDFs uploaded through the Google account initially showed `Failed to fetch`.
+Railway HTTP logs confirmed browser `OPTIONS` preflight requests to
+`POST /api/analyze/{paper_id}` returned HTTP 400 because the Vercel Preview
+origin was not in the API's exact `FRONTEND_ORIGIN` list.
+
+The API CORS policy now accepts explicit production/local origins plus only
+this project's Vercel Preview host pattern:
+`https://financial-paper-analyzer-<deployment>-daegweonai-9583.vercel.app`.
+It does not allow arbitrary `*.vercel.app` origins. Regression tests verify
+known PaperSignal previews and reject unrelated Vercel projects.
+
+A second, document-specific issue appeared after jobs entered the queue:
+the 60-page NBER PDF contains control characters in extracted text.
+PostgreSQL JSONB rejected its checkpoint with PostgREST `22P05`
+(untranslatable character). PDF and model JSON text is now sanitized
+recursively before persistence; normal tabs/newlines/carriage returns remain.
+
+All three existing uploaded PDFs were re-queued without re-uploading:
+- Asset Pricing with Liquidity Risk (60 pages; 50-page extraction cap).
+- Bank funding constraints and stock liquidity (17 pages).
+- Monetary policy, funding cost and banks’ risk-taking: evidence from the USA (20 pages).
+
+All three jobs completed using `finance-structured-v6.2` and
+`gemini-3.5-flash-lite`. Each has exactly one analysis row and terminal
+checkpoint cleanup left zero checkpoint rows. The 60-page paper completed
+on attempt 3 after the earlier JSONB control-character failures.
+
+The latest Railway API and Worker builds each passed **73 tests, 1 skipped**.
+The latest API health check returned HTTP 200; API and Worker are Online.
+The latest Vercel Preview build is READY.
+
+**Quality note:** the first paper produced 6 structured findings; the other
+two produced summary/methodology/evidence but an empty structured
+`findings` array. Job completion is not equivalent to full extraction
+quality; those two papers need a separate finding-level quality review.
