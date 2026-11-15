@@ -29,7 +29,7 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-terra")
-ANALYSIS_VERSION = "finance-structured-v6.3.6"
+ANALYSIS_VERSION = "finance-structured-v6.3.7"
 log = logging.getLogger("papersignal")
 app = FastAPI(title="PaperSignal API", version="0.2.0")
 # Production origins are configured explicitly in FRONTEND_ORIGIN.
@@ -2626,7 +2626,7 @@ async def _process_analysis_job(
                             "status": "eq.completed",
                             "select": "result",
                             "order": "created_at.desc",
-                            "limit": "3",
+                            "limit": "5",
                         },
                     )
                     prior_rows = await check_response(
@@ -2645,7 +2645,7 @@ async def _process_analysis_job(
                             prior_findings.extend(
                                 item for item in prior_items if isinstance(item, dict)
                             )
-                        if len(prior_findings) >= 24:
+                        if len(prior_findings) >= 40:
                             break
                 except Exception as exc:
                     # Historical evidence is an optional quality boost. A failed
