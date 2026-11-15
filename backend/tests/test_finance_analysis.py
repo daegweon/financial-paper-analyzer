@@ -530,6 +530,56 @@ def test_audit_finding_requires_numeric_estimate_inside_direct_quote():
     assert audit["unsupported_numeric_tokens"] == ["-0.154"]
 
 
+def test_audit_finding_ignores_tier_table_and_column_labels_but_checks_coefficient():
+    pages = [{
+        "page": 7,
+        "text": (
+            "Table 3 L.Tier1Rat*SFFR −0.000348 −0.000493 0.00140*** 0.00168*** "
+            "(0.340) (0.183) (0.000) (0.000). "
+            "Standard errors are clustered at the bank level p values in parentheses "
+            "* p < 0.10, ** p < 0.05, *** p < 0.01."
+        ),
+    }]
+    finding = {
+        "claim": (
+            "표 3의 열 (4)에서 티어 1 자본비율과 SFFR의 상호작용항 계수는 "
+            "0.00168로 양(+)이며 1% 수준에서 유의하다."
+        ),
+        "direction": "positive",
+        "estimate": "0.00168",
+        "statistical_significance": "p < 0.01",
+        "table_reference": "Table 3",
+        "model_or_column": "(4)",
+        "evidence": [{
+            "page": 7,
+            "quote": (
+                "L.Tier1Rat*SFFR −0.000348 −0.000493 0.00140*** 0.00168*** "
+                "(0.340) (0.183) (0.000) (0.000)"
+            ),
+        }],
+        "significance_legend_evidence": [{
+            "page": 7,
+            "quote": (
+                "Standard errors are clustered at the bank level p values in parentheses "
+                "* p < 0.10, ** p < 0.05, *** p < 0.01"
+            ),
+        }],
+    }
+    audit = module.audit_finding(finding, pages)
+    assert audit["status"] == "screen_passed"
+    assert audit["numeric_supported"] is True
+    assert audit["unsupported_numeric_tokens"] == []
+    assert audit["significance_supported"] is True
+    revalidated, _ = module._revalidate_prior_findings([finding], pages)
+    assert len(revalidated) == 1
+
+    unsupported = {**finding, "estimate": "0.999"}
+    failed_audit = module.audit_finding(unsupported, pages)
+    assert failed_audit["status"] == "review"
+    assert failed_audit["numeric_supported"] is False
+    assert failed_audit["unsupported_numeric_tokens"] == ["0.999"]
+
+
 def test_audit_finding_supports_unicode_operator_star_legend():
     pages = [{
         "page": 7,
