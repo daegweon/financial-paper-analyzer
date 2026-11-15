@@ -96,43 +96,31 @@ signup. Never disable email confirmation to bypass delivery limits.
 
 ## OAuth incident diagnosis — 2026-11-15
 
-The real Supabase Auth logs for the failing Google callback show:
+The original callback failure was caused by an invalid Google OAuth Client
+Secret (`invalid_client`) and an earlier Supabase Site URL that sent the
+browser back to `http://localhost:3000`. The operator has since created and
+saved a new Google Client Secret and updated Site URL to the production
+PaperSignal origin.
 
-```text
-oauth2: "invalid_client" "The provided client secret is invalid."
-500: Unable to exchange external code
-```
+Post-change verification:
 
-The logs also identify `http://localhost:3000` as the failed redirect destination.
-This is a **configuration incident**, not a PaperSignal user-data migration.
+- Supabase Auth public settings report `external.google=true`.
+- OAuth authorization requests return HTTP 302 to
+  `accounts.google.com/o/oauth2/v2/auth` for both the production origin and
+  the current Vercel Preview origin.
+- Both redirects use the same Google Web Client ID and the correct Supabase
+  callback `https://hwmtayrecsfxernhssro.supabase.co/auth/v1/callback`.
+- Supabase Auth logs after the configuration update show authorization
+  requests from the production and Preview origins and no new
+  `invalid_client` / `Unable to exchange external code` errors.
+- No callback request has yet been recorded after the configuration update.
+  The Google consent, token exchange, session creation and library access
+  still require a real account completing the interactive browser flow.
 
-Two independent operator-side fixes are required:
+The frontend uses the current origin as `redirectTo` and displays a safe,
+actionable message if OAuth returns an error. It removes duplicate OAuth error
+parameters without altering a valid PKCE `code`.
 
-1. In [Google Cloud OAuth Clients](https://console.cloud.google.com/auth/clients),
-   open the **same Web application OAuth client** whose Client ID is registered
-   in Supabase. Copy the actual client secret for that client (or create a
-   fresh secret if the stored value is unavailable). Do not paste a Google
-   API key, project ID, masked secret or a different client's secret.
-   In [Supabase Google Provider](https://supabase.com/dashboard/project/hwmtayrecsfxernhssro/auth/providers?provider=Google),
-   replace the saved Client Secret with that exact value and save it.
-2. In [Supabase Auth URL Configuration](https://supabase.com/dashboard/project/hwmtayrecsfxernhssro/auth/url-configuration),
-   change **Site URL** from the stale localhost address to
-   `https://financial-paper-analyzer.vercel.app`. Add the production URL
-   and approved Vercel Preview origin to **Redirect URLs**, preserving
-   `http://localhost:3000/**` only if actively needed for isolated local
-   development. This keeps failures from launching a different app on localhost.
-
-The browser-side error UI now gives a clear explanation and removes the
-duplicated OAuth error fields from the location bar once the callback lands
-on PaperSignal. It cannot correct a wrong Google Client Secret or a wrong
-Supabase Site URL on behalf of the Supabase project.
-
-**Verification after configuration:** open the latest PaperSignal Preview
-in a fresh browser session, use "Google로 계속하기", complete Google consent,
-confirm the browser returns to the same PaperSignal origin with an
-authenticated user, and check that its library is accessible. Only a
-real completed account login proves code exchange and session creation;
-an initial HTTP 302 to Google does not.
 
 ## Google OAuth login
 

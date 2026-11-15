@@ -80,6 +80,22 @@ test as a public-beta release gate; do not turn off email confirmation.
 - Retry/backoff, terminal failure after the configured attempt limit, lease renewal, stale-lease recovery and duplicate-active-job prevention were previously exercised.
 - Supabase checkpoint data is protected by RLS and an explicit `service_role`-only policy. New `sb_secret_*` keys are sent in the `apikey` header only.
 
+## Google OAuth post-fix verification (2026-11-15)
+
+- Operator replaced the Google OAuth Client Secret in Supabase and set the
+  Supabase Site URL to `https://financial-paper-analyzer.vercel.app`.
+- Supabase Auth settings report `external.google=true`.
+- Authorization requests for production and Preview both return HTTP 302 to
+  Google's OAuth authorization endpoint with the matching Google Client ID
+  and Supabase callback URI.
+- Auth logs after the change show authorization requests from both approved
+  origins. The previous `invalid_client` errors are confined to the earlier
+  attempts; no new exchange errors appear after the change.
+- No new `/callback` event has been recorded after the fix. Therefore actual
+  Google consent, callback exchange, session creation and per-user library
+  access are **not yet verified**. Complete one real Google login in a browser
+  before marking OAuth E2E as passed.
+
 ## Google OAuth verification (2026-11-14)
 
 - Supabase `/auth/v1/settings` returned HTTP 200 and `external.google=true`.
