@@ -29,7 +29,7 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-terra")
-ANALYSIS_VERSION = "finance-structured-v6.3.4"
+ANALYSIS_VERSION = "finance-structured-v6.3.5"
 log = logging.getLogger("papersignal")
 app = FastAPI(title="PaperSignal API", version="0.2.0")
 # Production origins are configured explicitly in FRONTEND_ORIGIN.
@@ -812,7 +812,12 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
     # Significance levels in prose are evaluated by the significance parser,
     # not mistaken for unsupported effect-size numbers.
     numeric_claim = re.sub(
-        r"(?:p\s*[<≤=]\s*[0-9]*\.?[0-9]+|(?:at\s+the\s+)?(?:1|5|10)\s*(?:%|percent)\s*(?:level|수준)?|(?:1|5|10)%\s*수준)",
+        r"(?:p\\s*[<≤=]\\s*[0-9]*\\.?[0-9]+"
+        r"|(?:at\\s+the\\s+)?(?:1|5|10)\\s*(?:%|percent)\\s*(?:level|수준)?"
+        r"|(?:1|5|10)%\\s*수준"
+        r"|\\b(?:tier|model|column|table)\\s*[-(]?\\s*\\d+\\)?(?=\\W|$)"
+        r"|\\bpanel\\s+[a-z](?=\\W|$)"
+        r"|(?:티어|모형|모델|열|표)\\s*[-(]?\\s*\\d+\\)?(?=\\W|$))",
         " ",
         claim,
         flags=re.IGNORECASE,
