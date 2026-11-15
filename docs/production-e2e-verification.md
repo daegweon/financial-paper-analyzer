@@ -80,6 +80,46 @@ test as a public-beta release gate; do not turn off email confirmation.
 - Retry/backoff, terminal failure after the configured attempt limit, lease renewal, stale-lease recovery and duplicate-active-job prevention were previously exercised.
 - Supabase checkpoint data is protected by RLS and an explicit `service_role`-only policy. New `sb_secret_*` keys are sent in the `apikey` header only.
 
+## Google login and tenant-isolation E2E — 2026-11-15
+
+The operator completed Google sign-in in the latest Preview. Supabase Auth logs
+confirm the complete PKCE flow:
+
+- Google `/callback` recorded `user_signedup` and returned HTTP 302 to the
+  PaperSignal production Site URL.
+- The PKCE `/token` exchange returned HTTP 200 with
+  `auth_event.action=login` and `provider_type=google`.
+- The frontend then called Supabase `/user` successfully (HTTP 200).
+
+The resulting Google identity is a distinct Auth user. The existing email
+account is a different user and owns the pre-existing 11 papers and 44
+analyses; the new Google user currently owns 0 papers and 0 analyses. There
+are no duplicate email groups. No data was moved or merged. This is expected:
+Supabase automatic identity linking applies when verified provider emails
+match; it must not be assumed for different email addresses.
+
+RLS was tested in rollback-only SQL transactions under the `authenticated`
+role with the Google user's JWT claims simulated:
+
+- The Google user could insert and read a paper, an analysis and an analysis
+  job belonging to its own user ID (3 rows visible).
+- The pre-existing account could see 0 of those Google-owned rows.
+- The Google user initially saw 0 of the existing account's papers, analyses,
+  jobs and Storage objects.
+- The temporary test rows were rolled back; no permanent records or source
+  files were created.
+
+This confirms the database ownership policies and new Google user's clean
+library boundary. It does not replace a real PDF upload and Worker analysis
+executed from the Google user's browser session; that remains a separate
+end-to-end upload/analysis test.
+
+**Account policy:** do not merge identities or move papers automatically.
+If a user needs their old research library, they should sign in with the
+original account. A future account migration must require proof of control
+of both accounts, explicit user confirmation, and an auditable transactional
+transfer of papers, Storage objects, analyses and jobs.
+
 ## Google OAuth post-fix verification (2026-11-15)
 
 - Operator replaced the Google OAuth Client Secret in Supabase and set the

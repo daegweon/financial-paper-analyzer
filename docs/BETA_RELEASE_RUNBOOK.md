@@ -122,6 +122,22 @@ actionable message if OAuth returns an error. It removes duplicate OAuth error
 parameters without altering a valid PKCE `code`.
 
 
+## Google account and existing-library policy
+
+A successful Google sign-in can create a new Auth user if the Google email
+does not match an existing verified account. Supabase's automatic identity
+linking is based on matching verified email addresses; do not merge accounts
+solely because one person controls both. The latest QA Google identity is a
+separate user from the account that owns the historical 11-paper/44-analysis
+library. The existing library remains intact and visible only after signing
+in with its original account.
+
+Do not automatically move research data or attempt manual identity linking
+for an identity already attached to another Auth user. Any future migration
+must authenticate both source and destination accounts, obtain explicit
+confirmation, and transactionally transfer the paper metadata, private
+Storage objects, analysis history and jobs while preserving auditability.
+
 ## Google OAuth login
 
 The application now exposes a Google sign-in button. It uses Supabase Auth
