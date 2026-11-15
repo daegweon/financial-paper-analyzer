@@ -815,9 +815,9 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
         r"(?:p\s*[<≤=]\s*[0-9]*\.?[0-9]+"
         r"|(?:at\s+the\s+)?(?:1|5|10)\s*(?:%|percent)\s*(?:level|수준)?"
         r"|(?:1|5|10)%\s*수준"
-        r"|\b(?:tier|model|column|table)\s*[-(]?\s*\d+\)?(?=\W|$)"
-        r"|\bpanel\s+[a-z](?=\W|$)"
-        r"|(?:티어|모형|모델|열|표)\s*[-(]?\s*\d+\)?(?=\W|$))",
+        r"|\b(?:tier|model|column|table)\s*[-(]?\s*\d+\)?(?=\W|$|[가-힣])"
+        r"|\bpanel\s+[a-z](?=\W|$|[가-힣])"
+        r"|(?:티어|모형|모델|열|표)\s*[-(]?\s*\d+\)?(?=\W|$|[가-힣]))",
         " ",
         claim,
         flags=re.IGNORECASE,
