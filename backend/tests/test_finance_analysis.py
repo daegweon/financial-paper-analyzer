@@ -1386,6 +1386,115 @@ def test_llm_result_runs_table_first_rescue_when_findings_only_need_review(monke
     assert {item["page"] for item in result["findings"][0]["evidence"]} == {11, 12}
 
 
+def test_llm_result_rescues_review_findings_even_when_supported_findings_exist(monkeypatch):
+    pages = _sample_pages() + [
+        {
+            "page": 11,
+            "text": (
+                "The results in Table 9 show that unexpected liquidity risk is "
+                "negatively related to excess stock returns."
+            ),
+        },
+        {
+            "page": 12,
+            "text": (
+                "Table 9. Unexpected stock illiquidity. "
+                "AR_Amihud −0.154*** (0.048). "
+                "Note: *** p < 0.01, ** p < 0.05, * p < 0.10."
+            ),
+        },
+    ]
+    review_finding = {
+        "claim": "AR_Amihud 계수는 음(-)이며 1% 수준에서 유의하다.",
+        "direction": "negative",
+        "estimate": "-0.154",
+        "statistical_significance": "1% level",
+        "table_reference": "Table 9",
+        "model_or_column": "AR_Amihud Column (1)",
+        "evidence": [{
+            "page": 11,
+            "quote": (
+                "The results in Table 9 show that unexpected liquidity risk is "
+                "negatively related to excess stock returns."
+            ),
+        }],
+    }
+    initial_output = _sample_model_output()
+    supported_finding = initial_output["findings"][0]
+    initial_output["findings"] = [supported_finding, review_finding]
+    repair_output = {"findings": [review_finding]}
+    rescue_output = {
+        "findings": [{
+            **review_finding,
+            "evidence": [{
+                "page": 12,
+                "quote": "AR_Amihud −0.154*** (0.048)",
+            }],
+            "significance_legend_evidence": [{
+                "page": 12,
+                "quote": "*** p < 0.01, ** p < 0.05, * p < 0.10",
+            }],
+        }]
+    }
+    requests = []
+
+    class FakeResponse:
+        status_code = 200
+        headers = {}
+        text = ""
+
+        def __init__(self, payload):
+            self.payload = payload
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"candidates": [{
+                "finishReason": "STOP",
+                "content": {"parts": [{
+                    "text": json.dumps(self.payload, ensure_ascii=False)
+                }]},
+            }]}
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return None
+
+        async def post(self, url, **kwargs):
+            requests.append({**kwargs, "url": url})
+            payload = (
+                initial_output if len(requests) == 1
+                else repair_output if len(requests) == 2
+                else rescue_output
+            )
+            return FakeResponse(payload)
+
+    async def fake_sleep(seconds):
+        return None
+
+    monkeypatch.setattr(module, "AI_PROVIDER", "gemini")
+    monkeypatch.setattr(module, "GEMINI_API_KEY", "test-key-not-used")
+    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-3.5-flash-lite")
+    monkeypatch.setattr(module, "GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    monkeypatch.setattr(module.asyncio, "sleep", fake_sleep)
+
+    result = asyncio.run(module.llm_result(12, pages))
+    assert len(requests) == 3
+    assert result["findings_verification"]["rescue_attempted"] is True
+    assert result["findings_verification"]["rescue_reason"] == "mixed_findings_review"
+    assert result["findings_verification"]["rescue_status"] == "recovered"
+    assert result["findings_coverage"]["supported_findings_count"] == 2
+    assert all(item["verification"]["status"] == "screen_passed" for item in result["findings"])
+
+
 def test_llm_result_marks_findings_incomplete_if_table_first_rescue_still_empty(monkeypatch):
     pages = _sample_pages()
     first_output = _sample_model_output()
