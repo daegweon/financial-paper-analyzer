@@ -430,3 +430,38 @@ def test_other_user_paper_returns_404(monkeypatch):
     )
     assert res.status_code == 404
     assert len(calls) == 2
+
+
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "https://financial-paper-analyzer-8foxzucww-daegweonai-9583.vercel.app",
+        "https://financial-paper-analyzer-3jn7ah972-daegweonai-9583.vercel.app",
+    ],
+)
+def test_vercel_preview_origin_allows_analysis_preflight(origin):
+    response = TestClient(module.app).options(
+        "/api/analyze/00000000-0000-4000-8000-000000000001",
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "authorization,content-type",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == origin
+    assert "POST" in response.headers["access-control-allow-methods"]
+    assert "authorization" in response.headers["access-control-allow-headers"].lower()
+
+
+def test_unrelated_vercel_project_origin_is_rejected():
+    response = TestClient(module.app).options(
+        "/api/analyze/00000000-0000-4000-8000-000000000001",
+        headers={
+            "Origin": "https://unrelated-project-daegweonai-9583.vercel.app",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "authorization,content-type",
+        },
+    )
+    assert response.status_code == 400
+    assert "access-control-allow-origin" not in response.headers
