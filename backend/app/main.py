@@ -38,7 +38,7 @@ app = FastAPI(title="PaperSignal API", version="0.2.0")
 # deployment. Allow only this project's preview hostname and this Vercel team;
 # do not use a broad *.vercel.app wildcard.
 VERCEL_PREVIEW_ORIGIN_REGEX = (
-    r"^https://financial-paper-analyzer(?:-[a-z0-9-]+)?-daegweonai-9583\\.vercel\\.app$"
+    r"^https://financial-paper-analyzer(?:-[a-z0-9-]+)?-daegweonai-9583\.vercel\.app$"
 )
 app.add_middleware(
     CORSMiddleware,
