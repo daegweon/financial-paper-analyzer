@@ -468,19 +468,23 @@ def test_unrelated_vercel_project_origin_is_rejected():
 
 
 def test_pdf_text_sanitization_removes_postgres_incompatible_controls():
-    raw = "Liquidity\\x00 risk\\x01 프리미엄\\x00 and\\x7f evidence"
+    raw = (
+        "Liquidity" + chr(0) + " risk" + chr(1) + " 프리미엄"
+        + chr(0) + " and" + chr(127) + " evidence"
+    )
     cleaned = module.sanitize_pdf_text(raw)
-    assert "\\x00" not in cleaned
-    assert "\\x01" not in cleaned
-    assert "\\x7f" not in cleaned
+    assert chr(0) not in cleaned
+    assert chr(1) not in cleaned
+    assert chr(127) not in cleaned
     assert "Liquidity risk" in cleaned
     assert "프리미엄" in cleaned
 
 
+
 def test_json_payload_sanitization_is_recursive_and_preserves_structure():
     payload = {
-        "summary": "asset\\x00 pricing",
-        "findings": [{"claim": "risk\\x01 premium", "evidence": ["page\\x00 quote"]}],
+        "summary": "asset" + chr(0) + " pricing",
+        "findings": [{"claim": "risk" + chr(1) + " premium", "evidence": ["page" + chr(0) + " quote"]}],
         "page": 3,
     }
     cleaned = module.sanitize_json_payload(payload)
