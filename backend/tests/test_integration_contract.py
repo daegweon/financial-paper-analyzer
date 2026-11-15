@@ -166,6 +166,14 @@ def test_background_job_saves_analysis_and_completes(monkeypatch):
         async def get(self, url, **kwargs):
             requests_seen.append(("GET", url, kwargs))
             if url.endswith("/rest/v1/analyses"):
+                if "paper_id" in kwargs["params"]:
+                    assert kwargs["params"]["paper_id"] == "eq." + paper_id
+                    assert kwargs["params"]["user_id"] == "eq." + user_id
+                    assert kwargs["params"]["limit"] == "5"
+                    return httpx.Response(200, json=[
+                        {"result": {"findings": [{"claim": f"prior-{index}"}]}}
+                        for index in range(5)
+                    ])
                 return httpx.Response(200, json=[])
             if url.endswith("/rest/v1/analysis_job_checkpoints"):
                 return httpx.Response(200, json=[])
@@ -198,7 +206,10 @@ def test_background_job_saves_analysis_and_completes(monkeypatch):
     async def fake_patch_owned_row(table, row_id, owner_id, token, values):
         patched_rows.append((table, row_id, owner_id, values))
 
+    prior_findings_received = []
+
     async def fake_llm_result(page_count, pages, prior_findings=None):
+        prior_findings_received.extend(prior_findings or [])
         return module.extractive_result(page_count, pages) | {
             "analysis_version": "extractive-v3"
         }
@@ -216,6 +227,9 @@ def test_background_job_saves_analysis_and_completes(monkeypatch):
         if item[0] == "POST" and item[1].endswith("/rest/v1/analysis_job_checkpoints")
     ]
     assert checkpoint_stages == ["pdf_extracted", "analysis_result"]
+    assert [item["claim"] for item in prior_findings_received] == [
+        "prior-0", "prior-1", "prior-2", "prior-3", "prior-4"
+    ]
     assert any(
         table == "analysis_jobs" and values.get("status") == "completed"
         for table, _, _, values in patched_rows
