@@ -88,6 +88,21 @@ type AnalysisResult = {
   findings_verification?: { repair_attempted: boolean; repair_status: string; repair_model?: string | null };
   methodology_verification?: { repair_attempted: boolean; repair_status: string; repair_model?: string | null };
   findings_deduplication?: { duplicates_removed: number };
+  findings_coverage?: {
+    status: "supported" | "review_required" | "incomplete" | "not_assessable";
+    supported_findings_count: number;
+    review_findings_count: number;
+    empirical_result_signals_detected: boolean;
+    method: string;
+  };
+  findings_verification?: {
+    repair_attempted: boolean;
+    repair_status: string;
+    repair_model?: string | null;
+    rescue_attempted?: boolean;
+    rescue_status?: string;
+    rescue_model?: string | null;
+  };
   summary_verification?: { status: string; unsupported_numeric_tokens?: string[] };
   summary_consistency?: { status: string; summary_mentions_results: boolean; findings_count: number; unmatched_numeric_tokens: string[]; reasons: string[]; method: string };
   summary: string;
@@ -663,7 +678,11 @@ export default function Home() {
               <section className="analysis-section">
                 <h3>주요 실증 결과 <small>{analysis.result.findings?.length ?? 0}</small></h3>
                 {!!analysis.result.findings_deduplication?.duplicates_removed && <p className="muted">유사·중복 결과 {analysis.result.findings_deduplication.duplicates_removed}개를 통합했습니다.</p>}
-                {analysis.result.findings_verification?.repair_attempted && <p className="muted">2차 실증 결과 검증: {analysis.result.findings_verification.repair_status === "recovered" ? "누락 결과 복구 완료" : analysis.result.findings_verification.repair_status === "reviewed" ? "기존 결과 재검토 완료" : analysis.result.findings_verification.repair_status === "no_supported_findings" ? "추가 근거 확인 불가" : "검증 미완료"}</p>}
+                {analysis.result.findings_verification?.repair_attempted && <p className="muted">2차 실증 결과 검증: {analysis.result.findings_verification.repair_status === "recovered" || analysis.result.findings_verification.repair_status === "recovered_by_rescue" ? "누락 결과 복구 완료" : analysis.result.findings_verification.repair_status === "reviewed" ? "기존 결과 재검토 완료" : analysis.result.findings_verification.repair_status === "no_supported_findings" ? "추가 근거 확인 불가" : "검증 미완료"}</p>}
+                {analysis.result.findings_verification?.rescue_attempted && <p className="muted">결과표 중심 3차 검증: {analysis.result.findings_verification.rescue_status === "recovered" ? "복구 완료" : analysis.result.findings_verification.rescue_status === "no_supported_findings" ? "근거 있는 결과 미확보" : "검증 미완료"}</p>}
+                {analysis.result.findings_coverage && <p className={analysis.result.findings_coverage.status === "incomplete" ? "warning" : analysis.result.findings_coverage.status === "review_required" ? "verification-note" : "muted"}>
+                  실증 결과 추출 품질: {analysis.result.findings_coverage.status === "supported" ? "페이지 근거가 확인된 결과 " + analysis.result.findings_coverage.supported_findings_count + "건" : analysis.result.findings_coverage.status === "review_required" ? "연구자 검토가 필요한 결과 " + analysis.result.findings_coverage.review_findings_count + "건" : analysis.result.findings_coverage.status === "incomplete" ? "실증 결과 신호가 있으나 검증된 결과가 없어 불완전" : "실증 결과 추출 가능 여부 확인 불가"}
+                </p>}
                 {!analysis.result.findings?.length
                   ? <p className="muted">검증된 실증 결과가 없습니다.</p>
                   : analysis.result.findings.map((finding, index) =>
