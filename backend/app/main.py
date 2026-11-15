@@ -29,7 +29,7 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-terra")
-ANALYSIS_VERSION = "finance-structured-v6.3.5"
+ANALYSIS_VERSION = "finance-structured-v6.3.6"
 log = logging.getLogger("papersignal")
 app = FastAPI(title="PaperSignal API", version="0.2.0")
 # Production origins are configured explicitly in FRONTEND_ORIGIN.
@@ -582,6 +582,17 @@ def _finding_numeric_set(finding: dict[str, Any]) -> set[str]:
     return {_numeric_key(x) for x in _extract_numeric_tokens(str(finding.get("estimate", "")))}
 
 
+def _finding_direction_sign(value: Any) -> str | None:
+    text = str(value or "").casefold()
+    negative = any(word in text for word in ("negative", "음", "감소", "하락"))
+    positive = any(word in text for word in ("positive", "양", "증가", "상승"))
+    if negative and not positive:
+        return "negative"
+    if positive and not negative:
+        return "positive"
+    return None
+
+
 def _are_duplicate_findings(left: dict[str, Any], right: dict[str, Any]) -> bool:
     left_claim = _normalized_claim_key(str(left.get("claim", "")))
     right_claim = _normalized_claim_key(str(right.get("claim", "")))
@@ -605,7 +616,7 @@ def _are_duplicate_findings(left: dict[str, Any], right: dict[str, Any]) -> bool
     )
     if not numbers_compatible:
         return False
-    same_direction = str(left.get("direction", "")).casefold() == str(right.get("direction", "")).casefold()
+    same_direction = _finding_direction_sign(left.get("direction")) == _finding_direction_sign(right.get("direction"))
     left_table = str(left.get("table_reference", "")).casefold().strip()
     right_table = str(right.get("table_reference", "")).casefold().strip()
     left_model = str(left.get("model_or_column", "")).casefold().strip()
