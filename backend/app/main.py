@@ -2192,9 +2192,13 @@ async def llm_result(
         int(result.get("findings_deduplication", {}).get("duplicates_removed", 0))
         + prior_findings_duplicates
     )
+    summary_needs_findings_repair = (
+        result.get("summary_consistency", {}).get("status") == "review"
+        and not prior_findings_revalidated
+    )
     needs_findings_repair = (
         not result["findings"]
-        or result.get("summary_consistency", {}).get("status") == "review"
+        or summary_needs_findings_repair
         or any(
             item.get("verification", {}).get("status") == "review"
             for item in result["findings"]
