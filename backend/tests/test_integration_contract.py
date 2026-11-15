@@ -465,3 +465,27 @@ def test_unrelated_vercel_project_origin_is_rejected():
     )
     assert response.status_code == 400
     assert "access-control-allow-origin" not in response.headers
+
+
+def test_pdf_text_sanitization_removes_postgres_incompatible_controls():
+    raw = "Liquidity\\x00 risk\\x01 프리미엄\\x00 and\\x7f evidence"
+    cleaned = module.sanitize_pdf_text(raw)
+    assert "\\x00" not in cleaned
+    assert "\\x01" not in cleaned
+    assert "\\x7f" not in cleaned
+    assert "Liquidity risk" in cleaned
+    assert "프리미엄" in cleaned
+
+
+def test_json_payload_sanitization_is_recursive_and_preserves_structure():
+    payload = {
+        "summary": "asset\\x00 pricing",
+        "findings": [{"claim": "risk\\x01 premium", "evidence": ["page\\x00 quote"]}],
+        "page": 3,
+    }
+    cleaned = module.sanitize_json_payload(payload)
+    assert cleaned == {
+        "summary": "asset pricing",
+        "findings": [{"claim": "risk premium", "evidence": ["page quote"]}],
+        "page": 3,
+    }
