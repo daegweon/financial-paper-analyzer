@@ -32,9 +32,18 @@ OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-terra")
 ANALYSIS_VERSION = "finance-structured-v6.2"
 log = logging.getLogger("papersignal")
 app = FastAPI(title="PaperSignal API", version="0.2.0")
+# Production origins are configured explicitly in FRONTEND_ORIGIN.
+# Vercel creates immutable preview URLs per deployment, so enumerating a single
+# preview URL causes browser preflight OPTIONS requests to fail on every new
+# deployment. Allow only this project's preview hostname and this Vercel team;
+# do not use a broad *.vercel.app wildcard.
+VERCEL_PREVIEW_ORIGIN_REGEX = (
+    r"^https://financial-paper-analyzer(?:-[a-z0-9-]+)?-daegweonai-9583\\.vercel\\.app$"
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=FRONTEND_ORIGINS,
+    allow_origin_regex=VERCEL_PREVIEW_ORIGIN_REGEX,
     allow_methods=["GET", "POST"],
     allow_headers=["Authorization", "Content-Type"],
 )
