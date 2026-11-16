@@ -119,5 +119,12 @@
 - Worker now logs analysis_jobs.created_at on claim. Telemetry parser calculates job_created_to_terminal_ms (includes queue wait) and claim_to_terminal_ms. Both exclude PDF upload transfer; full_pipeline_latency_ms remains null. Added malformed timestamp regression test.
 - PR #6 remains the only clean candidate; PR #5 closed for invalid lock ancestry. No production data or deployments changed.
 
+## 2026-11-17 — Read-only B01-B10 private-storage hash workflow
+
+- Supabase read-only inventory confirms B01-B10 originals exist in private Storage (10 PDFs, 209 pages, 17,760,530 bytes), but the connected Supabase tools return metadata only.
+- Added \`benchmark/lock_legacy_storage_pdfs.py\`: user can run it locally with \`SUPABASE_URL\` and \`SUPABASE_SERVICE_ROLE_KEY\` held only in local environment. It performs GET-only metadata and private-object downloads, checks exact file size/PDF header/PyMuPDF page count, hashes exact bytes, and emits SHA-256 JSON without file bytes, storage paths, user IDs or secrets.
+- Added synthetic tests and \`docs/LOCK_LEGACY_STORAGE_PDFS.md\`. Tests have not run in connected CI; GitHub Actions startup_failure persists.
+- Once user attaches the generated JSON (not the service-role key or PDFs), commit the B01-B10 binary lock to the handoff branch, then create a new candidate from that lock. Current PR #6 candidate predates the B01-B10 binary lock and must be re-created after it; do not claim Q0 complete yet.
+
 ## 새 세션 시작 시 그대로 사용할 메시지
 "PaperSignal 개발을 이어가자. GitHub `plan/engine-quality-release-handoff`의 `docs/SESSION_HANDOFF_NEXT.md`, `docs/ENGINE_QUALITY_RELEASE_PLAN_2026-11-17.md`, `docs/PROJECT_STATE.md`와 `benchmark/engine_release_gates_2026-11-17.json`을 먼저 읽어. 오픈소스 교체 검토는 종료, 기존 PyMuPDF/v6.4.2 엔진만 개선. 독립 골드·인용·전체 정확도·비용·실서비스 테스트 임계점 충족 전 배포 금지. 지금 상태 확인 후 다음 목표를 실제 구현하고 검증 결과를 GitHub에 기록해."
