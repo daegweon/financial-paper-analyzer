@@ -29,7 +29,7 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-terra")
-ANALYSIS_VERSION = "finance-structured-v6.4.0"
+ANALYSIS_VERSION = "finance-structured-v6.4.1"
 log = logging.getLogger("papersignal")
 app = FastAPI(title="PaperSignal API", version="0.2.0")
 # Production origins are configured explicitly in FRONTEND_ORIGIN.
@@ -964,6 +964,8 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
         r"|\bportfolio\s*\(?\s*\d+\s*[-–]\s*\d+\s*\)?"
         r"|\b\d+\s*[-–]\s*\d+\s+(?:(?:hedging|investment)\s+)?portfolio\b"
         r"|(?:포트폴리오|헷징 포트폴리오)\s*\(?\s*\d+\s*[-–]\s*\d+\s*\)?"
+        r"|\\b\\d+[- ]?stocks?\\b"
+        r"|\\d+\\s*종목"
         r"|(?:티어|모형|모델|열|표)\s*[-(]?\s*\d+\)?(?=\W|$|[가-힣]))",
         " ",
         claim,
