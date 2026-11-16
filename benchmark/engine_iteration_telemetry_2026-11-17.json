@@ -98,8 +98,11 @@
     "tests": [
       "test_aggregate_job_attempts_tokens_and_pipeline_latency_without_cost_guess",
       "test_aggregate_all_models_failed_and_worker_retry_without_raw_logs",
-      "test_ignores_malformed_and_unrelated_log_records"
+      "test_ignores_malformed_and_unrelated_log_records",
+      "test_missing_thought_token_count_is_marked_incomplete_not_invented"
     ],
-    "ci_status": "not_run_startup_failure_before_jobs"
+    "ci_status": "not_run_startup_failure_before_jobs",
+    "partial_usage_behavior": "Missing token fields are retained as incomplete, never fabricated as zero-complete; sums use zero only for aggregation while token_usage_complete=false is emitted.",
+    "latest_parser_commit": "06cf140841a1af232e112ef5d17f9c6e7bd0e0d7"
   }
 }
