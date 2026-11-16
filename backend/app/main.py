@@ -965,7 +965,7 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
         r"|\b\d+\s*[-–]\s*\d+\s+(?:(?:hedging|investment)\s+)?portfolio\b"
         r"|(?:포트폴리오|헷징 포트폴리오)\s*\(?\s*\d+\s*[-–]\s*\d+\s*\)?"
         r"|\b\d+[- ]?stocks?\b"
-        r"|\d+\s*종목"
+        r"|\d+\s*개?\s*종목"
         r"|(?:티어|모형|모델|열|표)\s*[-(]?\s*\d+\)?(?=\W|$|[가-힣]))",
         " ",
         claim,
