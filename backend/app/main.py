@@ -376,6 +376,15 @@ _WRITTEN_COUNT_RANGE_RE = re.compile(
 )
 
 
+# Portfolio fraction claims describe two checkable sample counts, even when
+# the numerator/denominator are written in English instead of digits.
+_WRITTEN_COUNT_SHARE_RE = re.compile(
+    rf"\b(?P<first>{_WRITTEN_NUMBER_PATTERN}|\d+)\s+(?:out\s+of|of)\s+"
+    rf"(?:the\s+)?(?P<second>{_WRITTEN_NUMBER_PATTERN}|\d+)\s+"
+    rf"(?:{_WRITTEN_COUNT_CONTEXT})\b"
+)
+
+
 def _extract_written_count_tokens(value: str) -> list[str]:
     """Normalize spelled-out numbers only when they describe explicit counts."""
     text = _normalize_numeric_text(value).casefold()
@@ -385,6 +394,11 @@ def _extract_written_count_tokens(value: str) -> list[str]:
             _WRITTEN_COUNT_WORDS[match.group("first")],
             _WRITTEN_COUNT_WORDS[match.group("second")],
         ))
+    for match in _WRITTEN_COUNT_SHARE_RE.finditer(text):
+        for part in ("first", "second"):
+            word = match.group(part)
+            if word in _WRITTEN_COUNT_WORDS:
+                output.append(_WRITTEN_COUNT_WORDS[word])
     for word, number in _WRITTEN_COUNT_WORDS.items():
         if re.search(
             rf"\b{word}\b\s+(?:of\s+(?:the\s+)?\d+\s+)?(?:{_WRITTEN_COUNT_CONTEXT})\b",
