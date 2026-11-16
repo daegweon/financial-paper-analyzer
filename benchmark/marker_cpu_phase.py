@@ -53,7 +53,7 @@ def main():
     historical=historical_result(src,spec,owner)
     report={"backend":"marker-pdf 2.0.0 / no_ocr",
             "original_id":"B01","source_sha256":identity["sha256"],
-            "mode":"cpu_no_ocr","commercial_weight_license_cleared":False,
+            "mode":"cpu_fast_disable_ocr","commercial_weight_license_cleared":False,
             "production_eligible":False,"human_gold_accuracy":None}
     try:
         with tempfile.TemporaryDirectory(prefix="papersignal-marker-") as d:
@@ -68,7 +68,7 @@ def main():
             env.update(TOKENIZERS_PARALLELISM="false",CUDA_VISIBLE_DEVICES="",
                        OMP_NUM_THREADS="1",OPENBLAS_NUM_THREADS="1")
             command=[
-                "marker_single",str(pdf),"--mode","no_ocr",
+                "marker_single",str(pdf),"--mode","fast",
                 "--disable_ocr","--disable_image_extraction",
                 "--output_format","json","--output_dir",str(dest)
             ]
