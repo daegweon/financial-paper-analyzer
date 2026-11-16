@@ -29,7 +29,7 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-terra")
-ANALYSIS_VERSION = "finance-structured-v6.3.9"
+ANALYSIS_VERSION = "finance-structured-v6.4.0"
 log = logging.getLogger("papersignal")
 app = FastAPI(title="PaperSignal API", version="0.2.0")
 # Production origins are configured explicitly in FRONTEND_ORIGIN.
@@ -1300,6 +1300,10 @@ def build_findings_rescue_prompt(
         "각 finding의 evidence는 제공된 PDF 페이지에서 연속된 10~220자 원문이어야 한다. page는 실제 PDF 페이지 번호다. "
         "estimate에 숫자를 기재할 경우 해당 숫자 자체가 evidence 인용문 안에 포함되어야 한다. "
         "가능하면 계수와 별표가 함께 있는 표 행 전체를 직접 인용한다. "
+         "가능하면 변수명, 해당 모형 열의 계수, 괄호 안 표준오차/t-statistic, 별표가 함께 보이는 표 행 일부를 "
+         "10~220자 범위에서 직접 인용한다. 행 전체가 길면 연속된 핵심 구간을 선택한다. "
+         "본문 해석 인용과 숫자가 있는 표 행 인용이 다른 페이지라면 각각 evidence에 포함한다. "
+         "significance_legend_evidence는 별표 기준을 보완할 뿐 계수 행을 대체하지 않는다. "
         "같은 페이지의 다른 표·열에만 존재하는 숫자를 근거로 사용하지 않는다. "
         "claim은 한국어로 작성하고 원문 변수명·모형명은 유지한다. estimate와 statistical_significance는 원문에서 "
         "직접 확인되는 경우에만 작성한다. table_reference와 model_or_column을 가능한 경우 기재한다.\n\n"
@@ -1972,6 +1976,13 @@ def build_analysis_prompt(pages: list[dict[str, Any]]) -> str:
         "별표 주석을 찾지 못하면 유의수준을 추정하지 말고 '확인 불가'로 둔다.\n"
         "22. 각 실증 결과는 해당 결과표의 인용과 가능하면 유의성 주석 인용을 함께 제공한다. "
         "표 주석이 다른 페이지에 있으면 해당 페이지를 추가 인용한다.\n\n"
+         "23. 숫자가 포함된 실증 결과의 evidence에는 설명 문장만 인용하지 말고, 해당 변수 행의 실제 계수 셀을 포함한 "
+         "회귀표 행 일부를 직접 인용한다. 가능한 경우 변수명, 계수, 괄호 안 표준오차/t-statistic, 별표가 함께 보이는 "
+         "10~220자 연속 구간을 선택한다. 여러 열이 있으면 해당 model_or_column의 셀을 정확히 식별하고, "
+         "인접 열의 숫자를 한 결과에 섞지 않는다.\\n"
+         "24. 결과 해석 본문과 숫자가 있는 표 행이 다른 페이지라면 evidence에 두 페이지를 각각 인용한다. "
+         "숫자는 반드시 숫자 자체가 포함된 표 행 인용에 연결하고, 본문 인용은 방향·해석을 보완하는 용도로만 사용한다. "
+         "유의성 별표 설명은 significance_legend_evidence에 별도로 인용하며 계수 행을 대신하지 않는다.\\n"
         "분석 목표:\n"
         "- 서지정보와 초록 수준의 핵심 요약\n"
         "- 연구 질문, 가설, 학술적 기여\n"
