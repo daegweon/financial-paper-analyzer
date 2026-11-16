@@ -672,6 +672,42 @@ def test_table_and_figure_reference_overlap_deduplicates_compound_citations():
     assert module._are_duplicate_findings(cross_page_left, cross_page_right) is True
 
 
+def test_dedup_merges_figure_findings_with_unknown_metadata_but_protects_other_variables():
+    quote = (
+        "As shown in Figure 1a, SCGP emerges as the most frequently selected stock, "
+        "appearing in 12 of the 20 portfolios, followed by KCE with nine appearances."
+    )
+    left = {
+        "claim": "SCGP는 실현 변동성 모형에서 가장 자주 선택된 종목이다.",
+        "direction": "positive",
+        "estimate": "12",
+        "table_reference": "Figure 1",
+        "model_or_column": "Stock selection frequency based on Volm(W)",
+        "evidence": [{"page": 13, "quote": quote}],
+    }
+    alias = {
+        "claim": "SCGP와 KCE의 종목 선택 빈도가 높게 나타났다.",
+        "direction": "확인 불가",
+        "estimate": "SCGP 12, KCE 9",
+        "table_reference": "Figure 1 and Table 9",
+        "model_or_column": "확인 불가",
+        "evidence": [{"page": 13, "quote": quote}],
+    }
+    assert module._are_duplicate_findings(left, alias) is True
+
+    contradictory = {**alias, "direction": "negative"}
+    assert module._are_duplicate_findings(left, contradictory) is False
+
+    other_variable = {
+        **alias,
+        "claim": "CDS 스프레드가 주식 비유동성을 높인다.",
+        "direction": "positive",
+        "estimate": "12",
+        "model_or_column": "Liquidity regression",
+    }
+    assert module._are_duplicate_findings(left, other_variable) is False
+
+
 def test_audit_finding_supports_unicode_operator_star_legend():
     pages = [{
         "page": 7,
@@ -1040,6 +1076,83 @@ def test_llm_result_does_not_add_repair_call_for_single_rejected_prior_finding(m
     result = asyncio.run(module.llm_result(2, pages, prior_findings=one_rejected))
     assert len(requests) == 1
     assert result["findings_verification"]["prior_findings_rejected_count"] == 1
+    assert result["findings_verification"]["repair_attempted"] is False
+
+
+def test_llm_result_skips_redundant_repair_when_four_findings_are_already_supported(monkeypatch):
+    pages = _sample_pages()
+    first_output = _sample_model_output()
+    base = first_output["findings"][0]
+    first_output["findings"] = []
+    for label, table_number in [
+        ("Alpha", 1), ("Beta", 2), ("Gamma", 3), ("Delta", 4)
+    ]:
+        finding = dict(base)
+        finding["claim"] = f"{label} supported result: " + base["claim"]
+        finding["table_reference"] = f"Table {table_number}"
+        finding["model_or_column"] = f"Column ({table_number})"
+        first_output["findings"].append(finding)
+    rejected_prior = [
+        {
+            "claim": "prior-only-candidate-one의 추정계수는 9.99이다.",
+            "direction": "positive",
+            "estimate": "9.99",
+            "table_reference": "Table 8",
+            "model_or_column": "Column (1)",
+            "evidence": [{
+                "page": 2,
+                "quote": "The estimated coefficient is -0.12 and statistically significant at the 5 percent level.",
+            }],
+        },
+        {
+            "claim": "prior-only-candidate-two의 추정계수는 8.88이다.",
+            "direction": "positive",
+            "estimate": "8.88",
+            "table_reference": "Table 9",
+            "model_or_column": "Column (2)",
+            "evidence": [{
+                "page": 2,
+                "quote": "The estimated coefficient is -0.12 and statistically significant at the 5 percent level.",
+            }],
+        },
+    ]
+    requests = []
+
+    class FakeResponse:
+        status_code = 200
+        headers = {}
+        text = ""
+        def raise_for_status(self):
+            return None
+        def json(self):
+            return {"candidates": [{
+                "finishReason": "STOP",
+                "content": {"parts": [{"text": json.dumps(first_output, ensure_ascii=False)}]},
+            }]}
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return None
+        async def post(self, url, **kwargs):
+            requests.append(kwargs["json"])
+            return FakeResponse()
+
+    async def fake_sleep(seconds):
+        return None
+
+    monkeypatch.setattr(module, "AI_PROVIDER", "gemini")
+    monkeypatch.setattr(module, "GEMINI_API_KEY", "test-key-not-used")
+    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-3.5-flash-lite")
+    monkeypatch.setattr(module, "GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    monkeypatch.setattr(module.asyncio, "sleep", fake_sleep)
+
+    result = asyncio.run(module.llm_result(2, pages, prior_findings=rejected_prior))
+    assert len(result["findings"]) == 4
+    assert all(item["verification"]["status"] == "screen_passed" for item in result["findings"])
+    assert len(requests) == 1
+    assert result["findings_verification"]["prior_findings_rejected_count"] == 2
     assert result["findings_verification"]["repair_attempted"] is False
 
 
