@@ -84,7 +84,9 @@ def test_missing_evidence_fails_all_gates():
 
 def test_complete_synthetic_fixture_exercises_calculator_not_real_certification():
     report = evaluate(POLICY, synthetic_evidence())
-    assert report["final_deploy_allowed"] is True
+    assert report["structural_checks_passed"] is True
+    assert report["final_deploy_allowed"] is False
+    assert report["next_action"] == "INDEPENDENT_SOURCE_REVIEW_AND_RELEASE_OWNER_SIGNOFF"
     assert report["human_claim_precision"] == 1.0
     assert report["pipeline_metrics"]["baseline_p95_ms"] == 1000
     assert report["record_type"] == "STRUCTURAL_CHECK_NOT_INDEPENDENT_CERTIFICATION"
@@ -159,3 +161,10 @@ def test_disallowed_heldout_page_count_blocks_q0():
     sample["corpus"]["heldout"][0]["pages"] = 0
     report = evaluate(POLICY, sample)
     assert report["gates"]["Q0"]["status"] == "BLOCKED"
+
+
+def test_no_automatic_deployment_permission_even_for_synthetic_green_evidence():
+    report = evaluate(POLICY, synthetic_evidence())
+    assert all(gate["status"] == "PASS" for gate in report["gates"].values())
+    assert report["structural_checks_passed"] is True
+    assert report["final_deploy_allowed"] is False
