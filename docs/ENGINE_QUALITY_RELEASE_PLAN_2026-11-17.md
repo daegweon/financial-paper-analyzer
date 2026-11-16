@@ -76,3 +76,8 @@ Local production-extractor reproduction (PyMuPDF 1.26.7 vs production pin 1.26.3
 ## Latency measurement scope clarification (2026-11-17)
 
 Worker claim logs now include `analysis_jobs.created_at`, allowing `job_created_to_terminal_ms` (queue wait + worker processing) and `claim_to_terminal_ms` to be calculated. The row is created after PDF upload completes, so neither includes upload transfer. The Q2-required upload-start-to-result-save p95 remains unavailable and must not be inferred from these proxy durations. `full_pipeline_latency_ms` stays null until the actual upload-start timestamp is captured.
+
+
+## Legacy regression source inventory (2026-11-17)
+
+A read-only Supabase inventory confirms all B01-B10 originals remain in the private `papers` bucket (10 PDFs, 209 pages, 17,760,530 bytes). See `benchmark/legacy_regression_storage_inventory_2026-11-17.json` for sanitized file sizes/page counts/opaque ETags. The available connector exposes metadata only, not private object bytes; ETags are not accepted as SHA-256. Q0 remains blocked until the exact stored bytes are hashed. Do not replace them with a newer publisher copy without proving byte identity.
