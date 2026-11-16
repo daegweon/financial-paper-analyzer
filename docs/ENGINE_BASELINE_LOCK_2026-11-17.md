@@ -33,3 +33,7 @@ The uploaded PDFs were passed through the production extraction algorithm locall
 - P0: two-account RLS/auth/upload, external SMTP and final release/rollback checks remain outstanding.
 
 No engine code was modified in this baseline step. No production deployment or database write was performed. Do not tune until baseline and source locks are complete; do not mark any gate PASS based on local extraction preflight.
+
+## Chronology verification
+
+GitHub commit metadata confirms the immutable held-out lock commit 149311ec2993cac3bd410c10ac7feb202d582fc7 was created at 2026-11-16T21:11:16Z. The first commit on the new candidate branch, 356b4d688657fc2c55b828d2b12b3062e1c9434b, was created at 2026-11-16T21:15:33Z. The lock therefore precedes the candidate branch's first commit by 4 minutes 17 seconds. The candidate branch starts at the frozen production SHA.
