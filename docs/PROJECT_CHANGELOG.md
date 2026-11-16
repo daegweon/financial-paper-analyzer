@@ -1,3 +1,10 @@
+## 2026-11-17 — Read-only B01-B10 private-storage hash workflow
+
+- Supabase read-only inventory confirms B01-B10 originals exist in private Storage (10 PDFs, 209 pages, 17,760,530 bytes), but the connected Supabase tools return metadata only.
+- Added \`benchmark/lock_legacy_storage_pdfs.py\`: user can run it locally with \`SUPABASE_URL\` and \`SUPABASE_SERVICE_ROLE_KEY\` held only in local environment. It performs GET-only metadata and private-object downloads, checks exact file size/PDF header/PyMuPDF page count, hashes exact bytes, and emits SHA-256 JSON without file bytes, storage paths, user IDs or secrets.
+- Added synthetic tests and \`docs/LOCK_LEGACY_STORAGE_PDFS.md\`. Tests have not run in connected CI; GitHub Actions startup_failure persists.
+- Once user attaches the generated JSON (not the service-role key or PDFs), commit the B01-B10 binary lock to the handoff branch, then create a new candidate from that lock. Current PR #6 candidate predates the B01-B10 binary lock and must be re-created after it; do not claim Q0 complete yet.
+
 ## 2026-11-17 — Legacy regression inventory and job-created timing
 
 - Read-only Supabase inventory confirms B01-B10 still exist in the private papers bucket: 10 PDFs, 209 pages, 17,760,530 bytes. Sanitized sizes/pages/opaque ETags (not treated as hashes) are in benchmark/legacy_regression_storage_inventory_2026-11-17.json. Exact private file bytes are not exposed by the current connector; B01-B10 SHA-256 remains unverified.
