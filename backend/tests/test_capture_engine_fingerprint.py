@@ -83,4 +83,4 @@ def test_capture_supports_legacy_backend_dockerfile_fallback(tmp_path):
     make_repo(tmp_path)
     (tmp_path / "Dockerfile").rename(tmp_path / "backend/Dockerfile")
     report = capture(tmp_path, production_commit="d" * 40)
-    assert len(report["source_fingerprints"]["dockerfile"]["sha256"]) == 64
+    assert len(report["files"]["dockerfile"]["sha256"]) == 64
