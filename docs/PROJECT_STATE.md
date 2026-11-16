@@ -1,5 +1,12 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-17 — Held-out PDF lock utility test correction
+
+- Local reproduction of the exact-byte lock utility tests initially exposed one incorrect expected error-message substring (test-only mismatch; utility correctly rejected the wrong record type).
+- Updated the repository test to match the documented exception message. Re-ran the local synthetic reproduction: 7/7 passed.
+- This does not constitute a verified run of the connected repository backend suite or GitHub Actions.
+- Publisher PDF binary retrieval was unavailable from the isolated runtime. Exact SHA-256 remains null; both held-outs are preselected, not binary locked; Q0 remains blocked.
+
 ## 2026-11-17 — Held-out papers preselected; PDF binary lock still pending
 
 - Registered two new open-access CC BY 4.0 finance papers (H01 40 pages, VAR/TVP-VAR + DMA/DMS + genetic algorithm; H02 30 pages, LASSO/Elastic Net/tree ML + FX/global portfolio) in benchmark/heldout_preregistration_2026-11-17.json.
