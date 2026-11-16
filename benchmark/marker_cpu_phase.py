@@ -40,7 +40,7 @@ def page_text(block):
             out.extend(parser.text)
     for child in block.get("children") or []:
         out.append(page_text(child))
-    return " ".join(x for x in out if x).strip()
+    return " ".join(" ".join(x for x in out if x).split())
 
 def main():
     src=StorageSource()
