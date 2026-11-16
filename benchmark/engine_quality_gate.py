@@ -83,6 +83,8 @@ def evaluate(policy, evidence):
                 and x.get('locked_before_candidate') is True for x in heldout)
         and len({x['id'] for x in heldout if isinstance(x, dict) and 'id' in x}) == len(heldout)
         and len({x['sha256'] for x in heldout if isinstance(x, dict) and 'sha256' in x}) == len(heldout)
+        and not ({x['sha256'] for x in heldout if isinstance(x, dict) and 'sha256' in x}
+                 & {x['sha256'] for x in regression if isinstance(x, dict) and 'sha256' in x})
     )
     check('Q0', valid_heldout, '2+ held-out PDFs must be uniquely SHA-locked before tuning')
 
