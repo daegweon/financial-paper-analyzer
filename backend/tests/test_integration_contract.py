@@ -209,6 +209,7 @@ def test_background_job_saves_analysis_and_completes(monkeypatch):
     prior_findings_received = []
 
     async def fake_llm_result(page_count, pages, prior_findings=None):
+        assert module.CURRENT_ANALYSIS_JOB_ID.get() == job_id
         prior_findings_received.extend(prior_findings or [])
         return module.extractive_result(page_count, pages) | {
             "analysis_version": "extractive-v3"
@@ -220,6 +221,7 @@ def test_background_job_saves_analysis_and_completes(monkeypatch):
     monkeypatch.setattr(module, "_patch_owned_row", fake_patch_owned_row)
     monkeypatch.setattr(module, "llm_result", fake_llm_result)
     asyncio.run(module._process_analysis_job(paper_id, job_id, user_id, "valid_test_jwt"))
+    assert module.CURRENT_ANALYSIS_JOB_ID.get() == "-"
 
     checkpoint_stages = [
         item[2]["json"]["stage"]
