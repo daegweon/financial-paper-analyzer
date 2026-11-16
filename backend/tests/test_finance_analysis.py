@@ -2242,10 +2242,12 @@ def test_gemini_attempt_telemetry_correlates_job_status_latency_and_usage(monkey
     assert parsed == {"ok": True}
     assert model == "gemini-3.6-flash"
     assert len(requests) == 2
-    assert "job_id=job-telemetry-123 attempt=1/2" in caplog.text
+    assert "job_id=job-telemetry-123 provider_call_id=" in caplog.text
     assert "model=gemini-3.5-flash-lite status=503 elapsed_ms=" in caplog.text
-    assert "Gemini usage job_id=job-telemetry-123 attempt=2/2 provider_attempts=2" in caplog.text
-    assert "Gemini attempt succeeded job_id=job-telemetry-123 attempt=2/2 provider_attempts=2" in caplog.text
+    assert "Gemini usage job_id=job-telemetry-123 provider_call_id=" in caplog.text
+    assert "attempt=2/2 provider_attempts=2" in caplog.text
+    assert "Gemini attempt succeeded job_id=job-telemetry-123 provider_call_id=" in caplog.text
+    assert "attempt=2/2 provider_attempts=2" in caplog.text
     assert "prompt_tokens=120 candidate_tokens=30 thought_tokens=5 total_tokens=155" in caplog.text
     assert "test-secret-never-log" not in caplog.text
 
@@ -2291,9 +2293,10 @@ def test_gemini_all_model_failure_log_preserves_both_statuses_and_job_id(monkeyp
         module.CURRENT_ANALYSIS_JOB_ID.reset(token)
 
     assert len(requests) == 2
-    assert "job_id=job-all-failed-456 attempt=1/2" in caplog.text
+    assert "job_id=job-all-failed-456 provider_call_id=" in caplog.text
     assert "model=gemini-3.5-flash-lite status=503" in caplog.text
     assert "model=gemini-3.6-flash status=429" in caplog.text
-    assert "All Gemini models failed job_id=job-all-failed-456 attempts=2" in caplog.text
+    assert "All Gemini models failed job_id=job-all-failed-456 provider_call_id=" in caplog.text
+    assert "attempts=2" in caplog.text
     assert "gemini-3.5-flash-lite=503; gemini-3.6-flash=429" in caplog.text
     assert "another-secret-never-log" not in caplog.text
