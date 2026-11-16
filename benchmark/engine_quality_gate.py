@@ -223,13 +223,19 @@ def evaluate(policy, evidence):
               and isinstance(item.get('evidence_ref'), str) and bool(item['evidence_ref'].strip()),
               f'{field} missing external, commit-bound verification')
 
+    structural_passed = not any(gates.values())
     return {'record_type': 'STRUCTURAL_CHECK_NOT_INDEPENDENT_CERTIFICATION',
             'candidate_commit': candidate,
             'gates': {name: {'status': 'BLOCKED' if reasons else 'PASS', 'failures': reasons}
                       for name, reasons in gates.items()},
             'human_claim_precision': precision, 'source_confirmed_recoveries': recovered,
-            'pipeline_metrics': metrics, 'final_deploy_allowed': not any(gates.values()),
-            'warning': 'Verify human independence, source evidence, costs and E2E outside this evaluator.'}
+            'pipeline_metrics': metrics,
+            'structural_checks_passed': structural_passed,
+            # Never issue deployment permission from self-reported JSON or test fixtures.
+            'final_deploy_allowed': False,
+            'next_action': ('INDEPENDENT_SOURCE_REVIEW_AND_RELEASE_OWNER_SIGNOFF' if structural_passed
+                            else 'COMPLETE_MISSING_OR_FAILED_GATES'),
+            'warning': 'Verify reviewer independence, source PDFs, bills, build logs and E2E before release.'}
 
 
 def main():
@@ -240,7 +246,8 @@ def main():
     report = evaluate(json.loads(args.policy.read_text(encoding='utf-8')),
                       json.loads(args.evidence.read_text(encoding='utf-8')))
     print(json.dumps(report, ensure_ascii=False, indent=2))
-    raise SystemExit(0 if report['final_deploy_allowed'] else 1)
+    # Zero exit status means structural validation passed, NOT release authorization.
+    raise SystemExit(0 if report['structural_checks_passed'] else 1)
 
 
 if __name__ == '__main__':
