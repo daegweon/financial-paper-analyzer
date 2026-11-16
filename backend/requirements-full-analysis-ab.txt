@@ -1,0 +1,9 @@
+# Isolated full-analysis A/B. PyMuPDF exists ONLY for baseline control.
+# Candidate extractor runs via docling-parse with no PyMuPDF fallback.
+fastapi==0.115.12
+uvicorn==0.34.2
+httpx==0.28.1
+pydantic==2.11.7
+PyMuPDF==1.26.3
+docling-parse==7.26.0
+pytest==9.0.2
