@@ -9,7 +9,6 @@
   "candidate_first_code_commit": "7dd13343f44702369b8a1415c750d5fdf08371f7",
   "latest_main_telemetry_redaction_commit": "be69ebb5df262fd0f86342ba4f3868ce0fb01a45",
   "latest_telemetry_test_commit": "40bc8d255b3bc02929942947e302789c053f4845",
-  "current_head": "68a777f554c3cd31c645e0386f7ba51b73cc401f",
   "analysis_version": "finance-structured-v6.4.2",
   "source_files": {
     "baseline_main": {
@@ -117,5 +116,11 @@
     "P0": "BLOCKED"
   },
   "final_deploy_allowed": false,
-  "candidate_worker_blob_sha1": "8b3e2be6e1385b677143e6706494e91a3b7571be"
+  "candidate_worker_blob_sha1": "8b3e2be6e1385b677143e6706494e91a3b7571be",
+  "candidate_code_commits": {
+    "main_telemetry_and_error_body_redaction": "be69ebb5df262fd0f86342ba4f3868ce0fb01a45",
+    "worker_job_created_at_logging": "af81cb3f18133ca342a821d4c47dcaa4b208b936",
+    "telemetry_parser": "72b8cee9a01e1e99f69dd7455072fc3cf8c2c777",
+    "telemetry_parser_tests": "a549ebd4a2461ede34c82f49fae077c68e2f163e"
+  }
 }
