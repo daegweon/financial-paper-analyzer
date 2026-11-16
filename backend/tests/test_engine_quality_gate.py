@@ -129,6 +129,7 @@ def test_false_boolean_is_not_accepted_as_measured_zero():
 
 def test_review_disagreement_requires_resolution_record():
     sample = synthetic_evidence()
+    sample["human_review"]["legacy"][0]["source_confirmed_recovery"] = False
     sample["human_review"]["legacy"][0]["reviewers"] = [
         {"reviewer_id": "independent-a", "verdict": "supported"},
         {"reviewer_id": "independent-b", "verdict": "rejected"},
