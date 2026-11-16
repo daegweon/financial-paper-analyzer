@@ -154,10 +154,11 @@ async def run() -> None:
                     await asyncio.sleep(POLL_SECONDS)
                     continue
                 log.info(
-                    "Claimed job_id=%s paper_id=%s attempt=%s",
+                    "Claimed job_id=%s paper_id=%s attempt=%s job_created_at=%s",
                     job["id"],
                     job["paper_id"],
                     job["attempts"],
+                    job.get("created_at") or "-",
                 )
                 await process_job(client, job)
             except asyncio.CancelledError:
