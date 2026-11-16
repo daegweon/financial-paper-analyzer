@@ -653,7 +653,7 @@ def _finding_table_reference_keys(value: Any) -> set[str]:
 def _finding_variable_tokens(finding: dict[str, Any]) -> set[str]:
     """Extract explicit variable/ticker names to prevent false merges across outcomes."""
     text = str(finding.get("claim", ""))
-    tokens = set(re.findall(r"\b[A-Z][A-Za-z0-9_]{1,}\b", text))
+    tokens = set(re.findall(r"(?<![A-Za-z0-9_])[A-Z][A-Za-z0-9_]{1,}(?![A-Za-z0-9_])", text))
     stopwords = {
         "Table", "Tables", "Figure", "Figures", "Model", "Models", "Column",
         "Columns", "Panel", "Panels", "Regime", "ASEAN", "Fama", "French",
