@@ -1,5 +1,14 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-17 NEW USER DECISION — OVERRIDES OLD "ENGINE FROZEN" EXPERIMENT TEXT
+
+**Open-source parser replacement research is OVER. Resume improving the EXISTING PyMuPDF / finance-structured-v6.4.2 analysis engine in a separate, gated development branch.** The engine was frozen during OSS comparisons only; the user has now explicitly authorized resuming its improvement. Hard stop when independently verified quality/resource/production release thresholds are met, followed by final release. Do NOT continue the OSS candidate hunt.
+
+**Canonical cross-session handoff:** `plan/engine-quality-release-handoff` commit `2e71924bf0801bca9798fddeadb9357cf0f5e05a`, `docs/SESSION_HANDOFF_NEXT.md`, `docs/ENGINE_QUALITY_RELEASE_PLAN_2026-11-17.md`, `benchmark/engine_release_gates_2026-11-17.json`. Read these FIRST; previous "immediate next task" and "frozen forever" text below is superseded. This is a GitHub checkpoint, NOT ChatGPT saved memory (project memory is off). No production branch update or automatic deployment authorized by this pointer.
+
+---
+
+
 ## 2026-11-17 (Asia/Seoul) — Full-model A/B attempted, deterministic ten-paper evidence replay completed
 
 **Production remains FROZEN**, unchanged on commit `8cd5e37ee8eab3bf4b726b75af89e410ab48396e`, API and Worker SUCCESS/online. User authorized full-analysis Docling Parse vs PyMuPDF A/B as an isolated experiment. Source code of downstream `llm_result`, schemas, finding checks and prompts is identical to deployed v6.4.2; only PDF extraction boundary differs in experiment.
