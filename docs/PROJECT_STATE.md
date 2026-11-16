@@ -1,5 +1,17 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-17 — Ongoing isolated engine-quality work (newest session checkpoint)
+
+Branch: \`experiment/engine-quality-v6-4-x\`, PR #4 (Draft, targeting handoff branch). Full detail in \`docs/ENGINE_QUALITY_PROGRESS_2026-11-17.md\`.
+
+- Added narrow PyMuPDF v6.4.2-compatible written-portfolio-fraction numeric audit (with unsupported-count/estimate tests).
+- Added fail-closed Q0/Q1/Q2/P0 evidence evaluator and deterministic 18-item historical human review queue generator. Empty reviewer slots are NOT human gold.
+- Read-only query confirms stored v6.3.9 review counts 4+6+1+2+3+2 = 18; original user data untouched.
+- Tightened source/PDF SHA/page anchors, held-out segregation, and **made final_deploy_allowed always false** until separately verified external release authorization.
+- Local reproduction of gate checks 9 passed; full backend CI not executed due GitHub Actions startup_failure. New Railway test resource creation failed Free plan limit. Preview-only Vercel build READY. No overall performance/accuracy improvement declared.
+- Crucial: this test branch began tuning BEFORE new held-outs were SHA-locked; a future release-eligible candidate must be rebuilt from frozen baseline after independent held-out pre-registration. Do not retroactively claim Q0.
+- All Q0/Q1/Q2/P0 remain BLOCKED. Production API + Worker on \`8cd5e37ee8eab3bf4b726b75af89e410ab48396e\` (v6.4.2), no production merge or release.
+
 ## 2026-11-17 — 사용자 최종 지시: OSS 종료, 기존 PyMuPDF 엔진 개선 → 임계점 충족 → 최종 배포
 
 **이 항목이 아래 과거 '오픈소스 평가' 및 'v6.3.9가 운영'이라는 구형 계획보다 우선합니다.** 사용자는 추가 OSS/파서 교체 탐색을 **종료**하고 **현재 PyMuPDF / finance-structured-v6.4.2 운영 엔진**만 개선하기로 최종 결정했습니다. 현재 운영 엔진과 사용자의 기존 논문은 변경하지 않았습니다. 향후 개선은 독립 인간 골드·원문 인용 보존·전체 정확도·지연/메모리/비용·실제 사용자 E2E의 합격 기준을 충족한 다음에만 최종 배포합니다. 목표 달성 후 사소한 최적화 반복을 종료하며, 전체 엔진 성능을 해치는 개선은 거부/롤백합니다.
