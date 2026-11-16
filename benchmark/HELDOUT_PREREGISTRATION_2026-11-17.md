@@ -39,3 +39,5 @@ python -m benchmark.lock_heldout_pdfs \\
 \`\`\`
 
 It uses PyMuPDF to verify PDF readability and exact page count, hashes the original unmodified bytes with SHA-256, rejects duplicate held-out files and optionally rejects hashes overlapping a supplied regression manifest. It never uploads or commits PDF bytes. The result is still not Git-locked: commit the verified manifest and record the resulting commit SHA in a follow-up commit before creating a new candidate branch.
+
+Local lock-utility test reproduction: 7/7 synthetic checks passed after fixing one test assertion to match the utility's error contract. This is not a connected repository CI run. Exact publisher PDF bytes remain unavailable in the execution runtime; SHA-256 is still null for both papers and Q0 remains BLOCKED.
