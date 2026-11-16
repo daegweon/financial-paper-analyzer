@@ -91,3 +91,10 @@ def test_wrong_record_type_and_missing_file_fail_closed(tmp_path):
                            "heldout_papers": manifest()["heldout_papers"]}, tmp_path)
     with pytest.raises(FileNotFoundError):
         lock_heldout_pdfs(manifest(), tmp_path)
+
+
+def test_non_pdf_bytes_are_rejected(tmp_path):
+    (tmp_path / "H01.pdf").write_bytes(b"this is not a PDF")
+    make_pdf(tmp_path / "H02.pdf", 3, "Two")
+    with pytest.raises(ValueError, match="does not have a PDF header"):
+        lock_heldout_pdfs(manifest(), tmp_path)
