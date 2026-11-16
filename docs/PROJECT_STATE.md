@@ -1,5 +1,7 @@
 # PaperSignal — Project State / Session Handoff
 
+
+- GitHub commit metadata independently confirms lock chronology: lock commit 149311ec2993cac3bd410c10ac7feb202d582fc7 at 2026-11-16T21:11:16Z; first commit on the new candidate branch 356b4d688657fc2c55b828d2b12b3062e1c9434b at 2026-11-16T21:15:33Z. The immutable lock preceded the candidate branch's first commit by 4 minutes 17 seconds.
 ## 2026-11-17 — Candidate-only Gemini telemetry added, not yet validated
 
 - Candidate branch experiment/engine-quality-v6-4-2-heldout-locked adds per-job/per-call Gemini attempt telemetry (status, model, attempt count, elapsed, token usage), without changing prompt/schema/extraction/request body/retry policy/output version.
