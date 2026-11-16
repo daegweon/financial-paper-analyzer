@@ -722,6 +722,20 @@ def _are_duplicate_findings(left: dict[str, Any], right: dict[str, Any]) -> bool
     )
     if not same_table:
         return False
+    # Figure-caption paraphrases can differ only by a short lead-in and by a
+    # neutral/positive label. Merge only when the exact figure, model, numeric
+    # outcome set and explicit ticker/variable set all agree on the same page.
+    same_figure_outcome = (
+        bool(left_table_refs & right_table_refs)
+        and any(ref.startswith("figure:") for ref in left_table_refs & right_table_refs)
+        and bool(shared_pages)
+        and bool(left_model) and left_model == right_model
+        and bool(left_numbers) and left_numbers == right_numbers
+        and bool(left_variables) and left_variables == right_variables
+        and directions_compatible
+    )
+    if same_figure_outcome:
+        return True
     # Exact shared evidence is stronger than inconsistent model/column labels.
     # Still protect distinct variables and contradictory directions.
     if shared_evidence and directions_compatible and variables_compatible:
