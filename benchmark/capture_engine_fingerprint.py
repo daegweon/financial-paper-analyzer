@@ -81,11 +81,14 @@ def _env_default(source: str, env_name: str, fallback: str) -> str:
 
 def capture(root: Path, *, production_commit: str) -> dict[str, Any]:
     root = root.resolve()
+    dockerfile_path = root / "Dockerfile"
+    if not dockerfile_path.is_file():
+        dockerfile_path = root / "backend/Dockerfile"
     paths = {
         "main": root / "backend/app/main.py",
         "worker": root / "backend/app/worker.py",
         "requirements": root / "backend/requirements.txt",
-        "dockerfile": root / "backend/Dockerfile",
+        "dockerfile": dockerfile_path,
     }
     for label, path in paths.items():
         if not path.is_file():
