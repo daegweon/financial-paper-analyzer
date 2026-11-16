@@ -6,8 +6,8 @@ COPY backend/requirements-full-analysis-ab.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 COPY backend/app/__init__.py backend/app/main.py backend/app/pdf_replacement.py /bench/app/
 COPY benchmark/__init__.py benchmark/evaluate.py benchmark/table_shadow.py benchmark/full_analysis_ab.py benchmark/manifest.json benchmark/table_corpus.sha256.json /bench/benchmark/
-COPY benchmark/model_probe.py /bench/benchmark/model_probe.py
-COPY backend/tests/test_full_analysis_ab.py /bench/tests/
+COPY benchmark/model_probe.py benchmark/full_analysis_replay.py /bench/benchmark/
+COPY backend/tests/test_full_analysis_ab.py backend/tests/test_full_analysis_replay.py /bench/tests/
 ENV PYTHONPATH=/bench
 RUN python -m pytest -q tests/test_full_analysis_ab.py && python -c "import app.main; assert app.main.ANALYSIS_VERSION == 'finance-structured-v6.4.2'; print('full-llm-pipeline-import-ok')"
 USER 65532:65532
