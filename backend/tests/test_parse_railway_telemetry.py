@@ -23,7 +23,10 @@ def test_aggregate_job_attempts_tokens_and_pipeline_latency_without_cost_guess()
     result = aggregate_logs(logs, metadata)
     job = result["jobs"][0]
     assert job["status"] == "completed"
-    assert job["pipeline_latency_ms"] == 10000
+    assert job["claim_to_terminal_ms"] == 10000
+    assert job["latency_scope"] == "worker_claim_to_terminal"
+    assert job["full_pipeline_latency_ms"] is None
+    assert job["full_pipeline_latency_status"] == "UNAVAILABLE_UPLOAD_TIMESTAMP_NOT_LOGGED"
     assert job["provider_attempts_total"] == 2
     assert job["prompt_tokens_total"] == 120
     assert job["candidate_tokens_total"] == 30
