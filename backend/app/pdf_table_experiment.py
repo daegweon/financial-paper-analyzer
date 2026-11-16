@@ -42,9 +42,11 @@ def extract_tables_camelot(
                 continue
             for table in tables:
                 df = table.df
+                values = df.values
+                raw_rows = values.tolist() if hasattr(values, "tolist") else values
                 rows = [
                     [str(cell).strip() for cell in row]
-                    for row in df.values.tolist()
+                    for row in raw_rows
                 ]
                 if not rows or not any(cell for row in rows for cell in row):
                     continue
