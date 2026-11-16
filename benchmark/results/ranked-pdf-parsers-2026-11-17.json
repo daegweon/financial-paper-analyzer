@@ -339,7 +339,50 @@
       "promotion_eligible": false
     }
   ],
-  "marker_phase": "attempted_separately_building_at_checkpoint",
+  "marker_phase": {
+    "backend": "marker-pdf==2.0.0",
+    "mode": "CPU fast --disable_ocr",
+    "scope": "Only B01 original PDF attempted; no model or user-result writes",
+    "package_install": "success",
+    "cli_help": "success",
+    "synthetic_unit_tests_passed": 2,
+    "attempts": [
+      {
+        "deployment": "971d686a-54f9-4b01-a8a0-089a17e9a060",
+        "stage": "build_failed",
+        "reason": "benchmark helper module omitted from isolated image; experimental build fixed"
+      },
+      {
+        "deployment": "7f25df94-2f53-4e89-aa4a-b5187ebc5940",
+        "stage": "cli_failed",
+        "exit_code": 2,
+        "reason": "marker 2.0 CLI rejects newer no_ocr mode; fixed to fast plus --disable_ocr"
+      },
+      {
+        "deployment": "af903c96-a298-4d5a-b840-18e357d5dff1",
+        "stage": "cli_failed",
+        "exit_code": 1,
+        "reason_category": "permission_denied",
+        "wall_seconds": 6.795
+      },
+      {
+        "deployment": "b2e9600c-c438-47f5-9ef2-6ae8fd819793",
+        "stage": "cli_failed",
+        "exit_code": 1,
+        "reason_category": "permission_denied",
+        "wall_seconds": 6.2191,
+        "note": "Remains under nonroot permissions after writable HOME/model cache/working directory"
+      }
+    ],
+    "final_status": "not_evaluated_runtime_permission_blocker",
+    "page_labeled_result_produced": false,
+    "source_quote_accuracy": null,
+    "analysis_quality": null,
+    "cost": null,
+    "commercial_weight_license_review_pending": true,
+    "adopted": false,
+    "previous_status": "marker-feasibility-building-at-first-checkpoint"
+  },
   "model_calls": 0,
   "production_changed": false,
   "promotion_eligible": false,

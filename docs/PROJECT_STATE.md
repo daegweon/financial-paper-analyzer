@@ -1,10 +1,21 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-17 FINAL — Five-candidate ranked parser evaluation closed; engine still frozen
+
+User-ordered ranking: pypdfium2 -> pdfplumber -> GROBID -> MinerU -> Marker. First two actually executed on locked ten-paper 209-page source. PyMuPDF baseline: 346/346 previous quotes, 71 directly evidenced findings, 54 screen-passed under v6.4.2; pypdfium2: 292/346, 64, 50; pdfplumber: 14/346, 2, 1. All ten processed per mode, but source-citation quality is lower for both, so neither can replace the frozen parser.
+
+GROBID NOT EXECUTED (Java service/multi-GB RAM/TEI page mapping prerequisites missing). MinerU NOT EXECUTED (official min 16GB RAM vs 1GB runner). Marker 2.0.0 CPU fast --disable_ocr ATTEMPTED on B01, installation and two unit tests passed; actual CLI twice exited 1/permission_denied despite nonroot temporary-cache/cwd mitigation, no page JSON or accuracy numbers. Its heavyweight dependencies and weights licence need separate approval for production. Do not present these nonexecuted/failed candidates as low-accuracy outputs.
+
+**Final decision: zero OSS replacements adopted. Engine-development freeze continues.** Full-model Gemini A/B still blocked by prior provider HTTP503. Summary and sanitized metrics: `docs/RANKED_PDF_PARSERS_2026-11-17.md`, `benchmark/results/ranked-pdf-parsers-2026-11-17.json`. Raw sources/experiments remain private. API and Worker remain on `8cd5e37ee8eab3bf4b726b75af89e410ab48396e`; original rows/papers unchanged. All benchmark running replicas zero. No further automatic parser tuning or model runs.
+
+---
+
+
 ## 2026-11-17 — Ranked five-candidate parser trial underway; initial ten-paper evidence replay verified
 
 User requested sequence **pypdfium2 -> pdfplumber -> GROBID -> MinerU -> Marker**, while *original engine remains frozen*. First two isolated exact-source trials B01–B10 (209 pages) completed: baseline PyMuPDF quote retentions 346/346, screen-passed 54; pypdfium2 292/346 and 50, 6.1527 seconds total parser wall and max child RSS 80.621 MiB; pdfplumber 14/346 and 1, 24.1568s and 309.734 MiB. Baseline parser wall 7.0552s, child RSS 97.555 MiB. These compare legacy v6.3.9 claims under current v6.4.2 revalidation, not independently human-scored precision nor fresh Gemini complete analysis. Both full replacements fail the no-regression gate. Ten private metrics JSON artifacts saved; no SQL/AI/production changes.
 
-GROBID and MinerU blocked at feasibility by missing multi-GB/16GB RAM model and dedicated runtime; **NOT RUN; no accuracy inference**. Marker CPU no-OCR separately attempted on B01, build pending at this checkpoint. See docs/RANKED_PDF_PARSERS_2026-11-17.md and benchmark/results/ranked-pdf-parsers-2026-11-17.json. Do not promote any candidates and do not merge runner railway.toml. Production version v6.4.2 commit 8cd5e37ee8eab3bf4b726b75af89e410ab48396e remains frozen.
+GROBID and MinerU blocked at feasibility by missing multi-GB/16GB RAM model and dedicated runtime; **NOT RUN; no accuracy inference**. Marker 2.0 CPU fast --disable_ocr attempted on B01 after installation and 2 focused tests; no source-page JSON because two nonroot attempts exited with permission_denied (even after writable HOME/cache/cwd). Quality NOT MEASURED, no adoption. See docs/RANKED_PDF_PARSERS_2026-11-17.md and benchmark/results/ranked-pdf-parsers-2026-11-17.json. Do not promote any candidates and do not merge runner railway.toml. Production version v6.4.2 commit 8cd5e37ee8eab3bf4b726b75af89e410ab48396e remains frozen.
 
 ---
 

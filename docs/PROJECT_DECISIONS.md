@@ -55,3 +55,8 @@
 - Previously explored but untested Docling, MinerU, Unstructured and Science Parse are deferred without conclusions about performance. Avoid speculative candidate expansion.
 - Experiment code and runners stay outside production. Direct future work to existing-engine evidence fidelity, 18 review findings, operational telemetry and beta reliability.
 - See `docs/OPEN_SOURCE_ADOPTION_DECISION_2026-11-16.md` for pre/post extraction measures and qualifications. Do not interpret historical v6.3.9 scores as a fresh evaluation of the currently deployed v6.4.2 source.
+
+## Ranked five-parser evaluation final decision (2026-11-17)
+- User-ordered pypdfium2 / pdfplumber / GROBID / MinerU / Marker evaluation. Actual ten-paper locked-source validation was completed only for pypdfium2 and pdfplumber; both lost verified source quote matches and screen-pass findings versus unchanged production PyMuPDF, so reject full replacement.
+- GROBID and MinerU were not executed under unavailable Java/memory/model infrastructure; no negative accuracy inference. Marker CPU run attempted but blocked by nonroot runtime permission errors, no citation accuracy generated; additional model-weight commercial license diligence required.
+- Keep existing PyMuPDF production engine frozen; **zero** candidates approved. Previous full-model Gemini paired A/B failed due provider503, so no new full-model accuracy conclusions. Require exact-source citation non-regression, independent human gold, resource cost and paired live model tests before any future adoption. Never merge experiment runner railway.toml.

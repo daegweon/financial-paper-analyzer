@@ -1,3 +1,9 @@
+## 2026-11-17 — Ranked five-parser assessment FINAL, no replacement approved
+- Exact source replay: pypdfium2 10/10 and pdfplumber 10/10; quote retention 292/346 and 14/346 vs existing PyMuPDF 346/346, screened findings 50 and 1 vs54. Full replacement denied on unchanged citation regression gate.
+- GROBID missing multi-GB dedicated Java/TEI runtime (not executed). MinerU official minimum16GB RAM vs service1GB (not executed). No accuracy estimates fabricated.
+- Marker-pdf2.0 installed and two tests passed; original B01 execution attempts failed: initial bad CLI mode corrected, two later nonroot runtime attempts permission_denied even with temporary cache/cwd; no page source JSON, so accuracy unavailable. No production adoption or model weights shipped.
+- All experiment services zero running replicas, original14 PDFs/14 papers/103 analyses/102 completed jobs/28 historical failures unchanged; private benchmark JSON artifacts99. API/Worker frozen at8cd5e37. Final report updated in GitHub.
+
 ## 2026-11-17 — Ranked OSS parser replacement trial (checkpoint)
 - User asked pypdfium2 -> pdfplumber -> GROBID -> MinerU -> Marker. Isolated original-source B01–B10 replay completed for first two, baseline too.
 - PyMuPDF 346/346 citations/54 screened; PDFium 292/346 and 50; pdfplumber 14/346 and 1. All10 PDFs processed per implementation; no parser failures, no provider calls, no SQL writes.

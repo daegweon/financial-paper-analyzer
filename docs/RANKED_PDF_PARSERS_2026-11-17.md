@@ -1,6 +1,6 @@
 # Ranked PDF parser replacement: B01-B10 evidence replay
 
-Date: 2026-11-17 (Asia/Seoul)
+Date: 2026-11-17 (Asia/Seoul); **FINAL checkpoint after Marker CPU trial**
 Priority explicitly requested: **pypdfium2 → pdfplumber → GROBID → MinerU → Marker**.
 **Production remains FROZEN; no candidate promoted.** This checkpoint covers the first two exact-source measured candidates, the other engines' feasibility gates, and a separately queued Marker CPU attempt.
 
@@ -43,14 +43,14 @@ These numbers are the reproducible run's *isolated subprocess* durations, not ov
 
 **MinerU (4): NOT EXECUTED.** Current official hardware docs specify **minimum 16GB RAM** for local pipeline / engine modes (and additional disk/model costs), far above the benchmark's 1 GB; using an unaudited external hosted parser for locked private storage is not allowed. MinerU uses a custom Apache-derived license with extra commercial/attribution conditions. No accuracy result recorded.
 
-**Marker (5): separate CPU no_ocr installation/execution attempt is in progress at this checkpoint.** Official CLI supports no_ocr, JSON pages and CPU-only processing, but the model runtime still downloads substantial dependencies even with GPU disabled. Commercial use of model weights requires a separate legal check; code and weights have different licenses. Record eventual build/run result separately; do not claim a Marker quality score before a page-indexed run.
+**Marker (5): ATTEMPTED, NOT ACCURACY-MEASURED.** In the isolated CPU nonroot service with `marker-pdf==2.0.0`, installation, CLI help and **two focused unit tests** succeeded. The v2.0 CLI does **not** accept the newer standalone `no_ocr` mode, so the initial CLI attempt exited code 2; it was corrected to `--mode fast --disable_ocr`. B01 original execution then exited code 1 with a sanitized `permission_denied` diagnostic. A further nonroot attempt with writable HOME, Hugging Face/PyTorch caches and temporary working directory also ended code 1 / `permission_denied` after **6.2191 s**. No page-indexed JSON was produced and **no numeric/citation/Findings score is available**. The image's heavyweight PyTorch/CUDA dependencies and the separate commercial license of Marker model weights are additional deployment concerns. This is an *execution-environment blocker*, not proof Marker text accuracy is poor. Experimental execution-only branch `experiment/marker-cpu-noocr-runner`, final commit `bbe5add099cadc56cef2295cc5bf75c21f6da8db`, final deployment `b2e9600c-c438-47f5-9ef2-6ae8fd819793`; zero running replicas after exit.
 
 ## Decision gate
 
 - pypdfium2: less extraction time/memory, but 54 missing original exact citations and 4 lost screened findings: **full replacement not approved**.
 - pdfplumber: much larger quote/finding retention regression and slower: **full replacement not approved**.
 - GROBID/MinerU: cannot assign accuracy/speed score when not run.
-- Marker: pending feasibility; no promotion.
+- Marker: installed/CLI-tested but B01 CPU execution blocked by nonroot permission errors; source-citation quality NOT MEASURED, no promotion.
 - No production modifications or global performance-maximum claim. A new parser needs 346/346 baseline original citations and 54/54 current screen-passed findings, verified *new* source cell accuracy, at least equivalent total time/memory/cost and paired real-model held-out tests before adoption.
 
 ## Reproduction and security
@@ -60,3 +60,23 @@ These numbers are the reproducible run's *isolated subprocess* durations, not ov
 - Railway one-off service `c279046d-aedc-43bf-9e25-c09ab59fe38b`, deployment `bbf487c2-4a1f-4657-b8ab-4ddc159f9c0a`, private run `ranked-oss-82646488eb5d421d8556b4f261e71432`. Focused Docker build tests passed.
 - Private artifact namespace stores source hashes and metrics, not full PDF text or user identifiers in Git. Existing private bucket remains private.
 - Production API and Worker source/deployments untouched. No new model calls.
+
+## Final run status and adoption verdict (post-marker)
+
+| Requested rank | Parser | Exact B01–B10 quote/Findings test | Feasibility conclusion | Adopt into production? |
+|---|---|---|---|---|
+| 1 | pypdfium2 5.15.2 | **10/10 complete; 292/346 quotes; 50/54 screen-passed** | Fast and lower RSS but supported evidence regression | **No** |
+| 2 | pdfplumber 0.11.10 | **10/10 complete; 14/346 quotes; 1/54 screen-passed** | Incompatible source quote representation without relaxing validator | **No** |
+| 3 | GROBID | **Not executed** | Local Java/TEI service absent, multi-GB RAM needed | **Not assessed** |
+| 4 | MinerU | **Not executed** | Official local minimum RAM 16GB vs 1GB benchmark cap | **Not assessed** |
+| 5 | Marker 2.0 CPU `fast --disable_ocr` | **Attempted B01, no page-indexed result** | Installed; nonroot run exited with permission_denied even after writable-cache/cwd repair | **Not assessed** |
+
+Original 10-paper production-aligned source lock remains intact: 14 paper rows, 103 analysis rows, 102 completed / 28 historical failed jobs, and 14 private PDF Storage objects. Private benchmark JSON artifacts now total **99**, including new candidate and Marker error packets; no raw paper text or credentials were published. Railway benchmark services have **0 running replicas**, while production API and Worker each remain online with unchanged source commit `8cd5e37ee8eab3bf4b726b75af89e410ab48396e`.
+
+**Final:** no full PyMuPDF replacement cleared the non-regression gate. Do not treat GROBID, MinerU or Marker failure-to-run as evidence of poor document accuracy. Future evaluations would require adequate isolated memory, source-localized JSON/TEI contracts, legal model-weight clearance where applicable, independent human page-level gold and model-backed whole-pipeline A/B when provider availability permits. No unconditional production merge.
+
+### Official prerequisite references
+
+- GROBID deployment / TEI API: https://grobid.org/guides/grobid-docker-and-api
+- MinerU recommended hardware and license: https://github.com/opendatalab/MinerU and https://github.com/opendatalab/MinerU/blob/master/LICENSE.md
+- Marker CLI and commercial weight restrictions: https://github.com/datalab-to/marker and https://pypi.org/project/marker-pdf/
