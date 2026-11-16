@@ -1,5 +1,12 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-17 — Candidate-only Gemini telemetry added, not yet validated
+
+- Candidate branch experiment/engine-quality-v6-4-2-heldout-locked adds per-job/per-call Gemini attempt telemetry (status, model, attempt count, elapsed, token usage), without changing prompt/schema/extraction/request body/retry policy/output version.
+- Two mocked provider telemetry tests and one job-context integration assertion added. GitHub Actions startup_failure before job creation; no test execution or overhead measurement.
+- Candidate main SHA-256 0886879ed41dec90450894cc14963ac7b3fd6daa7a44a631daae57ef48dbd8ed. Prompt/schema/extraction function hashes remain identical to frozen production.
+- PR #5 Draft. No production changes. All Q0/Q1/Q2/P0 remain BLOCKED.
+
 ## 2026-11-17 — H01/H02 binary lock and new baseline candidate
 
 - Exact user-uploaded H01/H02 PDF bytes locked: H01 40 pages / SHA-256 816e404d2f1dee7df84d52bf4238a75d7d777878cf100b42e3f220cc1da9b127; H02 30 pages / SHA-256 d385806b9a448e399dfc9f6017710561bf15bfd50ec514536303978ad07eb283.
