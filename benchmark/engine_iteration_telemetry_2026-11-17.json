@@ -74,7 +74,8 @@
     "provider error response bodies are absent from telemetry logs",
     "test_capture_engine_fingerprint",
     "test_extraction_preflight",
-    "test_parse_railway_telemetry"
+    "test_parse_railway_telemetry",
+    "test_malformed_job_created_timestamp_does_not_create_latency"
   ],
   "verification": {
     "github_actions": "startup_failure",
@@ -103,7 +104,7 @@
     "cost_usd": null,
     "cost_note": "No dated price schedule supplied; cost remains null.",
     "latest_parser_commit": "72b8cee9a01e1e99f69dd7455072fc3cf8c2c777",
-    "parser_test_commit": "c4aede78b2c591c942928ed61c66cfea5acb1add",
+    "parser_test_commit": "a549ebd4a2461ede34c82f49fae077c68e2f163e",
     "ci_status": "not_run_startup_failure_before_jobs",
     "latency_scope": "job_created_to_terminal_and_worker_claim_to_terminal; excludes file upload transfer",
     "full_pipeline_latency_status": "UPLOAD_START_TIMESTAMP_NOT_LOGGED",
