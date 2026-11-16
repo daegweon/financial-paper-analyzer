@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "planned_at": "2026-11-17",
-  "record_type": "UPDATED_BINARY_LOCKS_BASELINE_EXECUTION_PENDING",
+  "record_type": "BINARY_LOCK_COMPLETE_LOCAL_TESTS_PASS_FULL_PIPELINE_BASELINE_PENDING",
   "source_branch": "experiment/engine-quality-v6-4-2-b01-b10-locked",
   "frozen_production": {
     "source_branch": "feat/research-workspace-mvp",
@@ -41,7 +41,21 @@
         "legacy_lock_reference_commit": "14ed46fd032b42813dd0ccf372447bd71bd363aa",
         "heldout_lock_commit": "149311ec2993cac3bd410c10ac7feb202d582fc7",
         "binary_lock_complete": true,
-        "full_v642_baseline_run": false
+        "source_fingerprint_complete": true,
+        "pinned_runtime_verified": true,
+        "local_frozen_production_tests": {
+          "passed": 102,
+          "skipped": 1,
+          "failed": 0
+        },
+        "local_candidate_tests": {
+          "passed": 123,
+          "skipped": 1,
+          "failed": 0
+        },
+        "historical_current_v642_completed_papers": 1,
+        "current_v642_full_ten_paper_baseline": false,
+        "heldout_gemini_runs": 0
       }
     },
     {
@@ -98,7 +112,7 @@
   },
   "final_deployed": false,
   "critical_errors_human_certified": null,
-  "note": "Binary corpus lock complete. Q0 remains BLOCKED until the frozen v6.4.2 full-pipeline baseline is available; Q1/Q2/P0 unchanged and blocked.",
+  "note": "B01-B10 and H01-H02 exact binary locks complete. Pinned source fingerprint and local backend suites pass. Only one historical B10 v6.4.2 result exists; full 10-paper v6.4.2 and held-out Gemini baseline still missing. Q0/Q1/Q2/P0 remain blocked.",
   "binary_corpus_lock": {
     "B01_B10": {
       "papers": 10,
@@ -113,6 +127,30 @@
       "pages": 70,
       "sha256_verified": 2,
       "lock_commit": "149311ec2993cac3bd410c10ac7feb202d582fc7"
+    }
+  },
+  "local_verification": {
+    "runtime": {
+      "python": "3.12.16",
+      "pymupdf": "1.26.3"
+    },
+    "frozen_production_tests": {
+      "passed": 102,
+      "skipped": 1,
+      "failed": 0
+    },
+    "candidate_tests": {
+      "passed": 123,
+      "skipped": 1,
+      "failed": 0
+    },
+    "b07_extraction_prompt_paired_ab": {
+      "baseline_p50_ms": 67.226,
+      "candidate_p50_ms": 68.1,
+      "ratio": 1.013,
+      "text_hash_equal": true,
+      "prompt_hash_equal": true,
+      "scope": "extraction and prompt only"
     }
   }
 }
