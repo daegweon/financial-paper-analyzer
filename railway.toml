@@ -3,3 +3,4 @@ builder="DOCKERFILE"
 dockerfilePath="Dockerfile.full-replacement"
 [deploy]
 restartPolicyType="NEVER"
+startCommand="python -m benchmark.full_replacement_compare --ids B01 B02 B03 B04 B05 B06 B07 B08 B09 B10 --timeout 150"
