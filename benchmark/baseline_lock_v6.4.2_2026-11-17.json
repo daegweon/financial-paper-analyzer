@@ -43,7 +43,7 @@
     "latest_telemetry_test_commit": "40bc8d255b3bc02929942947e302789c053f4845",
     "main_git_blob_sha1": "f1a4461f5822305aebdaadf1a7eae0bd28c98e3e",
     "test_finance_git_blob_sha1": "f29088c156682ed3fb271a64e7d7175d07626004",
-    "current_head": "939fa6985af1f4d34edfec1519b132cbb89be44a",
+    "current_head": "68a777f554c3cd31c645e0386f7ba51b73cc401f",
     "worker_git_blob_sha1": "8b3e2be6e1385b677143e6706494e91a3b7571be",
     "latest_worker_job_created_at_commit": "af81cb3f18133ca342a821d4c47dcaa4b208b936"
   },
