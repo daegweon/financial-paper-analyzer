@@ -24,7 +24,7 @@ TOTAL_ELAPSED_RE = re.compile(r"\btotal_elapsed_ms=([0-9]+(?:\.[0-9]+)?)")
 TOKEN_RE = re.compile(
     r"\bprompt_tokens=(\d+|None)\s+candidate_tokens=(\d+|None)\s+thought_tokens=(\d+|None)\s+total_tokens=(\d+|None)"
 )
-CLAIM_RE = re.compile(r"\bClaimed job_id=([0-9a-fA-F-]{8,}) paper_id=([0-9a-fA-F-]{8,}) attempt=(\d+)")
+CLAIM_RE = re.compile(r"\bClaimed job_id=([0-9a-fA-F-]{8,}) paper_id=([0-9a-fA-F-]{8,}) attempt=(\d+)(?: job_created_at=(\S+))?")
 COMPLETE_RE = re.compile(r"\bAnalysis job completed job_id=([0-9a-fA-F-]{8,}) paper_id=([0-9a-fA-F-]{8,}) provider=([A-Za-z0-9._-]+) model=([A-Za-z0-9._-]+) pages=(\d+)")
 FAILED_RE = re.compile(r"\bAnalysis job failed job_id=([0-9a-fA-F-]{8,}) status=(\d{3})")
 RETRY_RE = re.compile(r"\bFailed job scheduled for retry job_id=([0-9a-fA-F-]{8,})")
@@ -77,8 +77,15 @@ def aggregate_logs(
         job = job_entry(job_id)
 
         if claim:
+            job_created_at = None
+            if claim.group(4) and claim.group(4) != "-":
+                try:
+                    job_created_at = _time(claim.group(4))
+                except ValueError:
+                    job_created_at = None
             job["claim_events"].append({
-                "timestamp": at, "paper_id": claim.group(2), "worker_attempt": int(claim.group(3))
+                "timestamp": at, "paper_id": claim.group(2),
+                "worker_attempt": int(claim.group(3)), "job_created_at": job_created_at,
             })
         if complete:
             job["terminal_events"].append({
@@ -151,9 +158,15 @@ def aggregate_logs(
         first_claim = claims[0]["timestamp"] if claims else None
         final_terminal = terminals[-1] if terminals else None
         last_time = final_terminal["timestamp"] if final_terminal else None
-        pipeline_latency = (
+        claim_to_terminal_latency = (
             round((last_time - first_claim).total_seconds() * 1000, 3)
             if first_claim and last_time and last_time >= first_claim else None
+        )
+        job_created_times = [x["job_created_at"] for x in claims if x.get("job_created_at")]
+        first_job_created = min(job_created_times) if job_created_times else None
+        job_created_to_terminal = (
+            round((last_time - first_job_created).total_seconds() * 1000, 3)
+            if first_job_created and last_time and last_time >= first_job_created else None
         )
         provider_calls = []
         for call_id, call in job["provider_calls"].items():
@@ -190,10 +203,12 @@ def aggregate_logs(
             "provider": (final_terminal or {}).get("provider"),
             "final_model": (final_terminal or {}).get("model"),
             "pages": (final_terminal or {}).get("pages"),
-            "claim_to_terminal_ms": pipeline_latency,
-            "latency_scope": "worker_claim_to_terminal",
+            "job_created_at": first_job_created.isoformat() if first_job_created else None,
+            "job_created_to_terminal_ms": job_created_to_terminal,
+            "claim_to_terminal_ms": claim_to_terminal_latency,
+            "latency_scope": "job_created_to_terminal_and_worker_claim_to_terminal",
             "full_pipeline_latency_ms": None,
-            "full_pipeline_latency_status": "UNAVAILABLE_UPLOAD_TIMESTAMP_NOT_LOGGED",
+            "full_pipeline_latency_status": "UPLOAD_START_TIMESTAMP_NOT_LOGGED",
             "provider_calls": provider_calls,
             "provider_attempts_total": sum(x["provider_attempts"] for x in provider_calls),
             "prompt_tokens_total": sum(x["prompt_tokens"] for x in provider_calls),
