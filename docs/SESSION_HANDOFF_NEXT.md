@@ -1,4 +1,12 @@
 # PaperSignal — 새 세션 인계 및 최종 제품 방향
+
+## Latest candidate / CI confirmation (2026-11-17)
+
+- PR #7 remains draft; latest branch head after documentation updates: `343e53a98f32b8175d88ee093f26b6a6df56387e`. Latest code-changing commit: `e7782e1c1531dcc658a52246bfb61faa94d1d932`.
+- GitHub Actions runs `43979921435` and `43979839645` both ended `startup_failure` before any jobs were created (0 jobs). This does not contradict the separate local result: candidate backend suite 123 passed, 1 skipped, 0 failed on Python 3.12.16 / PyMuPDF 1.26.3.
+- Railway production API and Worker remain online on frozen production SHA `8cd5e37ee8eab3bf4b726b75af89e410ab48396e`; candidate not deployed.
+- Q0/Q1/Q2/P0 remain blocked. Do not merge or deploy.
+
 기록일: 2026-11-17 (Asia/Seoul)
 **이 문서가 이전 세션의 구형 오픈소스 실험 계획보다 우선합니다.**
 
