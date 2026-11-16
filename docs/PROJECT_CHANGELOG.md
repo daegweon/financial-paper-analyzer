@@ -1,5 +1,13 @@
 ## 2026-11-17 — pinned-runtime verification and next baseline gate
 
+## Latest candidate / CI confirmation (2026-11-17)
+
+- PR #7 remains draft; latest branch head after documentation updates: `343e53a98f32b8175d88ee093f26b6a6df56387e`. Latest code-changing commit: `e7782e1c1531dcc658a52246bfb61faa94d1d932`.
+- GitHub Actions runs `43979921435` and `43979839645` both ended `startup_failure` before any jobs were created (0 jobs). This does not contradict the separate local result: candidate backend suite 123 passed, 1 skipped, 0 failed on Python 3.12.16 / PyMuPDF 1.26.3.
+- Railway production API and Worker remain online on frozen production SHA `8cd5e37ee8eab3bf4b726b75af89e410ab48396e`; candidate not deployed.
+- Q0/Q1/Q2/P0 remain blocked. Do not merge or deploy.
+
+
 - Candidate branch: `experiment/engine-quality-v6-4-2-b01-b10-locked`; PR #7 remains draft. Latest candidate head before this handoff update: `e7782e1c1531dcc658a52246bfb61faa94d1d932`.
 - Runtime verified: Python 3.12.16 / PyMuPDF 1.26.3, matching production pin.
 - Backend tests on this runtime: frozen production 102 passed / 1 skipped / 0 failed; candidate 123 passed / 1 skipped / 0 failed. The skipped test is opt-in live E2E. GitHub Actions still fails `startup_failure` before creating jobs (latest run 43978680210, 0 jobs).
