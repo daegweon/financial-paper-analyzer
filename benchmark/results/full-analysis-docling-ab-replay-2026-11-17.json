@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-11-17 (Asia/Seoul)",
+  "analysis_code_version": "finance-structured-v6.4.2",
+  "existing_engine_commit": "8cd5e37ee8eab3bf4b726b75af89e410ab48396e",
+  "historical_result_version": "finance-structured-v6.3.9",
+  "fresh_full_model_ab": {
+    "paired_success_count": 0,
+    "requested_initial_papers": [
+      "B01",
+      "B09"
+    ],
+    "second_attempt": [
+      "B03",
+      "B09"
+    ],
+    "failures": [
+      {
+        "paper": "B01",
+        "deployment": "25ec3be7-09c9-48ad-814d-152f984a9380",
+        "baseline_status": "failed",
+        "provider_error_type": "HTTPException",
+        "api_attempts": 2,
+        "status_codes": [
+          503,
+          503
+        ],
+        "models_attempted": [
+          "gemini-3.5-flash-lite",
+          "gemini-3.6-flash"
+        ],
+        "measured_provider_wall_s": 39.0653
+      },
+      {
+        "paper": "B03",
+        "deployment": "521aaccd-dbe4-4f82-a9a6-55dfb2e6f98a",
+        "baseline_status": "failed",
+        "provider_error_type": "HTTPException",
+        "api_attempts": 2,
+        "status_codes": [
+          503,
+          503
+        ],
+        "models_attempted": [
+          "gemini-3.5-flash-lite",
+          "gemini-3.6-flash"
+        ],
+        "measured_provider_wall_s": 9.9888
+      }
+    ],
+    "synthetic_probe": [
+      {
+        "model": "gemini-3.5-flash-lite",
+        "status": 200,
+        "transport_error_type": null,
+        "wall_seconds": 9.1681
+      },
+      {
+        "model": "gemini-3.6-flash",
+        "status": null,
+        "transport_error_type": "ReadTimeout",
+        "wall_seconds": 30.0325
+      }
+    ],
+    "reason": "Gemini primary and fallback responded HTTP 503 to full-paper analyses; no paired fresh analysis could complete"
+  },
+  "deterministic_historical_findings_replay": {
+    "run_id": "replay-49dfcc9e5d9b4c0485ff70bcc1f56028",
+    "deployment": "5d169fb9-fbf1-4781-b080-05cb6ba949e5",
+    "papers_completed": 10,
+    "errors": [],
+    "provider_calls": 0,
+    "totals": {
+      "paper_count": 10,
+      "source_pages": 209,
+      "original_quotes": 346,
+      "baseline_retained_quotes": 346,
+      "docling_retained_quotes": 296,
+      "baseline_quote_retention": 1,
+      "docling_quote_retention": 0.855491,
+      "lost_quotes": 50,
+      "baseline_findings": 71,
+      "docling_findings": 65,
+      "lost_findings": 6,
+      "baseline_screen_passed": 54,
+      "docling_screen_passed": 51,
+      "lost_screen_passed": 3,
+      "baseline_parser_seconds": 8.2202,
+      "docling_parser_seconds": 33.9086,
+      "docling_parser_slowdown": 4.125,
+      "baseline_peak_child_rss_mib": 101.25,
+      "docling_peak_child_rss_mib": 664.73
+    },
+    "rows": [
+      {
+        "id": "B01",
+        "quotes": 31,
+        "baseline_quotes": 31,
+        "docling_quotes": 25,
+        "baseline_findings": 6,
+        "docling_findings": 6,
+        "baseline_screen_passed": 2,
+        "docling_screen_passed": 2,
+        "baseline_parser_seconds": 0.7659,
+        "docling_parser_seconds": 4.0822,
+        "baseline_rss_mib": 88.31,
+        "docling_rss_mib": 574.71
+      },
+      {
+        "id": "B02",
+        "quotes": 48,
+        "baseline_quotes": 48,
+        "docling_quotes": 32,
+        "baseline_findings": 8,
+        "docling_findings": 4,
+        "baseline_screen_passed": 2,
+        "docling_screen_passed": 1,
+        "baseline_parser_seconds": 0.87,
+        "docling_parser_seconds": 2.9218,
+        "baseline_rss_mib": 84.82,
+        "docling_rss_mib": 494.74
+      },
+      {
+        "id": "B03",
+        "quotes": 33,
+        "baseline_quotes": 33,
+        "docling_quotes": 27,
+        "baseline_findings": 6,
+        "docling_findings": 6,
+        "baseline_screen_passed": 5,
+        "docling_screen_passed": 5,
+        "baseline_parser_seconds": 0.7656,
+        "docling_parser_seconds": 2.674,
+        "baseline_rss_mib": 84.54,
+        "docling_rss_mib": 443.64
+      },
+      {
+        "id": "B04",
+        "quotes": 29,
+        "baseline_quotes": 29,
+        "docling_quotes": 24,
+        "baseline_findings": 8,
+        "docling_findings": 8,
+        "baseline_screen_passed": 8,
+        "docling_screen_passed": 8,
+        "baseline_parser_seconds": 0.866,
+        "docling_parser_seconds": 3.7237,
+        "baseline_rss_mib": 101.25,
+        "docling_rss_mib": 549.88
+      },
+      {
+        "id": "B05",
+        "quotes": 37,
+        "baseline_quotes": 37,
+        "docling_quotes": 35,
+        "baseline_findings": 7,
+        "docling_findings": 7,
+        "baseline_screen_passed": 5,
+        "docling_screen_passed": 5,
+        "baseline_parser_seconds": 0.8158,
+        "docling_parser_seconds": 4.4257,
+        "baseline_rss_mib": 87.17,
+        "docling_rss_mib": 664.73
+      },
+      {
+        "id": "B06",
+        "quotes": 27,
+        "baseline_quotes": 27,
+        "docling_quotes": 24,
+        "baseline_findings": 8,
+        "docling_findings": 8,
+        "baseline_screen_passed": 8,
+        "docling_screen_passed": 8,
+        "baseline_parser_seconds": 0.8678,
+        "docling_parser_seconds": 3.6844,
+        "baseline_rss_mib": 86.88,
+        "docling_rss_mib": 601.27
+      },
+      {
+        "id": "B07",
+        "quotes": 43,
+        "baseline_quotes": 43,
+        "docling_quotes": 41,
+        "baseline_findings": 8,
+        "docling_findings": 8,
+        "baseline_screen_passed": 8,
+        "docling_screen_passed": 8,
+        "baseline_parser_seconds": 0.8171,
+        "docling_parser_seconds": 3.1727,
+        "baseline_rss_mib": 89.6,
+        "docling_rss_mib": 515.91
+      },
+      {
+        "id": "B08",
+        "quotes": 39,
+        "baseline_quotes": 39,
+        "docling_quotes": 37,
+        "baseline_findings": 4,
+        "docling_findings": 4,
+        "baseline_screen_passed": 4,
+        "docling_screen_passed": 4,
+        "baseline_parser_seconds": 0.7685,
+        "docling_parser_seconds": 3.1261,
+        "baseline_rss_mib": 86.22,
+        "docling_rss_mib": 534.77
+      },
+      {
+        "id": "B09",
+        "quotes": 33,
+        "baseline_quotes": 33,
+        "docling_quotes": 32,
+        "baseline_findings": 8,
+        "docling_findings": 8,
+        "baseline_screen_passed": 5,
+        "docling_screen_passed": 5,
+        "baseline_parser_seconds": 0.8161,
+        "docling_parser_seconds": 2.9766,
+        "baseline_rss_mib": 86.63,
+        "docling_rss_mib": 475.57
+      },
+      {
+        "id": "B10",
+        "quotes": 26,
+        "baseline_quotes": 26,
+        "docling_quotes": 19,
+        "baseline_findings": 8,
+        "docling_findings": 6,
+        "baseline_screen_passed": 7,
+        "docling_screen_passed": 5,
+        "baseline_parser_seconds": 0.8674,
+        "docling_parser_seconds": 3.1214,
+        "baseline_rss_mib": 85.74,
+        "docling_rss_mib": 456.98
+      }
+    ]
+  },
+  "guardrails": {
+    "frozen_engine_unchanged": true,
+    "zero_production_analysis_writes": true,
+    "original_pdf_objects_unchanged": true,
+    "private_new_artifacts_only": true,
+    "independent_human_accuracy": null,
+    "full_model_quality_comparison_complete": false,
+    "production_adoption_eligible": false
+  }
+}
