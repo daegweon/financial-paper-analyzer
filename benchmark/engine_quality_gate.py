@@ -78,19 +78,42 @@ def evaluate(policy, evidence):
         isinstance(heldout, list) and len(heldout) >= req['Q0']['min_heldout_papers']
         and all(isinstance(x, dict) and isinstance(x.get('id'), str)
                 and x['id'] not in {f'B{i:02d}' for i in range(1, 11)}
-                and sha(x.get('sha256')) and sha(x.get('lock_commit'), git=True)
+                and sha(x.get('sha256')) and type(x.get('pages')) is int and x['pages'] > 0
+                and sha(x.get('lock_commit'), git=True)
                 and x.get('locked_before_candidate') is True for x in heldout)
         and len({x['id'] for x in heldout if isinstance(x, dict) and 'id' in x}) == len(heldout)
         and len({x['sha256'] for x in heldout if isinstance(x, dict) and 'sha256' in x}) == len(heldout)
     )
     check('Q0', valid_heldout, '2+ held-out PDFs must be uniquely SHA-locked before tuning')
 
+    # A reviewer cannot certify an arbitrary 64-hex string. Each review must
+    # anchor to the *actual declared PDF* and a visible source page and quote.
+    paper_meta = {
+        item['id']: item for item in regression + heldout
+        if isinstance(item, dict) and isinstance(item.get('id'), str)
+    }
+
+    def source_anchor_valid(item):
+        paper = paper_meta.get(item.get('paper_id'))
+        if not paper or item.get('source_sha256') != paper.get('sha256'):
+            return False
+        page = item.get('source_page')
+        quote = item.get('source_quote')
+        if type(page) is not int or page < 1:
+            return False
+        if type(paper.get('pages')) is int and page > paper['pages']:
+            return False
+        if not isinstance(quote, str) or len(quote.strip()) < 8:
+            return False
+        anchor_ref = item.get('source_evidence_ref')
+        return isinstance(anchor_ref, str) and bool(anchor_ref.strip())
+
     audit = evidence.get('human_review') or {}
     legacy = audit.get('legacy') or []
     claims = audit.get('claims') or []
     legacy_valid = (
         isinstance(legacy, list) and len(legacy) == req['Q0']['review_required_to_adjudicate']
-        and all(isinstance(x, dict) and reviewers_valid(x) and x.get('resolved') is True
+        and all(isinstance(x, dict) and reviewers_valid(x) and source_anchor_valid(x) and x.get('resolved') is True
                 and x.get('critical_unresolved') is False
                 and (x.get('source_confirmed_recovery') is not True or
                      all(r['verdict'] in {'supported', 'corrected'} for r in x['reviewers']))
@@ -102,7 +125,7 @@ def evaluate(policy, evidence):
     check('Q1', legacy_valid, '18 historical findings remain unadjudicated')
     claims_valid = (
         isinstance(claims, list) and len(claims) >= req['Q1']['human_reviewed_material_claims_min']
-        and all(isinstance(x, dict) and reviewers_valid(x) and type(x.get('supported')) is bool
+        and all(isinstance(x, dict) and reviewers_valid(x) and source_anchor_valid(x) and type(x.get('supported')) is bool
                 and x.get('critical_false_approval') is False
                 and (x['supported'] is False or
                      all(r['verdict'] in {'supported', 'corrected'} for r in x['reviewers']))
