@@ -41,3 +41,16 @@ python -m benchmark.lock_heldout_pdfs \\
 It uses PyMuPDF to verify PDF readability and exact page count, hashes the original unmodified bytes with SHA-256, rejects duplicate held-out files and optionally rejects hashes overlapping a supplied regression manifest. It never uploads or commits PDF bytes. The result is still not Git-locked: commit the verified manifest and record the resulting commit SHA in a follow-up commit before creating a new candidate branch.
 
 Local lock-utility test reproduction: 7/7 synthetic checks passed after fixing one test assertion to match the utility's error contract. This is not a connected repository CI run. Exact publisher PDF bytes remain unavailable in the execution runtime; SHA-256 is still null for both papers and Q0 remains BLOCKED.
+
+
+## Binary lock completed from user-uploaded PDFs
+
+Exact original PDF bytes were supplied in the project conversation and opened with PyMuPDF. Both page counts, metadata/DOI and Creative Commons Attribution 4.0 licence text were verified.
+
+| ID | Pages | Bytes | SHA-256 |
+| --- | ---: | ---: | --- |
+| H01 | 40 | 2,521,298 | 816e404d2f1dee7df84d52bf4238a75d7d777878cf100b42e3f220cc1da9b127 |
+| H02 | 30 | 5,223,546 | d385806b9a448e399dfc9f6017710561bf15bfd50ec514536303978ad07eb283 |
+
+The immutable binary lock is commit 149311ec2993cac3bd410c10ac7feb202d582fc7; the follow-up manifest records that lock SHA in commit 59b68fbc902bd17b656d606246d17b19a5614acf. A fresh candidate branch was then created from the frozen v6.4.2 production SHA. No tuning preceded the lock on this candidate branch.
+
