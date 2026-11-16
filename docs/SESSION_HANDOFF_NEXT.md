@@ -113,5 +113,16 @@
 - GitHub Actions runs 43969788375 and 43970441861 both ended startup_failure before creating jobs (0 jobs); repository tests did not execute. Retry was rejected with HTTP 403.
 - Main API and Worker are online. No production deployment or data mutation occurred.
 
+## 2026-11-17 — pinned-runtime verification and next baseline gate
+
+- Candidate branch: `experiment/engine-quality-v6-4-2-b01-b10-locked`; PR #7 remains draft. Latest candidate head before this handoff update: `e7782e1c1531dcc658a52246bfb61faa94d1d932`.
+- Runtime verified: Python 3.12.16 / PyMuPDF 1.26.3, matching production pin.
+- Backend tests on this runtime: frozen production 102 passed / 1 skipped / 0 failed; candidate 123 passed / 1 skipped / 0 failed. The skipped test is opt-in live E2E. GitHub Actions still fails `startup_failure` before creating jobs (latest run 43978680210, 0 jobs).
+- Source fingerprint file: `benchmark/source_fingerprint_v6.4.2_2026-11-17.json`. Analysis version, prompt, schema, extraction, model config, requirements and Dockerfile hashes match; Gemini transport hash changed as intended. No secrets read or stored.
+- B07 exact locked PDF: 23/23 pages extracted, zero empty pages, 69,414 chars, 73,295 prompt chars. Production/candidate text and prompt hashes match. Paired 10-run extraction+prompt A/B: p50 67.226 ms production vs 68.100 ms candidate (1.013 ratio), maxima 69.456 vs 68.968 ms. Extraction-only; not full-pipeline Q2.
+- Historical Supabase results are mixed: B03-B08 v6.3.9, B01/B02/B09 v6.4.0, B10 v6.4.2. Only B10 is a historical v6.4.2 result (job-created-to-completed 27.701 s; worker-started-to-completed 26.575 s; two Gemini calls, 39,653 total tokens). Provider cost, per-call elapsed and RSS unavailable. Do not pool these mixed versions.
+- Q0 remains BLOCKED: full same-version v6.4.2 baseline for all B01-B10 plus held-out H01/H02 Gemini runs still pending. Q1/Q2/P0 remain blocked. No production deploy or database mutation.
+- Next: execute the frozen v6.4.2 end-to-end baseline on all 10 locked regression PDFs and both locked held-out PDFs in an isolated environment with provider usage/cost and peak RSS telemetry; then compare the telemetry-only candidate under matched conditions. Keep PR #7 draft until gates pass.
+
 ## 새 세션 시작 시 그대로 사용할 메시지
 "PaperSignal 개발을 이어가자. GitHub `plan/engine-quality-release-handoff`의 `docs/SESSION_HANDOFF_NEXT.md`, `docs/ENGINE_QUALITY_RELEASE_PLAN_2026-11-17.md`, `docs/PROJECT_STATE.md`와 `benchmark/engine_release_gates_2026-11-17.json`을 먼저 읽어. 오픈소스 교체 검토는 종료, 기존 PyMuPDF/v6.4.2 엔진만 개선. 독립 골드·인용·전체 정확도·비용·실서비스 테스트 임계점 충족 전 배포 금지. 지금 상태 확인 후 다음 목표를 실제 구현하고 검증 결과를 GitHub에 기록해."
