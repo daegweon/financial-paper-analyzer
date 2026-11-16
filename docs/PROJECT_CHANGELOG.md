@@ -1,3 +1,11 @@
+## 2026-11-17 — Latency scope correction and clean PR
+
+- PR #6 is the clean candidate; PR #5 has been closed because its branch lacked the Held-out lock commit in its Git ancestry.
+- Worker claim logs now include \`analysis_jobs.created_at\` from the claim RPC result. The telemetry parser reports \`job_created_to_terminal_ms\` (includes queue wait) and \`claim_to_terminal_ms\`.
+- Important: \`analysis_jobs.created_at\` is recorded after PDF upload completes. Neither metric is upload-start-to-save latency. \`full_pipeline_latency_ms\` remains null and Q2 p95 cannot use these two proxy durations.
+- Synthetic timing arithmetic verified locally (job created 2 seconds before claim; terminal 10 seconds after claim => 12,000 ms job-created-to-terminal and 10,000 ms claim-to-terminal). Repository CI remains unavailable.
+- All Q0/Q1/Q2/P0 remain BLOCKED; no Gemini full-pipeline run, billable cost, peak RSS, independent human gold or actual upload-start timestamp. No production deployment or user-data change.
+
 ## 2026-11-17 — Corrected Held-out lineage, telemetry and local preflight (latest)
 
 - User-uploaded H01/H02 original PDFs rechecked by SHA-256 and PyMuPDF: H01 40 pages / 2,521,298 bytes / \`816e404d2f1dee7df84d52bf4238a75d7d777878cf100b42e3f220cc1da9b127\`; H02 30 pages / 5,223,546 bytes / \`d385806b9a448e399dfc9f6017710561bf15bfd50ec514536303978ad07eb283\`.
