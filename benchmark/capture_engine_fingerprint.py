@@ -44,6 +44,25 @@ def _function_source(source: str, name: str) -> str:
     raise ValueError(f"Could not locate function {name}")
 
 
+def _safe_numeric_expression(node: ast.AST) -> int | float:
+    """Evaluate only literal numeric arithmetic; never execute source code."""
+    if isinstance(node, ast.Constant) and type(node.value) in (int, float):
+        return node.value
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
+        value = _safe_numeric_expression(node.operand)
+        return value if isinstance(node.op, ast.UAdd) else -value
+    if isinstance(node, ast.BinOp):
+        left = _safe_numeric_expression(node.left)
+        right = _safe_numeric_expression(node.right)
+        if isinstance(node.op, ast.Add):
+            return left + right
+        if isinstance(node.op, ast.Sub):
+            return left - right
+        if isinstance(node.op, ast.Mult):
+            return left * right
+    raise ValueError("unsupported non-literal module constant")
+
+
 def _module_constants(source: str) -> dict[str, Any]:
     tree = ast.parse(source)
     constants: dict[str, Any] = {}
@@ -51,9 +70,13 @@ def _module_constants(source: str) -> dict[str, Any]:
         if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
             name = node.targets[0].id
             try:
-                constants[name] = ast.literal_eval(node.value)
+                value = ast.literal_eval(node.value)
             except (ValueError, TypeError):
-                continue
+                try:
+                    value = _safe_numeric_expression(node.value)
+                except ValueError:
+                    continue
+            constants[name] = value
     return constants
 
 
