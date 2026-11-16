@@ -1,3 +1,12 @@
+## 2026-11-17 — Continued PyMuPDF improvement, source-review preparation and hard release safeguards
+
+- Committed five synthetic review-queue tests and source-linked \`benchmark/human_review_pack.py\` for 18 v6.3.9 review-required findings, with no fabricated reviewer decisions.
+- Verified frozen historical review counts in Supabase by read-only SQL, with exact distribution B01 4/B02 6/B03 1/B05 2/B09 3/B10 2.
+- Strengthened release gate with PDF SHA + page + source quote cross-checks, disjoint held-out/regression SHA, and separate structural PASS from actual deployment authorization.
+- Local reproduced gate test set: 9 PASS. GitHub runner failed \`startup_failure\`; Free Railway plan denied isolated build service. No secret-bearing historic service modified to work around constraints.
+- Experiment branch is NOT held-out pre-registered, so not yet a release-eligible candidate. No current Gemini p95/cost or independently reviewed gold accuracy. Full Q0/Q1/Q2/P0 and final deployment remain blocked.
+- Kept Railway production \`8cd5e37\` deployed, data and secrets unchanged. PR #4 remains Draft.
+
 ## 2026-11-17 — User final product decision: stop OSS, focus on existing engine and quality-gated final deployment
 - Closed speculative external parser adoption/complete replacements (0 production adoptions). Preserve PyMuPDF/v6.4.2 with frozen operating SHA 8cd5e37; do not re-run OSS hunt.
 - Committed durable cross-session handoff in isolated `plan/engine-quality-release-handoff` branch: `docs/SESSION_HANDOFF_NEXT.md`, `docs/ENGINE_QUALITY_RELEASE_PLAN_2026-11-17.md`, machine-readable gates JSON, updated state and decisions. No engine code, data, environment or production deployment changes.
