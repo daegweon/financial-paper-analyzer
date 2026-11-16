@@ -29,7 +29,7 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-terra")
-ANALYSIS_VERSION = "finance-structured-v6.3.7"
+ANALYSIS_VERSION = "finance-structured-v6.3.8"
 log = logging.getLogger("papersignal")
 app = FastAPI(title="PaperSignal API", version="0.2.0")
 # Production origins are configured explicitly in FRONTEND_ORIGIN.
@@ -356,6 +356,32 @@ def _extract_numeric_tokens(value: str) -> list[str]:
     return _NUMERIC_TOKEN_RE.findall(_normalize_numeric_text(value))
 
 
+_WRITTEN_COUNT_WORDS = {
+    "one": "1", "two": "2", "three": "3", "four": "4", "five": "5",
+    "six": "6", "seven": "7", "eight": "8", "nine": "9", "ten": "10",
+    "eleven": "11", "twelve": "12", "thirteen": "13", "fourteen": "14",
+    "fifteen": "15", "sixteen": "16", "seventeen": "17", "eighteen": "18",
+    "nineteen": "19", "twenty": "20",
+}
+_WRITTEN_COUNT_CONTEXT = (
+    r"appearances?|stocks?|portfolios?|firms?|banks?|countries?|observations?|"
+    r"periods?|quarters?|months?|years?|assets?|companies?|samples?|groups?"
+)
+
+
+def _extract_written_count_tokens(value: str) -> list[str]:
+    """Normalize spelled-out counts only when they describe an explicit count."""
+    text = _normalize_numeric_text(value).casefold()
+    return [
+        number
+        for word, number in _WRITTEN_COUNT_WORDS.items()
+        if re.search(
+            rf"{word}[- ]+(?:{_WRITTEN_COUNT_CONTEXT})",
+            text,
+        )
+    ]
+
+
 def _parse_count_value(value: str) -> int | None:
     """Read a clearly stated integer count; do not infer counts from date ranges or percentages."""
     for token in _extract_numeric_tokens(value):
@@ -593,6 +619,25 @@ def _finding_direction_sign(value: Any) -> str | None:
     return None
 
 
+def _finding_table_reference_keys(value: Any) -> set[str]:
+    """Extract typed table/figure identifiers so compound references can overlap safely."""
+    text = str(value or "").casefold()
+    references: set[str] = set()
+    for match in re.finditer(r"\b(tables?|figures?)\s*(\d+)(?:\s*[-–~]\s*(\d+))?", text):
+        kind = "table" if match.group(1).startswith("table") else "figure"
+        first = int(match.group(2))
+        last = int(match.group(3) or first)
+        if last - first <= 20:
+            references.update(f"{kind}:{number}" for number in range(first, last + 1))
+    for match in re.finditer(r"(표|그림)\s*(\d+)(?:\s*[-–~~]\s*(\d+))?", text):
+        kind = "table" if match.group(1) == "표" else "figure"
+        first = int(match.group(2))
+        last = int(match.group(3) or first)
+        if last - first <= 20:
+            references.update(f"{kind}:{number}" for number in range(first, last + 1))
+    return references
+
+
 def _are_duplicate_findings(left: dict[str, Any], right: dict[str, Any]) -> bool:
     left_claim = _normalized_claim_key(str(left.get("claim", "")))
     right_claim = _normalized_claim_key(str(right.get("claim", "")))
@@ -619,11 +664,19 @@ def _are_duplicate_findings(left: dict[str, Any], right: dict[str, Any]) -> bool
     same_direction = _finding_direction_sign(left.get("direction")) == _finding_direction_sign(right.get("direction"))
     left_table = str(left.get("table_reference", "")).casefold().strip()
     right_table = str(right.get("table_reference", "")).casefold().strip()
+    left_table_refs = _finding_table_reference_keys(left_table)
+    right_table_refs = _finding_table_reference_keys(right_table)
     left_model = str(left.get("model_or_column", "")).casefold().strip()
     right_model = str(right.get("model_or_column", "")).casefold().strip()
-    left_columns = set(re.findall(r"\d+", left_model))
-    right_columns = set(re.findall(r"\d+", right_model))
-    same_table = not left_table or not right_table or left_table == right_table
+    left_columns = set(re.findall(r"d+", left_model))
+    right_columns = set(re.findall(r"d+", right_model))
+    left_table_unknown = not left_table or left_table in {"확인 불가", "unknown", "n/a"}
+    right_table_unknown = not right_table or right_table in {"확인 불가", "unknown", "n/a"}
+    same_table = (
+        left_table_unknown or right_table_unknown
+        or left_table == right_table
+        or bool(left_table_refs & right_table_refs)
+    )
     same_model = (
         not left_model or not right_model
         or left_model == right_model
@@ -799,6 +852,9 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
             cited_numbers.update(
                 _numeric_key(x) for x in _extract_numeric_tokens(quote_text)
             )
+            cited_numbers.update(
+                _numeric_key(x) for x in _extract_written_count_tokens(quote_text)
+            )
     legend_evidence = finding.get("significance_legend_evidence", [])
     legend_text_parts: list[str] = []
     for item in legend_evidence:
@@ -828,6 +884,16 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
         r"|(?:1|5|10)%\s*수준"
         r"|\b(?:tier|model|column|table)\s*[-(]?\s*\d+\)?(?=\W|$|[가-힣])"
         r"|\bpanel\s+[a-z](?=\W|$|[가-힣])"
+        r"|\b(?:one|two|1|2)[- ]country(?:[- ](?:durable|consumption))?(?:[- ]model)?\b"
+        r"|(?:1|2)\s*국가(?:\s*(?:내구재|소비))?\s*모형"
+        r"|\bregime\s*[-(]?\s*\d+\)?(?=\W|$|[가-힣])"
+        r"|(?:국면|체제)\s*[-(]?\s*\d+(?=\W|$|[가-힣])"
+        r"|\b(?:fama[-– ]?french|carhart)\s*(?:three|four|3|4)\s*[- ]?(?:factor|요인)(?:s|모형)?\b"
+        r"|\b(?:three|four|3|4)[- ]factor(?:s)?\b"
+        r"|\bASEAN\s*[-–]\s*5\b"
+        r"|\bportfolio\s*\(?\s*\d+\s*[-–]\s*\d+\s*\)?"
+        r"|\b\d+\s*[-–]\s*\d+\s*portfolio\b"
+        r"|(?:포트폴리오|헷징 포트폴리오)\s*\(?\s*\d+\s*[-–]\s*\d+\s*\)?"
         r"|(?:티어|모형|모델|열|표)\s*[-(]?\s*\d+\)?(?=\W|$|[가-힣]))",
         " ",
         claim,
@@ -951,36 +1017,36 @@ def _normalize_findings(items: Any, pages: list[dict[str, Any]]) -> list[dict[st
 def _revalidate_prior_findings(
     prior_findings: Any,
     pages: list[dict[str, Any]],
-) -> tuple[list[dict[str, Any]], int]:
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], int]:
     """Re-audit earlier-version claims using only current PDF evidence and validators."""
     validated: list[dict[str, Any]] = []
+    rejected: list[dict[str, Any]] = []
     for item in prior_findings[:40] if isinstance(prior_findings, list) else []:
         if not isinstance(item, dict):
             continue
         normalized = _normalize_findings([item], pages)
-        if (
-            normalized
-            and normalized[0].get("verification", {}).get("status") == "screen_passed"
-        ):
+        if normalized and normalized[0].get("verification", {}).get("status") == "screen_passed":
             validated.append(normalized[0])
+        else:
+            rejected.append(item)
     deduplicated, duplicates = _deduplicate_findings(validated, pages)
-    return deduplicated[:8], duplicates
+    return deduplicated[:8], rejected, duplicates
 
 
 def _merge_prior_findings(
     current_findings: list[dict[str, Any]],
     prior_findings: Any,
     pages: list[dict[str, Any]],
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]], int]:
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], int]:
     """Keep prior findings only when their exact quotes pass the current audit."""
-    validated_prior, prior_duplicates = _revalidate_prior_findings(prior_findings, pages)
+    validated_prior, rejected_prior, prior_duplicates = _revalidate_prior_findings(prior_findings, pages)
     merged, merge_duplicates = _deduplicate_findings(
         current_findings + validated_prior, pages
     )
     merged.sort(
         key=lambda item: item.get("verification", {}).get("status") != "screen_passed"
     )
-    return merged[:8], validated_prior, prior_duplicates + merge_duplicates
+    return merged[:8], validated_prior, rejected_prior, prior_duplicates + merge_duplicates
 
 
 def _select_ranked_pages(
@@ -2115,10 +2181,15 @@ async def llm_result(
         raise ValueError("지원하지 않는 AI 제공자입니다.")
 
     result = normalize_llm_result(parsed, count, pages)
-    result["findings"], prior_findings_revalidated, prior_findings_duplicates = (
-        _merge_prior_findings(result["findings"], prior_findings or [], pages)
-    )
+    (
+        result["findings"],
+        prior_findings_revalidated,
+        prior_findings_rejected,
+        prior_findings_duplicates,
+    ) = _merge_prior_findings(result["findings"], prior_findings or [], pages)
     prior_findings_revalidated_count = len(prior_findings_revalidated)
+    prior_findings_rejected_count = len(prior_findings_rejected)
+    prior_findings_loaded_count = len(prior_findings or [])
 
     # Methodology is repaired independently from findings. This is triggered
     # only when section-level evidence/design/sample/period is missing or panel
@@ -2219,13 +2290,25 @@ async def llm_result(
             item.get("verification", {}).get("status") == "review"
             for item in result["findings"]
         )
+        or prior_findings_rejected_count >= 2
     )
     if needs_findings_repair:
         findings_repair_attempted = True
         findings_repair_status = "attempted"
         try:
+            review_candidates = [
+                item for item in result["findings"]
+                if item.get("verification", {}).get("status") == "review"
+            ]
+            supported_candidates = [
+                item for item in result["findings"]
+                if item.get("verification", {}).get("status") == "screen_passed"
+            ]
+            repair_candidates = (
+                review_candidates + prior_findings_rejected[:8] + supported_candidates
+            )[:12]
             findings_prompt = build_findings_repair_prompt(
-                pages, result["findings"]
+                pages, repair_candidates
             )
             if provider == "gemini":
                 repaired_raw, findings_repair_model = await _generate_gemini(
@@ -2367,7 +2450,9 @@ async def llm_result(
         "rescue_status": findings_rescue_status,
         "rescue_reason": findings_rescue_reason,
         "rescue_model": findings_rescue_model,
+        "prior_findings_loaded_count": prior_findings_loaded_count,
         "prior_findings_revalidated_count": prior_findings_revalidated_count,
+        "prior_findings_rejected_count": prior_findings_rejected_count,
     }
     result["findings_coverage"] = findings_coverage
 
