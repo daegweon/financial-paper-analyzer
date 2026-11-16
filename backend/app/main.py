@@ -730,7 +730,8 @@ def _are_duplicate_findings(left: dict[str, Any], right: dict[str, Any]) -> bool
         and any(ref.startswith("figure:") for ref in left_table_refs & right_table_refs)
         and bool(shared_pages)
         and bool(left_model) and left_model == right_model
-        and bool(left_numbers) and left_numbers == right_numbers
+        and bool(left_numbers) and bool(right_numbers)
+        and (left_numbers.issubset(right_numbers) or right_numbers.issubset(left_numbers))
         and bool(left_variables) and left_variables == right_variables
         and directions_compatible
     )
