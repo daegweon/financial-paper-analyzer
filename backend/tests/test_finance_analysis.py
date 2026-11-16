@@ -2180,3 +2180,31 @@ def test_significance_legend_uses_validated_excerpt_not_unrelated_page_stars():
     audit = module.audit_finding(finding, pages)
     assert audit["significance_supported"] is True
     assert audit["status"] == "screen_passed"
+
+
+def test_written_portfolio_fraction_audits_both_counts_without_relaxing_estimates():
+    quote = "Four out of six portfolios improve, with an estimated coefficient of -0.12."
+    pages = [{"page": 6, "text": quote}]
+    assert module._extract_written_count_tokens(quote) == ["4", "6"]
+    assert module._extract_written_count_tokens("four of the six portfolios") == ["4", "6"]
+    assert module._extract_written_count_tokens("four out of six times higher") == []
+
+    finding = {
+        "claim": "Four out of six portfolios improve; the coefficient is -0.12.",
+        "estimate": "-0.12",
+        "direction": "negative",
+        "evidence": [{"page": 6, "quote": quote}],
+    }
+    supported = module.audit_finding(finding, pages)
+    assert supported["numeric_supported"] is True
+    assert supported["status"] == "screen_passed"
+
+    wrong_count = module.audit_finding({**finding, "claim": "Five out of six portfolios improve."}, pages)
+    assert wrong_count["numeric_supported"] is False
+    assert "5" in wrong_count["unsupported_numeric_tokens"]
+    assert wrong_count["status"] == "review"
+
+    wrong_coefficient = module.audit_finding({**finding, "estimate": "-0.99"}, pages)
+    assert wrong_coefficient["numeric_supported"] is False
+    assert "-0.99" in wrong_coefficient["unsupported_numeric_tokens"]
+    assert wrong_coefficient["status"] == "review"
