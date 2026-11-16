@@ -1,3 +1,9 @@
+## 2026-11-17 — Ranked OSS parser replacement trial (checkpoint)
+- User asked pypdfium2 -> pdfplumber -> GROBID -> MinerU -> Marker. Isolated original-source B01–B10 replay completed for first two, baseline too.
+- PyMuPDF 346/346 citations/54 screened; PDFium 292/346 and 50; pdfplumber 14/346 and 1. All10 PDFs processed per implementation; no parser failures, no provider calls, no SQL writes.
+- PDFium faster and lower child RSS but loses 54 exact citations; plumber large quote regression. Neither promoted. GROBID/MinerU not executed under 1GB hard resource gate; Marker one-shot CPU research feasibility separately pending.
+- Benchmark source and metrics committed to experiment/ranked-pdf-parser-trial; execution-only runner kept separate. Full production untouched, engine freeze continues.
+
 ## 2026-11-16 — Open-source parser evaluation CLOSED, no production adoption
 - User directed ending speculative OSS comparisons. Adopt only a independently verified, overall non-regressing option.
 - Existing locked-source evidence: four-PDF selected Camelot Stream extraction 20.565219s -> 9.869005s combined, but B01 p18 Table2 five primary cells remain missing in both all/selected outputs. No human gold or whole-engine gain. Reject unrestricted and selected Camelot for production; preserve experimental code and data.

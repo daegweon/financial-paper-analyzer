@@ -1,5 +1,14 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-17 — Ranked five-candidate parser trial underway; initial ten-paper evidence replay verified
+
+User requested sequence **pypdfium2 -> pdfplumber -> GROBID -> MinerU -> Marker**, while *original engine remains frozen*. First two isolated exact-source trials B01–B10 (209 pages) completed: baseline PyMuPDF quote retentions 346/346, screen-passed 54; pypdfium2 292/346 and 50, 6.1527 seconds total parser wall and max child RSS 80.621 MiB; pdfplumber 14/346 and 1, 24.1568s and 309.734 MiB. Baseline parser wall 7.0552s, child RSS 97.555 MiB. These compare legacy v6.3.9 claims under current v6.4.2 revalidation, not independently human-scored precision nor fresh Gemini complete analysis. Both full replacements fail the no-regression gate. Ten private metrics JSON artifacts saved; no SQL/AI/production changes.
+
+GROBID and MinerU blocked at feasibility by missing multi-GB/16GB RAM model and dedicated runtime; **NOT RUN; no accuracy inference**. Marker CPU no-OCR separately attempted on B01, build pending at this checkpoint. See docs/RANKED_PDF_PARSERS_2026-11-17.md and benchmark/results/ranked-pdf-parsers-2026-11-17.json. Do not promote any candidates and do not merge runner railway.toml. Production version v6.4.2 commit 8cd5e37ee8eab3bf4b726b75af89e410ab48396e remains frozen.
+
+---
+
+
 ## 2026-11-16 final OSS decision — supersedes the experimental next-task sections below
 
 **CLOSED: no new OSS parser adoption in production.** User direction is to stop broad parser comparisons. Camelot page-selected runs reduced *extraction-only* wall time by 52.01% on four PDFs, but frozen original-source visual drafts show B01 p18 Table 2's five parameter targets missing from BOTH all-page and selected-page Stream. There is no certified cell/whole-engine accuracy gain, and 0 independent human-reviewed cells. Neither Camelot nor other untested parsers are approved. Do not continue caption/geometry recovery experiments as part of the OSS workstream; direct subsequent engineering to the existing production stack and unresolved 18 review-required findings, durable token/cost telemetry and release gates. See docs/OPEN_SOURCE_ADOPTION_DECISION_2026-11-16.md.
