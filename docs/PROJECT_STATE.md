@@ -1,5 +1,11 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-17 — Production SHA and repeated CI confirmation
+
+- Railway API and Worker latest successful deployments both remain on frozen production SHA 8cd5e37ee8eab3bf4b726b75af89e410ab48396e; candidate PR #7 has not been deployed.
+- GitHub Actions runs 43969788375 and 43970441861 both ended startup_failure before creating jobs (0 jobs); repository tests did not execute. Retry was rejected with HTTP 403.
+- Main API and Worker are online. No production deployment or data mutation occurred.
+
 ## 2026-11-17 — New candidate CI status
 
 - New branch workflow run 43969788375 ended `startup_failure` before any job was created (0 jobs). Repository tests were not executed.

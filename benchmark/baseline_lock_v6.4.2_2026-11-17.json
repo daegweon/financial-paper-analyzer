@@ -316,5 +316,19 @@
     "No current v6.4.2 full-pipeline Gemini baseline, cost, upload-to-save latency, or peak RSS is available.",
     "18 historical review-required findings and 50+ material claims still require two independent human reviews.",
     "No production source, deployment, database row or user file was changed."
-  ]
+  ],
+  "production_deployment_check": {
+    "checked_at": "2026-11-17",
+    "api": {
+      "deployment_id": "17c9134b-f49c-4358-a879-7ca77b55b936",
+      "status": "SUCCESS",
+      "commit": "8cd5e37ee8eab3bf4b726b75af89e410ab48396e"
+    },
+    "worker": {
+      "deployment_id": "dc501061-d434-454a-bc7d-4658b991a2f1",
+      "status": "SUCCESS",
+      "commit": "8cd5e37ee8eab3bf4b726b75af89e410ab48396e"
+    },
+    "candidate_deployed": false
+  }
 }

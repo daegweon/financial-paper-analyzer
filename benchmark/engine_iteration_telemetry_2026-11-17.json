@@ -63,14 +63,18 @@
     "scope": "local extraction only"
   },
   "verification": {
-    "github_actions": "startup_failure",
+    "github_actions": "repeated_startup_failure_before_jobs",
     "repository_tests_executed": false,
     "local_full_suite_verified": false,
     "measured_runtime_overhead_ms": null,
     "q2_non_regression_proven": false,
     "workflow_run_id": 43969788375,
     "jobs_created": 0,
-    "retry": "403_not_retryable"
+    "retry": "403_not_retryable",
+    "workflow_run_ids": [
+      43969788375,
+      43970441861
+    ]
   },
   "telemetry_aggregation": {
     "script": "benchmark/parse_railway_telemetry.py",
@@ -89,5 +93,11 @@
     "Q2": "BLOCKED",
     "P0": "BLOCKED"
   },
-  "final_deploy_allowed": false
+  "final_deploy_allowed": false,
+  "production_deployment_check": {
+    "api_status": "SUCCESS",
+    "worker_status": "SUCCESS",
+    "both_on_frozen_production_sha": "8cd5e37ee8eab3bf4b726b75af89e410ab48396e",
+    "candidate_deployed": false
+  }
 }
