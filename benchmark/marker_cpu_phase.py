@@ -66,7 +66,9 @@ def main():
                 if k.startswith(("SUPABASE_","BENCHMARK_","GEMINI_","OPENAI_","ANTHROPIC_","FULL_AB_")):
                     env.pop(k)
             env.update(TOKENIZERS_PARALLELISM="false",CUDA_VISIBLE_DEVICES="",
-                       OMP_NUM_THREADS="1",OPENBLAS_NUM_THREADS="1")
+                       OMP_NUM_THREADS="1",OPENBLAS_NUM_THREADS="1",
+                       HOME="/tmp", XDG_CACHE_HOME="/tmp/.cache",
+                       HF_HOME="/tmp/.cache/huggingface",TORCH_HOME="/tmp/.cache/torch")
             command=[
                 "marker_single",str(pdf),"--mode","fast",
                 "--disable_ocr","--disable_image_extraction",
@@ -75,11 +77,24 @@ def main():
             started=time.perf_counter()
             try:
                 proc=subprocess.run(command,env=env,stdin=subprocess.DEVNULL,
-                    stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,
                     timeout=160,check=False)
                 report["subprocess_exit_code"]=proc.returncode
                 if proc.returncode:
                     report["status"]="cli_failed"
+                    # Never persist raw stderr: it may contain private file paths.
+                    error=(proc.stderr or b"").decode("utf-8",errors="ignore").lower()
+                    tags={
+                        "permission_denied":("permissionerror","permission denied","read-only file system"),
+                        "missing_dependency":("modulenotfounderror","importerror","no module named"),
+                        "download_or_model":("hfhubhttperror","failed to download","couldn't connect","model not found"),
+                        "out_of_memory":("outofmemory","out of memory","cannot allocate memory"),
+                        "invalid_cli_option":("no such option","invalid value for","badparameter"),
+                        "runtime_error":("runtimeerror","assertionerror","valueerror","exception")
+                    }
+                    report["failure_categories"]=[
+                        key for key,phrases in tags.items() if any(p in error for p in phrases)
+                    ][:4] or ["unknown_cli_failure"]
                 else:
                     outputs=list(dest.rglob("*.json"))
                     if len(outputs)!=1:
