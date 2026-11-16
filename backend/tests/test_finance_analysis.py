@@ -2180,3 +2180,133 @@ def test_significance_legend_uses_validated_excerpt_not_unrelated_page_stars():
     audit = module.audit_finding(finding, pages)
     assert audit["significance_supported"] is True
     assert audit["status"] == "screen_passed"
+
+
+def test_gemini_attempt_telemetry_correlates_job_status_latency_and_usage(monkeypatch, caplog):
+    responses = [
+        {"status": 503, "text": "temporary unavailable"},
+        {
+            "status": 200,
+            "text": "",
+            "payload": {
+                "candidates": [{
+                    "finishReason": "STOP",
+                    "content": {"parts": [{"text": json.dumps({"ok": True})}]},
+                }],
+                "usageMetadata": {
+                    "promptTokenCount": 120,
+                    "candidatesTokenCount": 30,
+                    "thoughtsTokenCount": 5,
+                    "totalTokenCount": 155,
+                },
+            },
+        },
+    ]
+    requests = []
+
+    class FakeResponse:
+        def __init__(self, item):
+            self.status_code = item["status"]
+            self.text = item["text"]
+            self._payload = item.get("payload", {})
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                raise AssertionError("retryable status should be handled before raise_for_status")
+        def json(self):
+            return self._payload
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return None
+        async def post(self, url, **kwargs):
+            requests.append(url)
+            return FakeResponse(responses[len(requests) - 1])
+
+    async def fake_sleep(seconds):
+        return None
+
+    monkeypatch.setattr(module, "GEMINI_API_KEY", "test-secret-never-log")
+    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-3.5-flash-lite")
+    monkeypatch.setattr(module, "GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    monkeypatch.setattr(module.asyncio, "sleep", fake_sleep)
+    caplog.set_level("INFO", logger="papersignal")
+
+    token = module.CURRENT_ANALYSIS_JOB_ID.set("job-telemetry-123")
+    try:
+        parsed, model = asyncio.run(module._generate_gemini("synthetic prompt"))
+    finally:
+        module.CURRENT_ANALYSIS_JOB_ID.reset(token)
+
+    assert parsed == {"ok": True}
+    assert model == "gemini-3.6-flash"
+    assert len(requests) == 2
+    assert "job_id=job-telemetry-123 provider_call_id=" in caplog.text
+    assert "model=gemini-3.5-flash-lite status=503 elapsed_ms=" in caplog.text
+    assert "Gemini usage job_id=job-telemetry-123 provider_call_id=" in caplog.text
+    assert "attempt=2/2 provider_attempts=2" in caplog.text
+    assert "Gemini attempt succeeded job_id=job-telemetry-123 provider_call_id=" in caplog.text
+    assert "attempt=2/2 provider_attempts=2" in caplog.text
+    assert "prompt_tokens=120 candidate_tokens=30 thought_tokens=5 total_tokens=155" in caplog.text
+    assert "test-secret-never-log" not in caplog.text
+    call_ids = {
+        line.split("provider_call_id=", 1)[1].split()[0]
+        for line in caplog.text.splitlines() if "provider_call_id=" in line
+    }
+    assert len(call_ids) == 1
+
+
+def test_gemini_all_model_failure_log_preserves_both_statuses_and_job_id(monkeypatch, caplog):
+    statuses = [503, 429]
+    requests = []
+
+    class FakeResponse:
+        def __init__(self, status):
+            self.status_code = status
+            self.text = f"provider status {status}"
+        def raise_for_status(self):
+            raise AssertionError("retryable statuses should not call raise_for_status")
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return None
+        async def post(self, url, **kwargs):
+            requests.append(url)
+            return FakeResponse(statuses[len(requests) - 1])
+
+    async def fake_sleep(seconds):
+        return None
+
+    monkeypatch.setattr(module, "GEMINI_API_KEY", "another-secret-never-log")
+    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-3.5-flash-lite")
+    monkeypatch.setattr(module, "GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    monkeypatch.setattr(module.asyncio, "sleep", fake_sleep)
+    caplog.set_level("INFO", logger="papersignal")
+
+    token = module.CURRENT_ANALYSIS_JOB_ID.set("job-all-failed-456")
+    try:
+        try:
+            asyncio.run(module._generate_gemini("synthetic prompt"))
+        except module.HTTPException as exc:
+            assert exc.status_code == 503
+        else:
+            raise AssertionError("Both retryable provider failures must surface as HTTP 503")
+    finally:
+        module.CURRENT_ANALYSIS_JOB_ID.reset(token)
+
+    assert len(requests) == 2
+    assert "job_id=job-all-failed-456 provider_call_id=" in caplog.text
+    assert "model=gemini-3.5-flash-lite status=503" in caplog.text
+    assert "model=gemini-3.6-flash status=429" in caplog.text
+    assert "All Gemini models failed job_id=job-all-failed-456 provider_call_id=" in caplog.text
+    assert "attempts=2" in caplog.text
+    assert "gemini-3.5-flash-lite=503; gemini-3.6-flash=429" in caplog.text
+    assert "another-secret-never-log" not in caplog.text
+    call_ids = {
+        line.split("provider_call_id=", 1)[1].split()[0]
+        for line in caplog.text.splitlines() if "provider_call_id=" in line
+    }
+    assert len(call_ids) == 1
