@@ -1,14 +1,16 @@
 import asyncio
+from contextvars import ContextVar
 from difflib import SequenceMatcher
 import json
 import logging
 import os
 import re
+import time
 import unicodedata
 from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import quote
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import fitz
 import httpx
@@ -31,6 +33,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-terra")
 ANALYSIS_VERSION = "finance-structured-v6.4.2"
 log = logging.getLogger("papersignal")
+CURRENT_ANALYSIS_JOB_ID = ContextVar("papersignal_analysis_job_id", default="-")
 app = FastAPI(title="PaperSignal API", version="0.2.0")
 # Production origins are configured explicitly in FRONTEND_ORIGIN.
 # Vercel creates immutable preview URLs per deployment, so enumerating a single
@@ -2062,6 +2065,9 @@ async def _generate_gemini(
     )
     failures: list[tuple[str, str, str]] = []
     timeout = httpx.Timeout(connect=10.0, read=75.0, write=25.0, pool=10.0)
+    job_id = CURRENT_ANALYSIS_JOB_ID.get()
+    provider_call_id = uuid4().hex
+    provider_started = time.perf_counter()
 
     for index, model_name in enumerate(models):
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
@@ -2078,6 +2084,7 @@ async def _generate_gemini(
         }
         if index:
             await asyncio.sleep(1.0)
+        attempt_started = time.perf_counter()
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(
@@ -2090,25 +2097,27 @@ async def _generate_gemini(
                 )
         except httpx.TransportError as exc:
             error_type = type(exc).__name__
+            elapsed_ms = (time.perf_counter() - attempt_started) * 1000
             log.warning(
-                "Gemini transport failure model=%s error=%s; trying next configured model",
-                model_name, error_type,
+                "Gemini attempt failed job_id=%s provider_call_id=%s attempt=%d/%d model=%s outcome=transport elapsed_ms=%.1f error=%s",
+                job_id, provider_call_id, index + 1, len(models), model_name, elapsed_ms, error_type,
             )
             failures.append((model_name, "timeout", error_type))
             continue
 
+        elapsed_ms = (time.perf_counter() - attempt_started) * 1000
         if response.status_code in (429, 500, 502, 503, 504, 404):
             body = response.text[:700]
             log.warning(
-                "Gemini model unavailable model=%s status=%d body=%s; trying next configured model",
-                model_name, response.status_code, body,
+                "Gemini attempt failed job_id=%s provider_call_id=%s attempt=%d/%d model=%s status=%d elapsed_ms=%.1f body=%s; trying next configured model",
+                job_id, provider_call_id, index + 1, len(models), model_name, response.status_code, elapsed_ms, body,
             )
             failures.append((model_name, str(response.status_code), body[:220]))
             continue
         if response.status_code in (401, 403):
             log.error(
-                "Gemini API authentication/access rejected status=%d body=%s",
-                response.status_code, response.text[:700],
+                "Gemini API authentication/access rejected job_id=%s provider_call_id=%s attempt=%d/%d status=%d elapsed_ms=%.1f body=%s",
+                job_id, provider_call_id, index + 1, len(models), response.status_code, elapsed_ms, response.text[:700],
             )
             raise HTTPException(
                 status_code=503,
@@ -2116,8 +2125,8 @@ async def _generate_gemini(
             )
         if response.status_code == 400:
             log.error(
-                "Gemini request rejected status=400 model=%s body=%s",
-                model_name, response.text[:1000],
+                "Gemini request rejected job_id=%s provider_call_id=%s attempt=%d/%d status=400 model=%s elapsed_ms=%.1f body=%s",
+                job_id, provider_call_id, index + 1, len(models), model_name, elapsed_ms, response.text[:1000],
             )
             raise HTTPException(
                 status_code=502,
@@ -2135,8 +2144,14 @@ async def _generate_gemini(
         finish_reason = candidate.get("finishReason")
         usage = payload.get("usageMetadata", {})
         log.info(
-            "Gemini usage model=%s finish=%s prompt_tokens=%s candidate_tokens=%s thought_tokens=%s total_tokens=%s",
+            "Gemini usage job_id=%s provider_call_id=%s attempt=%d/%d provider_attempts=%d model=%s elapsed_ms=%.1f finish=%s prompt_tokens=%s candidate_tokens=%s thought_tokens=%s total_tokens=%s",
+            job_id,
+            provider_call_id,
+            index + 1,
+            len(models),
+            index + 1,
             model_name,
+            elapsed_ms,
             finish_reason,
             usage.get("promptTokenCount"),
             usage.get("candidatesTokenCount"),
@@ -2150,13 +2165,17 @@ async def _generate_gemini(
                 f"total={usage.get('totalTokenCount')}"
             )
             log.warning(
-                "Gemini output cap reached model=%s cap=%d usage=%s; trying next model",
-                model_name, request_body["generationConfig"]["maxOutputTokens"], detail,
+                "Gemini output cap reached job_id=%s provider_call_id=%s attempt=%d/%d model=%s elapsed_ms=%.1f cap=%d usage=%s; trying next model",
+                job_id, provider_call_id, index + 1, len(models), model_name, elapsed_ms,
+                request_body["generationConfig"]["maxOutputTokens"], detail,
             )
             failures.append((model_name, "max_tokens", detail))
             continue
         if finish_reason not in (None, "STOP"):
-            log.warning("Gemini incomplete response model=%s finish=%s", model_name, finish_reason)
+            log.warning(
+                "Gemini incomplete response job_id=%s provider_call_id=%s attempt=%d/%d model=%s elapsed_ms=%.1f finish=%s",
+                job_id, provider_call_id, index + 1, len(models), model_name, elapsed_ms, finish_reason,
+            )
             failures.append((model_name, "incomplete", str(finish_reason)))
             continue
         parts = candidate.get("content", {}).get("parts", [])
@@ -2170,17 +2189,31 @@ async def _generate_gemini(
         try:
             parsed = json.loads(content)
         except json.JSONDecodeError as exc:
-            log.warning("Gemini invalid JSON model=%s; trying next configured model", model_name)
+            log.warning(
+                "Gemini invalid JSON job_id=%s provider_call_id=%s attempt=%d/%d model=%s elapsed_ms=%.1f; trying next model",
+                job_id, provider_call_id, index + 1, len(models), model_name, elapsed_ms,
+            )
             failures.append((model_name, "invalid_json", str(exc)[:180]))
             continue
         if not isinstance(parsed, dict):
-            log.warning("Gemini response was not a JSON object model=%s", model_name)
+            log.warning(
+                "Gemini non-object JSON job_id=%s provider_call_id=%s attempt=%d/%d model=%s elapsed_ms=%.1f",
+                job_id, provider_call_id, index + 1, len(models), model_name, elapsed_ms,
+            )
             failures.append((model_name, "invalid_json", "response_not_object"))
             continue
+        log.info(
+            "Gemini attempt succeeded job_id=%s provider_call_id=%s attempt=%d/%d provider_attempts=%d model=%s elapsed_ms=%.1f total_elapsed_ms=%.1f",
+            job_id, provider_call_id, index + 1, len(models), index + 1, model_name, elapsed_ms,
+            (time.perf_counter() - provider_started) * 1000,
+        )
         return parsed, model_name
 
     summary = "; ".join(f"{model}={status}" for model, status, _ in failures)
-    log.error("All Gemini models failed: %s", summary)
+    log.error(
+        "All Gemini models failed job_id=%s provider_call_id=%s attempts=%d total_elapsed_ms=%.1f failures=%s",
+        job_id, provider_call_id, len(failures), (time.perf_counter() - provider_started) * 1000, summary,
+    )
     if failures and all(status == "429" for _, status, _ in failures):
         raise HTTPException(
             status_code=429,
@@ -2730,6 +2763,7 @@ async def _process_analysis_job(
 ) -> None:
     """Resume from durable checkpoints and make result persistence idempotent."""
     headers = supabase_headers(token)
+    job_context_token = CURRENT_ANALYSIS_JOB_ID.set(job_id)
     try:
         async with httpx.AsyncClient(timeout=60) as client:
             # If a previous attempt committed the result but crashed before the
@@ -2926,6 +2960,8 @@ async def _process_analysis_job(
             await _patch_owned_row("papers", paper_id, user_id, token, {"status": "failed"})
         except Exception:
             log.exception("Could not persist crashed analysis job job_id=%s", job_id)
+    finally:
+        CURRENT_ANALYSIS_JOB_ID.reset(job_context_token)
 
 
 @app.post("/api/analyze/{paper_id}", status_code=202)
