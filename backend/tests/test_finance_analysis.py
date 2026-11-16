@@ -890,7 +890,7 @@ def test_primary_prompt_requires_exact_regression_row_and_separate_legend():
     prompt = module.build_analysis_prompt(pages)
     assert "실제 계수 셀을 포함한" in prompt
     assert "model_or_column의 셀을 정확히 식별" in prompt
-    assert "숫자가 있는 표 행 인용" in prompt
+    assert "표 행 인용에 연결" in prompt
     assert "significance_legend_evidence" in prompt
 
 
