@@ -119,13 +119,43 @@ def camelot_composite_pages(data: bytes, count: int) -> tuple[int, list[dict[str
     return _normal_pages(by_page, count)
 
 
+
+def docling_parse_pages(data: bytes, count: int) -> tuple[int, list[dict[str, Any]]]:
+    """Direct docling-parse v7: replacement PDF text, no fitz or ML models."""
+    from docling_parse.pdf_parser import ContentConfig, ContentLevel, DecodeConfig, DoclingPdfParser
+    with tempfile.TemporaryDirectory(prefix="papersignal-docling-native-") as d:
+        p = os.path.join(d, "source.pdf")
+        with open(p, "wb") as handle:
+            handle.write(data)
+        parser = DoclingPdfParser(loglevel="fatal")
+        doc = parser.load(
+            path_or_stream=p,
+            decode_config=DecodeConfig(do_sanitization=True, keep_glyphs=False),
+            content_config=ContentConfig(
+                word_cells_content_level=ContentLevel.COMPUTE_AND_MATERIALIZE,
+                line_cells_content_level=ContentLevel.COMPUTE_AND_MATERIALIZE,
+                shapes_content_level=ContentLevel.SKIP,
+                bitmaps_content_level=ContentLevel.SKIP,
+            ),
+        )
+        if doc is None or doc.number_of_pages() != count:
+            raise ValueError("docling-parse page-count mismatch")
+        pages: dict[int, list[str]] = defaultdict(list)
+        for n, page in doc.iterate_pages():
+            if 1 <= int(n) <= min(count, MAX_SCAN):
+                pages[int(n)].extend(c.text for c in page.textline_cells
+                                     if isinstance(c.text, str) and c.text.strip())
+    return _normal_pages(pages, count)
+
 def extract_pages(data: bytes, backend: str | None = None) -> tuple[int, list[dict[str, Any]]]:
     if not isinstance(data, bytes) or not data.startswith(b"%PDF-") or not 0 < len(data) <= MAX_BYTES:
         raise ValueError("Expected a valid PDF of at most 30 MiB")
-    mode = backend if backend is not None else os.environ.get("PAPERSIGNAL_PDF_BACKEND", "docling")
-    if mode not in ("docling", "camelot_composite"):
+    mode = backend if backend is not None else os.environ.get("PAPERSIGNAL_PDF_BACKEND", "docling_parse")
+    if mode not in ("docling", "camelot_composite", "docling_parse"):
         raise ValueError("Invalid experimental PDF backend")
     count = _count_pages(data)
     if mode == "docling":
         return docling_pages(data, count)
+    if mode == "docling_parse":
+        return docling_parse_pages(data, count)
     return camelot_composite_pages(data, count)
