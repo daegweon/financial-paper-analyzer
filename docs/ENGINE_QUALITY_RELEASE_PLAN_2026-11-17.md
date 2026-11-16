@@ -71,3 +71,8 @@
 The former branch `experiment/engine-quality-v6-4-2-heldout-locked` / PR #5 is **not eligible**: GitHub compare shows it diverged from lock commit 149311ec2993cac3bd410c10ac7feb202d582fc7, with merge base frozen production SHA 8cd5e37. Do not merge PR #5. The clean branch `experiment/engine-quality-v6-4-2-heldout-clean` starts at 325fb7e5bda6dd05cf4888fd658018a2d8e4abbf, a descendant of the lock commit; first code commit 7dd13343f44702369b8a1415c750d5fdf08371f7 has that base as parent. The corrected lineage and exact PDF hashes are documented in `docs/ENGINE_BASELINE_LOCK_2026-11-17.md` and `benchmark/baseline_lock_v6.4.2_2026-11-17.json`.
 
 Local production-extractor reproduction (PyMuPDF 1.26.7 vs production pin 1.26.3) measured H01 40/40 pages, 111,448 extracted chars, median 212.735 ms; H02 30/30, 62,589 chars, median 84.105 ms. This is local extraction-only evidence, not Q2. No Gemini full-pipeline run or cost/RSS comparison has been completed. GitHub Actions still fails startup_failure before creating jobs. All Q0/Q1/Q2/P0 remain BLOCKED.
+
+
+## Latency measurement scope clarification (2026-11-17)
+
+Worker claim logs now include `analysis_jobs.created_at`, allowing `job_created_to_terminal_ms` (queue wait + worker processing) and `claim_to_terminal_ms` to be calculated. The row is created after PDF upload completes, so neither includes upload transfer. The Q2-required upload-start-to-result-save p95 remains unavailable and must not be inferred from these proxy durations. `full_pipeline_latency_ms` stays null until the actual upload-start timestamp is captured.
