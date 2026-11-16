@@ -63,11 +63,14 @@
     "scope": "local extraction only"
   },
   "verification": {
-    "github_actions": "not_yet_checked_on_new_branch",
+    "github_actions": "startup_failure",
     "repository_tests_executed": false,
     "local_full_suite_verified": false,
     "measured_runtime_overhead_ms": null,
-    "q2_non_regression_proven": false
+    "q2_non_regression_proven": false,
+    "workflow_run_id": 43969788375,
+    "jobs_created": 0,
+    "retry": "403_not_retryable"
   },
   "telemetry_aggregation": {
     "script": "benchmark/parse_railway_telemetry.py",

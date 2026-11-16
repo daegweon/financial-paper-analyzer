@@ -28,4 +28,4 @@ Exact production extraction logic, local PyMuPDF 1.26.7 (production pin 1.26.3),
 
 ## Verification limits
 
-GitHub Actions has previously failed with `startup_failure` before creating jobs. New-branch CI status is pending inspection. No repository test pass, Gemini baseline, measured telemetry overhead, full-pipeline latency, provider cost or peak RSS is claimed. Q0/Q1/Q2/P0 remain blocked. No production deployment or Supabase data mutation.
+New-branch GitHub Actions run 43969788375 ended with `startup_failure` before creating any jobs (jobs=0). GitHub rejected a retry with HTTP 403 because the run is not retryable. This is an infrastructure/startup failure, not a passing or failing repository test result. No repository test pass, Gemini baseline, measured telemetry overhead, full-pipeline latency, provider cost or peak RSS is claimed. Q0/Q1/Q2/P0 remain blocked. No production deployment or Supabase data mutation.

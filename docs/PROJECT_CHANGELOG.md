@@ -1,3 +1,8 @@
+## 2026-11-17 — New candidate CI status
+
+- New branch workflow run 43969788375 ended `startup_failure` before any job was created (0 jobs). Repository tests were not executed.
+- GitHub API rejected retry with HTTP 403 (`This workflow run cannot be retried`). No test pass is claimed. Candidate remains draft and isolated; no production deployment.
+
 ## 2026-11-17 — B01-B10 exact SHA lock complete; v6.4.2 baseline pending
 
 - Attached B01-B10 PDFs verified: 10/10 valid, unencrypted, 209 pages, 17,760,530 bytes. Exact SHA-256 hashes are in benchmark/legacy_regression_binary_lock_2026-11-17.json.
