@@ -1,0 +1,10 @@
+# EXPERIMENT ONLY: full replacement of PyMuPDF at the extract_pages boundary.
+# Do not merge into backend/requirements.txt of production.
+fastapi==0.115.12
+uvicorn==0.34.2
+httpx==0.28.1
+pydantic==2.11.7
+docling==2.150.0
+camelot-py==1.0.9
+pdfminer.six==20260107
+pytest==9.0.2

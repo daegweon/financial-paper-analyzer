@@ -1,0 +1,18 @@
+# Isolated one-shot replacement experiment; production Dockerfile unchanged.
+FROM python:3.12-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=1 MPLBACKEND=Agg HF_HUB_DISABLE_TELEMETRY=1
+WORKDIR /bench
+COPY backend/requirements-replacement-experiment.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+COPY backend/app/pdf_replacement.py /bench/app/pdf_replacement.py
+COPY backend/app/__init__.py /bench/app/__init__.py
+COPY backend/app/main.py /bench/app/main.py
+COPY benchmark/__init__.py /bench/benchmark/__init__.py
+COPY benchmark/table_shadow.py /bench/benchmark/table_shadow.py
+COPY benchmark/full_replacement_compare.py /bench/benchmark/full_replacement_compare.py
+COPY benchmark/table_corpus.sha256.json /bench/benchmark/table_corpus.sha256.json
+COPY backend/tests/test_pdf_replacement_contract.py /bench/tests/test_pdf_replacement_contract.py
+ENV PYTHONPATH=/bench
+RUN python -m pytest -q tests/test_pdf_replacement_contract.py && python -c "import app.main; import app.pdf_replacement; print('replacement-main-import-ok')"
+USER 65532:65532
+CMD ["python", "-m", "benchmark.full_replacement_compare", "--ids", "B01", "B02", "B09", "B10", "--timeout", "150"]
