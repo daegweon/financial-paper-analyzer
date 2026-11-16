@@ -36,7 +36,7 @@ def make_repo(root: Path):
     (root / "backend/app/main.py").write_text(MAIN, encoding="utf-8")
     (root / "backend/app/worker.py").write_text("def worker(): return True\n", encoding="utf-8")
     (root / "backend/requirements.txt").write_text("PyMuPDF==1.26.3\n", encoding="utf-8")
-    (root / "backend/Dockerfile").write_text("FROM python:3.12-slim\n", encoding="utf-8")
+    (root / "Dockerfile").write_text("FROM python:3.12-slim\n", encoding="utf-8")
 
 
 def test_capture_fingerprints_are_stable_and_include_required_segments(tmp_path, monkeypatch):
@@ -77,3 +77,10 @@ def test_missing_source_file_fails_closed(tmp_path):
         pass
     else:
         raise AssertionError("Missing source files must not produce a fingerprint report")
+
+
+def test_capture_supports_legacy_backend_dockerfile_fallback(tmp_path):
+    make_repo(tmp_path)
+    (tmp_path / "Dockerfile").rename(tmp_path / "backend/Dockerfile")
+    report = capture(tmp_path, production_commit="d" * 40)
+    assert len(report["source_fingerprints"]["dockerfile"]["sha256"]) == 64
