@@ -1,3 +1,13 @@
+## 2026-11-16 — v6.3.9 ten-paper benchmark
+- Reanalyzed B01–B10 with finance-structured-v6.3.9; all ten durable analysis jobs completed and prior analyses were retained.
+- Latest deployment commit d9c684e5a4bcccbb95feaed6385429bd8ff85567 is SUCCESS for Railway API and Worker; API health returned HTTP 200.
+- Aggregate result: 71 findings, 53 screen-passed, 18 review-required; screen-passed share 74.6%.
+- Weighted lexical Gold-fact screen: 90.5%, compared with 84.9% in the mixed v6.1/v6.2 baseline.
+- Saved detailed scorecard to benchmark/results/scorecard-v6.3.9-2026-11-16.md.
+- Caveats: lexical Gold-fact screen is not human-verified citation accuracy; complete per-paper cost/latency telemetry is unavailable.
+- B02 experienced Gemini Free Tier quota/rate-limit errors (503 primary, 429 fallback); durable retry succeeded. Treat provider quota sustainability as a P0 beta gate.
+- Next: human-review 18 review-required findings, prioritize B01/B02/B09/B10; instrument token, latency and cost telemetry before further engine expansion.
+
 # PaperSignal — Development Changelog
 
 ## 2026-11-16 — Session continuity and v6.3 kickoff
