@@ -112,7 +112,7 @@
   },
   "final_deployed": false,
   "critical_errors_human_certified": null,
-  "note": "B01-B10 and H01-H02 exact binary locks complete. Pinned source fingerprint and local backend suites pass. Only one historical B10 v6.4.2 result exists; full 10-paper v6.4.2 and held-out Gemini baseline still missing. Q0/Q1/Q2/P0 remain blocked.",
+  "note": "B01-B10 and H01-H02 exact binary locks complete. Pinned source fingerprint and local backend suites pass. Only one historical B10 v6.4.2 result exists; full 10-paper v6.4.2 and held-out Gemini baseline still missing. Q0/Q1/Q2/P0 remain blocked. Latest GitHub Actions run 43979921435 also failed with startup_failure before any jobs were created; local pinned-runtime tests remain the available test evidence.",
   "binary_corpus_lock": {
     "B01_B10": {
       "papers": 10,
