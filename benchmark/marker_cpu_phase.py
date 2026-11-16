@@ -78,7 +78,7 @@ def main():
             try:
                 proc=subprocess.run(command,env=env,stdin=subprocess.DEVNULL,
                     stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,
-                    timeout=160,check=False)
+                    cwd=d,timeout=160,check=False)
                 report["subprocess_exit_code"]=proc.returncode
                 if proc.returncode:
                     report["status"]="cli_failed"
