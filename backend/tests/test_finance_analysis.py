@@ -636,6 +636,36 @@ def test_audit_finding_matches_written_count_words_only_in_count_context():
     assert module._extract_written_count_tokens("five times higher") == []
 
 
+def test_audit_finding_ignores_portfolio_size_labels_but_checks_sharpe_coefficients():
+    pages = [{
+        "page": 10,
+        "text": (
+            "2 (ADVANC, SCC) 0.03 0.33. "
+            "Portfolio Sharpe ratio for the two-stock portfolio is 0.33. "
+            "Table 1 reports SharpeRV 0.33 versus SharpeVar 0.02."
+        ),
+    }]
+    finding = {
+        "claim": "2종목 최적 포트폴리오에서 실현 변동성 모형의 샤프 지수는 0.33으로 분산 모형의 0.02보다 높다.",
+        "direction": "positive",
+        "estimate": "SharpeRV 0.33 vs SharpeVar 0.02",
+        "table_reference": "Table 1",
+        "model_or_column": "2-stock portfolio",
+        "evidence": [{
+            "page": 10,
+            "quote": "2 (ADVANC, SCC) 0.03 0.33. Table 1 reports SharpeRV 0.33 versus SharpeVar 0.02.",
+        }],
+    }
+    audit = module.audit_finding(finding, pages)
+    assert audit["numeric_supported"] is True
+    assert audit["unsupported_numeric_tokens"] == []
+
+    unsupported = {**finding, "estimate": "SharpeRV 0.99 vs SharpeVar 0.02"}
+    failed = module.audit_finding(unsupported, pages)
+    assert failed["numeric_supported"] is False
+    assert "0.99" in failed["unsupported_numeric_tokens"]
+
+
 def test_table_and_figure_reference_overlap_deduplicates_compound_citations():
     quote = "SCGP appears in 12 of the 20 portfolios, followed by KCE with nine appearances."
     left = {
