@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "record_type": "LEGACY_REGRESSION_STORAGE_METADATA_ONLY_NOT_BINARY_LOCK",
+  "recorded_at": "2026-11-17",
+  "source": "Read-only query of public.papers and storage.objects metadata",
+  "bucket": "papers",
+  "bucket_access": "private",
+  "total_papers": 10,
+  "total_pages": 209,
+  "total_bytes": 17760530,
+  "exact_pdf_bytes_downloaded_to_runtime": false,
+  "sha256_verified": false,
+  "note": "Storage eTag is retained as opaque metadata only; it is not assumed to be an MD5 or SHA-256 digest. Do not use it as a binary lock. No user IDs or private storage paths are included.",
+  "papers": [
+    {
+      "id": "B01",
+      "original_filename": "B01_factor-sufficiency.pdf",
+      "size_bytes": 2999239,
+      "pages": 31,
+      "storage_etag": "f2075ae9b1222cc50293d1e9b11ce912",
+      "sha256": null
+    },
+    {
+      "id": "B02",
+      "original_filename": "B02_korea-consumption.pdf",
+      "size_bytes": 606182,
+      "pages": 20,
+      "storage_etag": "165d0728c0d9925a371da9f2ce04a6bd",
+      "sha256": null
+    },
+    {
+      "id": "B03",
+      "original_filename": "B03_morocco-carhart.pdf",
+      "size_bytes": 396873,
+      "pages": 14,
+      "storage_etag": "2a8da0e1e6097eb44f417906a24b784e",
+      "sha256": null
+    },
+    {
+      "id": "B04",
+      "original_filename": "B04_china-regime.pdf",
+      "size_bytes": 4418309,
+      "pages": 19,
+      "storage_etag": "b2f81496143f0e3a80845d379846984a",
+      "sha256": null
+    },
+    {
+      "id": "B05",
+      "original_filename": "B05_warsaw-liquidity.pdf",
+      "size_bytes": 1064697,
+      "pages": 24,
+      "storage_etag": "1506c646a85d173551c62b43b21b96e6",
+      "sha256": null
+    },
+    {
+      "id": "B06",
+      "original_filename": "B06_asean-fx.pdf",
+      "size_bytes": 975524,
+      "pages": 22,
+      "storage_etag": "fef70bb01f1b55a1646e1a4cf283361b",
+      "sha256": null
+    },
+    {
+      "id": "B07",
+      "original_filename": "B07_korea-garch-midas.pdf",
+      "size_bytes": 3429628,
+      "pages": 23,
+      "storage_etag": "a38c2cc0e2cc56eab7a058b47db30af4",
+      "sha256": null
+    },
+    {
+      "id": "B08",
+      "original_filename": "B08_us-esg.pdf",
+      "size_bytes": 1202803,
+      "pages": 21,
+      "storage_etag": "610e73ead3e47d0be911b23519ccae61",
+      "sha256": null
+    },
+    {
+      "id": "B09",
+      "original_filename": "B09_firm-vov.pdf",
+      "size_bytes": 1076845,
+      "pages": 16,
+      "storage_etag": "97838a0cd74cb780a6c0f2d47d76fd8b",
+      "sha256": null
+    },
+    {
+      "id": "B10",
+      "original_filename": "B10_thailand-portfolio.pdf",
+      "size_bytes": 1590430,
+      "pages": 19,
+      "storage_etag": "4f8b19b56c80e15c1180b1dc3b7332be",
+      "sha256": null
+    }
+  ]
+}
