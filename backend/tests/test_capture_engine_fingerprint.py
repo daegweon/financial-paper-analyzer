@@ -52,6 +52,7 @@ def test_capture_fingerprints_are_stable_and_include_required_segments(tmp_path,
     assert report["segments"]["prompt_sha256"] == sha256_text("def build_analysis_prompt(pages):\n    return str(pages)")
     assert len(report["segments"]["schema_sha256"]) == 64
     assert report["extraction_config"]["MAX_PAGES_TO_SCAN"] == 50
+    assert len(report["segments"]["model_config_sha256"]) == 64
 
 
 def test_capture_reads_only_safe_model_names_and_never_serializes_secrets(tmp_path, monkeypatch):
