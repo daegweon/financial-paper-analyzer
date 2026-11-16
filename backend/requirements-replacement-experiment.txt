@@ -4,7 +4,7 @@ fastapi==0.115.12
 uvicorn==0.34.2
 httpx==0.28.1
 pydantic==2.11.7
-docling==2.150.0
+docling-slim==2.150.0
 camelot-py==1.0.9
 pdfminer.six==20260107
 pytest==9.0.2

@@ -23,7 +23,7 @@ from benchmark.table_shadow import StorageSource, check_bytes
 
 ROOT = Path(__file__).resolve().parents[1]
 FROZEN_RUN = "tables-1503f4d527fa419a9d48d0576c3f616d"
-MODES = ("docling", "camelot_composite")
+MODES = ("docling",)
 NUM = re.compile(r"(?<![\w.])[-+]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?%?(?![\w.])")
 WORD = re.compile(r"[A-Za-z]{4,}|[가-힣]{2,}")
 

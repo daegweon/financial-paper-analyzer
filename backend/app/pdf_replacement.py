@@ -46,15 +46,15 @@ def _normal_pages(per_page: dict[int, list[str]], count: int) -> tuple[int, list
 
 def docling_pages(data: bytes, count: int) -> tuple[int, list[dict[str, Any]]]:
     from docling.datamodel.base_models import DocumentStream, InputFormat
-    from docling.datamodel.pipeline_options import PdfPipelineOptions
-    from docling.document_converter import DocumentConverter, PdfFormatOption
-    # Avoid OCR and GPU downloads to make a CPU comparison reproducible.
-    opts = PdfPipelineOptions(do_ocr=False, do_table_structure=True)
+    from docling.datamodel.pipeline_options import NativePdfPipelineOptions
+    from docling.document_converter import DocumentConverter, NativePdfFormatOption
+    # Native Docling is a model-free complete text extraction replacement.
+    # It does not reconstruct structured tables or OCR: measure those losses.
+    opts = NativePdfPipelineOptions()
     opts.generate_page_images = False
-    opts.generate_picture_images = False
     converter = DocumentConverter(
         allowed_formats=[InputFormat.PDF],
-        format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=opts)},
+        format_options={InputFormat.PDF: NativePdfFormatOption(pipeline_options=opts)},
     )
     stream = DocumentStream(name="paper.pdf", stream=BytesIO(data))
     result = converter.convert(stream, raises_on_error=True, page_range=(1, min(count, MAX_SCAN)))
