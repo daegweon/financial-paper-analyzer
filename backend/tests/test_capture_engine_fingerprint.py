@@ -9,7 +9,7 @@ from benchmark.capture_engine_fingerprint import capture, sha256_text
 
 MAIN = '''import os
 ANALYSIS_VERSION = "finance-structured-v6.4.2"
-MAX_BYTES = 100
+MAX_BYTES = 30 * 1024 * 1024
 MAX_PAGES = 300
 MAX_PAGES_TO_SCAN = 50
 MAX_PAGE_CHARS = 4500
@@ -52,6 +52,7 @@ def test_capture_fingerprints_are_stable_and_include_required_segments(tmp_path,
     assert report["segments"]["prompt_sha256"] == sha256_text("def build_analysis_prompt(pages):\n    return str(pages)")
     assert len(report["segments"]["schema_sha256"]) == 64
     assert report["extraction_config"]["MAX_PAGES_TO_SCAN"] == 50
+    assert report["extraction_config"]["MAX_BYTES"] == 30 * 1024 * 1024
     assert len(report["segments"]["model_config_sha256"]) == 64
 
 
