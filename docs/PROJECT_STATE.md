@@ -1,5 +1,20 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-17 — 사용자 최종 지시: OSS 종료, 기존 PyMuPDF 엔진 개선 → 임계점 충족 → 최종 배포
+
+**이 항목이 아래 과거 '오픈소스 평가' 및 'v6.3.9가 운영'이라는 구형 계획보다 우선합니다.** 사용자는 추가 OSS/파서 교체 탐색을 **종료**하고 **현재 PyMuPDF / finance-structured-v6.4.2 운영 엔진**만 개선하기로 최종 결정했습니다. 현재 운영 엔진과 사용자의 기존 논문은 변경하지 않았습니다. 향후 개선은 독립 인간 골드·원문 인용 보존·전체 정확도·지연/메모리/비용·실제 사용자 E2E의 합격 기준을 충족한 다음에만 최종 배포합니다. 목표 달성 후 사소한 최적화 반복을 종료하며, 전체 엔진 성능을 해치는 개선은 거부/롤백합니다.
+
+**새 세션 첫 작업:** `docs/SESSION_HANDOFF_NEXT.md`, `docs/ENGINE_QUALITY_RELEASE_PLAN_2026-11-17.md` 및 `benchmark/engine_release_gates_2026-11-17.json`을 읽으세요. GitHub 전용 문서 브랜치 `plan/engine-quality-release-handoff`를 현재 핸드오프 기준으로 사용합니다. 실제 엔진 개발은 이 브랜치를 출발점으로 별도 실험 브랜치에서 시작하고, 평가 게이트 전에는 운영 브랜치 `feat/research-workspace-mvp`에 push하지 마세요 (자동 Railway 배포 주의).
+
+운영 코드 고정 SHA `8cd5e37ee8eab3bf4b726b75af89e410ab48396e`; `ANALYSIS_VERSION="finance-structured-v6.4.2"`. Historical v6.3.9 결과(71 findings/53 screenpass/18 review-required)와 v6.4.2 validator로 historical result를 재검증한 54 screenpass/346 quotes는 구분합니다. **독립 human gold 아직 0명, 현재 전체-model 비교 503 오류로 미완료**, 품질 및 배포 게이트 모두 아직 BLOCKED. 코드 교체나 배포는 하지 않았습니다.
+
+오픈소스 최종 실측: PyMuPDF의 346/346 기존 직접 인용 대비 Docling Parse 296/346, pypdfium2 292/346, pdfplumber 14/346. GROBID/MinerU는 현재 자원으로 미실행, Marker는 변환 실행 권한 오류로 정확도 미측정. OSS 전면 대체/운영 신규 도입 0건, 이후 비교 중단. 세부 보고서: `experiment/ranked-pdf-parser-trial/docs/RANKED_PDF_PARSERS_2026-11-17.md`.
+
+메모리 제한: **이 프로젝트의 ChatGPT 메모리는 비활성화**되어 있습니다. 이 결정은 계정 메모리에 저장된 것이 아니라 **GitHub 문서로 지속 보존**됩니다. 새로운 세션에서도 해당 브랜치·문서를 먼저 조회해야 합니다.
+
+---
+
+
 Last updated: 2026-11-16 (Asia/Seoul)
 Source of truth: Git branch feat/research-workspace-mvp
 Open development PR: https://github.com/daegweon/financial-paper-analyzer/pull/2 (Draft; do not merge without release gates)

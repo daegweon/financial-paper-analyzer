@@ -1,3 +1,9 @@
+## 2026-11-17 — User final product decision: stop OSS, focus on existing engine and quality-gated final deployment
+- Closed speculative external parser adoption/complete replacements (0 production adoptions). Preserve PyMuPDF/v6.4.2 with frozen operating SHA 8cd5e37; do not re-run OSS hunt.
+- Committed durable cross-session handoff in isolated `plan/engine-quality-release-handoff` branch: `docs/SESSION_HANDOFF_NEXT.md`, `docs/ENGINE_QUALITY_RELEASE_PLAN_2026-11-17.md`, machine-readable gates JSON, updated state and decisions. No engine code, data, environment or production deployment changes.
+- Defined explicit exit gates: two independent human reviewers for all18 legacy review-required, at least50 material claims and ≥98% source-supported precision, zero critical false approvals, verified meaningful recovery (≥4 issues or heldout recall +5pp), legacy source evidence no regression, whole-pipeline p95 ≤1.05×/cost ≤1.05×/RSS ≤1.10× baseline, repeated matched Gemini runs; two-user/RLS/SMTP/Google frontend/backend release checks. All new gates still BLOCKED until evidence.
+- Final goal: stop minor tuning immediately when certified gates are met, stage and deploy only the tested commit, verify live and roll back on any regression. Preserve all existing PDF/history. Current prior-provider Gemini503 blocks full model assertions.
+
 ## 2026-11-16 — v6.3.9 ten-paper benchmark
 - Reanalyzed B01–B10 with finance-structured-v6.3.9; all ten durable analysis jobs completed and prior analyses were retained.
 - Latest deployment commit d9c684e5a4bcccbb95feaed6385429bd8ff85567 is SUCCESS for Railway API and Worker; API health returned HTTP 200.
