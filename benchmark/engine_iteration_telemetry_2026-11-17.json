@@ -9,7 +9,7 @@
   "legacy_lock_commit": "342a2ed30b6e270c9a8f167d2a6cbc8dedeaf80c",
   "legacy_lock_reference_commit": "14ed46fd032b42813dd0ccf372447bd71bd363aa",
   "candidate_first_code_commit": "ef8b941315765ed45b65c8065b2a35a613f4aced",
-  "current_candidate_commit": "50d020e6a960086d4de3a12e94744c51083e1c72",
+  "current_candidate_commit": "e7782e1c1531dcc658a52246bfb61faa94d1d932",
   "analysis_version": "finance-structured-v6.4.2",
   "invariants": {
     "analysis_version_unchanged": true,
@@ -64,17 +64,44 @@
   },
   "verification": {
     "github_actions": "repeated_startup_failure_before_jobs",
-    "repository_tests_executed": false,
-    "local_full_suite_verified": false,
+    "repository_tests_executed": true,
+    "local_full_suite_verified": true,
     "measured_runtime_overhead_ms": null,
     "q2_non_regression_proven": false,
     "workflow_run_id": 43969788375,
     "jobs_created": 0,
     "retry": "403_not_retryable",
     "workflow_run_ids": [
-      43969788375,
-      43970441861
-    ]
+      43978680210,
+      43978670203,
+      43978662406,
+      43978653666,
+      43977423733
+    ],
+    "local_test_results": {
+      "environment": {
+        "python": "3.12.16",
+        "pymupdf": "1.26.3",
+        "pymupdf_pin_match": true
+      },
+      "frozen_production_backend_suite": {
+        "passed": 102,
+        "skipped": 1,
+        "failed": 0,
+        "warnings": 6,
+        "elapsed_seconds": 0.53
+      },
+      "candidate_backend_suite": {
+        "passed": 123,
+        "skipped": 1,
+        "failed": 0,
+        "warnings": 6,
+        "elapsed_seconds": 0.62
+      },
+      "skipped_test": "Opt-in live E2E; not executed without explicit live-test enablement and credentials.",
+      "note": "Local isolated Vercel sandbox runs. GitHub Actions runner itself still fails startup before creating jobs."
+    },
+    "latest_workflow_run_jobs_created": 0
   },
   "telemetry_aggregation": {
     "script": "benchmark/parse_railway_telemetry.py",
@@ -99,5 +126,283 @@
     "worker_status": "SUCCESS",
     "both_on_frozen_production_sha": "8cd5e37ee8eab3bf4b726b75af89e410ab48396e",
     "candidate_deployed": false
-  }
+  },
+  "source_fingerprint_comparison": {
+    "path": "benchmark/source_fingerprint_v6.4.2_2026-11-17.json",
+    "analysis_version_unchanged": true,
+    "prompt_sha256_unchanged": true,
+    "schema_sha256_unchanged": true,
+    "extraction_sha256_unchanged": true,
+    "model_config_sha256_unchanged": true,
+    "gemini_transport_sha256_changed": true,
+    "requirements_unchanged": true,
+    "dockerfile_unchanged": true,
+    "baseline_main_sha256": "3e86a9402af6850527b77beaaf74998ba922dc8d07ab51c789bbc7e53540dba5",
+    "candidate_main_sha256": "da2390862536a4e9f3c9afa108ea30ff8790b0f896b855c2fb09364419a2d027",
+    "baseline_worker_sha256": "f5d15bd6a5343c76dd106d0a24f5c2bdd6d12efe2cbb1bc858b7bb0eb483de42",
+    "candidate_worker_sha256": "bfdd64e2aedc68d1d135d08123347484097551cf45cd1a71b3e3bc6efff3eddd"
+  },
+  "pinned_extraction_preflight": {
+    "record_type": "LOCAL_EXTRACTION_PREFLIGHT_NOT_FULL_PIPELINE_BASELINE",
+    "analysis_version": "finance-structured-v6.4.2",
+    "runtime": {
+      "python": "3.12.16",
+      "pymupdf": "1.26.3",
+      "pymupdf_pin_match": true
+    },
+    "provider_calls": 0,
+    "papers": 1,
+    "measurement_scope": "B07 exact PDF only; extraction and prompt construction",
+    "measurements": [
+      {
+        "id": "B07",
+        "doi": "10.1371/journal.pone.0300393",
+        "pdf_sha256": "10ffc3942b5c74fda8d78e1c875f8c39e05546ff7bcd69fafefc53635d7123ad",
+        "pdf_byte_length": 3429628,
+        "actual_page_count": 23,
+        "pages_scanned": 23,
+        "empty_text_pages": 0,
+        "extracted_chars": 69414,
+        "prompt_chars": 73295,
+        "extracted_text_sha256": "d05587ee3b688888e53724cec859d6a94c3d37b4a263fcb5b72dcde938b379c3",
+        "prompt_sha256": "1e20ef79eaf4573a8efdee14588264858499ac82809525780840851edadfa38d",
+        "five_run_extract_ms": [
+          102.227,
+          67.444,
+          67.147,
+          66.848,
+          68.819
+        ],
+        "median_extract_ms": 67.444
+      }
+    ],
+    "note": "The B07 publisher PDF SHA-256 matches the locked B01-B10 manifest. Same extracted-text and prompt hashes were reproduced by frozen production main.py and candidate main.py."
+  },
+  "paired_extraction_prompt_ab": {
+    "record_type": "PAIRED_EXTRACTION_AND_PROMPT_CONSTRUCTION_AB_NOT_FULL_PIPELINE",
+    "environment": {
+      "python": "3.12.16",
+      "pymupdf": "1.26.3",
+      "pin_match": true
+    },
+    "paper_id": "B07",
+    "repeats_per_engine": 10,
+    "baseline_ms": [
+      68.900978,
+      68.576768,
+      67.692319,
+      69.456071,
+      68.923709,
+      66.746563,
+      66.75982,
+      66.023069,
+      66.218312,
+      66.592622
+    ],
+    "candidate_ms": [
+      68.572606,
+      68.87114,
+      68.414235,
+      68.398462,
+      68.968253,
+      67.800747,
+      66.155501,
+      66.100383,
+      66.36455,
+      66.09874
+    ],
+    "baseline_p50_ms": 67.226,
+    "candidate_p50_ms": 68.1,
+    "candidate_vs_baseline_p50_ratio": 1.013,
+    "baseline_max_ms": 69.456071,
+    "candidate_max_ms": 68.968253,
+    "text_hash_equal": true,
+    "prompt_hash_equal": true,
+    "extracted_text_sha256": "d05587ee3b688888e53724cec859d6a94c3d37b4a263fcb5b72dcde938b379c3",
+    "prompt_sha256": "1e20ef79eaf4573a8efdee14588264858499ac82809525780840851edadfa38d",
+    "scope": "PDF extraction + prompt construction only; no Gemini, provider cost, database save, upload time or peak RSS.",
+    "interpretation": "No material extraction/prompt regression observed in this single-paper paired check; this is not the Q2 full-pipeline gate."
+  },
+  "historical_production_observations": {
+    "record_type": "HISTORICAL_MIXED_ANALYSIS_VERSIONS_NOT_V642_BASELINE",
+    "source": "Supabase analysis_jobs/analyses rows, latest completed job per B01-B10",
+    "records": [
+      {
+        "id": "B01",
+        "analysis_version": "finance-structured-v6.4.0",
+        "job_created_at": "2026-11-16T04:52:38.780623Z",
+        "worker_started_at": "2026-11-16T04:53:55.078598Z",
+        "completed_at": "2026-11-16T04:54:27.718785Z",
+        "job_created_to_completed_seconds": 108.938,
+        "worker_started_to_completed_seconds": 32.64,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      },
+      {
+        "id": "B02",
+        "analysis_version": "finance-structured-v6.4.0",
+        "job_created_at": "2026-11-16T04:52:38.780623Z",
+        "worker_started_at": "2026-11-16T04:53:24.821288Z",
+        "completed_at": "2026-11-16T04:53:52.580946Z",
+        "job_created_to_completed_seconds": 73.8,
+        "worker_started_to_completed_seconds": 27.76,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      },
+      {
+        "id": "B03",
+        "analysis_version": "finance-structured-v6.3.9",
+        "job_created_at": "2026-11-16T01:31:41.389012Z",
+        "worker_started_at": "2026-11-16T01:32:38.619809Z",
+        "completed_at": "2026-11-16T01:33:04.916648Z",
+        "job_created_to_completed_seconds": 83.528,
+        "worker_started_to_completed_seconds": 26.297,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      },
+      {
+        "id": "B04",
+        "analysis_version": "finance-structured-v6.3.9",
+        "job_created_at": "2026-11-16T01:31:41.389012Z",
+        "worker_started_at": "2026-11-16T01:33:07.606128Z",
+        "completed_at": "2026-11-16T01:33:30.420748Z",
+        "job_created_to_completed_seconds": 109.032,
+        "worker_started_to_completed_seconds": 22.815,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      },
+      {
+        "id": "B05",
+        "analysis_version": "finance-structured-v6.3.9",
+        "job_created_at": "2026-11-16T01:31:41.389012Z",
+        "worker_started_at": "2026-11-16T01:31:43.743990Z",
+        "completed_at": "2026-11-16T01:32:07.499685Z",
+        "job_created_to_completed_seconds": 26.111,
+        "worker_started_to_completed_seconds": 23.756,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      },
+      {
+        "id": "B06",
+        "analysis_version": "finance-structured-v6.3.9",
+        "job_created_at": "2026-11-16T01:31:41.389012Z",
+        "worker_started_at": "2026-11-16T01:34:35.756142Z",
+        "completed_at": "2026-11-16T01:35:03.142597Z",
+        "job_created_to_completed_seconds": 201.754,
+        "worker_started_to_completed_seconds": 27.386,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      },
+      {
+        "id": "B07",
+        "analysis_version": "finance-structured-v6.3.9",
+        "job_created_at": "2026-11-16T01:31:41.389012Z",
+        "worker_started_at": "2026-11-16T01:35:05.999555Z",
+        "completed_at": "2026-11-16T01:35:27.994371Z",
+        "job_created_to_completed_seconds": 226.605,
+        "worker_started_to_completed_seconds": 21.995,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      },
+      {
+        "id": "B08",
+        "analysis_version": "finance-structured-v6.3.9",
+        "job_created_at": "2026-11-16T01:31:41.389012Z",
+        "worker_started_at": "2026-11-16T01:33:32.921636Z",
+        "completed_at": "2026-11-16T01:33:58.973739Z",
+        "job_created_to_completed_seconds": 137.585,
+        "worker_started_to_completed_seconds": 26.052,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      },
+      {
+        "id": "B09",
+        "analysis_version": "finance-structured-v6.4.0",
+        "job_created_at": "2026-11-16T04:52:38.780623Z",
+        "worker_started_at": "2026-11-16T04:52:40.375855Z",
+        "completed_at": "2026-11-16T04:53:05.971754Z",
+        "job_created_to_completed_seconds": 27.191,
+        "worker_started_to_completed_seconds": 25.596,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      },
+      {
+        "id": "B10",
+        "analysis_version": "finance-structured-v6.4.2",
+        "job_created_at": "2026-11-16T05:38:58.357946Z",
+        "worker_started_at": "2026-11-16T05:38:59.483628Z",
+        "completed_at": "2026-11-16T05:39:26.058970Z",
+        "job_created_to_completed_seconds": 27.701,
+        "worker_started_to_completed_seconds": 26.575,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      }
+    ],
+    "version_distribution": {
+      "finance-structured-v6.3.9": 6,
+      "finance-structured-v6.4.0": 3,
+      "finance-structured-v6.4.2": 1
+    },
+    "b10_v642_provider_usage": {
+      "source": "Railway Worker logs, deployment dc501061-d434-454a-bc7d-4658b991a2f1, 2026-11-16",
+      "analysis_version": "finance-structured-v6.4.2",
+      "model": "gemini-3.5-flash-lite",
+      "job_attempts": 1,
+      "provider_generate_calls": 2,
+      "calls": [
+        {
+          "finish_reason": "STOP",
+          "prompt_tokens": 15908,
+          "candidate_tokens": 5297,
+          "thought_tokens": null,
+          "total_tokens": 21205
+        },
+        {
+          "finish_reason": "STOP",
+          "prompt_tokens": 16437,
+          "candidate_tokens": 2011,
+          "thought_tokens": null,
+          "total_tokens": 18448
+        }
+      ],
+      "total_prompt_tokens": 32345,
+      "total_candidate_tokens": 7308,
+      "total_tokens": 39653,
+      "per_call_elapsed_ms": null,
+      "provider_cost_usd": null,
+      "peak_rss_mb": null,
+      "note": "One historical B10 run only. This does not constitute a matched 10-paper v6.4.2 baseline."
+    }
+  },
+  "note": "Source fingerprint and local tests are verified; full v6.4.2 end-to-end baseline, Q1 human gold, Q2 full-pipeline A/B and P0 live release gates remain blocked."
 }
