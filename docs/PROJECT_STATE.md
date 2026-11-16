@@ -1,5 +1,13 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-17 — Held-out papers preselected; PDF binary lock still pending
+
+- Registered two new open-access CC BY 4.0 finance papers (H01 40 pages, VAR/TVP-VAR + DMA/DMS + genetic algorithm; H02 30 pages, LASSO/Elastic Net/tree ML + FX/global portfolio) in benchmark/heldout_preregistration_2026-11-17.json.
+- Exact publisher PDF URLs and DOI/version metadata are recorded. Execution runtime could not download raw PDF bytes, so SHA-256 fields remain null and Q0 is BLOCKED.
+- Added benchmark/lock_heldout_pdfs.py and six synthetic tests to hash exact original bytes, check PyMuPDF page counts, and reject duplicates/regression overlap. No PDF files are stored in Git.
+- The next release-eligible candidate branch must be created only after PDF bytes are supplied/obtained, the binary hashes are committed, and that Git commit is recorded as the lock commit. Existing experiment branch remains ineligible because tuning predated holdout preselection.
+- No production change or user-data write.
+
 ## 2026-11-17 — 사용자 최종 지시: OSS 종료, 기존 PyMuPDF 엔진 개선 → 임계점 충족 → 최종 배포
 
 **이 항목이 아래 과거 '오픈소스 평가' 및 'v6.3.9가 운영'이라는 구형 계획보다 우선합니다.** 사용자는 추가 OSS/파서 교체 탐색을 **종료**하고 **현재 PyMuPDF / finance-structured-v6.4.2 운영 엔진**만 개선하기로 최종 결정했습니다. 현재 운영 엔진과 사용자의 기존 논문은 변경하지 않았습니다. 향후 개선은 독립 인간 골드·원문 인용 보존·전체 정확도·지연/메모리/비용·실제 사용자 E2E의 합격 기준을 충족한 다음에만 최종 배포합니다. 목표 달성 후 사소한 최적화 반복을 종료하며, 전체 엔진 성능을 해치는 개선은 거부/롤백합니다.
