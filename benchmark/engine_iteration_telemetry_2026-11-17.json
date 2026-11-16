@@ -9,7 +9,7 @@
   "candidate_first_code_commit": "7dd13343f44702369b8a1415c750d5fdf08371f7",
   "latest_main_telemetry_redaction_commit": "be69ebb5df262fd0f86342ba4f3868ce0fb01a45",
   "latest_telemetry_test_commit": "40bc8d255b3bc02929942947e302789c053f4845",
-  "current_head": "da859290641869f664db0cc5e6825cab337f216e",
+  "current_head": "939fa6985af1f4d34edfec1519b132cbb89be44a",
   "analysis_version": "finance-structured-v6.4.2",
   "source_files": {
     "baseline_main": {
@@ -106,7 +106,8 @@
     "parser_test_commit": "c4aede78b2c591c942928ed61c66cfea5acb1add",
     "ci_status": "not_run_startup_failure_before_jobs",
     "latency_scope": "job_created_to_terminal_and_worker_claim_to_terminal; excludes file upload transfer",
-    "full_pipeline_latency_status": "UPLOAD_START_TIMESTAMP_NOT_LOGGED"
+    "full_pipeline_latency_status": "UPLOAD_START_TIMESTAMP_NOT_LOGGED",
+    "worker_created_at_commit": "af81cb3f18133ca342a821d4c47dcaa4b208b936"
   },
   "quality_gate_status": {
     "Q0": "BLOCKED",
