@@ -51,7 +51,7 @@
     "branch_base_descends_from_heldout_lock": true,
     "branch_base_descends_from_B01_B10_lock_reference": true,
     "first_candidate_code_commit": "ef8b941315765ed45b65c8065b2a35a613f4aced",
-    "latest_candidate_commit": "50d020e6a960086d4de3a12e94744c51083e1c72",
+    "latest_candidate_commit": "e7782e1c1531dcc658a52246bfb61faa94d1d932",
     "main_git_blob_sha1": "f1a4461f5822305aebdaadf1a7eae0bd28c98e3e",
     "worker_git_blob_sha1": "8b3e2be6e1385b677143e6706494e91a3b7571be",
     "finance_test_git_blob_sha1": "f29088c156682ed3fb271a64e7d7175d07626004",
@@ -83,7 +83,10 @@
     "schema_sha256": "9bbfdc0cabbb27327da91232115cc1b6be55c7ed94b32cb6e65ccc1c3892ad5d",
     "extraction_config_sha256": "0f79b5ab5508b2134a97d96b937a0f8be85bc605c2314861e3719b2674c8d198",
     "model_config_sha256": "46e35f9ee77406ba0e7939b66584bae4b5a201105c9f37a141a4609a4aee16ab",
-    "note": "Secret values excluded. Candidate source SHA-256 must be recaptured in a local clone."
+    "note": "Secret values excluded. Candidate source SHA-256 must be recaptured in a local clone.",
+    "candidate_main_sha256": "da2390862536a4e9f3c9afa108ea30ff8790b0f896b855c2fb09364419a2d027",
+    "candidate_worker_sha256": "bfdd64e2aedc68d1d135d08123347484097551cf45cd1a71b3e3bc6efff3eddd",
+    "candidate_source_sha256_pending": false
   },
   "model_config": {
     "provider": "gemini",
@@ -283,13 +286,17 @@
     "note": "Five local repetitions per PDF on PyMuPDF 1.26.7. Extraction-only preflight, not production-pinned baseline and not Q2 evidence; no Gemini, upload, database save, cost or peak RSS measured."
   },
   "baseline_execution": {
-    "current_v642_B01_B10_analyses_completed": 0,
+    "current_v642_B01_B10_analyses_completed": 1,
     "heldout_gemini_analyses_completed": 0,
     "full_pipeline_latency_upload_start_to_saved_ms": null,
     "provider_cost_usd": null,
     "peak_rss_mb": null,
     "baseline_full_v642_available": false,
-    "status": "BLOCKED_PENDING_PINNED_FULL_PIPELINE_BASELINE_AND_GEMINI_RUNS"
+    "status": "PARTIAL_HISTORICAL_B10_V642_ONLY_FULL_BASELINE_BLOCKED",
+    "current_v642_completed_paper_ids": [
+      "B10"
+    ],
+    "note": "Only B10 has a historical v6.4.2 result among B01-B10. B01/B02/B09 are v6.4.0 and B03-B08 are v6.3.9; do not pool mixed versions into a v6.4.2 baseline. H01/H02 have not been run through Gemini."
   },
   "historical_diagnostics": {
     "papers": 10,
@@ -303,7 +310,7 @@
     "independent_human_certified_accuracy": null
   },
   "quality_gate_status": {
-    "Q0": "BLOCKED_BASELINE_EXECUTION_PENDING",
+    "Q0": "BLOCKED_FULL_V642_AND_HELDOUT_BASELINE_PENDING",
     "Q1": "BLOCKED",
     "Q2": "BLOCKED",
     "P0": "BLOCKED"
@@ -315,7 +322,12 @@
     "PyMuPDF local preflight used 1.26.7 while production pins 1.26.3; not Q2 evidence.",
     "No current v6.4.2 full-pipeline Gemini baseline, cost, upload-to-save latency, or peak RSS is available.",
     "18 historical review-required findings and 50+ material claims still require two independent human reviews.",
-    "No production source, deployment, database row or user file was changed."
+    "No production source, deployment, database row or user file was changed.",
+    "Pinned Python 3.12.16 / PyMuPDF 1.26.3 source fingerprint comparison completed. Prompt, schema, extraction, model config, requirements and Dockerfile are unchanged; Gemini transport hash changed.",
+    "Frozen production backend tests: 102 passed, 1 skipped. Candidate backend tests: 123 passed, 1 skipped. The skipped case is opt-in live E2E.",
+    "B07 pinned-runtime extraction+prompt paired A/B: exact text/prompt hashes equal; p50 67.226 ms baseline vs 68.100 ms candidate (1.3% slower), max 69.456 vs 68.968 ms. Extraction-only, not full-pipeline Q2.",
+    "Historical Supabase results are mixed versions: six v6.3.9, three v6.4.0, one v6.4.2 (B10). Only B10's v6.4.2 run has two Gemini calls totalling 39,653 tokens; provider cost, per-call latency and RSS unavailable.",
+    "GitHub Actions remains startup_failure before job creation; latest run 43978680210 has zero jobs. Local test runs are separate and passed."
   ],
   "production_deployment_check": {
     "checked_at": "2026-11-17",
@@ -330,5 +342,304 @@
       "commit": "8cd5e37ee8eab3bf4b726b75af89e410ab48396e"
     },
     "candidate_deployed": false
+  },
+  "source_fingerprint_comparison": {
+    "path": "benchmark/source_fingerprint_v6.4.2_2026-11-17.json",
+    "record_type": "SOURCE_FINGERPRINT_COMPARISON_NOT_FULL_PIPELINE_BASELINE",
+    "checks": {
+      "analysis_version_unchanged": true,
+      "prompt_sha256_unchanged": true,
+      "schema_sha256_unchanged": true,
+      "extraction_sha256_unchanged": true,
+      "model_config_sha256_unchanged": true,
+      "gemini_transport_sha256_changed": true,
+      "requirements_unchanged": true,
+      "dockerfile_unchanged": true
+    }
+  },
+  "test_results": {
+    "environment": {
+      "python": "3.12.16",
+      "pymupdf": "1.26.3",
+      "pymupdf_pin_match": true
+    },
+    "frozen_production_backend_suite": {
+      "passed": 102,
+      "skipped": 1,
+      "failed": 0,
+      "warnings": 6,
+      "elapsed_seconds": 0.53
+    },
+    "candidate_backend_suite": {
+      "passed": 123,
+      "skipped": 1,
+      "failed": 0,
+      "warnings": 6,
+      "elapsed_seconds": 0.62
+    },
+    "skipped_test": "Opt-in live E2E; not executed without explicit live-test enablement and credentials.",
+    "note": "Local isolated Vercel sandbox runs. GitHub Actions runner itself still fails startup before creating jobs."
+  },
+  "pinned_runtime_preflight": {
+    "record_type": "LOCAL_EXTRACTION_PREFLIGHT_NOT_FULL_PIPELINE_BASELINE",
+    "analysis_version": "finance-structured-v6.4.2",
+    "runtime": {
+      "python": "3.12.16",
+      "pymupdf": "1.26.3",
+      "pymupdf_pin_match": true
+    },
+    "provider_calls": 0,
+    "papers": 1,
+    "measurement_scope": "B07 exact PDF only; extraction and prompt construction",
+    "measurements": [
+      {
+        "id": "B07",
+        "doi": "10.1371/journal.pone.0300393",
+        "pdf_sha256": "10ffc3942b5c74fda8d78e1c875f8c39e05546ff7bcd69fafefc53635d7123ad",
+        "pdf_byte_length": 3429628,
+        "actual_page_count": 23,
+        "pages_scanned": 23,
+        "empty_text_pages": 0,
+        "extracted_chars": 69414,
+        "prompt_chars": 73295,
+        "extracted_text_sha256": "d05587ee3b688888e53724cec859d6a94c3d37b4a263fcb5b72dcde938b379c3",
+        "prompt_sha256": "1e20ef79eaf4573a8efdee14588264858499ac82809525780840851edadfa38d",
+        "five_run_extract_ms": [
+          102.227,
+          67.444,
+          67.147,
+          66.848,
+          68.819
+        ],
+        "median_extract_ms": 67.444
+      }
+    ],
+    "note": "The B07 publisher PDF SHA-256 matches the locked B01-B10 manifest. Same extracted-text and prompt hashes were reproduced by frozen production main.py and candidate main.py."
+  },
+  "paired_extraction_prompt_ab": {
+    "record_type": "PAIRED_EXTRACTION_AND_PROMPT_CONSTRUCTION_AB_NOT_FULL_PIPELINE",
+    "environment": {
+      "python": "3.12.16",
+      "pymupdf": "1.26.3",
+      "pin_match": true
+    },
+    "paper_id": "B07",
+    "repeats_per_engine": 10,
+    "baseline_ms": [
+      68.900978,
+      68.576768,
+      67.692319,
+      69.456071,
+      68.923709,
+      66.746563,
+      66.75982,
+      66.023069,
+      66.218312,
+      66.592622
+    ],
+    "candidate_ms": [
+      68.572606,
+      68.87114,
+      68.414235,
+      68.398462,
+      68.968253,
+      67.800747,
+      66.155501,
+      66.100383,
+      66.36455,
+      66.09874
+    ],
+    "baseline_p50_ms": 67.226,
+    "candidate_p50_ms": 68.1,
+    "candidate_vs_baseline_p50_ratio": 1.013,
+    "baseline_max_ms": 69.456071,
+    "candidate_max_ms": 68.968253,
+    "text_hash_equal": true,
+    "prompt_hash_equal": true,
+    "extracted_text_sha256": "d05587ee3b688888e53724cec859d6a94c3d37b4a263fcb5b72dcde938b379c3",
+    "prompt_sha256": "1e20ef79eaf4573a8efdee14588264858499ac82809525780840851edadfa38d",
+    "scope": "PDF extraction + prompt construction only; no Gemini, provider cost, database save, upload time or peak RSS.",
+    "interpretation": "No material extraction/prompt regression observed in this single-paper paired check; this is not the Q2 full-pipeline gate."
+  },
+  "historical_production_observations": {
+    "record_type": "HISTORICAL_MIXED_ANALYSIS_VERSIONS_NOT_V642_BASELINE",
+    "source": "Supabase analysis_jobs/analyses rows, latest completed job per B01-B10",
+    "records": [
+      {
+        "id": "B01",
+        "analysis_version": "finance-structured-v6.4.0",
+        "job_created_at": "2026-11-16T04:52:38.780623Z",
+        "worker_started_at": "2026-11-16T04:53:55.078598Z",
+        "completed_at": "2026-11-16T04:54:27.718785Z",
+        "job_created_to_completed_seconds": 108.938,
+        "worker_started_to_completed_seconds": 32.64,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      },
+      {
+        "id": "B02",
+        "analysis_version": "finance-structured-v6.4.0",
+        "job_created_at": "2026-11-16T04:52:38.780623Z",
+        "worker_started_at": "2026-11-16T04:53:24.821288Z",
+        "completed_at": "2026-11-16T04:53:52.580946Z",
+        "job_created_to_completed_seconds": 73.8,
+        "worker_started_to_completed_seconds": 27.76,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      },
+      {
+        "id": "B03",
+        "analysis_version": "finance-structured-v6.3.9",
+        "job_created_at": "2026-11-16T01:31:41.389012Z",
+        "worker_started_at": "2026-11-16T01:32:38.619809Z",
+        "completed_at": "2026-11-16T01:33:04.916648Z",
+        "job_created_to_completed_seconds": 83.528,
+        "worker_started_to_completed_seconds": 26.297,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      },
+      {
+        "id": "B04",
+        "analysis_version": "finance-structured-v6.3.9",
+        "job_created_at": "2026-11-16T01:31:41.389012Z",
+        "worker_started_at": "2026-11-16T01:33:07.606128Z",
+        "completed_at": "2026-11-16T01:33:30.420748Z",
+        "job_created_to_completed_seconds": 109.032,
+        "worker_started_to_completed_seconds": 22.815,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      },
+      {
+        "id": "B05",
+        "analysis_version": "finance-structured-v6.3.9",
+        "job_created_at": "2026-11-16T01:31:41.389012Z",
+        "worker_started_at": "2026-11-16T01:31:43.743990Z",
+        "completed_at": "2026-11-16T01:32:07.499685Z",
+        "job_created_to_completed_seconds": 26.111,
+        "worker_started_to_completed_seconds": 23.756,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      },
+      {
+        "id": "B06",
+        "analysis_version": "finance-structured-v6.3.9",
+        "job_created_at": "2026-11-16T01:31:41.389012Z",
+        "worker_started_at": "2026-11-16T01:34:35.756142Z",
+        "completed_at": "2026-11-16T01:35:03.142597Z",
+        "job_created_to_completed_seconds": 201.754,
+        "worker_started_to_completed_seconds": 27.386,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      },
+      {
+        "id": "B07",
+        "analysis_version": "finance-structured-v6.3.9",
+        "job_created_at": "2026-11-16T01:31:41.389012Z",
+        "worker_started_at": "2026-11-16T01:35:05.999555Z",
+        "completed_at": "2026-11-16T01:35:27.994371Z",
+        "job_created_to_completed_seconds": 226.605,
+        "worker_started_to_completed_seconds": 21.995,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      },
+      {
+        "id": "B08",
+        "analysis_version": "finance-structured-v6.3.9",
+        "job_created_at": "2026-11-16T01:31:41.389012Z",
+        "worker_started_at": "2026-11-16T01:33:32.921636Z",
+        "completed_at": "2026-11-16T01:33:58.973739Z",
+        "job_created_to_completed_seconds": 137.585,
+        "worker_started_to_completed_seconds": 26.052,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      },
+      {
+        "id": "B09",
+        "analysis_version": "finance-structured-v6.4.0",
+        "job_created_at": "2026-11-16T04:52:38.780623Z",
+        "worker_started_at": "2026-11-16T04:52:40.375855Z",
+        "completed_at": "2026-11-16T04:53:05.971754Z",
+        "job_created_to_completed_seconds": 27.191,
+        "worker_started_to_completed_seconds": 25.596,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      },
+      {
+        "id": "B10",
+        "analysis_version": "finance-structured-v6.4.2",
+        "job_created_at": "2026-11-16T05:38:58.357946Z",
+        "worker_started_at": "2026-11-16T05:38:59.483628Z",
+        "completed_at": "2026-11-16T05:39:26.058970Z",
+        "job_created_to_completed_seconds": 27.701,
+        "worker_started_to_completed_seconds": 26.575,
+        "job_status": "completed",
+        "job_attempts": 1,
+        "provider": "gemini",
+        "model": "gemini-3.5-flash-lite",
+        "note": "Historical DB job metadata; job created after upload, not upload-to-save latency."
+      }
+    ],
+    "version_distribution": {
+      "finance-structured-v6.3.9": 6,
+      "finance-structured-v6.4.0": 3,
+      "finance-structured-v6.4.2": 1
+    },
+    "b10_v642_provider_usage": {
+      "source": "Railway Worker logs, deployment dc501061-d434-454a-bc7d-4658b991a2f1, 2026-11-16",
+      "analysis_version": "finance-structured-v6.4.2",
+      "model": "gemini-3.5-flash-lite",
+      "job_attempts": 1,
+      "provider_generate_calls": 2,
+      "calls": [
+        {
+          "finish_reason": "STOP",
+          "prompt_tokens": 15908,
+          "candidate_tokens": 5297,
+          "thought_tokens": null,
+          "total_tokens": 21205
+        },
+        {
+          "finish_reason": "STOP",
+          "prompt_tokens": 16437,
+          "candidate_tokens": 2011,
+          "thought_tokens": null,
+          "total_tokens": 18448
+        }
+      ],
+      "total_prompt_tokens": 32345,
+      "total_candidate_tokens": 7308,
+      "total_tokens": 39653,
+      "per_call_elapsed_ms": null,
+      "provider_cost_usd": null,
+      "peak_rss_mb": null,
+      "note": "One historical B10 run only. This does not constitute a matched 10-paper v6.4.2 baseline."
+    }
   }
 }
