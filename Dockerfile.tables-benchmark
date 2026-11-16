@@ -1,0 +1,16 @@
+# Isolated one-shot benchmark image; never used by API or durable Worker.
+FROM python:3.12-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 MPLBACKEND=Agg OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
+WORKDIR /bench
+COPY backend/requirements-tables-experiment.txt /tmp/tables.txt
+RUN pip install --no-cache-dir -r /tmp/tables.txt PyMuPDF==1.26.7 pytest==9.0.2
+COPY backend/app/pdf_table_experiment.py backend/app/pdf_table_experiment.py
+COPY benchmark/__init__.py benchmark/__init__.py
+COPY benchmark/table_shadow.py benchmark/table_shadow.py
+COPY benchmark/table_corpus.json benchmark/table_corpus.json
+COPY backend/tests/test_pdf_table_experiment.py backend/tests/test_pdf_table_experiment.py
+COPY backend/tests/test_table_shadow.py backend/tests/test_table_shadow.py
+ENV PYTHONPATH=/bench/backend:/bench
+RUN python -m pytest -q backend/tests/test_pdf_table_experiment.py backend/tests/test_table_shadow.py
+USER 65532:65532
+CMD ["python", "-m", "benchmark.table_shadow", "--supabase", "--timeout", "90"]

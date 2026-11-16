@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "snapshot_date": "2026-11-16",
+  "identity_note": "Storage ETag and byte size are recorded identity checks, not an assumed universal ETag=MD5 guarantee. Exact Storage bytes are retrieved and SHA-256 is recorded by the runner. No publisher substitute is silently accepted.",
+  "papers": [
+    {"id":"B01","filename":"B01_factor-sufficiency.pdf","bytes":2999239,"pages":31,"etag":"f2075ae9b1222cc50293d1e9b11ce912"},
+    {"id":"B02","filename":"B02_korea-consumption.pdf","bytes":606182,"pages":20,"etag":"165d0728c0d9925a371da9f2ce04a6bd"},
+    {"id":"B03","filename":"B03_morocco-carhart.pdf","bytes":396873,"pages":14,"etag":"2a8da0e1e6097eb44f417906a24b784e"},
+    {"id":"B04","filename":"B04_china-regime.pdf","bytes":4418309,"pages":19,"etag":"b2f81496143f0e3a80845d379846984a"},
+    {"id":"B05","filename":"B05_warsaw-liquidity.pdf","bytes":1064697,"pages":24,"etag":"1506c646a85d173551c62b43b21b96e6"},
+    {"id":"B06","filename":"B06_asean-fx.pdf","bytes":975524,"pages":22,"etag":"fef70bb01f1b55a1646e1a4cf283361b"},
+    {"id":"B07","filename":"B07_korea-garch-midas.pdf","bytes":3429628,"pages":23,"etag":"a38c2cc0e2cc56eab7a058b47db30af4"},
+    {"id":"B08","filename":"B08_us-esg.pdf","bytes":1202803,"pages":21,"etag":"610e73ead3e47d0be911b23519ccae61"},
+    {"id":"B09","filename":"B09_firm-vov.pdf","bytes":1076845,"pages":16,"etag":"97838a0cd74cb780a6c0f2d47d76fd8b"},
+    {"id":"B10","filename":"B10_thailand-portfolio.pdf","bytes":1590430,"pages":19,"etag":"4f8b19b56c80e15c1180b1dc3b7332be"}
+  ]
+}
