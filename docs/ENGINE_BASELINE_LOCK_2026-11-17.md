@@ -62,3 +62,10 @@ The exact per-run times and extracted-text SHA-256 values are in \`benchmark/bas
 - **P0:** two-account RLS/auth/upload, external SMTP, production release and rollback verification remain outstanding.
 
 GitHub Actions still fails with \`startup_failure\` before creating jobs. No repository CI test result is claimed. No production deployment, database write or user-data change occurred. \`final_deploy_allowed=false\`.
+
+
+## Original B01-B10 regression PDFs — storage metadata only
+
+A read-only Supabase query confirms all ten original B01-B10 PDFs remain in the private \`papers\` bucket: 209 total pages and 17,760,530 total bytes. Per-paper sizes, page counts and opaque storage ETags are recorded in \`benchmark/legacy_regression_storage_inventory_2026-11-17.json\`.
+
+The current connector exposes metadata but not private object bytes. The ETags are **not assumed to be MD5 or SHA-256** and are not accepted as binary hashes. All ten SHA-256 values remain null until the exact stored files can be downloaded through an authorized private-file workflow or re-uploaded by the owner. Do not substitute a newer publisher PDF without proving byte identity.
