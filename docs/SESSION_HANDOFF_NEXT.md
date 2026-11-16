@@ -55,5 +55,9 @@
 - **Do not create the next candidate branch yet.** Obtain exact H01/H02 PDF bytes, run the lock utility, commit the binary-verified manifest, add the actual Git lock commit SHA in a follow-up commit, then create a new candidate branch from frozen production SHA 8cd5e37ee8eab3bf4b726b75af89e410ab48396e.
 - Current experiment experiment/engine-quality-v6-4-x remains ineligible for release because it was tuned before held-out pre-registration. PR #4 remains Draft and isolated. Production API/Worker unchanged.
 
+
+- Local synthetic test reproduction for the exact-byte lock logic: **7/7 passed** after correcting one test's expected error-message substring. This is a local reproduction only; GitHub Actions/full backend CI still has not executed.
+- Exact Springer PDF binary downloads were attempted but unavailable from this execution runtime (network/DNS restriction). Publisher-parsed PDF page counts and article metadata do not substitute for exact binary hashes.
+
 ## 새 세션 시작 시 그대로 사용할 메시지
 "PaperSignal 개발을 이어가자. GitHub `plan/engine-quality-release-handoff`의 `docs/SESSION_HANDOFF_NEXT.md`, `docs/ENGINE_QUALITY_RELEASE_PLAN_2026-11-17.md`, `docs/PROJECT_STATE.md`와 `benchmark/engine_release_gates_2026-11-17.json`을 먼저 읽어. 오픈소스 교체 검토는 종료, 기존 PyMuPDF/v6.4.2 엔진만 개선. 독립 골드·인용·전체 정확도·비용·실서비스 테스트 임계점 충족 전 배포 금지. 지금 상태 확인 후 다음 목표를 실제 구현하고 검증 결과를 GitHub에 기록해."
