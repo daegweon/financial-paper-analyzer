@@ -1,5 +1,9 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-17 — B01-B10 private storage inventory
+
+Read-only Supabase inspection confirms B01-B10 are still present in the private papers bucket: 10 PDFs, 209 pages, 17,760,530 bytes. Per-paper file size/page count and opaque storage ETag are in benchmark/legacy_regression_storage_inventory_2026-11-17.json. The connector cannot download private object bytes; ETags are not treated as SHA-256. Original B01-B10 binary hashes remain unverified, so Q0 stays BLOCKED. No storage object or database row was modified.
+
 ## 2026-11-17 — Latency scope correction and clean PR
 
 - PR #6 is the clean candidate; PR #5 has been closed because its branch lacked the Held-out lock commit in its Git ancestry.
