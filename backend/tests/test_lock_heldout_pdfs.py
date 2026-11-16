@@ -86,7 +86,7 @@ def test_symlink_outside_pdf_dir_is_rejected(tmp_path):
 
 def test_wrong_record_type_and_missing_file_fail_closed(tmp_path):
     make_pdf(tmp_path / "H01.pdf", 2, "One")
-    with pytest.raises(ValueError, match="not the preselected"):
+    with pytest.raises(ValueError, match="preselected, not-yet-locked"):
         lock_heldout_pdfs({"record_type": "HELDOUT_BINARY_VERIFIED_PENDING_GIT_COMMIT",
                            "heldout_papers": manifest()["heldout_papers"]}, tmp_path)
     with pytest.raises(FileNotFoundError):
