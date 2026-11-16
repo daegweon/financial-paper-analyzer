@@ -70,3 +70,23 @@ def test_ignores_malformed_and_unrelated_log_records():
         {"message": "missing timestamp"},
     ])
     assert result["jobs"] == []
+
+
+def test_missing_thought_token_count_is_marked_incomplete_not_invented():
+    logs = [
+        {"timestamp": "2026-11-17T02:00:00Z",
+         "message": "INFO:papersignal:Claimed job_id=55555555-5555-4555-8555-555555555555 paper_id=66666666-6666-4666-8666-666666666666 attempt=1"},
+        {"timestamp": "2026-11-17T02:00:01Z",
+         "message": "INFO:papersignal:Gemini usage job_id=55555555-5555-4555-8555-555555555555 provider_call_id=cccccccccccccccccccccccccccccccc attempt=1/1 provider_attempts=1 model=gemini-3.5-flash-lite elapsed_ms=700.0 finish=STOP prompt_tokens=100 candidate_tokens=20 thought_tokens=None total_tokens=120"},
+        {"timestamp": "2026-11-17T02:00:02Z",
+         "message": "INFO:papersignal:Gemini attempt succeeded job_id=55555555-5555-4555-8555-555555555555 provider_call_id=cccccccccccccccccccccccccccccccc attempt=1/1 provider_attempts=1 model=gemini-3.5-flash-lite elapsed_ms=700.0 total_elapsed_ms=710.0"},
+        {"timestamp": "2026-11-17T02:00:03Z",
+         "message": "INFO:papersignal:Analysis job completed job_id=55555555-5555-4555-8555-555555555555 paper_id=66666666-6666-4666-8666-666666666666 provider=gemini model=gemini-3.5-flash-lite pages=30"},
+    ]
+    result = aggregate_logs(logs)
+    call = result["jobs"][0]["provider_calls"][0]
+    assert call["prompt_tokens"] == 100
+    assert call["candidate_tokens"] == 20
+    assert call["thought_tokens"] == 0
+    assert call["total_tokens"] == 120
+    assert call["token_usage_complete"] is False
