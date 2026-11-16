@@ -29,3 +29,14 @@ Exact production extraction logic, local PyMuPDF 1.26.7 (production pin 1.26.3),
 ## Verification limits
 
 New-branch GitHub Actions run 43969788375 ended with `startup_failure` before creating any jobs (jobs=0). GitHub rejected a retry with HTTP 403 because the run is not retryable. This is an infrastructure/startup failure, not a passing or failing repository test result. No repository test pass, Gemini baseline, measured telemetry overhead, full-pipeline latency, provider cost or peak RSS is claimed. Q0/Q1/Q2/P0 remain blocked. No production deployment or Supabase data mutation.
+
+
+## 2026-11-17 — pinned-runtime tests, source fingerprint and B07 paired A/B
+
+- Runtime: Python 3.12.16 / PyMuPDF 1.26.3 (production pin).
+- Backend suite results: frozen production **102 passed / 1 skipped / 0 failed**; candidate **123 passed / 1 skipped / 0 failed**. Skip is the opt-in live E2E test.
+- Source/config fingerprints: `benchmark/source_fingerprint_v6.4.2_2026-11-17.json`. Analysis version, prompt, schema, extraction code/config, model config, requirements and Dockerfile are unchanged. Gemini transport hash changed as intended for telemetry/redaction.
+- B07 exact locked publisher PDF, 23 pages: 0 empty-text pages, 69,414 extracted characters, 73,295 prompt characters. Production and candidate text/prompt hashes match.
+- Paired 10-run extraction+prompt A/B: p50 67.226 ms baseline / 68.100 ms candidate (1.013 ratio); maxima 69.456 / 68.968 ms. No material extraction/prompt regression observed in this one-paper check. It does not measure Gemini or end-to-end latency/cost/memory.
+- Historical v6.4.2 production evidence is limited to B10 only. Two Gemini calls used 32,345 prompt tokens and 7,308 candidate tokens (39,653 total). Per-call elapsed, provider cost and RSS are not present.
+- GitHub Actions runs continue to end in `startup_failure` before jobs are created; local tests are separate. Q0/Q1/Q2/P0 remain blocked.
