@@ -705,6 +705,8 @@ def test_dedup_merges_figure_findings_with_unknown_metadata_but_protects_other_v
         "estimate": "12",
         "model_or_column": "Liquidity regression",
     }
+    assert module._finding_variable_tokens(left) == {"SCGP"}
+    assert module._finding_variable_tokens(other_variable) == {"CDS"}
     assert module._are_duplicate_findings(left, other_variable) is False
 
 
