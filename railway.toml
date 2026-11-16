@@ -1,9 +1,7 @@
+# EXECUTION ONLY: never merge this configuration into production.
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
-
+dockerfilePath = "Dockerfile.cell-review"
 [deploy]
-healthcheckPath = "/health"
-healthcheckTimeout = 120
-restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 3
+startCommand = "python -m benchmark.draft_cell_audit_run"
+restartPolicyType = "NEVER"
