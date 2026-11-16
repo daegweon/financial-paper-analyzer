@@ -17,21 +17,25 @@ def synthetic_evidence():
     regression = [{"id": f"B{i:02d}", "sha256": f"{i:064x}", "pages": 20 if i < 10 else 29}
                   for i in range(1, 11)]
     heldout = [
-        {"id": f"H{i}", "sha256": f"{i+20:064x}", "lock_commit": "c" * 40,
+        {"id": f"H{i}", "sha256": f"{i+20:064x}", "pages": 30, "lock_commit": "c" * 40,
          "locked_before_candidate": True}
         for i in (1, 2)
     ]
     reviewers = [{"reviewer_id": "synthetic-reviewer-a", "verdict": "corrected"},
                  {"reviewer_id": "synthetic-reviewer-b", "verdict": "corrected"}]
     legacy = [
-        {"id": f"{paper}-{j}", "paper_id": paper, "source_sha256": DIGEST,
+        {"id": f"{paper}-{j}", "paper_id": paper, "source_sha256": f"{int(paper[1:]):064x}",
+         "source_page": 3, "source_quote": "Synthetic source quote 0.12",
+         "source_evidence_ref": "SYNTHETIC/ROW-3",
          "reviewers": reviewers, "resolved": True, "critical_unresolved": False,
          "source_confirmed_recovery": j == 0}
         for paper, n in HISTORICAL.items() for j in range(n)
     ]
     claims = [
         {"id": f"claim-{i}", "paper_id": "H1" if i == 0 else "H2" if i == 1 else "B01",
-         "source_sha256": DIGEST, "reviewers": reviewers, "supported": True,
+         "source_sha256": f"{21 if i == 0 else 22 if i == 1 else 1:064x}",
+         "source_page": 3, "source_quote": "Synthetic source quote 0.12",
+         "source_evidence_ref": "SYNTHETIC/ROW-3", "reviewers": reviewers, "supported": True,
          "critical_false_approval": False}
         for i in range(50)
     ]
@@ -139,3 +143,19 @@ def test_review_disagreement_requires_resolution_record():
     sample["human_review"]["legacy"][0]["disagreement_resolution_ref"] = "external-review-record"
     report = evaluate(POLICY, sample)
     assert report["gates"]["Q0"]["status"] == "PASS"
+
+
+def test_unmatched_source_sha_and_missing_page_anchor_block_accuracy():
+    sample = synthetic_evidence()
+    sample["human_review"]["claims"][0]["source_sha256"] = "d" * 64
+    sample["human_review"]["legacy"][0]["source_page"] = 99999
+    report = evaluate(POLICY, sample)
+    assert report["gates"]["Q1"]["status"] == "BLOCKED"
+    assert report["gates"]["Q0"]["status"] == "BLOCKED"
+
+
+def test_disallowed_heldout_page_count_blocks_q0():
+    sample = synthetic_evidence()
+    sample["corpus"]["heldout"][0]["pages"] = 0
+    report = evaluate(POLICY, sample)
+    assert report["gates"]["Q0"]["status"] == "BLOCKED"
