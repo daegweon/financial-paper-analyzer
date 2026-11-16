@@ -96,3 +96,17 @@ def test_missing_thought_token_count_is_marked_incomplete_not_invented():
     assert call["thought_tokens"] == 0
     assert call["total_tokens"] == 120
     assert call["token_usage_complete"] is False
+
+
+def test_malformed_job_created_timestamp_does_not_create_latency():
+    logs = [
+        {"timestamp": "2026-11-17T03:00:00Z",
+         "message": "INFO:papersignal:Claimed job_id=77777777-7777-4777-8777-777777777777 paper_id=88888888-8888-4888-8888-888888888888 attempt=1 job_created_at=not-a-time"},
+        {"timestamp": "2026-11-17T03:00:05Z",
+         "message": "INFO:papersignal:Analysis job completed job_id=77777777-7777-4777-8777-777777777777 paper_id=88888888-8888-4888-8888-888888888888 provider=gemini model=gemini-3.6-flash pages=40"},
+    ]
+    job = aggregate_logs(logs)["jobs"][0]
+    assert job["status"] == "completed"
+    assert job["job_created_at"] is None
+    assert job["job_created_to_terminal_ms"] is None
+    assert job["full_pipeline_latency_ms"] is None
