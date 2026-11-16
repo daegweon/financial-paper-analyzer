@@ -51,7 +51,7 @@
     "branch_base_descends_from_heldout_lock": true,
     "branch_base_descends_from_B01_B10_lock_reference": true,
     "first_candidate_code_commit": "ef8b941315765ed45b65c8065b2a35a613f4aced",
-    "latest_candidate_commit": "343e53a98f32b8175d88ee093f26b6a6df56387e",
+    "latest_candidate_commit": "b9647b9a5aa683a86e01ba2a10beb851860a78af",
     "main_git_blob_sha1": "f1a4461f5822305aebdaadf1a7eae0bd28c98e3e",
     "worker_git_blob_sha1": "8b3e2be6e1385b677143e6706494e91a3b7571be",
     "finance_test_git_blob_sha1": "f29088c156682ed3fb271a64e7d7175d07626004",
@@ -330,7 +330,8 @@
     "Historical Supabase results are mixed versions: six v6.3.9, three v6.4.0, one v6.4.2 (B10). Only B10's v6.4.2 run has two Gemini calls totalling 39,653 tokens; provider cost, per-call latency and RSS unavailable.",
     "GitHub Actions remains startup_failure before job creation; latest run 43978680210 has zero jobs. Local test runs are separate and passed.",
     "After the recorded code fingerprint, only benchmark and handoff documentation commits were added; latest PR #7 head is 343e53a98f32b8175d88ee093f26b6a6df56387e.",
-    "Latest GitHub Actions runs 43979921435 and 43979839645 also ended startup_failure before creating jobs (0 jobs)."
+    "Latest GitHub Actions runs 43979921435 and 43979839645 also ended startup_failure before creating jobs (0 jobs).",
+    "Latest PR #7 head is b9647b9a5aa683a86e01ba2a10beb851860a78af. Latest GitHub Actions runs 43980191447 and 43980183930 are startup_failure with zero jobs."
   ],
   "production_deployment_check": {
     "checked_at": "2026-11-17",
