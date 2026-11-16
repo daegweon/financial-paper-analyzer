@@ -145,6 +145,12 @@ def find_summary(result: dict[str, Any], manifest_entry: dict, pages: list[dict]
         "verified_human_precision": None,
     }
 
+class TracedModelFailure(RuntimeError):
+    def __init__(self, cause_type: str, requests: list[dict]):
+        super().__init__("Model call or validation failed")
+        self.cause_type = cause_type
+        self.requests = list(requests)
+
 def analyze_with_model(count: int, pages: list[dict]) -> tuple[dict, list[dict], float]:
     """Exact unchanged async llm_result() including repair/rescue; observe HTTP usage."""
     if engine.active_ai_provider() != "gemini":
@@ -184,6 +190,8 @@ def analyze_with_model(count: int, pages: list[dict]) -> tuple[dict, list[dict],
         if result.get("mode") != "llm":
             raise RuntimeError("Not a full model-backed result")
         return result, usage, round(time.perf_counter() - began, 4)
+    except Exception as exc:
+        raise TracedModelFailure(type(exc).__name__, usage) from None
     finally:
         httpx.AsyncClient.post = original_post
 
@@ -287,6 +295,9 @@ def main() -> int:
                 except Exception as exc:
                     outcome["status"] = "failed"
                     outcome["error_type"] = type(exc).__name__
+                    if isinstance(exc, TracedModelFailure):
+                        outcome["provider_error_type"] = exc.cause_type
+                        outcome["usage"] = tally_usage(exc.requests)
                     outcome["failure_stage"] = "extract" if outcome.get("extraction", {}).get("status") != "ok" else "model_or_validation"
                     # A pair is incomplete; stop after recording this paper so
                     # quota errors do not cascade into additional model attempts.
