@@ -1,7 +1,7 @@
-# Isolated full-model A/B one-shot; NEVER merge with production railway.toml.
+# Isolated one-shot experiment. NEVER merge into production.
 [build]
 builder="DOCKERFILE"
-dockerfilePath="Dockerfile.full-analysis-ab"
+dockerfilePath="Dockerfile.ranked-oss"
 
 [deploy]
 restartPolicyType="NEVER"
