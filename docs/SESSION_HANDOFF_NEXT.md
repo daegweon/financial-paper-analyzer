@@ -113,5 +113,11 @@
 - Synthetic timing arithmetic verified locally (job created 2 seconds before claim; terminal 10 seconds after claim => 12,000 ms job-created-to-terminal and 10,000 ms claim-to-terminal). Repository CI remains unavailable.
 - All Q0/Q1/Q2/P0 remain BLOCKED; no Gemini full-pipeline run, billable cost, peak RSS, independent human gold or actual upload-start timestamp. No production deployment or user-data change.
 
+## 2026-11-17 — Legacy regression inventory and job-created timing
+
+- Read-only Supabase inventory confirms B01-B10 still exist in the private papers bucket: 10 PDFs, 209 pages, 17,760,530 bytes. Sanitized sizes/pages/opaque ETags (not treated as hashes) are in benchmark/legacy_regression_storage_inventory_2026-11-17.json. Exact private file bytes are not exposed by the current connector; B01-B10 SHA-256 remains unverified.
+- Worker now logs analysis_jobs.created_at on claim. Telemetry parser calculates job_created_to_terminal_ms (includes queue wait) and claim_to_terminal_ms. Both exclude PDF upload transfer; full_pipeline_latency_ms remains null. Added malformed timestamp regression test.
+- PR #6 remains the only clean candidate; PR #5 closed for invalid lock ancestry. No production data or deployments changed.
+
 ## 새 세션 시작 시 그대로 사용할 메시지
 "PaperSignal 개발을 이어가자. GitHub `plan/engine-quality-release-handoff`의 `docs/SESSION_HANDOFF_NEXT.md`, `docs/ENGINE_QUALITY_RELEASE_PLAN_2026-11-17.md`, `docs/PROJECT_STATE.md`와 `benchmark/engine_release_gates_2026-11-17.json`을 먼저 읽어. 오픈소스 교체 검토는 종료, 기존 PyMuPDF/v6.4.2 엔진만 개선. 독립 골드·인용·전체 정확도·비용·실서비스 테스트 임계점 충족 전 배포 금지. 지금 상태 확인 후 다음 목표를 실제 구현하고 검증 결과를 GitHub에 기록해."
