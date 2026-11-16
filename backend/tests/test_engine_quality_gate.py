@@ -117,3 +117,24 @@ def test_unlocked_heldout_and_missing_external_smtp_evidence_block():
     report = evaluate(POLICY, sample)
     assert report["gates"]["Q0"]["status"] == "BLOCKED"
     assert report["gates"]["P0"]["status"] == "BLOCKED"
+
+
+def test_false_boolean_is_not_accepted_as_measured_zero():
+    sample = synthetic_evidence()
+    sample["human_review"]["critical_false_approvals"] = False
+    sample["human_review"]["previously_approved_lost"] = False
+    report = evaluate(POLICY, sample)
+    assert report["gates"]["Q1"]["status"] == "BLOCKED"
+
+
+def test_review_disagreement_requires_resolution_record():
+    sample = synthetic_evidence()
+    sample["human_review"]["legacy"][0]["reviewers"] = [
+        {"reviewer_id": "independent-a", "verdict": "supported"},
+        {"reviewer_id": "independent-b", "verdict": "rejected"},
+    ]
+    report = evaluate(POLICY, sample)
+    assert report["gates"]["Q0"]["status"] == "BLOCKED"
+    sample["human_review"]["legacy"][0]["disagreement_resolution_ref"] = "external-review-record"
+    report = evaluate(POLICY, sample)
+    assert report["gates"]["Q0"]["status"] == "PASS"
