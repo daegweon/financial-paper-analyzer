@@ -885,14 +885,14 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
         r"|\b(?:tier|model|column|table)\s*[-(]?\s*\d+\)?(?=\W|$|[가-힣])"
         r"|\bpanel\s+[a-z](?=\W|$|[가-힣])"
         r"|\b(?:one|two|1|2)[- ]country(?:[- ](?:durable|consumption))?(?:[- ]model)?\b"
-        r"|(?:1|2)\s*국가(?:\s*(?:내구재|소비))?\s*모형"
+        r"|(?:1|2)\s*국가(?:\s*(?:내구재|소비))*\s*모형"
         r"|\bregime\s*[-(]?\s*\d+\)?(?=\W|$|[가-힣])"
         r"|(?:국면|체제)\s*[-(]?\s*\d+(?=\W|$|[가-힣])"
         r"|\b(?:fama[-– ]?french|carhart)\s*(?:three|four|3|4)\s*[- ]?(?:factor|요인)(?:s|모형)?\b"
         r"|\b(?:three|four|3|4)[- ]factor(?:s)?\b"
         r"|\bASEAN\s*[-–]\s*5\b"
         r"|\bportfolio\s*\(?\s*\d+\s*[-–]\s*\d+\s*\)?"
-        r"|\b\d+\s*[-–]\s*\d+\s*portfolio\b"
+        r"|\b\d+\s*[-–]\s*\d+\s+(?:(?:hedging|investment)\s+)?portfolio\b"
         r"|(?:포트폴리오|헷징 포트폴리오)\s*\(?\s*\d+\s*[-–]\s*\d+\s*\)?"
         r"|(?:티어|모형|모델|열|표)\s*[-(]?\s*\d+\)?(?=\W|$|[가-힣]))",
         " ",
