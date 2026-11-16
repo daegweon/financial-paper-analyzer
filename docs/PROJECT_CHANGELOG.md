@@ -1,3 +1,14 @@
+## 2026-11-16 — Actual assistant visual audit exposes within-page omission
+- Viewed source-derived crops BEFORE parser candidates: B01 PDF p18/Table2 and B10 p12/Table5. Recorded 15 assistant-draft targets /25 numeric cells, source/render hashes, source geometry and expected-text digests. No human reviewer invented; independent human gold remains0.
+- Added draft_cell_audit.py/run.py, visual_drafts_20261116.json and37 rejection tests (all passed locally,0.08s). Existing human-review gate and production validators unchanged. Railway mandatory pytest build gate passed; exact terminal count not recovered from log excerpt, so no new total claimed. LiveE2E/frontend not run.
+- Audited four frozen output variants per target (all/selected, prior two repeats):60 checks=40agreements+20missing,0unassessed. B10 all10targets match;B01 all5parameter bundles missing in everyvariant. Native source anchors and inspected raster hashes verified.
+- B01p18 saved candidate contains Table4 only, not actual Table2. Same-page omission means matrix equivalence and page-caption inclusion do not establish completeness. Do not promote or simply raise page cap.
+- Source semantics retained:transposed B01variable columns;Std.Dev. not relabelledstandarderror. B10volatility0.20 andSharpe0.15 atrow3 distinguish same-number/wrong-column errors;not a claim of observed production mislabelling.
+- Text-caption scan:86pages,32captioninstances,allin23selectedpages. Captionless/image tables,63excludedpages andnegativecontrols not fullyvisually audited;B02/B09 cellvisualaudit pending.
+- New private compactauditartifacts4, total18. Originalpapers14,analyses103,jobs102completed/28failed,PDFobjects14 unchanged. API/Worker unchanged/online;benchmarkzero runningreplicas,no pendingwork. Nomodelcalls/schema/RLS/publicendpoint/cron.
+- Implementationda3f12dd108e2f44e53f7fdf55b13a224b7c4fef;runnerfb5895d28336c9ed9da6c4d32f6bb674b5e649fa;deploymentb61322f7-edf3-4d71-a830-a4884c09862e;runvisual-draft-audit-c569a95eb0f44b608a608493de8a9910. Execution-onlyrunnerconfigs mustnotmerge.
+- Report:benchmark/results/visual-draft-audit-2026-11-16.md. Next:caption/geometry-bounded table-region recovery with frozen drafts/untouched controls;complete source/human/negative/fullpipeline/heldoutgates. All18historicalreview-required findings remainunapproved.
+
 ## 2026-11-16 — Exact-cell review preparation and bounded Stream execution
 - Added source-hash/page/row/column/value/companion exact-cell evaluation, conflict abstention, independent-review record checks, negative-control diagnostics and escaped offline source-first HTML review.
 - Added private source-render/cell packets and a predeclared caption-only page selector, capped at eight pages; gold annotations intentionally remain empty. No human review or finding approval was fabricated.
