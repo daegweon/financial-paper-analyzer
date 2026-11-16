@@ -122,5 +122,14 @@
     "worker_job_created_at_logging": "af81cb3f18133ca342a821d4c47dcaa4b208b936",
     "telemetry_parser": "72b8cee9a01e1e99f69dd7455072fc3cf8c2c777",
     "telemetry_parser_tests": "a549ebd4a2461ede34c82f49fae077c68e2f163e"
+  },
+  "legacy_storage_hash_workflow": {
+    "script": "benchmark/lock_legacy_storage_pdfs.py",
+    "tests": "backend/tests/test_lock_legacy_storage_pdfs.py",
+    "script_commit": "7dd8ac8aaf25f81c92b65438fc43b7b68c9a12b4",
+    "tests_commit": "ff57d24110c6445c8ad0e085141bd1284269df27",
+    "mode": "read-only GET using local environment variables",
+    "output": "SHA-256, byte length and PyMuPDF page count only; no file bytes, storage paths, user IDs or secrets",
+    "execution_status": "not_run_requires_local_service_role_environment"
   }
 }
