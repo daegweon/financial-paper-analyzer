@@ -20,7 +20,8 @@ The private \`papers\` bucket already contains the original B01-B10 files. The a
      --out /private/path/B01-B10-binary-lock.json
    \`\`\`
 
-4. Attach only the generated JSON output to the project conversation. Do not attach the service-role key. The JSON contains each paper's SHA-256, byte length and PyMuPDF page count, but no PDF bytes, storage path, user ID or secret.
+4. Remove the key from the current PowerShell session after the command: `Remove-Item Env:SUPABASE_SERVICE_ROLE_KEY`. In Bash, run `unset SUPABASE_SERVICE_ROLE_KEY`.
+5. Attach only the generated JSON output to the project conversation. Do not attach the service-role key. The JSON contains each paper's SHA-256, byte length and PyMuPDF page count, but no PDF bytes, storage path, user ID or secret.
 
 ## Safety properties
 
