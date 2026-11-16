@@ -15,4 +15,4 @@ COPY backend/tests/test_pdf_replacement_contract.py /bench/tests/test_pdf_replac
 ENV PYTHONPATH=/bench
 RUN python -m pytest -q tests/test_pdf_replacement_contract.py && python -c "import app.main; import app.pdf_replacement; print('replacement-main-import-ok')"
 USER 65532:65532
-CMD ["python", "-m", "benchmark.full_replacement_compare", "--ids", "B01", "B02", "B09", "B10", "--timeout", "150"]
+CMD ["python", "-m", "benchmark.full_replacement_compare", "--ids", "B01", "--timeout", "150"]

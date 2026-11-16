@@ -73,7 +73,15 @@ def child(pdf: Path, mode: str, output: Path) -> int:
     from app.pdf_replacement import extract_pages
     start = time.perf_counter()
     data = pdf.read_bytes()
-    count, pages = extract_pages(data, backend=mode)
+    try:
+        count, pages = extract_pages(data, backend=mode)
+    except Exception as exc:
+        # Only exception type/module, never message, PDF contents, paths or credentials.
+        output.write_text(json.dumps({
+            "failure_type": type(exc).__name__,
+            "failure_module": type(exc).__module__
+        }), encoding="utf-8")
+        return 2
     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     output.write_text(json.dumps({
         "page_count": count,
@@ -102,8 +110,15 @@ def run_child(pdf: Path, mode: str, output: Path, timeout: int) -> dict:
     except subprocess.TimeoutExpired:
         return {"status": "timeout", "wall_seconds": round(time.perf_counter() - start, 4)}
     if result.returncode or not output.exists():
+        info = {}
+        if output.exists():
+            try:
+                raw = json.loads(output.read_text(encoding="utf-8"))
+                info = {k: raw[k] for k in ("failure_type", "failure_module") if k in raw}
+            except (ValueError, OSError):
+                pass
         return {"status": "failed", "exit_code": result.returncode,
-                "wall_seconds": round(time.perf_counter() - start, 4)}
+                "wall_seconds": round(time.perf_counter() - start, 4), **info}
     data = json.loads(output.read_text(encoding="utf-8"))
     return {"status": "ok", "wall_seconds": round(time.perf_counter() - start, 4), **data}
 
