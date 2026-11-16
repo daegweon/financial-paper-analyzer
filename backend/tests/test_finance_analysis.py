@@ -2305,6 +2305,8 @@ def test_gemini_all_model_failure_log_preserves_both_statuses_and_job_id(monkeyp
     assert "attempts=2" in caplog.text
     assert "gemini-3.5-flash-lite=503; gemini-3.6-flash=429" in caplog.text
     assert "another-secret-never-log" not in caplog.text
+    assert "provider status 503" not in caplog.text
+    assert "provider status 429" not in caplog.text
     call_ids = {
         line.split("provider_call_id=", 1)[1].split()[0]
         for line in caplog.text.splitlines() if "provider_call_id=" in line
