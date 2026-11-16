@@ -94,5 +94,16 @@
 - Added benchmark/parse_railway_telemetry.py on the candidate branch to aggregate Worker claims/completion/retry events with Gemini job/call IDs, model attempt outcomes, latency and token counts. Provider cost remains null until a dated price schedule is supplied. Missing token metadata is explicitly marked incomplete, not treated as a verified zero.
 - Added four synthetic parser tests; these and the telemetry tests are committed but unexecuted because GitHub Actions startup_failure happens before any job is created.
 
+## 2026-11-17 — Corrected Held-out lineage, telemetry and local preflight (latest)
+
+- User-uploaded H01/H02 original PDFs rechecked by SHA-256 and PyMuPDF: H01 40 pages / 2,521,298 bytes / \`816e404d2f1dee7df84d52bf4238a75d7d777878cf100b42e3f220cc1da9b127\`; H02 30 pages / 5,223,546 bytes / \`d385806b9a448e399dfc9f6017710561bf15bfd50ec514536303978ad07eb283\`.
+- Held-out lock commit \`149311ec2993cac3bd410c10ac7feb202d582fc7\`.
+- **Important correction:** old candidate branch \`experiment/engine-quality-v6-4-2-heldout-locked\` / PR #5 is NOT descended from the lock commit. Git compare says \`diverged\`, 56 ahead / 18 behind, merge base frozen production SHA \`8cd5e37\`. PR #5 is superseded; do not merge.
+- Clean branch \`experiment/engine-quality-v6-4-2-heldout-clean\` starts at \`325fb7e5bda6dd05cf4888fd658018a2d8e4abbf\`, a docs-only descendant of the lock commit. First candidate code commit \`7dd13343f44702369b8a1415c750d5fdf08371f7\` has that base as parent, so lock ancestry is valid.
+- Telemetry-only patch adds job context + per-Gemini-call IDs, model attempt/status/timing/token logs, and a parser for Railway logs. Raw provider error bodies are now redacted. Prompt/schema/extraction logic, model order, request body and result schema unchanged.
+- Local reproduction of the frozen production \`extract_pages\` function on PyMuPDF 1.26.7: H01 40/40 text pages, 111,448 chars, median 212.735 ms; H02 30/30, 62,589 chars, median 84.105 ms. Production pins 1.26.3, so this is extraction-only local preflight, NOT Q2 or production performance evidence.
+- GitHub Actions continues \`startup_failure\` before jobs; repository tests remain unexecuted. No measured telemetry overhead, Gemini full-pipeline latency/cost or peak RSS. Q0/Q1/Q2/P0 all remain BLOCKED.
+- No production merge/deployment, Supabase write, user-data change or secret exposure. Keep the clean candidate isolated.
+
 ## 새 세션 시작 시 그대로 사용할 메시지
 "PaperSignal 개발을 이어가자. GitHub `plan/engine-quality-release-handoff`의 `docs/SESSION_HANDOFF_NEXT.md`, `docs/ENGINE_QUALITY_RELEASE_PLAN_2026-11-17.md`, `docs/PROJECT_STATE.md`와 `benchmark/engine_release_gates_2026-11-17.json`을 먼저 읽어. 오픈소스 교체 검토는 종료, 기존 PyMuPDF/v6.4.2 엔진만 개선. 독립 골드·인용·전체 정확도·비용·실서비스 테스트 임계점 충족 전 배포 금지. 지금 상태 확인 후 다음 목표를 실제 구현하고 검증 결과를 GitHub에 기록해."
