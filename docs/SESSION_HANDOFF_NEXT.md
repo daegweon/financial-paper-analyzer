@@ -105,5 +105,13 @@
 - GitHub Actions continues \`startup_failure\` before jobs; repository tests remain unexecuted. No measured telemetry overhead, Gemini full-pipeline latency/cost or peak RSS. Q0/Q1/Q2/P0 all remain BLOCKED.
 - No production merge/deployment, Supabase write, user-data change or secret exposure. Keep the clean candidate isolated.
 
+## 2026-11-17 — Latency scope correction and clean PR
+
+- PR #6 is the clean candidate; PR #5 has been closed because its branch lacked the Held-out lock commit in its Git ancestry.
+- Worker claim logs now include \`analysis_jobs.created_at\` from the claim RPC result. The telemetry parser reports \`job_created_to_terminal_ms\` (includes queue wait) and \`claim_to_terminal_ms\`.
+- Important: \`analysis_jobs.created_at\` is recorded after PDF upload completes. Neither metric is upload-start-to-save latency. \`full_pipeline_latency_ms\` remains null and Q2 p95 cannot use these two proxy durations.
+- Synthetic timing arithmetic verified locally (job created 2 seconds before claim; terminal 10 seconds after claim => 12,000 ms job-created-to-terminal and 10,000 ms claim-to-terminal). Repository CI remains unavailable.
+- All Q0/Q1/Q2/P0 remain BLOCKED; no Gemini full-pipeline run, billable cost, peak RSS, independent human gold or actual upload-start timestamp. No production deployment or user-data change.
+
 ## 새 세션 시작 시 그대로 사용할 메시지
 "PaperSignal 개발을 이어가자. GitHub `plan/engine-quality-release-handoff`의 `docs/SESSION_HANDOFF_NEXT.md`, `docs/ENGINE_QUALITY_RELEASE_PLAN_2026-11-17.md`, `docs/PROJECT_STATE.md`와 `benchmark/engine_release_gates_2026-11-17.json`을 먼저 읽어. 오픈소스 교체 검토는 종료, 기존 PyMuPDF/v6.4.2 엔진만 개선. 독립 골드·인용·전체 정확도·비용·실서비스 테스트 임계점 충족 전 배포 금지. 지금 상태 확인 후 다음 목표를 실제 구현하고 검증 결과를 GitHub에 기록해."
