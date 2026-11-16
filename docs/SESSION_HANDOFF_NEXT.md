@@ -43,5 +43,17 @@
 6. 모든 품질 게이트 통과 시 최종 출시 검증: 2계정 실제 PDF 업로드/분석, RLS/원본 비공개, Google 로그인, 외부 SMTP 확인, 프런트/백엔드 빌드, Railway 작업 복구, Vercel 릴리스 확인. 기존 데이터를 삭제하거나 시크릿을 노출하면 안 됩니다.
 7. 위 조건을 충족하면 **추가 미세 튜닝을 중단**하고 테스트된 커밋만 제한적 배포 후 헬스·E2E·품질을 검증해 최종 배포합니다. 문제가 발생하면 즉시 롤백하고 이전 운영 SHA를 유지합니다.
 
+
+## 2026-11-17 — Held-out preselection and exact PDF lock preparation (newest)
+
+- Preselected two held-out candidates **before creating any new release-eligible candidate branch**:
+  - H01: Monteiro, Sebastião & Silva, "Prediction and Allocation of Stocks, Bonds, and REITs in the US Market", DOI 10.1007/s10614-024-10589-2, publisher PDF reports 40 pages, CC BY 4.0; methods VAR/TVP-VAR, DMA/DMS, genetic algorithm and portfolio optimization.
+  - H02: Chun, Kang & Kim, "Forecasting returns with machine learning and optimizing global portfolios: evidence from the Korean and U.S. stock markets", DOI 10.1186/s40854-024-00648-w, publisher PDF reports 30 pages, CC BY 4.0; methods LASSO/Ridge/Elastic Net, Random Forest, LightGBM, XGBoost, FX and portfolio optimization.
+- Metadata and PDF links registered in benchmark/heldout_preregistration_2026-11-17.json and benchmark/HELDOUT_PREREGISTRATION_2026-11-17.md.
+- **Not binary-locked:** this session could inspect publisher PDF pages but the execution runtime could not download raw PDF bytes. Both SHA-256 values intentionally remain null; Q0 remains BLOCKED. Never hash parsed text instead of exact PDF bytes.
+- Added benchmark/lock_heldout_pdfs.py: PyMuPDF exact-byte verification, page count matching, SHA-256, duplicate and optional regression-overlap rejection. Added six synthetic tests. A local isolated reproduction verified hash, page count, overlap and mismatch fail-closed behavior; full repository CI still unavailable.
+- **Do not create the next candidate branch yet.** Obtain exact H01/H02 PDF bytes, run the lock utility, commit the binary-verified manifest, add the actual Git lock commit SHA in a follow-up commit, then create a new candidate branch from frozen production SHA 8cd5e37ee8eab3bf4b726b75af89e410ab48396e.
+- Current experiment experiment/engine-quality-v6-4-x remains ineligible for release because it was tuned before held-out pre-registration. PR #4 remains Draft and isolated. Production API/Worker unchanged.
+
 ## 새 세션 시작 시 그대로 사용할 메시지
 "PaperSignal 개발을 이어가자. GitHub `plan/engine-quality-release-handoff`의 `docs/SESSION_HANDOFF_NEXT.md`, `docs/ENGINE_QUALITY_RELEASE_PLAN_2026-11-17.md`, `docs/PROJECT_STATE.md`와 `benchmark/engine_release_gates_2026-11-17.json`을 먼저 읽어. 오픈소스 교체 검토는 종료, 기존 PyMuPDF/v6.4.2 엔진만 개선. 독립 골드·인용·전체 정확도·비용·실서비스 테스트 임계점 충족 전 배포 금지. 지금 상태 확인 후 다음 목표를 실제 구현하고 검증 결과를 GitHub에 기록해."
