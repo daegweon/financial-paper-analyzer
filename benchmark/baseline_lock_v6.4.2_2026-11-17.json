@@ -50,7 +50,6 @@
     "branch_base_commit": "14ed46fd032b42813dd0ccf372447bd71bd363aa",
     "branch_base_descends_from_heldout_lock": true,
     "branch_base_descends_from_B01_B10_lock_reference": true,
-    "branch_base_is_docs_only_descendant_of_frozen_production": true,
     "first_candidate_code_commit": "ef8b941315765ed45b65c8065b2a35a613f4aced",
     "latest_candidate_commit": "50d020e6a960086d4de3a12e94744c51083e1c72",
     "main_git_blob_sha1": "f1a4461f5822305aebdaadf1a7eae0bd28c98e3e",
@@ -59,7 +58,9 @@
     "integration_test_git_blob_sha1": "52347f7adf98d76df4df98e8a067b7cc3f32412e",
     "telemetry_parser_git_blob_sha1": "fbc7724dde398a3a5ed12c7aef28f3862c84016d",
     "telemetry_parser_test_git_blob_sha1": "d5871db2224059a6efd24903943a4ecb5476caec",
-    "candidate_source_sha256_pending": true
+    "candidate_source_sha256_pending": true,
+    "branch_base_is_non_production_code_descendant_of_frozen_production": true,
+    "branch_base_scope": "Adds lock manifests, benchmark scripts/tests and project documentation only; no production runtime application code changed before the first candidate code commit."
   },
   "source_fingerprints": {
     "production_main": {
