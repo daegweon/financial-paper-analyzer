@@ -57,3 +57,14 @@ This is a local extraction-only preflight, **not** a production-pinned run or Q2
 - P0: **BLOCKED** — two-account live E2E, SMTP and release/rollback checks remain outstanding.
 
 Historical v6.3.9 diagnostics (71 findings, 18 review-required, 53 legacy screen-passed, 346 exact quote pairs) are compatibility context only and are not v6.4.2 baseline results.
+
+
+## 2026-11-17 pinned-runtime verification and partial production observations
+
+- Local environment: Python 3.12.16, PyMuPDF 1.26.3; exact production pin match.
+- Source fingerprint comparison: `benchmark/source_fingerprint_v6.4.2_2026-11-17.json`. Frozen production and candidate prompt, schema, extraction configuration, model configuration, requirements and Dockerfile hashes match. Only Gemini transport fingerprint changed. `MAX_BYTES` is captured as 31,457,280 bytes using safe numeric-AST parsing.
+- Frozen production backend suite: **102 passed, 1 skipped**. Candidate backend suite: **123 passed, 1 skipped**. The skipped test is opt-in live E2E and was not enabled. These are local isolated test runs; GitHub Actions still fails before creating jobs.
+- B07 exact publisher PDF matches its locked SHA-256. On PyMuPDF 1.26.3: 23/23 pages extracted, zero empty pages, 69,414 extracted characters and 73,295 prompt characters. Extracted-text SHA-256 and prompt SHA-256 are identical between frozen production and candidate.
+- Paired B07 extraction+prompt A/B (10 runs each): baseline p50 67.226 ms; candidate p50 68.100 ms (ratio 1.013). Baseline maximum 69.456 ms; candidate maximum 68.968 ms. This is an extraction/prompt-only measurement, not full-pipeline Q2 evidence.
+- Historical Supabase records for B01-B10 are mixed versions: six v6.3.9, three v6.4.0, one v6.4.2 (B10). Only B10 can be treated as a historical v6.4.2 observation: job-created-to-completed 27.701 s, worker-started-to-completed 26.575 s, one job attempt and two Gemini generate calls totalling 39,653 tokens. Cost, per-call latency and peak RSS are unavailable.
+- Therefore Q0 remains **BLOCKED**: the full v6.4.2 baseline for all ten regression PDFs and Gemini runs for held-out H01/H02 have not been completed. Mixed-version timings are not pooled.
