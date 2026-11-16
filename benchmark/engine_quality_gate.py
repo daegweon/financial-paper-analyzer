@@ -35,6 +35,9 @@ def reviewers_valid(item):
                 and r.get('verdict') in {'supported', 'corrected', 'rejected'} for r in reviews)
         and len({r['reviewer_id'] for r in reviews}) == len(reviews)
         and sha(item.get('source_sha256'))
+        and (len({r['verdict'] for r in reviews}) == 1
+             or isinstance(item.get('disagreement_resolution_ref'), str)
+             and bool(item['disagreement_resolution_ref'].strip()))
     )
 
 
@@ -110,8 +113,10 @@ def evaluate(policy, evidence):
     precision = sum(x['supported'] for x in claims) / len(claims) if claims_valid else None
     check('Q1', precision is not None and precision >= req['Q1']['source_supported_precision_min'],
           'independent precision must be at least 98%')
-    check('Q1', audit.get('critical_false_approvals') == 0, 'critical false approvals must be measured at zero')
-    check('Q1', audit.get('previously_approved_lost') == 0, 'existing human-approved findings cannot be lost')
+    check('Q1', type(audit.get('critical_false_approvals')) is int
+          and audit['critical_false_approvals'] == 0, 'critical false approvals must be measured at zero')
+    check('Q1', type(audit.get('previously_approved_lost')) is int
+          and audit['previously_approved_lost'] == 0, 'existing human-approved findings cannot be lost')
     check('Q1', number(audit.get('legacy_quotes_retained'))
           and audit['legacy_quotes_retained'] >= req['Q1']['legacy_exact_quotes_retained_min'],
           '346 verified prior page/quote pairs not preserved')
