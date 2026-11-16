@@ -22,7 +22,7 @@ STATUS_RE = re.compile(r"\bstatus=(\d{3})")
 ELAPSED_RE = re.compile(r"\belapsed_ms=([0-9]+(?:\.[0-9]+)?)")
 TOTAL_ELAPSED_RE = re.compile(r"\btotal_elapsed_ms=([0-9]+(?:\.[0-9]+)?)")
 TOKEN_RE = re.compile(
-    r"\bprompt_tokens=(\d+)\s+candidate_tokens=(\d+)\s+thought_tokens=(\d+)\s+total_tokens=(\d+)"
+    r"\bprompt_tokens=(\d+|None)\s+candidate_tokens=(\d+|None)\s+thought_tokens=(\d+|None)\s+total_tokens=(\d+|None)"
 )
 CLAIM_RE = re.compile(r"\bClaimed job_id=([0-9a-fA-F-]{8,}) paper_id=([0-9a-fA-F-]{8,}) attempt=(\d+)")
 COMPLETE_RE = re.compile(r"\bAnalysis job completed job_id=([0-9a-fA-F-]{8,}) paper_id=([0-9a-fA-F-]{8,}) provider=([A-Za-z0-9._-]+) model=([A-Za-z0-9._-]+) pages=(\d+)")
@@ -138,10 +138,10 @@ def aggregate_logs(
         token_match = TOKEN_RE.search(message)
         if token_match:
             call["usage_events"].append({
-                "prompt_tokens": int(token_match.group(1)),
-                "candidate_tokens": int(token_match.group(2)),
-                "thought_tokens": int(token_match.group(3)),
-                "total_tokens": int(token_match.group(4)),
+                "prompt_tokens": int(token_match.group(1)) if token_match.group(1) != "None" else None,
+                "candidate_tokens": int(token_match.group(2)) if token_match.group(2) != "None" else None,
+                "thought_tokens": int(token_match.group(3)) if token_match.group(3) != "None" else None,
+                "total_tokens": int(token_match.group(4)) if token_match.group(4) != "None" else None,
             })
 
     output = []
@@ -164,10 +164,15 @@ def aggregate_logs(
                 "provider_attempts": len(attempts),
                 "models": [x["model"] for x in attempts if x["model"]],
                 "attempts": attempts,
-                "prompt_tokens": sum(x["prompt_tokens"] for x in usage),
-                "candidate_tokens": sum(x["candidate_tokens"] for x in usage),
-                "thought_tokens": sum(x["thought_tokens"] for x in usage),
-                "total_tokens": sum(x["total_tokens"] for x in usage),
+                "prompt_tokens": sum(x["prompt_tokens"] or 0 for x in usage),
+                "candidate_tokens": sum(x["candidate_tokens"] or 0 for x in usage),
+                "thought_tokens": sum(x["thought_tokens"] or 0 for x in usage),
+                "total_tokens": sum(x["total_tokens"] or 0 for x in usage),
+                "token_usage_complete": all(
+                    x[field] is not None
+                    for x in usage
+                    for field in ("prompt_tokens", "candidate_tokens", "thought_tokens", "total_tokens")
+                ),
                 "total_elapsed_ms": call["total_elapsed_ms"],
                 "final_status": call["final_status"],
             })
