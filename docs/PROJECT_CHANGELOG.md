@@ -1,3 +1,9 @@
+## 2026-11-17 — Legacy regression inventory and job-created timing
+
+- Read-only Supabase inventory confirms B01-B10 still exist in the private papers bucket: 10 PDFs, 209 pages, 17,760,530 bytes. Sanitized sizes/pages/opaque ETags (not treated as hashes) are in benchmark/legacy_regression_storage_inventory_2026-11-17.json. Exact private file bytes are not exposed by the current connector; B01-B10 SHA-256 remains unverified.
+- Worker now logs analysis_jobs.created_at on claim. Telemetry parser calculates job_created_to_terminal_ms (includes queue wait) and claim_to_terminal_ms. Both exclude PDF upload transfer; full_pipeline_latency_ms remains null. Added malformed timestamp regression test.
+- PR #6 remains the only clean candidate; PR #5 closed for invalid lock ancestry. No production data or deployments changed.
+
 ## 2026-11-17 — Latency scope correction and clean PR
 
 - PR #6 is the clean candidate; PR #5 has been closed because its branch lacked the Held-out lock commit in its Git ancestry.
