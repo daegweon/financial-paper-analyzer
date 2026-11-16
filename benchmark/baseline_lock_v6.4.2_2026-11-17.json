@@ -42,7 +42,10 @@
     "latest_main_telemetry_redaction_commit": "be69ebb5df262fd0f86342ba4f3868ce0fb01a45",
     "latest_telemetry_test_commit": "40bc8d255b3bc02929942947e302789c053f4845",
     "main_git_blob_sha1": "f1a4461f5822305aebdaadf1a7eae0bd28c98e3e",
-    "test_finance_git_blob_sha1": "f29088c156682ed3fb271a64e7d7175d07626004"
+    "test_finance_git_blob_sha1": "f29088c156682ed3fb271a64e7d7175d07626004",
+    "current_head": "939fa6985af1f4d34edfec1519b132cbb89be44a",
+    "worker_git_blob_sha1": "8b3e2be6e1385b677143e6706494e91a3b7571be",
+    "latest_worker_job_created_at_commit": "af81cb3f18133ca342a821d4c47dcaa4b208b936"
   },
   "superseded_candidate": {
     "branch": "experiment/engine-quality-v6-4-2-heldout-locked",
@@ -158,7 +161,8 @@
     "heldout_billable_cost_usd": null,
     "heldout_peak_rss_mb": null,
     "original_B01_B10_pdf_binary_hashes_locked": false,
-    "status": "BLOCKED_PENDING_ORIGINAL_CORPUS_LOCK_AND_PINNED_FULL_PIPELINE_MEASUREMENTS"
+    "status": "BLOCKED_PENDING_ORIGINAL_CORPUS_LOCK_AND_PINNED_FULL_PIPELINE_MEASUREMENTS",
+    "full_pipeline_latency_scope": "upload_start_to_result_saved_not_available"
   },
   "quality_gate_status": {
     "Q0": "BLOCKED",
@@ -173,6 +177,7 @@
     "Local PyMuPDF 1.26.7 differs from the production pin 1.26.3.",
     "No H01/H02 Gemini full-pipeline run, billable cost, full latency or peak RSS is available.",
     "Original B01-B10 PDF binary hashes and independent human gold are still missing.",
-    "No production source, deployment, database row or user file was changed."
+    "No production source, deployment, database row or user file was changed.",
+    "Worker now logs analysis_jobs.created_at; this begins after PDF upload completion and is not upload-start time. Do not treat job_created_to_terminal_ms as full upload-to-save latency."
   ]
 }
