@@ -19,7 +19,7 @@
     "total_pages": 209,
     "total_bytes": 17760530
   },
-  "lock_commit": null,
+  "lock_commit": "342a2ed30b6e270c9a8f167d2a6cbc8dedeaf80c",
   "papers": [
     {
       "id": "B01",
@@ -123,5 +123,6 @@
     "all_byte_lengths_match_supabase_metadata": true,
     "total_pages": 209,
     "total_bytes": 17760530
-  }
+  },
+  "lock_commit_reference_semantics": "This is the first commit that introduced the complete B01-B10 SHA-256 manifest. This follow-up commit records that immutable lock commit; release-eligible candidates must descend from the follow-up commit."
 }
