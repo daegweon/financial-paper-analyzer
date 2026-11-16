@@ -25,3 +25,10 @@ Added two mocked Gemini telemetry tests (503 -> fallback success; 503 + 429 -> c
 ## Acceptance status
 
 This is a measurement-enabling candidate only. No measured latency overhead, full suite pass, held-out Gemini run, billable cost or peak memory result is available. Q0/Q1/Q2/P0 remain BLOCKED. Do not merge or deploy until CI is repaired and full paired regression tests establish non-regression.
+
+
+## Log aggregation utility
+
+Added benchmark/parse_railway_telemetry.py to turn Railway's timestamp/message export into a safe job-level record. It joins Worker claim/completion/failure events with Gemini provider_call_id/attempt logs, calculates claim-to-terminal pipeline time, counts retries and provider attempts, sums token usage, and retains per-model HTTP outcomes. It does not copy raw log messages or response bodies into output. Provider cost remains null until an explicit dated price schedule is supplied; no prices are guessed.
+
+Synthetic tests cover a 503-to-fallback success, a 503+429 failure with worker retry, and malformed/unrelated logs. These tests are committed but have not run because GitHub Actions is still failing before job creation.
