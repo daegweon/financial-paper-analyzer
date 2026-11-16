@@ -168,3 +168,11 @@ def test_no_automatic_deployment_permission_even_for_synthetic_green_evidence():
     assert all(gate["status"] == "PASS" for gate in report["gates"].values())
     assert report["structural_checks_passed"] is True
     assert report["final_deploy_allowed"] is False
+
+
+def test_heldout_cannot_reuse_a_regression_pdf_hash():
+    sample = synthetic_evidence()
+    sample["corpus"]["heldout"][0]["sha256"] = sample["corpus"]["regression"][0]["sha256"]
+    report = evaluate(POLICY, sample)
+    assert report["gates"]["Q0"]["status"] == "BLOCKED"
+    assert report["final_deploy_allowed"] is False
