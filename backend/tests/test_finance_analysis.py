@@ -666,6 +666,42 @@ def test_audit_finding_ignores_portfolio_size_labels_but_checks_sharpe_coefficie
     assert "0.99" in failed["unsupported_numeric_tokens"]
 
 
+def test_numeric_audit_ignores_four_and_five_stock_labels():
+    pages = [{
+        "page": 12,
+        "text": (
+            "Realized volatility portfolios improve from 0.11 at 1% to 0.17 at 5%, "
+            "while variance-based portfolios show only marginal gains, peaking at 0.04."
+        ),
+    }]
+    for size in (4, 5):
+        finding = {
+            "claim": f"{size}개 종목 포트폴리오에서 SharpeRV는 0.11에서 0.17로 상승한다.",
+            "direction": "positive",
+            "estimate": "SharpeRV from 0.11 to 0.17",
+            "table_reference": "Table 5",
+            "model_or_column": f"{size}-stock portfolios",
+            "evidence": [{
+                "page": 12,
+                "quote": (
+                    "Realized volatility portfolios improve from 0.11 at 1% to 0.17 at 5%, "
+                    "while variance-based portfolios show only marginal gains, peaking at 0.04."
+                ),
+            }],
+        }
+        audit = module.audit_finding(finding, pages)
+        assert audit["numeric_supported"] is True
+        assert audit["unsupported_numeric_tokens"] == []
+
+    unsupported = {
+        **finding,
+        "estimate": "SharpeRV from 0.11 to 0.99",
+    }
+    audit = module.audit_finding(unsupported, pages)
+    assert audit["numeric_supported"] is False
+    assert "0.99" in audit["unsupported_numeric_tokens"]
+
+
 def test_table_and_figure_reference_overlap_deduplicates_compound_citations():
     quote = "SCGP appears in 12 of the 20 portfolios, followed by KCE with nine appearances."
     left = {
