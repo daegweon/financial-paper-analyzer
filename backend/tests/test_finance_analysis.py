@@ -878,6 +878,71 @@ def test_summary_falls_back_to_only_page_verified_methodology_and_findings():
     assert all(item["quote"] in _sample_pages()[item["page"] - 1]["text"] for item in result["evidence"])
 
 
+def test_primary_prompt_requires_exact_regression_row_and_separate_legend():
+    pages = [{
+        "page": 8,
+        "text": (
+            "Table 4. Liquidity regression. "
+            "AR_Amihud -0.154*** (0.048). "
+            "Note: *** p < 0.01."
+        ),
+    }]
+    prompt = module.build_analysis_prompt(pages)
+    assert "실제 계수 셀을 포함한" in prompt
+    assert "model_or_column의 셀을 정확히 식별" in prompt
+    assert "숫자가 있는 표 행 인용" in prompt
+    assert "significance_legend_evidence" in prompt
+
+
+def test_repair_prompt_requires_row_quote_not_prose_or_legend_substitution():
+    pages = [{
+        "page": 8,
+        "text": (
+            "The coefficient is negative and significant. "
+            "Table 4 AR_Amihud -0.154*** (0.048). "
+            "Note: *** p < 0.01."
+        ),
+    }]
+    prompt = module.build_findings_repair_prompt(pages, [{
+        "claim": "AR_Amihud 계수는 음(-)이며 유의하다.",
+        "estimate": "-0.154",
+        "table_reference": "Table 4",
+    }])
+    assert "해당 모형 열의 계수" in prompt
+    assert "significance_legend_evidence는 별표 기준을 보완" in prompt
+    assert "같은 페이지의 다른 표·열에만 존재하는 숫자는 근거로 인정하지 않는다" in prompt
+
+
+def test_numeric_audit_still_rejects_coefficient_missing_from_direct_quote():
+    pages = [{
+        "page": 8,
+        "text": (
+            "Table 4 AR_Amihud -0.154*** (0.048). "
+            "The coefficient is negative and significant."
+        ),
+    }]
+    finding = {
+        "claim": "AR_Amihud 계수는 -0.154로 음(-)이며 1% 수준에서 유의하다.",
+        "direction": "negative",
+        "estimate": "-0.154",
+        "statistical_significance": "1% level",
+        "table_reference": "Table 4",
+        "model_or_column": "Column (1)",
+        "evidence": [{
+            "page": 8,
+            "quote": "The coefficient is negative and significant.",
+        }],
+        "significance_legend_evidence": [{
+            "page": 8,
+            "quote": "*** p < 0.01",
+        }],
+    }
+    audit = module.audit_finding(finding, pages)
+    assert audit["status"] == "review"
+    assert audit["numeric_supported"] is False
+    assert audit["unsupported_numeric_tokens"] == ["-0.154"]
+
+
 def test_findings_repair_prompt_prioritizes_result_pages_and_marks_paper_as_untrusted():
     pages = [
         {"page": 1, "text": "Abstract: We find a negative and significant coefficient."},
