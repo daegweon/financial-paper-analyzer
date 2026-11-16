@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "record_type": "PARTIAL_Q0_BASELINE_LOCK_NOT_FULL_PIPELINE",
+  "recorded_at": "2026-11-17",
+  "frozen_production": {
+    "branch": "feat/research-workspace-mvp",
+    "commit": "8cd5e37ee8eab3bf4b726b75af89e410ab48396e",
+    "analysis_version": "finance-structured-v6.4.2",
+    "pymupdf_requirement": "PyMuPDF==1.26.3"
+  },
+  "candidate": {
+    "branch": "experiment/engine-quality-v6-4-2-heldout-locked",
+    "created_from_commit": "8cd5e37ee8eab3bf4b726b75af89e410ab48396e",
+    "created_after_heldout_lock": true
+  },
+  "heldout_lock": {
+    "manifest_path": "benchmark/heldout_preregistration_2026-11-17.json",
+    "lock_commit": "149311ec2993cac3bd410c10ac7feb202d582fc7",
+    "reference_record_commit": "59b68fbc902bd17b656d606246d17b19a5614acf",
+    "papers": [
+      {
+        "id": "H01",
+        "doi": "10.1007/s10614-024-10589-2",
+        "pdf_sha256": "816e404d2f1dee7df84d52bf4238a75d7d777878cf100b42e3f220cc1da9b127",
+        "bytes": 2521298,
+        "pages": 40
+      },
+      {
+        "id": "H02",
+        "doi": "10.1186/s40854-024-00648-w",
+        "pdf_sha256": "d385806b9a448e399dfc9f6017710561bf15bfd50ec514536303978ad07eb283",
+        "bytes": 5223546,
+        "pages": 30
+      }
+    ],
+    "status": "BINARY_HASHES_AND_PAGE_COUNTS_LOCKED"
+  },
+  "source_fingerprints": {
+    "main_py": {
+      "git_blob_sha1": "3d020cc1ecbd3153bb952ae967554b54e382d8dd",
+      "sha256": "3e86a9402af6850527b77beaaf74998ba922dc8d07ab51c789bbc7e53540dba5"
+    },
+    "worker_py": {
+      "git_blob_sha1": "443ae211b17ee86660ffc070596d42f8ffc49c59",
+      "sha256": "f5d15bd6a5343c76dd106d0a24f5c2bdd6d12efe2cbb1bc858b7bb0eb483de42"
+    },
+    "requirements_txt": {
+      "git_blob_sha1": "debc81ab00532e6bcfc70c77437f418ea92d399a",
+      "sha256": "c8630c15fd1843ff4d899762be7b523c2ec91a7e8b702073c746ca82653da859"
+    },
+    "dockerfile": {
+      "git_blob_sha1": "a28f187e6986e993f14ec458f2b85ee2fde24d1a",
+      "sha256": "54d94cd4707c7200ecbe8b5f0965b00dcecc1e32ee1f63bc31d85ccca0997c99"
+    },
+    "prompt": {
+      "sha256": "df0e36c9bb0ffc2e920e7d978fc4458118e7ce1ff3a4d78fe774bac49417cdcd",
+      "source_file": "backend/app/main.py",
+      "source_line_range": [
+        1952,
+        2037
+      ]
+    },
+    "schema": {
+      "sha256": "9bbfdc0cabbb27327da91232115cc1b6be55c7ed94b32cb6e65ccc1c3892ad5d",
+      "source_file": "backend/app/main.py",
+      "source_line_range": [
+        110,
+        220
+      ]
+    },
+    "extraction": {
+      "sha256": "0f79b5ab5508b2134a97d96b937a0f8be85bc605c2314861e3719b2674c8d198",
+      "source_file": "backend/app/main.py",
+      "source_line_range": [
+        89,
+        110
+      ]
+    },
+    "model_config": {
+      "sha256": "46e35f9ee77406ba0e7939b66584bae4b5a201105c9f37a141a4609a4aee16ab",
+      "secret_values_excluded": true
+    }
+  },
+  "model_config": {
+    "provider": "gemini",
+    "primary_model": "gemini-3.5-flash-lite",
+    "fallback_model": "gemini-3.6-flash",
+    "runtime_model_names_verified_from_worker_logs": true,
+    "thinking_level_primary": "minimal",
+    "thinking_level_fallback": "low",
+    "output_token_limits": [
+      16384,
+      24576
+    ],
+    "timeout_seconds": {
+      "connect": 10,
+      "read": 75,
+      "write": 25,
+      "pool": 10
+    },
+    "api_key_values_stored": false,
+    "source_default_pymupdf": "1.26.3"
+  },
+  "extraction_settings": {
+    "max_bytes": 31457280,
+    "max_pages": 300,
+    "max_pages_to_scan": 50,
+    "max_page_chars": 4500,
+    "max_llm_chars": 220000
+  },
+  "local_extraction_preflight": {
+    "record_type": "LOCAL_EXTRACTION_ONLY_NOT_PRODUCTION_OR_FULL_PIPELINE_BASELINE",
+    "runtime": {
+      "pymupdf": "1.26.7",
+      "required_pymupdf": "1.26.3",
+      "python": "3.13.5",
+      "platform": "Linux x86_64"
+    },
+    "note": "The runtime PyMuPDF version differs from the production pin. These measurements are only a local preflight and must not be used as Q2 production baseline or as proof of identical 1.26.3 extraction.",
+    "measurements": [
+      {
+        "id": "H01",
+        "pages": 40,
+        "pages_scanned": 40,
+        "empty_text_pages": 0,
+        "extracted_chars": 111484,
+        "prompt_input_chars": 112074,
+        "extracted_text_sha256": "d487c816d55ae29bd65355143a8a7320dd8cb62c6ad7bc1fffb988e1673b0e76",
+        "prompt_input_sha256": "86b39908f404b03f12b64713450a1d2a1fb7ef424296ebd04316a5c36d4e1529",
+        "five_run_extract_ms": [
+          330.41,
+          267.126,
+          237.159,
+          229.972,
+          249.978
+        ],
+        "median_extract_ms": 249.978
+      },
+      {
+        "id": "H02",
+        "pages": 30,
+        "pages_scanned": 30,
+        "empty_text_pages": 0,
+        "extracted_chars": 62630,
+        "prompt_input_chars": 63070,
+        "extracted_text_sha256": "5f3ac9b8bf37469165c5dd2651620448fc26685749f2e95b8a5c5ea1b053a196",
+        "prompt_input_sha256": "96dd3f5ac3f48f9396b9e0dbd29492484b19d4bbf4171fb9f3fa234fcae9fe1c",
+        "five_run_extract_ms": [
+          136.345,
+          114.252,
+          107.494,
+          101.962,
+          87.429
+        ],
+        "median_extract_ms": 107.494
+      }
+    ]
+  },
+  "production_log_observations": {
+    "source": "Railway Worker runtime logs, 2026-11-16",
+    "primary_model": "gemini-3.5-flash-lite",
+    "fallback_model": "gemini-3.6-flash",
+    "observed_failures": [
+      "2026-11-16T04:53:51Z primary 503 and fallback 429",
+      "2026-11-16T05:29:15Z primary 503 and fallback 503"
+    ],
+    "note": "These failures are historical production observations from other jobs, not H01/H02 baseline runs."
+  },
+  "baseline_execution": {
+    "heldout_gemini_analyses_completed": 0,
+    "heldout_full_pipeline_latency_ms": null,
+    "heldout_billable_cost_usd": null,
+    "heldout_peak_rss_mb": null,
+    "original_B01_B10_pdf_binary_hashes_locked": false,
+    "status": "BLOCKED_PENDING_PINNED_RUNTIME_AND_FULL_PIPELINE_MEASUREMENTS"
+  },
+  "quality_gate_status": {
+    "Q0": "BLOCKED",
+    "Q1": "BLOCKED",
+    "Q2": "BLOCKED",
+    "P0": "BLOCKED"
+  },
+  "final_deploy_allowed": false,
+  "warnings": [
+    "Do not use local PyMuPDF 1.26.7 timing as production v6.4.2 baseline; production is pinned to 1.26.3.",
+    "No H01/H02 Gemini full-pipeline baseline has been executed yet.",
+    "Original B01-B10 PDF binary hashes and actual independent human gold remain missing.",
+    "No production source, deployment, database row or user file was changed."
+  ]
+}
