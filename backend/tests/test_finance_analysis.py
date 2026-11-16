@@ -2250,6 +2250,11 @@ def test_gemini_attempt_telemetry_correlates_job_status_latency_and_usage(monkey
     assert "attempt=2/2 provider_attempts=2" in caplog.text
     assert "prompt_tokens=120 candidate_tokens=30 thought_tokens=5 total_tokens=155" in caplog.text
     assert "test-secret-never-log" not in caplog.text
+    call_ids = {
+        line.split("provider_call_id=", 1)[1].split()[0]
+        for line in caplog.text.splitlines() if "provider_call_id=" in line
+    }
+    assert len(call_ids) == 1
 
 
 def test_gemini_all_model_failure_log_preserves_both_statuses_and_job_id(monkeypatch, caplog):
@@ -2300,3 +2305,8 @@ def test_gemini_all_model_failure_log_preserves_both_statuses_and_job_id(monkeyp
     assert "attempts=2" in caplog.text
     assert "gemini-3.5-flash-lite=503; gemini-3.6-flash=429" in caplog.text
     assert "another-secret-never-log" not in caplog.text
+    call_ids = {
+        line.split("provider_call_id=", 1)[1].split()[0]
+        for line in caplog.text.splitlines() if "provider_call_id=" in line
+    }
+    assert len(call_ids) == 1
