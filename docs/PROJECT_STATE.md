@@ -1,5 +1,13 @@
 # PaperSignal — Project State / Session Handoff
 
+## Latest CI status — 2026-11-17
+
+- Current PR #7 branch head: `b9647b9a5aa683a86e01ba2a10beb851860a78af`.
+- Latest GitHub Actions run `43980191447` and previous `43980183930`: both `startup_failure`, zero jobs created. This is runner startup failure, not a repository test failure.
+- Local candidate backend suite remains **123 passed, 1 skipped, 0 failed** on Python 3.12.16 / PyMuPDF 1.26.3.
+- Production API and Worker remain on frozen SHA `8cd5e37ee8eab3bf4b726b75af89e410ab48396e`; candidate not deployed. All release gates remain blocked.
+
+
 ## Latest candidate / CI confirmation (2026-11-17)
 
 - PR #7 remains draft; latest branch head after documentation updates: `343e53a98f32b8175d88ee093f26b6a6df56387e`. Latest code-changing commit: `e7782e1c1531dcc658a52246bfb61faa94d1d932`.
