@@ -9,7 +9,7 @@
   "candidate_first_code_commit": "7dd13343f44702369b8a1415c750d5fdf08371f7",
   "latest_main_telemetry_redaction_commit": "be69ebb5df262fd0f86342ba4f3868ce0fb01a45",
   "latest_telemetry_test_commit": "40bc8d255b3bc02929942947e302789c053f4845",
-  "current_head": "939fa6985af1f4d34edfec1519b132cbb89be44a",
+  "current_head": "68a777f554c3cd31c645e0386f7ba51b73cc401f",
   "analysis_version": "finance-structured-v6.4.2",
   "source_files": {
     "baseline_main": {
