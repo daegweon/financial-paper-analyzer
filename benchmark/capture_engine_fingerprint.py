@@ -13,7 +13,6 @@ import json
 import os
 from pathlib import Path
 import platform
-import re
 from typing import Any
 
 
@@ -124,6 +123,7 @@ def capture(root: Path, *, production_commit: str) -> dict[str, Any]:
         "secret_environment_variables_read": [],
         "source_defaults_only_unless_safe_override_present": True,
     }
+    model_config_sha256 = sha256_text(json.dumps(model_config, sort_keys=True, separators=(",", ":")))
     return {
         "record_type": "SOURCE_FINGERPRINT_ONLY_NOT_FULL_PIPELINE_BASELINE",
         "production_commit": production_commit,
@@ -141,6 +141,7 @@ def capture(root: Path, *, production_commit: str) -> dict[str, Any]:
             "schema_sha256": sha256_text(schema_block),
             "extraction_sha256": sha256_text(json.dumps(extraction_config, sort_keys=True, separators=(",", ":"))),
             "gemini_transport_sha256": sha256_text(gemini_function),
+            "model_config_sha256": model_config_sha256,
         },
         "model_config": model_config,
         "extraction_config": extraction_config,
