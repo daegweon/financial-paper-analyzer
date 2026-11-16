@@ -178,6 +178,17 @@
     "No H01/H02 Gemini full-pipeline run, billable cost, full latency or peak RSS is available.",
     "Original B01-B10 PDF binary hashes and independent human gold are still missing.",
     "No production source, deployment, database row or user file was changed.",
-    "Worker now logs analysis_jobs.created_at; this begins after PDF upload completion and is not upload-start time. Do not treat job_created_to_terminal_ms as full upload-to-save latency."
-  ]
+    "Worker now logs analysis_jobs.created_at; this begins after PDF upload completion and is not upload-start time. Do not treat job_created_to_terminal_ms as full upload-to-save latency.",
+    "B01-B10 originals are present in private Supabase storage (10 papers, 209 pages, 17,760,530 bytes), but only metadata is available; no binary SHA-256 is claimed."
+  ],
+  "legacy_regression_inventory": {
+    "path": "benchmark/legacy_regression_storage_inventory_2026-11-17.json",
+    "storage_bucket": "papers (private)",
+    "papers": 10,
+    "total_pages": 209,
+    "total_bytes": 17760530,
+    "sha256_locked": 0,
+    "storage_etags_are_not_treated_as_hashes": true,
+    "note": "Original B01-B10 files are confirmed in private Supabase storage; exact bytes could not be downloaded through the available connector, so their SHA-256 values remain null."
+  }
 }
