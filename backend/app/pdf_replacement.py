@@ -122,7 +122,7 @@ def camelot_composite_pages(data: bytes, count: int) -> tuple[int, list[dict[str
 def extract_pages(data: bytes, backend: str | None = None) -> tuple[int, list[dict[str, Any]]]:
     if not isinstance(data, bytes) or not data.startswith(b"%PDF-") or not 0 < len(data) <= MAX_BYTES:
         raise ValueError("Expected a valid PDF of at most 30 MiB")
-    mode = backend if backend is not None else os.environ.get("PAPERSIGNAL_PDF_BACKEND", "docling")
+    mode = backend if backend is not None else os.environ.get("PAPERSIGNAL_PDF_BACKEND", "camelot_composite")
     if mode not in ("docling", "camelot_composite"):
         raise ValueError("Invalid experimental PDF backend")
     count = _count_pages(data)
