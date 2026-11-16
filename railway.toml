@@ -3,5 +3,5 @@
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile.cell-review"
 [deploy]
-startCommand = "python -m benchmark.source_visual_export"
+startCommand = "python -m benchmark.source_visual_focus"
 restartPolicyType = "NEVER"
