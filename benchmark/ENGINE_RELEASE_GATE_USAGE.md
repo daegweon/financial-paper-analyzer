@@ -24,3 +24,5 @@ The evidence JSON must include the following objects:
 P95 uses nearest-rank method across per-job full-pipeline latencies. Total provider cost and peak process RSS must meet policy limits. Human gold accuracy and any human reviewer assertions remain unverifiable by software alone.
 
 No service should automatically promote a release solely from this evaluator's return code. Check real external evidence and deployment SHA before production promotion.
+
+**Source-identity hardening:** each human_review legacy/claim entry must match `source_sha256` to `corpus.regression` / `corpus.heldout` for its `paper_id`, and have `source_page` (positive, within PDF page bounds), nonempty exact `source_quote` (8+ characters), and nonempty `source_evidence_ref` pointing to the reviewer-accessible source row/column evidence. Held-out entries also require their actual `pages` count. This checks structure only; the PDF and evidence link must be inspected by real reviewers.
