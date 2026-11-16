@@ -1,0 +1,13 @@
+# Separate benchmark image for Marker CPU no_ocr, no production merge.
+FROM python:3.12-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 CUDA_VISIBLE_DEVICES="" OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 HF_HUB_DISABLE_TELEMETRY=1
+WORKDIR /bench
+COPY backend/requirements-marker-experiment.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+COPY backend/app/__init__.py backend/app/main.py backend/app/pdf_replacement.py /bench/app/
+COPY benchmark/__init__.py benchmark/table_shadow.py benchmark/full_analysis_ab.py benchmark/full_analysis_replay.py benchmark/marker_cpu_phase.py benchmark/table_corpus.sha256.json /bench/benchmark/
+COPY backend/tests/test_marker_cpu_phase.py /bench/tests/
+ENV PYTHONPATH=/bench
+RUN python -m pytest -q tests/test_marker_cpu_phase.py && marker_single --help >/dev/null
+USER 65532:65532
+CMD ["python","-m","benchmark.marker_cpu_phase"]

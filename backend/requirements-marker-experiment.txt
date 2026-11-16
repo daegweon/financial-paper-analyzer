@@ -1,0 +1,9 @@
+# Isolated Marker CPU-only research feasibility; model-weights not promoted.
+fastapi==0.115.12
+uvicorn==0.34.2
+httpx==0.28.1
+pydantic==2.11.7
+PyMuPDF==1.26.3
+pdfminer.six==20260107
+marker-pdf==2.0.0
+pytest==9.0.2

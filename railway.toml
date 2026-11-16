@@ -1,7 +1,6 @@
-# Isolated full-model A/B one-shot; NEVER merge with production railway.toml.
+# One-off Marker feasibility service, NEVER merge into production.
 [build]
 builder="DOCKERFILE"
-dockerfilePath="Dockerfile.full-analysis-ab"
-
+dockerfilePath="Dockerfile.marker-feasibility"
 [deploy]
 restartPolicyType="NEVER"
