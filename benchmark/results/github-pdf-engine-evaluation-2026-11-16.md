@@ -45,3 +45,34 @@ The evaluator must score the *same target cells*, not Markdown similarity. A can
 ## Initial recommendation
 
 Start with Camelot because it is purpose-built for PDF tables, has multiple complementary parsers, exposes table parsing metrics, and can be integrated as an optional dependency without changing production. Evaluate Docling in a separate worker for complex layouts. Do not add all candidate dependencies to the main API image.
+
+
+## First executable Camelot experiment (2026-11-16)
+
+Environment: Python 3.12 container, Camelot 1.0.9, PyMuPDF 1.26.7, ReportLab 4.4.9.
+
+A synthetic, vector-text financial regression table was generated with:
+- three model columns;
+- coefficient rows containing signs and significance stars;
+- standard-error rows in parentheses;
+- ruled cell borders.
+
+Observed results:
+- Camelot lattice: 1 table, parser accuracy 100.0, whitespace 10.0.
+- Camelot stream: 1 table, parser accuracy 96.73, whitespace 20.83.
+- Lattice recovered the tested coefficient cells `-0.154***` and `0.00168***` in the expected model columns.
+- The two flavors detected the same physical table. The adapter now collapses same-page candidates only when bounding boxes overlap and row-label sets substantially agree, retaining the candidate with the better `accuracy - 0.15 × whitespace` score.
+- A separate synthetic check confirmed that two distinct tables on the same page remain separate.
+- The adapter's four isolated pytest tests passed.
+
+Limitations:
+- This is a controlled synthetic PDF, not any of the ten publisher PDFs.
+- Camelot's parser accuracy is its own structural metric, not audited coefficient-cell accuracy.
+- No conclusion about B01–B10 accuracy, page citation accuracy, production latency, memory or cost can be made yet.
+- The ten production PDFs are stored in the private Supabase workspace; this GitHub experiment runner has not yet been given authorized raw PDF bytes. Do not substitute publisher-page HTML or unrelated sample PDFs and call that a benchmark.
+
+Next gate:
+1. Run the adapter on exact B01–B10 PDF bytes in a private benchmark worker with approved access.
+2. Human-label target regression tables, key variable rows, model columns and significance legends.
+3. Compare PyMuPDF baseline, Camelot lattice/stream and Docling shadow output against the same gold cells.
+4. Only then decide whether to introduce a feature-flagged hybrid extraction path.
