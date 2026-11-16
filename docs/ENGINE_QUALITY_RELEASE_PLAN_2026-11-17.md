@@ -10,8 +10,8 @@
 ## Gate Q0 — 동일 조건의 고정 기준 준비 (모든 실험의 선행 요건)
 - 원래의 v6.4.2 운영 SHA, AI 모델명, 프롬프트/구조화 스키마/추출 파라미터, 코퍼스 SHA·페이지 수를 기록하고 베이스라인을 독립 저장합니다. 과거 v6.3.9 모델 출력의 숫자를 v6.4.2 신규 출력으로 잘못 표기하지 않습니다.
 - 원본 B01–B10(10편, 209페이지)을 regression, **별도 신규 논문 최소 2편을 사전 잠금된 held-out**으로 사용합니다. 튜닝 후 held-out을 선택하거나 교체하지 않습니다.
-- H01/H02 exact PDF bytes now locked (H01 40 pages, SHA-256 816e404d2f1dee7df84d52bf4238a75d7d777878cf100b42e3f220cc1da9b127; H02 30 pages, SHA-256 d385806b9a448e399dfc9f6017710561bf15bfd50ec514536303978ad07eb283), lock commit 149311ec2993cac3bd410c10ac7feb202d582fc7. Fresh candidate branch created from frozen production SHA after lock. B01-B10 original PDF hashes still missing; Q0 remains BLOCKED.
-- 2026-11-17 사전 후보 H01/H02를 등록했으나 PDF 원본 바이너리 SHA-256은 아직 확보되지 않았습니다. benchmark/heldout_preregistration_2026-11-17.json의 두 pdf_sha256는 null이므로 Q0는 계속 BLOCKED입니다. exact bytes + PyMuPDF page count + SHA commit lock 완료 전에는 새 release-eligible candidate branch를 만들지 않습니다.
+- H01/H02 exact PDF bytes are locked at commit `149311ec2993cac3bd410c10ac7feb202d582fc7`. B01-B10 exact attached PDF SHA-256 values are now locked in `benchmark/legacy_regression_binary_lock_2026-11-17.json`: first manifest commit `342a2ed30b6e270c9a8f167d2a6cbc8dedeaf80c`, follow-up lock-reference commit `14ed46fd032b42813dd0ccf372447bd71bd363aa`. The candidate branch starts from that follow-up commit. The PDFs match Supabase metadata by name/size/page count, but byte identity against private Storage is not claimed. Binary corpus lock is complete; Q0 remains BLOCKED until the pinned v6.4.2 full-pipeline baseline is run.
+- H01/H02 and B01-B10 PDF SHA-256 and page counts are committed and locked before candidate code. The new candidate branch is based on the lock-reference commit. Q0 remains BLOCKED because the frozen v6.4.2 end-to-end baseline (pinned PyMuPDF 1.26.3, Gemini model path, upload-to-save latency, cost and peak RSS) has not yet been executed.
 - 18건의 역사적 review-required finding은 **원본 페이지·숫자 셀·변수 및 모델 열·표 주석·표준오차/표준편차 구분**을 두 명의 실제 독립 검토자에게 각각 확인받아 일치/불일치를 기록합니다. 심사 이름을 AI가 꾸며내는 것은 금지합니다.
 - '스크린 통과'와 골드 정확도를 분리합니다. 기존 346/346 인용 및 54/54 현재 검증기 통과는 이전 분석에 대한 **호환성 기준**이지 독립 사실 정확도가 아닙니다.
 - provider 503/429가 있으면 '알 수 없음/측정 불가'로 표시하고 비용·속도·정확도 개선을 임의로 계산하지 않습니다.
@@ -64,3 +64,10 @@
 - GitHub Actions still startup_failure before any job; tests have not run and telemetry overhead is unmeasured. Do not claim the change is accepted or non-regressing.
 - Draft PR #5 now includes the telemetry patch. No production deployment or database change.
 
+
+
+## 2026-11-17 corpus lock and extraction preflight update
+
+The B01-B10 exact attachment bytes are SHA-256 locked (10 PDFs, 209 pages, 17,760,530 bytes). See `benchmark/legacy_regression_binary_lock_2026-11-17.json`; the first manifest commit is 342a2ed30b6e270c9a8f167d2a6cbc8dedeaf80c and the lock-reference commit is 14ed46fd032b42813dd0ccf372447bd71bd363aa. The new candidate branch descends from this commit and the earlier H01/H02 lock commit. Supabase private Storage metadata matches names/sizes/page counts, but binary identity to those private objects is not asserted.
+
+Local exact production extraction-function reproduction on B01-B10 with PyMuPDF 1.26.7: 209/209 pages yielded text, 0 empty pages, 691,985 extracted characters. Five-run per-paper median timings are recorded in the baseline JSON. Production pins 1.26.3, so this is extraction-only preflight, not Q2 evidence. Q0 remains blocked until the frozen v6.4.2 full-pipeline baseline is executed.

@@ -94,5 +94,13 @@
 - Added benchmark/parse_railway_telemetry.py on the candidate branch to aggregate Worker claims/completion/retry events with Gemini job/call IDs, model attempt outcomes, latency and token counts. Provider cost remains null until a dated price schedule is supplied. Missing token metadata is explicitly marked incomplete, not treated as a verified zero.
 - Added four synthetic parser tests; these and the telemetry tests are committed but unexecuted because GitHub Actions startup_failure happens before any job is created.
 
+## 2026-11-17 — B01-B10 exact SHA lock complete; v6.4.2 baseline pending
+
+- Attached B01-B10 PDFs verified: 10/10 valid, unencrypted, 209 pages, 17,760,530 bytes. Exact SHA-256 hashes are in benchmark/legacy_regression_binary_lock_2026-11-17.json.
+- First B01-B10 binary manifest commit: 342a2ed30b6e270c9a8f167d2a6cbc8dedeaf80c. Follow-up lock-reference commit: 14ed46fd032b42813dd0ccf372447bd71bd363aa. Candidate branch experiment/engine-quality-v6-4-2-b01-b10-locked starts from that follow-up commit.
+- H01/H02 remain locked at 149311ec2993cac3bd410c10ac7feb202d582fc7. Both corpus lock commits are ancestors of the candidate.
+- Exact frozen production extract_pages/sanitize_pdf_text logic reproduced locally on B01-B10 using PyMuPDF 1.26.7 (production pins 1.26.3): 209/209 pages with text, 691,985 chars; five-run local extraction-only preflight. Not production baseline/Q2.
+- Current v6.4.2 full-pipeline baseline has not run. Q0 remains BLOCKED pending pinned runtime + Gemini baseline; Q1/Q2/P0 also BLOCKED. No production deploy or DB mutation.
+
 ## 새 세션 시작 시 그대로 사용할 메시지
 "PaperSignal 개발을 이어가자. GitHub `plan/engine-quality-release-handoff`의 `docs/SESSION_HANDOFF_NEXT.md`, `docs/ENGINE_QUALITY_RELEASE_PLAN_2026-11-17.md`, `docs/PROJECT_STATE.md`와 `benchmark/engine_release_gates_2026-11-17.json`을 먼저 읽어. 오픈소스 교체 검토는 종료, 기존 PyMuPDF/v6.4.2 엔진만 개선. 독립 골드·인용·전체 정확도·비용·실서비스 테스트 임계점 충족 전 배포 금지. 지금 상태 확인 후 다음 목표를 실제 구현하고 검증 결과를 GitHub에 기록해."
