@@ -570,7 +570,8 @@ def test_audit_finding_ignores_tier_table_and_column_labels_but_checks_coefficie
     assert audit["numeric_supported"] is True
     assert audit["unsupported_numeric_tokens"] == []
     assert audit["significance_supported"] is True
-    revalidated, _ = module._revalidate_prior_findings([finding], pages)
+    revalidated, rejected, _ = module._revalidate_prior_findings([finding], pages)
+    assert rejected == []
     assert len(revalidated) == 1
 
     unsupported = {**finding, "estimate": "0.999"}
@@ -600,7 +601,7 @@ def test_audit_finding_ignores_financial_model_identifiers_but_checks_reported_m
         "evidence": [{"page": 10, "quote": quote}],
     }
     audit = module.audit_finding(finding, pages)
-    assert audit["numeric_supported"] is True
+    assert audit["numeric_supported"] is True, audit["unsupported_numeric_tokens"]
     assert audit["unsupported_numeric_tokens"] == []
 
     unsupported = {**finding, "estimate": "R2 = 0.999; MAE = 1.405%"}
@@ -623,8 +624,9 @@ def test_audit_finding_matches_written_count_words_only_in_count_context():
         "model_or_column": "Stock selection frequency",
         "evidence": [{"page": 13, "quote": quote}],
     }
+    assert module._extract_written_count_tokens(quote) == ["9"]
     audit = module.audit_finding(finding, pages)
-    assert audit["numeric_supported"] is True
+    assert audit["numeric_supported"] is True, audit["unsupported_numeric_tokens"]
     assert audit["unsupported_numeric_tokens"] == []
     assert module._extract_written_count_tokens("nine appearances") == ["9"]
     assert module._extract_written_count_tokens("five times higher") == []
@@ -769,7 +771,7 @@ def test_dedup_merges_same_evidence_across_korean_and_english_directions():
         "model_or_column": "(4)",
         "evidence": [{"page": 7, "quote": quote}],
     }
-    assert module._are_duplicate_findings(current, prior) is True
+    assert module._are_duplicate_findings(current, prior) is True, (module._finding_direction_sign(current["direction"]), module._finding_direction_sign(prior["direction"]), module._finding_numeric_set(current), module._finding_numeric_set(prior), module._finding_table_reference_keys(current["table_reference"]), module._finding_table_reference_keys(prior["table_reference"]))
 
     contradictory = {**prior, "direction": "negative"}
     assert module._are_duplicate_findings(current, contradictory) is False
