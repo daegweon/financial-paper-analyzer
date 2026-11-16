@@ -831,6 +831,52 @@ def test_dedup_merges_same_evidence_across_korean_and_english_directions():
     assert module._are_duplicate_findings(current, contradictory) is False
 
 
+def test_dedup_merges_b10_figure_one_duplicate_across_quote_prefix_and_direction_labels():
+    left = {
+        "claim": "종목 선택 빈도 분석 결과, SCGP와 KCE가 실현 변동성 및 분산 모형 모두에서 가장 빈번하게 선택되어 위험 최소화 전략의 핵심 구성 종목임을 확인하였다.",
+        "direction": "일치",
+        "estimate": "SCGP selected 12 times and KCE 9 times out of 20 portfolios under Volm",
+        "table_reference": "Figure 1 and Table 9",
+        "model_or_column": "Stock selection frequency",
+        "evidence": [{
+            "page": 13,
+            "quote": "As shown in Figure 1a, SCGP emerges as the most frequently selected stock, appearing in 12 of the 20 portfolios, followed by KCE with nine appearances.",
+        }],
+    }
+    right = {
+        "claim": "종목 선택 빈도 분석 결과, SCGP와 KCE가 두 위험 계량화 지표 모두에서 가장 빈번하게 최적 포트폴리오에 포함되어 위험 최소화 전략에서 핵심적인 역할을 한다.",
+        "direction": "positive",
+        "estimate": "SCGP selected in 12 and KCE in 9 portfolios (Volm)",
+        "table_reference": "Figure 1",
+        "model_or_column": "Stock selection frequency",
+        "evidence": [{
+            "page": 13,
+            "quote": "SCGP emerges as the most frequently selected stock, appearing in 12 of the 20 portfolios, followed by KCE with nine appearances.",
+        }],
+    }
+    assert module._are_duplicate_findings(left, right) is True
+
+
+def test_dedup_does_not_merge_same_figure_but_different_portfolio_outcomes():
+    left = {
+        "claim": "SCGP is selected 12 times among the 20 portfolios.",
+        "direction": "positive",
+        "estimate": "12 of 20 portfolios",
+        "table_reference": "Figure 1",
+        "model_or_column": "Stock selection frequency",
+        "evidence": [{"page": 13, "quote": "SCGP appears in 12 of the 20 portfolios."}],
+    }
+    right = {
+        "claim": "KCE is selected 9 times among the 20 portfolios.",
+        "direction": "positive",
+        "estimate": "9 of 20 portfolios",
+        "table_reference": "Figure 1",
+        "model_or_column": "Stock selection frequency",
+        "evidence": [{"page": 13, "quote": "KCE appears in 9 of the 20 portfolios."}],
+    }
+    assert module._are_duplicate_findings(left, right) is False
+
+
 def test_cross_page_dedup_does_not_merge_different_variables_with_same_estimate():
     left = {
         "claim": "AR_Amihud 유동성 위험 계수는 음(-)이다.",
