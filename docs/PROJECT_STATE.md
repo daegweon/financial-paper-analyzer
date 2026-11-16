@@ -1,5 +1,16 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-16 — engine FROZEN; full PyMuPDF replacement experiment executed
+
+User explicitly froze further engine development and authorized isolated attempts to replace PyMuPDF in full with Docling or Camelot. **No production code, dependency, provider, analysis/job or deployment changes.** Live Railway API/Worker SHA `8cd5e37ee8eab3bf4b726b75af89e410ab48396e` remains; source version `finance-structured-v6.4.2`. Do not treat historical v6.3.9 benchmark scores as current.
+
+Experimental replacement of `extract_pages` (no PyMuPDF fallback): Camelot+pdfminer 10/10 and Docling Parse 7.26.0 10/10 original PDFs, 209 pages, zero candidate/process errors in successful options. Docling standard 2.150.0 was installed but failed 4/4 runtime conversions (unclassified exit1); docling-slim Native path failed 4/4 (ImportError in isolated follow-up). Full details: `docs/FULL_PDF_PARSER_REPLACEMENT_TRIAL_2026-11-16.md`. On the frozen prior PyMuPDF token proxy, mean per-paper numeric retention 91.20% Camelot composite vs 95.52% Docling Parse, but **no independent source accuracy or full AI pipeline improvement validated**. Docling Parse max child RSS 651.25 MiB vs Camelot 245.45 MiB. Keep both alternatives experimental; no promotion.
+
+Existing 18 historical review-required findings, provider-cost/latency telemetry and human citation audit remain open. Production unchanged; no automatic follow-on engine improvement while freeze stands. Do not merge runner-root railway.toml. Existing changelog below records earlier historical checkpoints.
+
+---
+
+
 ## 2026-11-16 final OSS decision — supersedes the experimental next-task sections below
 
 **CLOSED: no new OSS parser adoption in production.** User direction is to stop broad parser comparisons. Camelot page-selected runs reduced *extraction-only* wall time by 52.01% on four PDFs, but frozen original-source visual drafts show B01 p18 Table 2's five parameter targets missing from BOTH all-page and selected-page Stream. There is no certified cell/whole-engine accuracy gain, and 0 independent human-reviewed cells. Neither Camelot nor other untested parsers are approved. Do not continue caption/geometry recovery experiments as part of the OSS workstream; direct subsequent engineering to the existing production stack and unresolved 18 review-required findings, durable token/cost telemetry and release gates. See docs/OPEN_SOURCE_ADOPTION_DECISION_2026-11-16.md.

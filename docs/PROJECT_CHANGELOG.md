@@ -1,3 +1,10 @@
+## 2026-11-16 — explicit engine freeze and complete parser replacement trial
+- Replaced `extract_pages` boundary on isolated branch with no `fitz` import/fallback; production source `feat/research-workspace-mvp` and API/Worker untouched.
+- Real original B01–B10 PDF tests: Camelot+pdfminer success10/10, Docling Parse v7.26.0 success10/10; all 209 pages returned; frozen prior PyMuPDF token proxy 91.20% vs95.52% mean-of-paper means (not independently certified accuracy).
+- Camelot p50 3.600s, max child RSS245.45MiB. Docling Parse p50 3.249s, max child RSS651.25MiB. Different work from prior PyMuPDF plain-text control. Full AI/Gemini end-to-end not run.
+- Standard Docling2.150.0 4/4 subprocess exit1; docling-slim Native 4/4 ImportError; these are experimental execution/configuration failures, NOT quality assessments.
+- No release approval; see `docs/FULL_PDF_PARSER_REPLACEMENT_TRIAL_2026-11-16.md`. Existing 18 findings require source review; engine remains frozen.
+
 ## 2026-11-16 — Open-source parser evaluation CLOSED, no production adoption
 - User directed ending speculative OSS comparisons. Adopt only a independently verified, overall non-regressing option.
 - Existing locked-source evidence: four-PDF selected Camelot Stream extraction 20.565219s -> 9.869005s combined, but B01 p18 Table2 five primary cells remain missing in both all/selected outputs. No human gold or whole-engine gain. Reject unrestricted and selected Camelot for production; preserve experimental code and data.
