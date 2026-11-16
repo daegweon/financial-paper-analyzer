@@ -38,3 +38,8 @@ def test_none_of_these_modules_run_production_db_mutations():
     assert "_process_analysis_job(" not in code
     assert "claim_analysis_job" not in code
     assert "rest/v1/analyses" not in code
+
+def test_docling_parse_import_and_shared_page_counter_dependencies():
+    from docling_parse.pdf_parser import DoclingPdfParser
+    from pdfminer.pdfpage import PDFPage
+    assert DoclingPdfParser and PDFPage

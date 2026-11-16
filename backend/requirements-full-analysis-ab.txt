@@ -6,4 +6,5 @@ httpx==0.28.1
 pydantic==2.11.7
 PyMuPDF==1.26.3
 docling-parse==7.26.0
+pdfminer.six==20260107
 pytest==9.0.2
