@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "record_type": "CANDIDATE_TELEMETRY_CHANGE_NOT_RELEASE_CERTIFIED",
+  "recorded_at": "2026-11-17",
+  "baseline_commit": "8cd5e37ee8eab3bf4b726b75af89e410ab48396e",
+  "candidate_branch": "experiment/engine-quality-v6-4-2-heldout-clean",
+  "candidate_branch_base": "325fb7e5bda6dd05cf4888fd658018a2d8e4abbf",
+  "heldout_lock_commit": "149311ec2993cac3bd410c10ac7feb202d582fc7",
+  "candidate_first_code_commit": "7dd13343f44702369b8a1415c750d5fdf08371f7",
+  "latest_main_telemetry_redaction_commit": "be69ebb5df262fd0f86342ba4f3868ce0fb01a45",
+  "latest_telemetry_test_commit": "40bc8d255b3bc02929942947e302789c053f4845",
+  "current_head": "da859290641869f664db0cc5e6825cab337f216e",
+  "analysis_version": "finance-structured-v6.4.2",
+  "source_files": {
+    "baseline_main": {
+      "git_blob_sha1": "3d020cc1ecbd3153bb952ae967554b54e382d8dd",
+      "sha256": "3e86a9402af6850527b77beaaf74998ba922dc8d07ab51c789bbc7e53540dba5"
+    },
+    "candidate_main": {
+      "git_blob_sha1": "f1a4461f5822305aebdaadf1a7eae0bd28c98e3e",
+      "sha256": null
+    },
+    "candidate_finance_test": {
+      "git_blob_sha1": "f29088c156682ed3fb271a64e7d7175d07626004"
+    },
+    "production_worker": {
+      "git_blob_sha1": "443ae211b17ee86660ffc070596d42f8ffc49c59"
+    },
+    "production_requirements": {
+      "git_blob_sha1": "debc81ab00532e6bcfc70c77437f418ea92d399a"
+    }
+  },
+  "invariants": {
+    "analysis_version_unchanged": true,
+    "prompt_sha256_unchanged": "df0e36c9bb0ffc2e920e7d978fc4458118e7ce1ff3a4d78fe774bac49417cdcd",
+    "schema_sha256_unchanged": "9bbfdc0cabbb27327da91232115cc1b6be55c7ed94b32cb6e65ccc1c3892ad5d",
+    "extract_pages_sha256_unchanged": "b116e1b38633ee11c47f51f424f1138edae058e276fc4288f83bd63273b7a291",
+    "request_body_unchanged": true,
+    "model_order_and_retry_policy_unchanged": true,
+    "output_schema_unchanged": true,
+    "pdf_extraction_logic_unchanged": true,
+    "user_result_shape_unchanged": true,
+    "provider_error_response_bodies_logged": false
+  },
+  "telemetry": {
+    "job_id_context_set_at_process_analysis_job_and_reset_in_finally": true,
+    "provider_call_id_per_generate_gemini_call": true,
+    "per_attempt_fields": [
+      "attempt_index",
+      "attempt_total",
+      "model",
+      "HTTP_status_or_transport_outcome",
+      "elapsed_ms",
+      "finish_reason",
+      "prompt_tokens",
+      "candidate_tokens",
+      "thought_tokens",
+      "total_tokens"
+    ],
+    "per_call_fields": [
+      "provider_attempts",
+      "total_elapsed_ms",
+      "failure_summary"
+    ],
+    "secrets_or_prompt_text_logged": false,
+    "provider_error_body_logged": false,
+    "provider_attempts_scope": "per _generate_gemini call; group all calls for a job by job_id",
+    "note": "Per-attempt elapsed excludes the deliberate 1-second inter-model fallback sleep; total_elapsed_ms includes it."
+  },
+  "tests_added": [
+    "test_gemini_attempt_telemetry_correlates_job_status_latency_and_usage",
+    "test_gemini_all_model_failure_log_preserves_both_statuses_and_job_id",
+    "test_integration_contract verifies job context is set during analysis and reset afterwards",
+    "provider error response bodies are absent from telemetry logs",
+    "test_capture_engine_fingerprint",
+    "test_extraction_preflight",
+    "test_parse_railway_telemetry"
+  ],
+  "verification": {
+    "github_actions": "startup_failure",
+    "jobs_created": 0,
+    "repository_tests_executed": false,
+    "local_full_suite_verified": false,
+    "measured_runtime_overhead_ms": null,
+    "q2_non_regression_proven": false
+  },
+  "telemetry_aggregation": {
+    "script": "benchmark/parse_railway_telemetry.py",
+    "purpose": "Aggregate Worker claim/completion/failure events and Gemini per-call/per-attempt traces by job_id/provider_call_id.",
+    "output_fields": [
+      "pipeline_latency_ms",
+      "worker_claim_attempts",
+      "retry_scheduled_count",
+      "provider_attempts_total",
+      "prompt_tokens_total",
+      "candidate_tokens_total",
+      "thought_tokens_total",
+      "per-call model path and HTTP outcomes"
+    ],
+    "cost_usd": null,
+    "cost_note": "No dated price schedule supplied; cost remains null.",
+    "latest_parser_commit": "c2fdd0efe8c14327da27b29e6a5b1a55b4b46a81",
+    "parser_test_commit": "cad0bb0fde25deeef2484adbbe432e8edf8d1935",
+    "ci_status": "not_run_startup_failure_before_jobs"
+  },
+  "quality_gate_status": {
+    "Q0": "BLOCKED",
+    "Q1": "BLOCKED",
+    "Q2": "BLOCKED",
+    "P0": "BLOCKED"
+  },
+  "final_deploy_allowed": false
+}
