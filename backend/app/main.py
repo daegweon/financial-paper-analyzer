@@ -726,11 +726,11 @@ def _are_duplicate_findings(left: dict[str, Any], right: dict[str, Any]) -> bool
     # neutral/positive label. Merge only when the exact figure, model, numeric
     # outcome set and explicit ticker/variable set all agree on the same page.
     left_tickers = set(re.findall(
-        r"\\b[A-Z][A-Z0-9]{1,5}\\b",
+        r"\b[A-Z][A-Z0-9]{1,5}\b",
         " ".join((str(left.get("claim", "")), str(left.get("estimate", "")), str(left.get("evidence", "")))),
     ))
     right_tickers = set(re.findall(
-        r"\\b[A-Z][A-Z0-9]{1,5}\\b",
+        r"\b[A-Z][A-Z0-9]{1,5}\b",
         " ".join((str(right.get("claim", "")), str(right.get("estimate", "")), str(right.get("evidence", "")))),
     ))
     same_figure_outcome = (
