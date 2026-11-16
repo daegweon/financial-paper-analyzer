@@ -725,6 +725,14 @@ def _are_duplicate_findings(left: dict[str, Any], right: dict[str, Any]) -> bool
     # Figure-caption paraphrases can differ only by a short lead-in and by a
     # neutral/positive label. Merge only when the exact figure, model, numeric
     # outcome set and explicit ticker/variable set all agree on the same page.
+    left_tickers = set(re.findall(
+        r"\\b[A-Z][A-Z0-9]{1,5}\\b",
+        " ".join((str(left.get("claim", "")), str(left.get("estimate", "")), str(left.get("evidence", "")))),
+    ))
+    right_tickers = set(re.findall(
+        r"\\b[A-Z][A-Z0-9]{1,5}\\b",
+        " ".join((str(right.get("claim", "")), str(right.get("estimate", "")), str(right.get("evidence", "")))),
+    ))
     same_figure_outcome = (
         bool(left_table_refs & right_table_refs)
         and any(ref.startswith("figure:") for ref in left_table_refs & right_table_refs)
@@ -732,7 +740,7 @@ def _are_duplicate_findings(left: dict[str, Any], right: dict[str, Any]) -> bool
         and bool(left_model) and left_model == right_model
         and bool(left_numbers) and bool(right_numbers)
         and (left_numbers.issubset(right_numbers) or right_numbers.issubset(left_numbers))
-        and bool(left_variables) and left_variables == right_variables
+        and bool(left_tickers) and left_tickers == right_tickers
         and directions_compatible
     )
     if same_figure_outcome:
