@@ -10,7 +10,7 @@ from typing import Any
 from urllib.parse import quote
 from uuid import UUID
 
-import fitz
+from app.pdf_replacement import extract_pages
 import httpx
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
@@ -86,29 +86,8 @@ def sanitize_json_payload(value: Any) -> Any:
     return value
 
 
-def extract_pages(data: bytes) -> tuple[int, list[dict[str, Any]]]:
-    if not data.startswith(b"%PDF-") or len(data) > MAX_BYTES:
-        raise ValueError("유효한 30MB 이하 PDF가 아닙니다.")
-    try:
-        with fitz.open(stream=data, filetype="pdf") as document:
-            if document.needs_pass:
-                raise ValueError("암호화된 PDF는 지원하지 않습니다.")
-            count = len(document)
-            if count < 1 or count > MAX_PAGES:
-                raise ValueError("1~300페이지 PDF만 지원합니다.")
-            pages = [
-                {
-                    "page": index + 1,
-                    "text": re.sub(r"\s+", " ", sanitize_pdf_text(document[index].get_text("text"))).strip()[:MAX_PAGE_CHARS],
-                }
-                for index in range(min(count, MAX_PAGES_TO_SCAN))
-            ]
-            pages = [page for page in pages if page["text"]]
-    except (fitz.FileDataError, fitz.EmptyFileError) as exc:
-        raise ValueError("PDF를 해석하지 못했습니다.") from exc
-    if not pages:
-        raise ValueError("본문 텍스트가 없습니다. 이미지 기반 PDF는 OCR이 필요합니다.")
-    return count, pages
+# PDF extractor wholly replaced in this experimental branch; no fitz fallback.
+# All existing downstream workflow calls use the identical (count, pages) contract.
 
 
 EVIDENCE_SCHEMA = {
