@@ -46,3 +46,28 @@
 4. Measure v6.4.2 and candidate full analyses with the same original+held-out corpus, at least 2 repeats each. Preserve error events and provider token/price data; 503/429 is not success.
 5. Revert any candidate that regresses factual precision, historical supported quotes or latency/cost/memory limits.
 6. Perform two-account RLS/SMTP/auth/upload E2E and production build/rollback checks. Only after **all** gates pass, stop tuning, release an exact verified Git SHA, and observe post-release health.
+
+
+## Iteration 3 — historical human-audit queue (code, not human gold)
+
+- New \`benchmark/human_review_pack.py\`: deterministic source-oriented records from a **frozen v6.3.9** JSON export of exactly B01–B10. Produces 18 unique case fingerprints and retains exact claim, coefficient, table/model labels, direct evidence and legend excerpt.
+- Source PDFs are SHA-256 hashed **only if local actual PDF bytes are available**; absent files remain \`sha256: null\` and all pages remain \`pdf_pages_verified: false\`.
+- Human reviewer slots, source adjudication, and evidence fields are null/empty by default; every case remains \`UNREVIEWED\`.
+- Added five synthetic tests for fixed counts, missing/duplicated rows, version mismatch, invalid page evidence, source header fingerprinting, and refusal to invent human review.
+- Read-only Supabase SQL inspection on 2026-11-17 confirmed current stored frozen v6.3.9 case totals: B01=4, B02=6, B03=1, B05=2, B09=3, B10=2; all 10 original benchmark papers present. **No DB rows or source storage were modified.**
+- The actual complete pack could not be generated from the private workspace here: the original PDF bytes and full local analysis export were not available to the isolated test runtime. No false 'source verified' assertions.
+
+## Iteration 4 — gate provenance / release-permission hardening
+
+- \`benchmark/engine_quality_gate.py\` now requires each independently reviewed claim to match the locked source PDF SHA of its paper, plus specific valid source page, source quote and evidence reference.
+- Held-out entries require positive page count and a SHA that does not occur in the regression corpus. Distinct reviewer IDs are necessary but not sufficient for human independence; the release owner must verify them.
+- Important security correction: even a fully structurally passing synthetic JSON returns \`final_deploy_allowed: false\`; only \`structural_checks_passed\` may become true. CLI exit zero means structural acceptance only, NEVER automatic promotion.
+- Nine local reproduction tests of the gate evaluator passed (\`/mnt/data/test_gate_local.py\`). This tests a local reproduction, **not the full connected repository backend test suite**. The new five review-pack synthetic tests were committed but not run by a verified repository CI runner.
+- GitHub Actions continues \`startup_failure\` before any job. New isolated Railway build service creation was refused with \`Free plan resource provision limit exceeded\`; no additional service was created. Existing stopped experimental services have server-side credentials and were not repointed to unreviewed branch code.
+- Vercel development Preview builds observed \`READY\`, but this is only the frontend build status and no engine A/B verification.
+
+## Independent held-out chronology warning
+
+This experiment branch was created and altered **before** any new 2-paper held-out PDF manifest was source-SHA locked. Under the strict Q0 pre-registration rule, a new release-eligible candidate must be constructed from the frozen baseline AFTER the new holdouts are genuinely locked; do not retroactively select/claim holdouts for this experimental candidate. Open-source paper discovery alone is not a PDF hash lock.
+
+**No production release:** Q0/Q1/Q2/P0 all remain BLOCKED. Real human reviewers = 0 recorded. Source-supported precision, recoveries, full-model p95/cost/RSS are unmeasured. Railway API/Worker still use production SHA \`8cd5e37\`; original papers/analyses preserved. Keep PR #4 in Draft.
