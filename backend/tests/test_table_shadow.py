@@ -81,7 +81,7 @@ def test_wrong_project_refused(monkeypatch):
 
 def test_public_artifact_bucket_refused():
     s=StorageSource.__new__(StorageSource);s.artifact_bucket="papersignal-benchmark-artifacts"
-    s.request=lambda *a:(b'{"public":true}',{})
+    s.request=lambda *a:(json.dumps([{"id":s.artifact_bucket,"public":True}]).encode(),{})
     with pytest.raises(ValueError): s.ensure_artifact_bucket()
 
 
@@ -89,12 +89,39 @@ def test_new_artifact_bucket_private_and_no_source_bucket_mutation():
     s=StorageSource.__new__(StorageSource);s.artifact_bucket="papersignal-benchmark-artifacts"; calls=[]
     def request(path,data=None):
         calls.append((path,data))
-        if len(calls)==1: raise urllib.error.HTTPError("",404,"",{},None)
-        return b'{"public":false}',{}
+        if len(calls)==1: return b'[{"id":"papers","public":false}]',{}
+        return json.dumps({"id":s.artifact_bucket,"public":False}).encode(),{}
     s.request=request;s.ensure_artifact_bucket()
     body=json.loads(calls[1][1])
     assert body["public"] is False and body["allowed_mime_types"]==["application/json"]
     assert body["id"]=="papersignal-benchmark-artifacts"
+    assert len(calls)==3 and calls[0][0]=="/storage/v1/bucket"
+
+
+def test_existing_private_artifact_bucket_not_mutated():
+    s=StorageSource.__new__(StorageSource);s.artifact_bucket="papersignal-benchmark-artifacts";calls=[]
+    def request(path,data=None):
+        assert data is None
+        calls.append(path)
+        return json.dumps([{"id":s.artifact_bucket,"public":False}]).encode(),{}
+    s.request=request;s.ensure_artifact_bucket()
+    assert calls==["/storage/v1/bucket"]
+
+
+def test_bucket_list_error_not_swallowed_or_followed_by_write():
+    s=StorageSource.__new__(StorageSource);s.artifact_bucket="papersignal-benchmark-artifacts";calls=[]
+    def request(path,data=None):
+        calls.append(path)
+        raise urllib.error.HTTPError("",400,"",{},None)
+    s.request=request
+    with pytest.raises(urllib.error.HTTPError): s.ensure_artifact_bucket()
+    assert calls==["/storage/v1/bucket"]
+
+
+def test_malformed_bucket_list_refused():
+    s=StorageSource.__new__(StorageSource);s.artifact_bucket="papersignal-benchmark-artifacts"
+    s.request=lambda *a:(b'{"error":"unexpected"}',{})
+    with pytest.raises(ValueError): s.ensure_artifact_bucket()
 
 
 def test_private_artifact_paths_cannot_overwrite_paper():

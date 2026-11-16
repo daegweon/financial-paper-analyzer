@@ -171,21 +171,26 @@ class StorageSource:
 
     def ensure_artifact_bucket(self) -> None:
         """Only this dedicated private JSON bucket can be created. Never alter papers."""
-        path = "/storage/v1/bucket/" + self.artifact_bucket
-        try:
-            body, _ = self.request(path)
-            bucket = json.loads(body)
-        except urllib.error.HTTPError as exc:
-            if exc.code != 404:
-                raise
+        # List before creating: missing-bucket GET status differs by Storage version.
+        # Never treat every HTTP 400 as permission to create a bucket.
+        body, _ = self.request("/storage/v1/bucket")
+        buckets = json.loads(body)
+        if not isinstance(buckets, list):
+            raise ValueError("Unexpected bucket list response")
+        matches = [b for b in buckets if b.get("id") == self.artifact_bucket]
+        if len(matches) > 1:
+            raise ValueError("Ambiguous artifact bucket")
+        if matches:
+            bucket = matches[0]
+        else:
             self.request("/storage/v1/bucket", json.dumps({
                 "id": self.artifact_bucket, "name": self.artifact_bucket, "public": False,
                 "allowed_mime_types": ["application/json"], "file_size_limit": MAX_PDF_BYTES,
             }).encode())
-            body, _ = self.request(path)
+            body, _ = self.request("/storage/v1/bucket/" + self.artifact_bucket)
             bucket = json.loads(body)
-        if bucket.get("public") is not False:
-            raise ValueError("Benchmark artifact bucket must be private")
+        if bucket.get("id") != self.artifact_bucket or bucket.get("public") is not False:
+            raise ValueError("Benchmark artifact bucket must match and be private")
 
     def get_pdf(self, spec: dict[str, Any]) -> tuple[bytes, dict[str, Any], str]:
         query = urllib.parse.urlencode({"select": "storage_path,user_id,size_bytes,page_count", "original_filename": "eq." + spec["filename"], "limit": "2"})
