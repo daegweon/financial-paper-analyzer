@@ -1,3 +1,11 @@
+## 2026-11-16 — Exact-corpus open-source table shadow evaluation
+- Optional Camelot hardening and isolated B01–B10 benchmark implemented; 209 pages, source identity/SHA-256 checks, separate processes, wall/RSS/version diagnostics and private raw artifacts.
+- Focused suites: 43 passed locally and 43 passed in Railway BuildKit, including real synthetic-PDF lattice/stream extraction. Full production regression suite was not rerun.
+- Two complete 30-execution extraction passes had zero parser failures and matching hashes/candidate counts. First-pass artifact uploads failed with HTTP 400; bucket discovery was fixed, tested and rerun. Final pass saved all ten private JSON artifacts with zero source/artifact errors.
+- API/Worker/frontend production paths, dependencies and historical analysis/job data unchanged. New one-shot benchmark service has no public endpoint/cron and zero running replicas after completion. Original PDF bucket remains private/PDF-only.
+- Decision: no unrestricted all-page Camelot production adoption. Exact-cell gold and bounded recovery quality/cost gates are next; no overall accuracy gain or global maximum claimed.
+- Report: benchmark/results/table-shadow-evaluation-2026-11-16.md. Guide: docs/TABLE_BENCHMARK.md. Experimental and execution-only branches intentionally separate.
+
 ## 2026-11-16 — v6.3.9 ten-paper benchmark
 - Reanalyzed B01–B10 with finance-structured-v6.3.9; all ten durable analysis jobs completed and prior analyses were retained.
 - Latest deployment commit d9c684e5a4bcccbb95feaed6385429bd8ff85567 is SUCCESS for Railway API and Worker; API health returned HTTP 200.

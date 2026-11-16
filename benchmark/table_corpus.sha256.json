@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "snapshot_date": "2026-11-16",
+  "identity_note": "SHA-256 computed from the exact private Storage originals and identical across both extraction runs. Byte sizes, Storage ETags and page counts were independently checked. ETag is not assumed universally equal to MD5.",
+  "papers": [
+    {"id":"B01","filename":"B01_factor-sufficiency.pdf","bytes":2999239,"pages":31,"etag":"f2075ae9b1222cc50293d1e9b11ce912","sha256":"d729eaa7fa349916e1753775f7d5a4c12b629a3eb7af77f90dec06accacfacf3"},
+    {"id":"B02","filename":"B02_korea-consumption.pdf","bytes":606182,"pages":20,"etag":"165d0728c0d9925a371da9f2ce04a6bd","sha256":"aa602635a2f64639ee94b666d19ed23be2eaae5b19cccc030b896e84954c7854"},
+    {"id":"B03","filename":"B03_morocco-carhart.pdf","bytes":396873,"pages":14,"etag":"2a8da0e1e6097eb44f417906a24b784e","sha256":"489614f7c709d28b77b0092fe2e9e589e3d917d2a906546e67813fd19dfb68dd"},
+    {"id":"B04","filename":"B04_china-regime.pdf","bytes":4418309,"pages":19,"etag":"b2f81496143f0e3a80845d379846984a","sha256":"dca200a597c048340f8eae81b09e169149501d0bc3b6809f31e15887521bd123"},
+    {"id":"B05","filename":"B05_warsaw-liquidity.pdf","bytes":1064697,"pages":24,"etag":"1506c646a85d173551c62b43b21b96e6","sha256":"0d5c61c34054a6b2534f23b0f895e69cfc6cc78cd6758187f2c9604eb33d7a2c"},
+    {"id":"B06","filename":"B06_asean-fx.pdf","bytes":975524,"pages":22,"etag":"fef70bb01f1b55a1646e1a4cf283361b","sha256":"42a8102e4b60dcae6eace1b23ee18e9f9dab4b4e7c968a61994fb1d95320e6c0"},
+    {"id":"B07","filename":"B07_korea-garch-midas.pdf","bytes":3429628,"pages":23,"etag":"a38c2cc0e2cc56eab7a058b47db30af4","sha256":"10ffc3942b5c74fda8d78e1c875f8c39e05546ff7bcd69fafefc53635d7123ad"},
+    {"id":"B08","filename":"B08_us-esg.pdf","bytes":1202803,"pages":21,"etag":"610e73ead3e47d0be911b23519ccae61","sha256":"fccffb87bfceba3b0971d208d357d7953637e33aad10d34f8bdcb27cb2c5d1d6"},
+    {"id":"B09","filename":"B09_firm-vov.pdf","bytes":1076845,"pages":16,"etag":"97838a0cd74cb780a6c0f2d47d76fd8b","sha256":"ab69f803264927a2321240f7f93696551e7691ec27cd221b0002363d329a288e"},
+    {"id":"B10","filename":"B10_thailand-portfolio.pdf","bytes":1590430,"pages":19,"etag":"4f8b19b56c80e15c1180b1dc3b7332be","sha256":"cee6e3a7171ccb93c25a1ce306058b615b4ded852c3806691b551aa9fc0c499e"}
+  ]
+}

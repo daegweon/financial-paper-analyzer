@@ -1,110 +1,63 @@
 # PaperSignal — Project State / Session Handoff
 
-Last updated: 2026-11-16 (Asia/Seoul)
-Source of truth: Git branch feat/research-workspace-mvp
-Open development PR: https://github.com/daegweon/financial-paper-analyzer/pull/2 (Draft; do not merge without release gates)
+Last updated: 2026-11-16 (Asia/Seoul).
+Production source: feat/research-workspace-mvp; Draft PR #2, do not merge without release gates.
+Current open-source work: experiment/pdf-table-engines.
+Execution-only branch: experiment/table-benchmark-runner. NEVER merge its root railway.toml into production.
 
-## Product north star
+## Latest checkpoint
 
-Build an evidence-first financial research workspace that accurately extracts research design, methodology, empirical findings, statistical significance and page-level PDF evidence; supports cross-paper comparison and a durable private research library. Prefer verifiable incompleteness over fabricated claims.
+Read benchmark/results/table-shadow-evaluation-2026-11-16.md and docs/TABLE_BENCHMARK.md first. The prior private-PDF access blocker is resolved using server-side Railway variable references. Do not ask for re-upload or retrieve service-role values into chat.
 
-## Current progress estimate
+Optional Camelot 1.0.9 adapter hardened; explicit diagnostics, conflict-preserving deduplication and exact-source shadow benchmark implemented. Focused suites: 43 passed locally and 43 passed in final Railway BuildKit, including real synthetic-PDF lattice/stream extraction. Full production regression suite was NOT rerun.
 
-Overall: approximately 72% (engineering estimate, not a measured product KPI).
-- Core service and user workflows: ~85%
-- Authentication and tenant isolation: ~80%
-- Analysis engine reliability: ~70%
-- Real-user workflow verification: ~75%
-- Quantitative analysis-quality benchmark: ~55%
-- Public beta readiness: ~45%
+Original B01–B10: 10 PDFs, 209 pages. Byte length, ETag and page count checked; SHA-256 locked in benchmark/table_corpus.sha256.json. Two complete extraction passes, each with 30 control/parser executions, had no extraction failures and matching per-paper hashes/candidate counts. First-pass artifact persistence failed with HTTP 400; bucket discovery was fixed and retested. Final pass had zero source/artifact errors and saved ten private result JSON objects.
 
-Do not raise these percentages without new verified evidence. The v6.3.9 benchmark is complete, but page-level citation fidelity and independent human review remain open.
+Decision: DO NOT enable unrestricted all-page Camelot in production. Final medians: text control 0.716s, lattice 10.039s, stream 2.749s per PDF. Lattice produced 9 candidates from B04/B07 only and peaked at 554.008 MiB; Stream produced 263 candidates across every page and peaked at 268.543 MiB. Counts are NOT true-table recall. Numeric-cell, model-column and citation accuracy remain unverified. No overall engine quality gain or global performance maximum is claimed.
 
-## Architecture
+## Next task
 
-- Frontend: Next.js 16 / React 19 on Vercel.
-- Auth, PostgreSQL and private PDF Storage: Supabase project hwmtayrecsfxernhssro, Seoul region.
-- API: FastAPI + PyMuPDF on Railway.
-- Durable queue/worker: Supabase job tables and independent Railway Worker.
-- AI: Gemini primary gemini-3.5-flash-lite, fallback gemini-3.6-flash.
-- Analysis version: current production API/Worker commit reports finance-structured-v6.3.9.
-- GitHub repository: daegweon/financial-paper-analyzer.
+Construct visually checked, independently reviewed exact-cell gold, prioritizing B01/B02/B09/B10 and the 18 historically review-required findings. Record variable, model column, coefficient/sign, standard error, stars/p-value/legend and page; include prose/figure negative controls. Use the saved raw private artifacts, not log-count proxies.
 
-## Verified complete
+Then compare bounded page-selected Stream recovery (Lattice only where warranted) against the COMPLETE existing pipeline under predeclared quality/time/memory/failure/cost budgets. No regression in existing supported claims or citation fidelity is allowed. Stop changes whose gain does not justify total-service overhead. Test held-out papers before promotion. Two extraction smoke passes do not satisfy the independent full-quality-benchmark gate. Docling and other shortlisted parsers have not been benchmarked in this checkpoint.
 
-- Research library, upload, analysis history, search/sort, up-to-four-paper comparison, CSV export and A4 report.
-- Private PDF Storage, signed source links, per-user RLS.
-- Email/password and Google OAuth UI; a real Google PKCE login succeeded. Supabase logs recorded Google callback, token exchange HTTP 200 and user lookup HTTP 200.
-- The Google identity is distinct from the legacy email identity. Legacy account has 11 papers / 44 analyses; Google account has three test papers / three analyses. Do not merge automatically.
-- RLS rollback tests showed Google user can access own paper/analysis/job rows and the legacy account cannot read those rows; Google user initially sees none of the legacy account's records. Test rows were rolled back; no leftovers.
-- Durable Worker: atomic claim, leases, heartbeat, retries, checkpoint resume, idempotent result persistence and terminal checkpoint cleanup.
-- CORS accepts explicit origins plus a narrowly scoped Vercel Preview hostname regex for this Vercel project/team. Unrelated Vercel origins are rejected.
-- PDF/model text is sanitized before JSONB persistence to prevent Postgres 22P05 from control characters.
-- Three real Google-account PDFs completed v6.2 analysis: Acharya/Pedersen liquidity risk (50 of 60 pages scanned, 21 evidence quotes, 6 findings); Bank funding constraints (17 pages, 26 quotes, 0 structured findings); Monetary policy/funding cost/risk-taking (20 pages, 40 quotes, 0 structured findings). The latter two are known findings-quality gaps.
-- Latest observed Railway API and Worker deployments are SUCCESS on branch commit d9c684e5a4bcccbb95feaed6385429bd8ff85567; API health returned HTTP 200.
-- Reanalyzed B01–B10 on finance-structured-v6.3.9. All ten durable jobs completed; prior analysis records were retained.
-- v6.3.9 ten-paper scorecard: 71 findings, 53 screen-passed, 18 review-required; screen-passed share 74.6%; weighted lexical Gold-fact screen 90.5%.
-- Baseline mixed v6.1/v6.2 snapshot: 24 findings, 15 screen-passed, 9 review-required; screen-passed share 62.5%; weighted lexical Gold-fact screen 84.9%.
-- Gold-fact metric is a lexical alias-presence screen, not human-verified precision/recall or page-level citation accuracy. Cost/latency comparison is unavailable because complete per-paper usage totals were not persisted.
-- Worker logs showed a Gemini Free Tier quota/rate-limit event during B02; durable retry succeeded. Do not claim the Free Tier quota is sufficient for sustained public-beta traffic.
+## Infrastructure and containment
 
-## Current in-progress work
+Railway project c663389c-453c-4645-a83d-299b94089864; environment 0b4f06c3-504a-4610-8995-395c2f4d3d1f.
+- API service 81b678e2-7136-436d-9058-7d20647dc1b7, active deployment 17c9134b-f49c-4358-a879-7ca77b55b936: SUCCESS/online, unchanged.
+- Worker 238af942-0628-47d5-9280-04a49373423f, deployment dc501061-d434-454a-bc7d-4658b991a2f1: SUCCESS/online, unchanged.
+- Benchmark-only service c279046d-aedc-43bf-9e25-c09ab59fe38b, papersignal-table-benchmark: 1 vCPU / 1 GB, no public listener/domain, no cron, restart NEVER, pinned runner commit d1a4b4e33ef8e898058cb0ef21b151843f74ea5c. Final deployment 20becdfa-272f-448f-a347-68af3c8f33b3 finished; running replicas=0, pending work empty.
+- API/Worker/frontend code, production dependency files and production service configuration were not changed. Historical failed builds in Railway's lookback predate this experiment.
+- Temporary Vercel sandbox sbx_ndWNtbHXF5WtmiZ3mVMq2Y2zIogP was stopped; its pre-existing source snapshot was not deleted.
 
-- v6.3.9 ten-paper benchmark completed and recorded at benchmark/results/scorecard-v6.3.9-2026-11-16.md.
-- Do not begin v6.4 or add broad new heuristics until the remaining 18 review-required findings receive targeted human audit.
-- Prioritize B01, B02, B09 and B10 because they have the largest review-required counts (4, 6, 3 and 2 respectively).
-- Validate every material coefficient, direction, p-value/significance legend, table/figure reference and page citation against the exact stored PDF.
-- Inspect B02's Gemini quota/retry event and define a sustainable provider quota/cost plan before public beta.
-- Capture per-job model, prompt/candidate token counts, provider attempts, wall-clock latency and estimated cost in a durable usage record before claiming cost/latency improvements.
-- Preserve all historical analysis versions; do not delete or overwrite prior results.
+Supabase hwmtayrecsfxernhssro remains Free/Seoul. Original private papers bucket is still PDF-only, 30 MiB/object, 14 objects; papers table 14 rows; jobs completed=102, failed=28. No historical analysis or job was rewritten or deleted. No model/provider call or queue claim occurred.
 
-## Known remaining work
+New papersignal-benchmark-artifacts bucket: private, JSON-only, 30 MiB/object, 10 objects. Existing Storage RLS policies only cover papers; no authenticated/anonymous artifact policy was added. Administrative-only raw artifacts are under <owner>/benchmarks/tables-1503f4d527fa419a9d48d0576c3f616d/Bnn.json. Never commit raw PDF/text payloads, owner identifiers, secrets or signed URLs.
 
-### P0 — before public beta
-1. Complete targeted human review of all 18 review-required findings, starting with B01, B02, B09 and B10.
-2. Audit all material coefficient, sign, p-value/significance legend and page-citation claims against the exact PDFs; record reviewer decisions and citation-level scorecard.
-3. Persist per-job model/token/provider-attempt/latency/cost telemetry and define sustainable quotas; B02 hit Gemini Free Tier quota before succeeding on retry.
-4. Complete a live two-user E2E with disposable accounts and real API/Worker upload-analysis.
-5. Configure custom SMTP and verify external mailbox signup/confirmation; Supabase Free built-in SMTP is limited to team-member recipients and 2 emails/hour.
-6. Resolve GitHub Actions runner provisioning: synthetic BuildFailed, startup_failure, zero jobs. Railway BuildKit is the backend fallback.
-7. Verify production domain auth, Google sign-in, logout/relogin, PDF upload and analysis.
+## Product and historical baseline
 
-### P1 — product quality and operations
-- OCR for scanned/image-only PDFs.
-- Expand beyond 50 scanned pages, especially appendix/table pages.
-- Paper deletion, retention and account export lifecycle.
-- Usage, token/cost limits, abuse controls and operational observability.
-- Model/provider quality and cost comparison.
+North star: evidence-first financial research workspace, verifiable methods/findings/significance/page evidence, private library and cross-paper comparison. Prefer verifiable incompleteness over fabricated claims.
 
-### P2 — long-term product
-- Research knowledge graph and variable/methodology index.
-- Cross-paper hypothesis and findings synthesis.
-- Library-wide grounded AI research assistant.
-- Team workspace, role management, billing and subscription.
+Architecture: Next.js/React on Vercel; Supabase Auth/PostgreSQL/private Storage; FastAPI/PyMuPDF API plus independent durable Railway Worker; model credentials server-side. Historical recorded engine benchmark is finance-structured-v6.3.9; verify live versions instead of assuming from notes.
 
-## Accepted product decisions
+Existing features include library/upload/history/search/sort, up-to-four-paper comparison, CSV/A4 reports, private source links, email/Google PKCE, owner RLS, durable leases/heartbeat/retry/checkpoints/idempotency, narrow Preview CORS and control-character-safe JSON persistence.
 
-- Keep Supabase on Free. Do not upgrade to Pro solely for Leaked Password Protection.
-- Leaked Password Protection stays disabled; its single security-advisor WARN is an accepted residual risk. Do not claim it is enabled.
-- No automatic account merging or cross-account data migration.
-- No secrets in browser code, GitHub or chat; service-role and AI keys remain server-side.
-- Public papers only for Gemini Free Tier testing; never upload confidential/internal/company/customer/personal data to the free tier.
-- Preserve existing papers and analyses unless the user explicitly authorizes deletion.
-- Prefer user-facing result status that distinguishes job completion from extraction quality.
-- The user prefers the assistant to choose the best implementation path and report outcomes rather than repeatedly ask for design opinions.
+Historical v6.3.9 B01–B10 scorecard (NOT rerun here): 71 findings, 53 screen-passed, 18 review-required; 74.6% screen-passed share and 90.5% weighted lexical Gold-fact screen. Mixed v6.1/v6.2 baseline: 24 findings, 15 screen-passed, 9 review-required; 62.5% and 84.9%. Lexical alias presence is NOT human-verified precision/recall or citation fidelity. Overall progress estimate stays approximately 72%, an engineering estimate, not a KPI. Do not increase it because an optional parser executes.
 
-## Session startup checklist
+Google PKCE real-user login and three-paper analysis previously succeeded, but two papers had no structured findings. Google and legacy email identities remain separate; no automatic merge. Historical RLS rollback tests were clean; complete current two-user live E2E remains a release gate.
 
-At the beginning of every new project session:
-1. Read this file, docs/PROJECT_DECISIONS.md, and the last 20 entries of docs/PROJECT_CHANGELOG.md.
-2. Inspect current Git branch/PR head, Railway active deployments, latest Vercel Preview, and Supabase job/result state before making claims.
-3. Compare live code with this handoff. If they differ, update this state document first.
-4. Continue the next P0 task unless the user explicitly changes priorities.
+## Retained release gates and decisions
 
-## Checkpoint cadence
+- Audit all 18 review-required findings and material numeric/page-citation claims before broad engine expansion.
+- Persist complete model/token/provider-attempt/latency/cost telemetry. B02 previously needed retry after Gemini Free Tier quota errors; sustained public-beta quota sufficiency is not established.
+- Complete disposable two-user upload-analysis E2E, custom SMTP/external confirmation, and production-domain sign-in/logout/relogin/upload/analysis verification.
+- Resolve historical GitHub Actions runner startup failures. Focused Railway BuildKit tests do not replace the full release suite.
+- Keep Supabase Free; no Pro upgrade solely for Leaked Password Protection. Its disabled state/advisor WARN remains an accepted residual risk, not a passed safeguard.
+- No automatic account merge/cross-account migration. Preserve PDFs, historical analyses and user data.
+- No secrets in browser/GitHub/chat. Public papers only with free-tier model providers; never confidential/company/customer/personal data.
+- Distinguish job completion from extraction quality. The user prefers implemented choices and verified results over repeated design questions.
+- Remaining broader work: image-only PDF OCR, beyond-50-page coverage, deletion/retention/export, usage/cost/abuse observability; later knowledge graph, grounded assistant, teams and billing.
 
-Update PROJECT_STATE.md and append PROJECT_CHANGELOG.md:
-- every five substantial development tasks/conversation turns;
-- immediately after architecture/provider/schema decisions;
-- after every production deployment, migration, or user-data E2E;
-- before a session handoff.
+## Startup and checkpoint cadence
+
+Read this state, docs/PROJECT_DECISIONS.md, changelog and latest evaluation. Inspect actual branch heads, Railway deployments, Vercel Preview and Supabase state. Resolve discrepancies before further edits. Update state/changelog after five substantial tasks, major architecture/provider/schema/deployment decisions and handoff. Save notes in Git; do not claim account memory is enabled. Continue the recorded next task without requiring the user to reconstruct context.

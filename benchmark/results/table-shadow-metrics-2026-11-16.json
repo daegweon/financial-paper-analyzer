@@ -1,0 +1,34 @@
+{
+  "date":"2026-11-16",
+  "scope":"Two extraction smoke/performance passes, not full-pipeline or independently reviewed quality benchmarks.",
+  "papers":10,"pages":209,"resource_limit":{"vcpu":1,"memory_gb":1},
+  "versions":{"camelot-py":"1.0.9","PyMuPDF":"1.26.7","pdfminer.six":"20260107","opencv-python-headless":"5.0.0.93","numpy":"2.5.5","pandas":"3.1.1","pypdfium2":"5.15.2"},
+  "final_run":{"run_id":"tables-1503f4d527fa419a9d48d0576c3f616d","deployment_id":"20becdfa-272f-448f-a347-68af3c8f33b3","runner_commit":"d1a4b4e33ef8e898058cb0ef21b151843f74ea5c","source_errors":[],"artifact_errors":[],"saved_private_artifacts":10},
+  "engine_columns":["engine","completed","failed","p50_wall_seconds","p95_wall_seconds","max_child_peak_rss_mib","candidate_tables"],
+  "final_engines":[
+    ["pymupdf-text",10,0,0.716144,0.868209,76.020,null],
+    ["camelot-lattice",10,0,10.038897,13.409829,554.008,9],
+    ["camelot-stream",10,0,2.748525,4.751715,268.543,263]
+  ],
+  "paper_columns":["id","pages","text_wall_seconds","lattice_wall_seconds","lattice_candidates","stream_wall_seconds","stream_candidates"],
+  "final_per_paper":[
+    ["B01",31,0.866560,14.157513,0,3.426255,35],
+    ["B02",20,0.716496,9.036301,0,2.277496,24],
+    ["B03",14,0.665926,6.529686,0,1.870084,17],
+    ["B04",19,0.766285,12.495992,2,5.836183,24],
+    ["B05",24,0.869558,11.151210,0,2.923948,26],
+    ["B06",22,0.766202,10.389787,0,2.873607,33],
+    ["B07",23,0.665868,10.692559,7,3.325705,28],
+    ["B08",21,0.715792,9.688007,0,2.623444,28],
+    ["B09",16,0.571117,7.030427,0,1.918954,22],
+    ["B10",19,0.615524,7.885225,0,1.971298,26]
+  ],
+  "first_run":{"run_id":"tables-0c49ca6f39de427d876d8131dcf043d6","deployment_id":"d26c718d-d41b-4780-9396-152f39ab9a9a","completed_extractions":30,"parser_failures":0,"artifact_failures":10,"artifact_http_status":400,"process_exit":1,"same_per_paper_hashes_and_candidate_counts":true},
+  "first_engines":[
+    ["pymupdf-text",10,0,0.716629,0.844028,76.293,null],
+    ["camelot-lattice",10,0,10.541135,13.349574,554.141,9],
+    ["camelot-stream",10,0,2.949695,4.661807,268.926,263]
+  ],
+  "promotion_eligible":false,
+  "blocking_gates":["human_reviewed_exact_cell_gold_missing","full_analysis_quality_regression_not_run","production_resource_and_cost_budget_not_validated","second_independent_full_quality_benchmark_not_run"]
+}
