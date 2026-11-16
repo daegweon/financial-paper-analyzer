@@ -15,10 +15,10 @@ Overall: approximately 72% (engineering estimate, not a measured product KPI).
 - Authentication and tenant isolation: ~80%
 - Analysis engine reliability: ~70%
 - Real-user workflow verification: ~75%
-- Quantitative analysis-quality benchmark: ~40%
+- Quantitative analysis-quality benchmark: ~55%
 - Public beta readiness: ~45%
 
-Do not raise these percentages without new verified evidence.
+Do not raise these percentages without new verified evidence. The v6.3.9 benchmark is complete, but page-level citation fidelity and independent human review remain open.
 
 ## Architecture
 
@@ -27,7 +27,7 @@ Do not raise these percentages without new verified evidence.
 - API: FastAPI + PyMuPDF on Railway.
 - Durable queue/worker: Supabase job tables and independent Railway Worker.
 - AI: Gemini primary gemini-3.5-flash-lite, fallback gemini-3.6-flash.
-- Analysis version: new analyses use finance-structured-v6.3.
+- Analysis version: current production API/Worker commit reports finance-structured-v6.3.9.
 - GitHub repository: daegweon/financial-paper-analyzer.
 
 ## Verified complete
@@ -41,28 +41,33 @@ Do not raise these percentages without new verified evidence.
 - CORS accepts explicit origins plus a narrowly scoped Vercel Preview hostname regex for this Vercel project/team. Unrelated Vercel origins are rejected.
 - PDF/model text is sanitized before JSONB persistence to prevent Postgres 22P05 from control characters.
 - Three real Google-account PDFs completed v6.2 analysis: Acharya/Pedersen liquidity risk (50 of 60 pages scanned, 21 evidence quotes, 6 findings); Bank funding constraints (17 pages, 26 quotes, 0 structured findings); Monetary policy/funding cost/risk-taking (20 pages, 40 quotes, 0 structured findings). The latter two are known findings-quality gaps.
-- Latest v6.3 Railway API and Worker BuildKit test stages each reported 78 passed, 1 skipped.
-- Latest observed Railway services API, Worker and Extractive API are Online with zero active warnings/critical alerts. There are historical failed deployment attempts; inspect the latest deployment before future promotion.
+- Latest observed Railway API and Worker deployments are SUCCESS on branch commit d9c684e5a4bcccbb95feaed6385429bd8ff85567; API health returned HTTP 200.
+- Reanalyzed B01–B10 on finance-structured-v6.3.9. All ten durable jobs completed; prior analysis records were retained.
+- v6.3.9 ten-paper scorecard: 71 findings, 53 screen-passed, 18 review-required; screen-passed share 74.6%; weighted lexical Gold-fact screen 90.5%.
+- Baseline mixed v6.1/v6.2 snapshot: 24 findings, 15 screen-passed, 9 review-required; screen-passed share 62.5%; weighted lexical Gold-fact screen 84.9%.
+- Gold-fact metric is a lexical alias-presence screen, not human-verified precision/recall or page-level citation accuracy. Cost/latency comparison is unavailable because complete per-paper usage totals were not persisted.
+- Worker logs showed a Gemini Free Tier quota/rate-limit event during B02; durable retry succeeded. Do not claim the Free Tier quota is sufficient for sustained public-beta traffic.
 
 ## Current in-progress work
 
-- v6.3: conditional table-first third-pass recovery for papers whose first two findings passes return no supported claims.
-- v6.3 adds findings_coverage: supported / review_required / incomplete / not_assessable.
-- Frontend displays findings coverage and rescue status.
-- Latest UI commit: 27833e00f10ee7babb8a3d8bd06b688d8ddc5a57. An earlier Preview failed due to a duplicate TypeScript property; the duplicate was consolidated. Verify the new Preview build.
-- Latest backend v6.3 commit: f30698cfa46766d3b8f96da4eeb9a14f9bbdee59. Latest project docs commit before this checkpoint: ad5fc4d08a70f7b9af0fbb16d5bacf4df39194b7.
-- The three previously analyzed PDFs are v6.2 results; they have NOT yet been reanalyzed with v6.3. Reanalysis should be done only after preview/production deployment and should create a new analysis version without deleting v6.2 history.
+- v6.3.9 ten-paper benchmark completed and recorded at benchmark/results/scorecard-v6.3.9-2026-11-16.md.
+- Do not begin v6.4 or add broad new heuristics until the remaining 18 review-required findings receive targeted human audit.
+- Prioritize B01, B02, B09 and B10 because they have the largest review-required counts (4, 6, 3 and 2 respectively).
+- Validate every material coefficient, direction, p-value/significance legend, table/figure reference and page citation against the exact stored PDF.
+- Inspect B02's Gemini quota/retry event and define a sustainable provider quota/cost plan before public beta.
+- Capture per-job model, prompt/candidate token counts, provider attempts, wall-clock latency and estimated cost in a durable usage record before claiming cost/latency improvements.
+- Preserve all historical analysis versions; do not delete or overwrite prior results.
 
 ## Known remaining work
 
 ### P0 — before public beta
-1. Reanalyze the two known empty-findings papers with v6.3 and human-review recovered claims.
-2. Run the full ten-paper benchmark, save a scorecard and complete human review of material findings/citations.
-3. Complete a live two-user E2E with disposable accounts and real API/Worker upload-analysis.
-4. Configure custom SMTP and verify external mailbox signup/confirmation; Supabase Free built-in SMTP is limited to team-member recipients and 2 emails/hour.
-5. Resolve GitHub Actions runner provisioning: synthetic BuildFailed, startup_failure, zero jobs. Railway BuildKit is the backend fallback.
-6. Verify production domain auth, Google sign-in, logout/relogin, PDF upload and analysis.
-7. Review findings completeness and all material coefficient/significance claims against publisher PDFs.
+1. Complete targeted human review of all 18 review-required findings, starting with B01, B02, B09 and B10.
+2. Audit all material coefficient, sign, p-value/significance legend and page-citation claims against the exact PDFs; record reviewer decisions and citation-level scorecard.
+3. Persist per-job model/token/provider-attempt/latency/cost telemetry and define sustainable quotas; B02 hit Gemini Free Tier quota before succeeding on retry.
+4. Complete a live two-user E2E with disposable accounts and real API/Worker upload-analysis.
+5. Configure custom SMTP and verify external mailbox signup/confirmation; Supabase Free built-in SMTP is limited to team-member recipients and 2 emails/hour.
+6. Resolve GitHub Actions runner provisioning: synthetic BuildFailed, startup_failure, zero jobs. Railway BuildKit is the backend fallback.
+7. Verify production domain auth, Google sign-in, logout/relogin, PDF upload and analysis.
 
 ### P1 — product quality and operations
 - OCR for scanned/image-only PDFs.
