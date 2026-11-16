@@ -184,7 +184,8 @@
     "Original B01-B10 PDF binary hashes and independent human gold are still missing.",
     "No production source, deployment, database row or user file was changed.",
     "Worker now logs analysis_jobs.created_at; this begins after PDF upload completion and is not upload-start time. Do not treat job_created_to_terminal_ms as full upload-to-save latency.",
-    "B01-B10 originals are present in private Supabase storage (10 papers, 209 pages, 17,760,530 bytes), but only metadata is available; no binary SHA-256 is claimed."
+    "B01-B10 originals are present in private Supabase storage (10 papers, 209 pages, 17,760,530 bytes), but only metadata is available; no binary SHA-256 is claimed.",
+    "A local read-only exporter is available to hash the exact B01-B10 private Storage objects without sharing service-role credentials; generated lock JSON is pending user-side execution. Current PR #6 predates this B01-B10 binary lock and must be recreated after the lock commit."
   ],
   "legacy_regression_inventory": {
     "path": "benchmark/legacy_regression_storage_inventory_2026-11-17.json",
@@ -194,6 +195,10 @@
     "total_bytes": 17760530,
     "sha256_locked": 0,
     "storage_etags_are_not_treated_as_hashes": true,
-    "note": "Original B01-B10 files are confirmed in private Supabase storage; exact bytes could not be downloaded through the available connector, so their SHA-256 values remain null."
+    "note": "Original B01-B10 files are confirmed in private Supabase storage; exact bytes could not be downloaded through the available connector, so their SHA-256 values remain null.",
+    "lock_helper": "benchmark/lock_legacy_storage_pdfs.py",
+    "lock_helper_commit": "7dd8ac8aaf25f81c92b65438fc43b7b68c9a12b4",
+    "tests": "backend/tests/test_lock_legacy_storage_pdfs.py",
+    "tests_commit": "ff57d24110c6445c8ad0e085141bd1284269df27"
   }
 }
