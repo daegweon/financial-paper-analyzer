@@ -52,3 +52,15 @@
 - 새 오픈소스 채택: **종료, 0건**. 최종 배포: **미실행**.
 
 자세한 과거 파서 결과: `https://github.com/daegweon/financial-paper-analyzer/blob/experiment/ranked-pdf-parser-trial/docs/RANKED_PDF_PARSERS_2026-11-17.md`.
+
+
+## 2026-11-17 — Candidate-only Gemini attempt telemetry (newest)
+
+- On the fresh held-out-locked candidate branch, added a telemetry-only change in backend/app/main.py. Each analysis job ID is placed in a ContextVar and reset in finally; each _generate_gemini call gets a provider_call_id.
+- Logs now associate model attempts with job ID/call ID, attempt number, model, HTTP status or transport outcome, per-request elapsed_ms, finish reason, prompt/candidate/thought/total tokens, provider_attempts and total_elapsed_ms. The 1-second inter-model delay is excluded from per-attempt elapsed but included in total elapsed.
+- No prompt text, PDF text or API key is logged. Analysis version remains finance-structured-v6.4.2. Prompt/schema/extract_pages SHA-256 are byte-for-byte unchanged from frozen production. Request body, model order, timeout and retry policy unchanged.
+- Added two mocked Gemini tests (503 -> fallback success; 503 + 429 -> failure) and an integration assertion that job context is set/reset.
+- Candidate main.py SHA-256 0886879ed41dec90450894cc14963ac7b3fd6daa7a44a631daae57ef48dbd8ed; blob SHA-1 6a6c5dc9907a7180c8a3f1cfc8515eceaa814624. Prompt SHA df0e36c9bb0ffc2e920e7d978fc4458118e7ce1ff3a4d78fe774bac49417cdcd, schema SHA 9bbfdc0cabbb27327da91232115cc1b6be55c7ed94b32cb6e65ccc1c3892ad5d, extraction function SHA b116e1b38633ee11c47f51f424f1138edae058e276fc4288f83bd63273b7a291 — unchanged.
+- GitHub Actions still startup_failure before any job; tests have not run and telemetry overhead is unmeasured. Do not claim the change is accepted or non-regressing.
+- Draft PR #5 now includes the telemetry patch. No production deployment or database change.
+
