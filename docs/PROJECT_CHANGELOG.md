@@ -1,3 +1,10 @@
+## 2026-11-17 — Verified freeze: paired Gemini full A/B blocked; replay reveals citation regression
+- Created isolated full-model A/B using exact current v6.4.2 analyzer and model configuration. B01 and B03 paired tests did not complete: Gemini primary and fallback each HTTP 503 on full-paper requests. Short synthetic probe primary 200/fallback ReadTimeout. No paired full-model quality or token-cost claims.
+- Added deterministic ten-paper replay of historical v6.3.9 exact citations/findings under current v6.4.2 validators. PyMuPDF 346/346 citation checks vs Docling 296/346 (50 lost); direct-evidenced Findings 71→65; screen-passed Findings 54→51. PDF parser wall 8.2202s vs33.9086s; max child RSS101.25MiB vs664.73MiB. Not fresh model outputs or independent human accuracy.
+- Corrected isolated missing pdfminer.six requirement, 7 focused build tests passed. Replay 10/10, zero source errors, 0 provider calls, 10 private artifacts saved. Model opt-in disabled after run.
+- No production code/jobs/analyses changed. API & Worker frozen on8cd5e37, SUCCESS/online; benchmark replicas0. Docs/metrics saved on experiment/full-analysis-ab-runner commit d5cefc4.
+- Decision: reject current Docling Parse complete replacement, preserve experimental branch and existing engine. No provider-independent quality or full-model maximum claims.
+
 ## 2026-11-16 — explicit engine freeze and complete parser replacement trial
 - Replaced `extract_pages` boundary on isolated branch with no `fitz` import/fallback; production source `feat/research-workspace-mvp` and API/Worker untouched.
 - Real original B01–B10 PDF tests: Camelot+pdfminer success10/10, Docling Parse v7.26.0 success10/10; all 209 pages returned; frozen prior PyMuPDF token proxy 91.20% vs95.52% mean-of-paper means (not independently certified accuracy).

@@ -55,3 +55,11 @@
 - Previously explored but untested Docling, MinerU, Unstructured and Science Parse are deferred without conclusions about performance. Avoid speculative candidate expansion.
 - Experiment code and runners stay outside production. Direct future work to existing-engine evidence fidelity, 18 review findings, operational telemetry and beta reliability.
 - See `docs/OPEN_SOURCE_ADOPTION_DECISION_2026-11-16.md` for pre/post extraction measures and qualifications. Do not interpret historical v6.3.9 scores as a fresh evaluation of the currently deployed v6.4.2 source.
+
+## Full-model Docling Parse A/B and source-evidence compatibility gate (2026-11-17)
+
+- Existing PaperSignal production engine remains frozen at `8cd5e37ee8eab3bf4b726b75af89e410ab48396e`, analysis source `v6.4.2`. Do not edit deployment or publish unapproved parser changes.
+- Fresh full Gemini A/B failed on B01/B03 due primary/fallback HTTP 503. No successful paired new AI analyses. Gemini synthetic probe does not qualify as full end-to-end test.
+- An authorized, model-free replay of identical previously saved v6.3.9 claims through the frozen v6.4.2 verifier found Docling Parse citation regression on all ten PDF papers: 296/346 citations vs PyMuPDF 346/346, 6 fewer evidence-qualified findings and 3 fewer current-screen-passed findings. Docling Parse also took 4.125× PDF-parser wall time and greater child RSS in the isolated run. The earlier 95.52% token-recall proxy is not a product quality win.
+- **Do not replace PyMuPDF with the current Docling Parse integration.** Any retry requires restored provider reliability, same-model complete paired analysis, independent page/table gold, zero existing-claim/citation regression, and acceptable full-service resource/cost overhead. Assistant drafts and lexical screen checks cannot certify human precision.
+- Test code, private source artifacts, and metrics are retained in experimental branches. Benchmark model opt-in is disabled pending new explicit request.

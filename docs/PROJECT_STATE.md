@@ -1,5 +1,27 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-17 (Asia/Seoul) — Full-model A/B attempted, deterministic ten-paper evidence replay completed
+
+**Production remains FROZEN**, unchanged on commit `8cd5e37ee8eab3bf4b726b75af89e410ab48396e`, API and Worker SUCCESS/online. User authorized full-analysis Docling Parse vs PyMuPDF A/B as an isolated experiment. Source code of downstream `llm_result`, schemas, finding checks and prompts is identical to deployed v6.4.2; only PDF extraction boundary differs in experiment.
+
+**Fresh full Gemini A/B: INCOMPLETE/BLOCKED, not a win for either engine.** Isolated B01 baseline PyMuPDF arm had Gemini 3.5 Flash Lite HTTP 503 and fallback Gemini 3.6 Flash HTTP 503 (deployment `25ec3be7-09c9-48ad-814d-152f984a9380`); identical on B03 (deployment `521aaccd-dbe4-4f82-a9a6-55dfb2e6f98a`). No paired model-backed results, so zero measured full-model precision/cost/latency improvement. Tiny synthetic Gemini primary probe HTTP 200, fallback read timeout, so provider is partially reachable. Do NOT claim root cause proved; no uncontrolled retries. The benchmark rejects extractive fallback and never writes analyses/jobs.
+
+**Deterministic source-evidence replay: 10/10 original B01–B10, 209 pages, COMPLETED**, in isolated Railway deployment `5d169fb9-fbf1-4781-b080-05cb6ba949e5` (SUCCESS; running replicas 0). Reused the same historical v6.3.9 structured findings and page quotes against PyMuPDF and Docling Parse extraction using current v6.4.2 validation. 346/346 prior citations still verifiable on baseline versus **296/346** on Docling (50 lost; 85.55%); directly-evidenced findings **71 vs 65** (6 lost); current-validator screened-pass findings **54 vs 51** (3 lost); B02 worst major regression (48→32 quotes; 8→4 findings). Parser-only wall sums **8.2202s vs 33.9086s** (Docling ~4.13× slower); maximum child RSS **101.25 MiB vs 664.73 MiB**. These are not fresh model quality metrics, nor independently human-verified correctness; source layout changes may explain quote matching, but the existing pipeline would reject those claims.
+
+**Decision: Docling Parse full replacement is NOT approved.** No engine modifications while user freeze applies. Revisit only after independently checking source quotes/layout, repairing parser-only source quote preservation without weakening numeric checks, paired full-model reruns after provider recovers, and complete resource/held-out/human gates. 18 historical review-required findings remain uncertified. Historical v6.3.9 score (53 passed) differs from current v6.4.2 replay validator (54); do not conflate.
+
+**Durable artifacts**
+- Source & one-shot runner `experiment/full-analysis-ab-runner`, measured report `benchmark/results/full-analysis-docling-ab-replay-2026-11-17.md`, JSON scorecard same basename `.json`; report commit `d5cefc46737362514ba91b998bf73ecccd99c783`.
+- Private Storage run `replay-49dfcc9e5d9b4c0485ff70bcc1f56028`: 10 new JSON-only per-paper artifacts, no public policy. Frozen originals untouched.
+- One experimental image initially lacked pdfminer.six; repaired by pinned dependency and 7 passed focused build tests, then exact ten-paper replay. Standard AI A/B failures and provider probe are recorded with only sanitized status/token metadata.
+- Database verified unchanged: 14 papers, 103 analyses, 102 historically completed jobs, 28 failed jobs, 14 private PDFs. Private JSON benchmark artifacts 85 including historical experiments. Model-call opt-in on the benchmark service was disabled after the run. All benchmark replicas 0; API/Worker each 1 running, both on existing commit.
+- No frontend deployment or user data modification.
+
+**DO NOT run model batches or promote parser variants without a new user request.** Next session must read this checkpoint and benchmark report first. Engine-development freeze remains in effect.
+
+---
+
+
 ## 2026-11-16 — engine FROZEN; full PyMuPDF replacement experiment executed
 
 User explicitly froze further engine development and authorized isolated attempts to replace PyMuPDF in full with Docling or Camelot. **No production code, dependency, provider, analysis/job or deployment changes.** Live Railway API/Worker SHA `8cd5e37ee8eab3bf4b726b75af89e410ab48396e` remains; source version `finance-structured-v6.4.2`. Do not treat historical v6.3.9 benchmark scores as current.
