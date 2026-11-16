@@ -2069,7 +2069,6 @@ async def _generate_gemini(
     provider_started = time.perf_counter()
 
     for index, model_name in enumerate(models):
-        attempt_started = time.perf_counter()
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
         thinking_level = "minimal" if "flash-lite" in model_name else "low"
         request_body = {
@@ -2084,6 +2083,7 @@ async def _generate_gemini(
         }
         if index:
             await asyncio.sleep(1.0)
+        attempt_started = time.perf_counter()
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(
@@ -2096,10 +2096,6 @@ async def _generate_gemini(
                 )
         except httpx.TransportError as exc:
             error_type = type(exc).__name__
-            log.warning(
-                "Gemini transport failure model=%s error=%s; trying next configured model",
-                model_name, error_type,
-            )
             elapsed_ms = (time.perf_counter() - attempt_started) * 1000
             log.warning(
                 "Gemini attempt failed job_id=%s attempt=%d/%d model=%s outcome=transport elapsed_ms=%.1f error=%s",
