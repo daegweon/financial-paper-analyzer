@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "record_type": "HELDOUT_BINARY_VERIFIED_PENDING_GIT_COMMIT",
+  "record_type": "HELDOUT_LOCKED",
   "selected_at": "2026-11-17",
   "selection_rule": "Select before creating a new release-eligible candidate branch. Exclude all B01-B10 by DOI and title. Hash exact publisher-version PDF bytes and verify page count with PyMuPDF before marking locked.",
   "heldout_papers": [
@@ -32,8 +32,8 @@
       "pdf_sha256": "816e404d2f1dee7df84d52bf4238a75d7d777878cf100b42e3f220cc1da9b127",
       "pdf_bytes_verified": true,
       "actual_page_count": 40,
-      "lock_commit": null,
-      "status": "BINARY_VERIFIED_PENDING_GIT_LOCK_COMMIT",
+      "lock_commit": "149311ec2993cac3bd410c10ac7feb202d582fc7",
+      "status": "LOCKED_BY_GIT_COMMIT",
       "sha256_algorithm": "SHA-256",
       "pdf_byte_length": 2521298,
       "pdf_metadata_title": "Prediction and Allocation of Stocks, Bonds, and REITs in the US Market",
@@ -73,8 +73,8 @@
       "pdf_sha256": "d385806b9a448e399dfc9f6017710561bf15bfd50ec514536303978ad07eb283",
       "pdf_bytes_verified": true,
       "actual_page_count": 30,
-      "lock_commit": null,
-      "status": "BINARY_VERIFIED_PENDING_GIT_LOCK_COMMIT",
+      "lock_commit": "149311ec2993cac3bd410c10ac7feb202d582fc7",
+      "status": "LOCKED_BY_GIT_COMMIT",
       "sha256_algorithm": "SHA-256",
       "pdf_byte_length": 5223546,
       "pdf_metadata_title": "Forecasting returns with machine learning and optimizing global portfolios: evidence from the Korean and U.S. stock markets",
@@ -85,8 +85,8 @@
       "locked_before_candidate": true
     }
   ],
-  "release_gate_status": "Q0_PENDING_GIT_LOCK_COMMIT_AND_BASELINE_CHECK",
-  "warning": "Exact uploaded PDF bytes and page counts have been verified. The following commit will record the immutable lock commit SHA. No candidate branch was created before this lock.",
+  "release_gate_status": "Q0_HELDOUT_LOCK_COMPLETE_BASELINE_LOCK_PENDING",
+  "warning": "Both exact PDF binary hashes and page counts are committed at lock_commit. This commit records the lock reference. Candidate tuning must start only from the frozen production SHA after this lock commit.",
   "verification": {
     "tool": "PyMuPDF",
     "tool_used_to_open_exact_bytes": true,
@@ -95,5 +95,6 @@
     "pdf_header_verified": true,
     "metadata_and_doi_verified": true,
     "source_files_uploaded_by_user": true
-  }
+  },
+  "lock_commit": "149311ec2993cac3bd410c10ac7feb202d582fc7"
 }
