@@ -11,7 +11,9 @@
   "candidate": {
     "branch": "experiment/engine-quality-v6-4-2-heldout-locked",
     "created_from_commit": "8cd5e37ee8eab3bf4b726b75af89e410ab48396e",
-    "created_after_heldout_lock": true
+    "created_after_heldout_lock": true,
+    "latest_telemetry_change_commit": "a373b27620f9228d35075e7d91e7e9035e2751c1",
+    "latest_telemetry_test_commit": "cb4ac47e7448c71dadb4f9a324d8d15ec64c11f0"
   },
   "heldout_lock": {
     "manifest_path": "benchmark/heldout_preregistration_2026-11-17.json",
@@ -33,7 +35,14 @@
         "pages": 30
       }
     ],
-    "status": "BINARY_HASHES_AND_PAGE_COUNTS_LOCKED"
+    "status": "BINARY_HASHES_AND_PAGE_COUNTS_LOCKED",
+    "chronology": {
+      "lock_commit_time_utc": "2026-11-16T21:11:16Z",
+      "candidate_first_commit": "356b4d688657fc2c55b828d2b12b3062e1c9434b",
+      "candidate_first_commit_time_utc": "2026-11-16T21:15:33Z",
+      "lock_precedes_candidate_first_commit": true,
+      "candidate_branch_created_from_frozen_production_commit": true
+    }
   },
   "source_fingerprints": {
     "main_py": {
