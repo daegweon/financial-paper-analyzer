@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "record_type": "HELDOUT_PRESELECTION_NOT_BINARY_LOCKED",
+  "selected_at": "2026-11-17",
+  "selection_rule": "Select before creating a new release-eligible candidate branch. Exclude all B01-B10 by DOI and title. Hash exact publisher-version PDF bytes and verify page count with PyMuPDF before marking locked.",
+  "heldout_papers": [
+    {
+      "id": "H01",
+      "title": "Prediction and Allocation of Stocks, Bonds, and REITs in the US Market",
+      "authors": [
+        "Ana Sofia Monteiro",
+        "Helder Sebastião",
+        "Nuno Silva"
+      ],
+      "doi": "10.1007/s10614-024-10589-2",
+      "version_of_record": "2025-03-01",
+      "published": "2024-04-13",
+      "publisher": "Computational Economics / Springer Nature",
+      "article_url": "https://link.springer.com/article/10.1007/s10614-024-10589-2",
+      "publisher_pdf_url": "https://link.springer.com/content/pdf/10.1007/s10614-024-10589-2.pdf",
+      "license": "CC BY 4.0",
+      "method_families": [
+        "VAR",
+        "TVP-VAR",
+        "Dynamic Model Averaging",
+        "Dynamic Model Selection",
+        "Genetic Algorithm",
+        "Portfolio Optimization"
+      ],
+      "publisher_pdf_pages_reported": 40,
+      "pdf_filename": "H01_prediction_allocation.pdf",
+      "pdf_sha256": null,
+      "pdf_bytes_verified": false,
+      "actual_page_count": null,
+      "lock_commit": null,
+      "status": "PRESELECTED_PENDING_BINARY_SHA256"
+    },
+    {
+      "id": "H02",
+      "title": "Forecasting returns with machine learning and optimizing global portfolios: evidence from the Korean and U.S. stock markets",
+      "authors": [
+        "Dohyun Chun",
+        "Jongho Kang",
+        "Jihun Kim"
+      ],
+      "doi": "10.1186/s40854-024-00648-w",
+      "version_of_record": "2024-12-01",
+      "published": "2024-12-01",
+      "publisher": "Financial Innovation / Springer Nature",
+      "article_url": "https://link.springer.com/article/10.1186/s40854-024-00648-w",
+      "publisher_pdf_url": "https://link.springer.com/content/pdf/10.1186/s40854-024-00648-w.pdf",
+      "license": "CC BY 4.0",
+      "method_families": [
+        "LASSO",
+        "Ridge",
+        "Elastic Net",
+        "Random Forest",
+        "LightGBM",
+        "XGBoost",
+        "Portfolio Optimization",
+        "FX Forecasting"
+      ],
+      "publisher_pdf_pages_reported": 30,
+      "pdf_filename": "H02_ml_global_portfolio.pdf",
+      "pdf_sha256": null,
+      "pdf_bytes_verified": false,
+      "actual_page_count": null,
+      "lock_commit": null,
+      "status": "PRESELECTED_PENDING_BINARY_SHA256"
+    }
+  ],
+  "release_gate_status": "Q0_BLOCKED",
+  "warning": "Titles, DOI, version-of-record, publisher links and licenses are registered; PDF binary bytes have NOT been acquired or SHA-256 locked. Do not claim these are locked held-outs and do not create a release-eligible tuning branch yet."
+}
