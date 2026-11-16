@@ -39,6 +39,12 @@ def run_preflight(
 ) -> dict[str, Any]:
     if type(repeats) is not int or not 1 <= repeats <= 20:
         raise ValueError("repeats must be an integer from 1 to 20")
+    if not isinstance(manifest, dict) or manifest.get("record_type") != "HELDOUT_LOCKED":
+        raise ValueError("held-out manifest must be binary locked")
+    papers = manifest.get("heldout_papers")
+    if not isinstance(papers, list) or not papers:
+        raise ValueError("held-out manifest must include a non-empty paper list")
+
     backend_root = Path(__file__).resolve().parents[1] / "backend"
     sys.path.insert(0, str(backend_root))
     from app.main import ANALYSIS_VERSION, build_analysis_prompt, extract_pages
@@ -53,8 +59,12 @@ def run_preflight(
     rows = []
     root = pdf_dir.resolve(strict=True)
 
-    for paper in manifest["heldout_papers"]:
-        paper_id = paper["id"]
+    for paper in papers:
+        if not isinstance(paper, dict):
+            raise ValueError("held-out paper record must be an object")
+        paper_id = paper.get("id")
+        if not isinstance(paper_id, str) or not paper_id:
+            raise ValueError("held-out paper id is missing")
         filename = paper["pdf_filename"]
         if not isinstance(filename, str) or Path(filename).name != filename:
             raise ValueError(f"{paper_id}: invalid PDF filename")
