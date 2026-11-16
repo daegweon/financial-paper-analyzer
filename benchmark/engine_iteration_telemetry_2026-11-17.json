@@ -79,5 +79,27 @@
     "Q2": "BLOCKED",
     "P0": "BLOCKED"
   },
-  "final_deploy_allowed": false
+  "final_deploy_allowed": false,
+  "telemetry_aggregation": {
+    "script": "benchmark/parse_railway_telemetry.py",
+    "purpose": "Aggregate worker claim/completion/failure events and Gemini per-call/per-attempt traces by job_id/provider_call_id.",
+    "output_fields": [
+      "pipeline_latency_ms",
+      "worker_claim_attempts",
+      "retry_scheduled_count",
+      "provider_attempts_total",
+      "prompt_tokens_total",
+      "candidate_tokens_total",
+      "thought_tokens_total",
+      "per-call model path and HTTP outcomes"
+    ],
+    "cost_usd": null,
+    "cost_note": "No price schedule is assumed or guessed; cost remains null.",
+    "tests": [
+      "test_aggregate_job_attempts_tokens_and_pipeline_latency_without_cost_guess",
+      "test_aggregate_all_models_failed_and_worker_retry_without_raw_logs",
+      "test_ignores_malformed_and_unrelated_log_records"
+    ],
+    "ci_status": "not_run_startup_failure_before_jobs"
+  }
 }
