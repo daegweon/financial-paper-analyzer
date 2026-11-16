@@ -29,7 +29,7 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-terra")
-ANALYSIS_VERSION = "finance-structured-v6.3.8"
+ANALYSIS_VERSION = "finance-structured-v6.3.9"
 log = logging.getLogger("papersignal")
 app = FastAPI(title="PaperSignal API", version="0.2.0")
 # Production origins are configured explicitly in FRONTEND_ORIGIN.
@@ -650,6 +650,20 @@ def _finding_table_reference_keys(value: Any) -> set[str]:
     return references
 
 
+def _finding_variable_tokens(finding: dict[str, Any]) -> set[str]:
+    """Extract explicit variable/ticker names to prevent false merges across outcomes."""
+    text = str(finding.get("claim", ""))
+    tokens = set(re.findall(r"\b[A-Z][A-Za-z0-9_]{1,}\b", text))
+    stopwords = {
+        "Table", "Tables", "Figure", "Figures", "Model", "Models", "Column",
+        "Columns", "Panel", "Panels", "Regime", "ASEAN", "Fama", "French",
+        "Carhart", "Wald", "Test", "Tests", "KRS", "GMM", "OLS", "GLS",
+        "CAPM", "FF3", "MR", "R2", "MAE", "Stock", "Selection", "Frequency",
+        "Volm", "Vm", "The", "This", "For", "Under", "Based",
+    }
+    return tokens - stopwords
+
+
 def _are_duplicate_findings(left: dict[str, Any], right: dict[str, Any]) -> bool:
     left_claim = _normalized_claim_key(str(left.get("claim", "")))
     right_claim = _normalized_claim_key(str(right.get("claim", "")))
@@ -673,7 +687,17 @@ def _are_duplicate_findings(left: dict[str, Any], right: dict[str, Any]) -> bool
     )
     if not numbers_compatible:
         return False
-    same_direction = _finding_direction_sign(left.get("direction")) == _finding_direction_sign(right.get("direction"))
+    left_direction = _finding_direction_sign(left.get("direction"))
+    right_direction = _finding_direction_sign(right.get("direction"))
+    same_direction = left_direction == right_direction
+    directions_compatible = (
+        left_direction is None or right_direction is None or left_direction == right_direction
+    )
+    left_variables = _finding_variable_tokens(left)
+    right_variables = _finding_variable_tokens(right)
+    variables_compatible = (
+        not left_variables or not right_variables or bool(left_variables & right_variables)
+    )
     left_table = str(left.get("table_reference", "")).casefold().strip()
     right_table = str(right.get("table_reference", "")).casefold().strip()
     left_table_refs = _finding_table_reference_keys(left_table)
@@ -689,18 +713,27 @@ def _are_duplicate_findings(left: dict[str, Any], right: dict[str, Any]) -> bool
         or left_table == right_table
         or bool(left_table_refs & right_table_refs)
     )
+    left_model_unknown = not left_model or left_model in {"확인 불가", "unknown", "n/a"}
+    right_model_unknown = not right_model or right_model in {"확인 불가", "unknown", "n/a"}
     same_model = (
-        not left_model or not right_model
+        left_model_unknown or right_model_unknown
         or left_model == right_model
         or bool(left_columns & right_columns)
     )
-    if not same_table or not same_model:
+    if not same_table:
         return False
-    if shared_evidence and same_direction:
+    # Exact shared evidence is stronger than inconsistent model/column labels.
+    # Still protect distinct variables and contradictory directions.
+    if shared_evidence and directions_compatible and variables_compatible:
         return True
     threshold = 0.72 if left_numbers and right_numbers else 0.86
-    if shared_pages:
-        return similarity >= threshold
+    if (
+        shared_pages and similarity >= threshold
+        and directions_compatible and variables_compatible
+    ):
+        return True
+    if not same_model:
+        return False
     # Table-first recovery may cite a different page than the initial prose
     # finding. Merge only when table/model identifiers and the reported numeric
     # estimate identify the same result, even if the Korean wording differs.
@@ -2306,6 +2339,13 @@ async def llm_result(
         result.get("summary_consistency", {}).get("status") == "review"
         and not prior_findings_revalidated
     )
+    supported_findings_count = sum(
+        item.get("verification", {}).get("status") == "screen_passed"
+        for item in result["findings"]
+    )
+    prior_rejections_need_repair = (
+        prior_findings_rejected_count >= 2 and supported_findings_count < 4
+    )
     needs_findings_repair = (
         not result["findings"]
         or summary_needs_findings_repair
@@ -2313,7 +2353,7 @@ async def llm_result(
             item.get("verification", {}).get("status") == "review"
             for item in result["findings"]
         )
-        or prior_findings_rejected_count >= 2
+        or prior_rejections_need_repair
     )
     if needs_findings_repair:
         findings_repair_attempted = True
