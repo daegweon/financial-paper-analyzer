@@ -59,5 +59,22 @@
 - Local synthetic test reproduction for the exact-byte lock logic: **7/7 passed** after correcting one test's expected error-message substring. This is a local reproduction only; GitHub Actions/full backend CI still has not executed.
 - Exact Springer PDF binary downloads were attempted but unavailable from this execution runtime (network/DNS restriction). Publisher-parsed PDF page counts and article metadata do not substitute for exact binary hashes.
 
+
+## 2026-11-17 — User-uploaded held-out PDFs binary-locked; fresh baseline branch started (newest)
+
+- User uploaded exact publisher PDFs H01/H02. PyMuPDF opened the original bytes and verified page counts, PDF metadata, DOI and CC BY 4.0 licence text:
+  - H01, 40 pages, 2,521,298 bytes, SHA-256 816e404d2f1dee7df84d52bf4238a75d7d777878cf100b42e3f220cc1da9b127.
+  - H02, 30 pages, 5,223,546 bytes, SHA-256 d385806b9a448e399dfc9f6017710561bf15bfd50ec514536303978ad07eb283.
+- Immutable binary lock commit: 149311ec2993cac3bd410c10ac7feb202d582fc7; follow-up manifest reference commit: 59b68fbc902bd17b656d606246d17b19a5614acf.
+- Created fresh candidate branch experiment/engine-quality-v6-4-2-heldout-locked directly from frozen production SHA 8cd5e37ee8eab3bf4b726b75af89e410ab48396e AFTER the lock commit. No code from the prior pre-registration experiment branch was copied into the engine.
+- Draft PR #5: https://github.com/daegweon/financial-paper-analyzer/pull/5. Changed files are benchmark/release utilities, tests and docs only; backend/app/main.py and backend/app/worker.py are unchanged.
+- Captured source SHA-256 for API/Worker/requirements/Dockerfile plus prompt, schema, extraction and sanitized model config in benchmark/baseline_lock_v6.4.2_2026-11-17.json on the candidate branch. Railway Worker logs corroborate Gemini primary gemini-3.5-flash-lite and fallback gemini-3.6-flash; no key values were read or recorded.
+- Local extraction-only preflight of H01/H02 was performed with PyMuPDF 1.26.7. Production pins 1.26.3, so local timings (H01 median 249.978ms, H02 107.494ms) are explicitly NOT production Q2 evidence.
+- Added repeatable benchmark/capture_engine_fingerprint.py and benchmark/extraction_preflight.py with tests. The extraction preflight refuses a PDF whose exact SHA/bytes/page count differ from the locked manifest and makes zero provider calls.
+- GitHub Actions on PR #5 again ended startup_failure before creating any job (zero jobs); full repository tests have not run. Do not report test pass.
+- Current Files inventory contains only H01/H02 PDFs; the original B01-B10 PDF bytes are not available here, so their SHA locks remain missing. Full Gemini baseline for H01/H02, independent human gold, full p95/cost/RSS and P0 E2E are also missing.
+
+**Status:** Q0/Q1/Q2/P0 remain BLOCKED. Do not merge PR #5, change production branch/deployments, or tune the engine until original corpus locks and same-version full-pipeline baseline are complete. Existing Railway API/Worker remain on production SHA 8cd5e37.
+
 ## 새 세션 시작 시 그대로 사용할 메시지
 "PaperSignal 개발을 이어가자. GitHub `plan/engine-quality-release-handoff`의 `docs/SESSION_HANDOFF_NEXT.md`, `docs/ENGINE_QUALITY_RELEASE_PLAN_2026-11-17.md`, `docs/PROJECT_STATE.md`와 `benchmark/engine_release_gates_2026-11-17.json`을 먼저 읽어. 오픈소스 교체 검토는 종료, 기존 PyMuPDF/v6.4.2 엔진만 개선. 독립 골드·인용·전체 정확도·비용·실서비스 테스트 임계점 충족 전 배포 금지. 지금 상태 확인 후 다음 목표를 실제 구현하고 검증 결과를 GitHub에 기록해."
