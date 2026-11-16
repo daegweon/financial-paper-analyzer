@@ -2107,17 +2107,16 @@ async def _generate_gemini(
 
         elapsed_ms = (time.perf_counter() - attempt_started) * 1000
         if response.status_code in (429, 500, 502, 503, 504, 404):
-            body = response.text[:700]
             log.warning(
-                "Gemini attempt failed job_id=%s provider_call_id=%s attempt=%d/%d model=%s status=%d elapsed_ms=%.1f body=%s; trying next configured model",
-                job_id, provider_call_id, index + 1, len(models), model_name, response.status_code, elapsed_ms, body,
+                "Gemini attempt failed job_id=%s provider_call_id=%s attempt=%d/%d model=%s status=%d elapsed_ms=%.1f; trying next configured model",
+                job_id, provider_call_id, index + 1, len(models), model_name, response.status_code, elapsed_ms,
             )
-            failures.append((model_name, str(response.status_code), body[:220]))
+            failures.append((model_name, str(response.status_code), "provider_error"))
             continue
         if response.status_code in (401, 403):
             log.error(
-                "Gemini API authentication/access rejected job_id=%s provider_call_id=%s attempt=%d/%d status=%d elapsed_ms=%.1f body=%s",
-                job_id, provider_call_id, index + 1, len(models), response.status_code, elapsed_ms, response.text[:700],
+                "Gemini API authentication/access rejected job_id=%s provider_call_id=%s attempt=%d/%d status=%d elapsed_ms=%.1f",
+                job_id, provider_call_id, index + 1, len(models), response.status_code, elapsed_ms,
             )
             raise HTTPException(
                 status_code=503,
@@ -2125,8 +2124,8 @@ async def _generate_gemini(
             )
         if response.status_code == 400:
             log.error(
-                "Gemini request rejected job_id=%s provider_call_id=%s attempt=%d/%d status=400 model=%s elapsed_ms=%.1f body=%s",
-                job_id, provider_call_id, index + 1, len(models), model_name, elapsed_ms, response.text[:1000],
+                "Gemini request rejected job_id=%s provider_call_id=%s attempt=%d/%d status=400 model=%s elapsed_ms=%.1f",
+                job_id, provider_call_id, index + 1, len(models), model_name, elapsed_ms,
             )
             raise HTTPException(
                 status_code=502,
