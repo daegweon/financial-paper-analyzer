@@ -25,3 +25,17 @@ Both publisher pages identify the articles as open access and specify CC BY 4.0.
 5. Never tune against these papers; keep them strictly held out. No lock is valid if a model prompt or parser has already been tuned against their content.
 
 Current status: PRESELECTED ONLY. PDF SHA-256 = null for both. No Q0 pass is claimed.
+
+
+## Exact-byte verification utility
+
+The repository now includes \`benchmark/lock_heldout_pdfs.py\`. Once the two actual publisher PDF files are available locally, run:
+
+\`\`\`bash
+python -m benchmark.lock_heldout_pdfs \\
+  --manifest benchmark/heldout_preregistration_2026-11-17.json \\
+  --pdf-dir /private/path/to/heldout-pdfs \\
+  --out /private/path/to/heldout-binary-verified.json
+\`\`\`
+
+It uses PyMuPDF to verify PDF readability and exact page count, hashes the original unmodified bytes with SHA-256, rejects duplicate held-out files and optionally rejects hashes overlapping a supplied regression manifest. It never uploads or commits PDF bytes. The result is still not Git-locked: commit the verified manifest and record the resulting commit SHA in a follow-up commit before creating a new candidate branch.
