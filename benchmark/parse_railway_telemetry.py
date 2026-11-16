@@ -168,7 +168,7 @@ def aggregate_logs(
                 "candidate_tokens": sum(x["candidate_tokens"] or 0 for x in usage),
                 "thought_tokens": sum(x["thought_tokens"] or 0 for x in usage),
                 "total_tokens": sum(x["total_tokens"] or 0 for x in usage),
-                "token_usage_complete": all(
+                "token_usage_complete": bool(usage) and all(
                     x[field] is not None
                     for x in usage
                     for field in ("prompt_tokens", "candidate_tokens", "thought_tokens", "total_tokens")
