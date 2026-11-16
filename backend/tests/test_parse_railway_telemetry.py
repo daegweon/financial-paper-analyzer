@@ -9,7 +9,7 @@ from benchmark.parse_railway_telemetry import aggregate_logs
 def test_aggregate_job_attempts_tokens_and_pipeline_latency_without_cost_guess():
     logs = [
         {"timestamp": "2026-11-17T00:00:00Z",
-         "message": "INFO:papersignal:Claimed job_id=11111111-1111-4111-8111-111111111111 paper_id=22222222-2222-4222-8222-222222222222 attempt=1"},
+         "message": "INFO:papersignal:Claimed job_id=11111111-1111-4111-8111-111111111111 paper_id=22222222-2222-4222-8222-222222222222 attempt=1 job_created_at=2026-11-16T23:59:58Z"},
         {"timestamp": "2026-11-17T00:00:02Z",
          "message": "WARNING:papersignal:Gemini attempt failed job_id=11111111-1111-4111-8111-111111111111 provider_call_id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa attempt=1/2 model=gemini-3.5-flash-lite status=503 elapsed_ms=180.5 body=unavailable"},
         {"timestamp": "2026-11-17T00:00:03Z",
@@ -24,9 +24,11 @@ def test_aggregate_job_attempts_tokens_and_pipeline_latency_without_cost_guess()
     job = result["jobs"][0]
     assert job["status"] == "completed"
     assert job["claim_to_terminal_ms"] == 10000
-    assert job["latency_scope"] == "worker_claim_to_terminal"
+    assert job["job_created_to_terminal_ms"] == 12000
+    assert job["job_created_at"] == "2026-11-16T23:59:58+00:00"
+    assert job["latency_scope"] == "job_created_to_terminal_and_worker_claim_to_terminal"
     assert job["full_pipeline_latency_ms"] is None
-    assert job["full_pipeline_latency_status"] == "UNAVAILABLE_UPLOAD_TIMESTAMP_NOT_LOGGED"
+    assert job["full_pipeline_latency_status"] == "UPLOAD_START_TIMESTAMP_NOT_LOGGED"
     assert job["provider_attempts_total"] == 2
     assert job["prompt_tokens_total"] == 120
     assert job["candidate_tokens_total"] == 30
@@ -57,6 +59,7 @@ def test_aggregate_all_models_failed_and_worker_retry_without_raw_logs():
     result = aggregate_logs(logs)
     job = result["jobs"][0]
     assert job["status"] == "failed"
+    assert job["job_created_to_terminal_ms"] is None
     assert job["retry_scheduled_count"] == 1
     assert job["provider_attempts_total"] == 2
     assert job["provider_calls"][0]["final_status"] == "all_models_failed"
