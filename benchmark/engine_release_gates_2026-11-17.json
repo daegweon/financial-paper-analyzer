@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "planned_at": "2026-11-17",
+  "record_type": "PREDECLARED_NOT_MEASURED",
+  "source_branch": "plan/engine-quality-release-handoff",
+  "frozen_production": {
+    "source_branch": "feat/research-workspace-mvp",
+    "commit": "8cd5e37ee8eab3bf4b726b75af89e410ab48396e",
+    "analysis_version": "finance-structured-v6.4.2"
+  },
+  "oss_workstream": {
+    "status": "CLOSED",
+    "production_adopted": 0
+  },
+  "historical_diagnostics": {
+    "papers": 10,
+    "original_pages": 209,
+    "legacy_analysis_version": "finance-structured-v6.3.9",
+    "legacy_findings": 71,
+    "legacy_review_required": 18,
+    "legacy_screen_passed": 53,
+    "contemporary_validator_screen_passed_on_legacy": 54,
+    "legacy_exact_quote_pairs": 346,
+    "independent_human_certified_accuracy": null
+  },
+  "quality_gates": [
+    {
+      "id": "Q0",
+      "status": "BLOCKED",
+      "requirements": {
+        "locked_original_papers": 10,
+        "min_heldout_papers": 2,
+        "review_required_to_adjudicate": 18,
+        "independent_human_reviewers_per_review": 2,
+        "baseline_full_v642_available": false
+      }
+    },
+    {
+      "id": "Q1",
+      "status": "BLOCKED",
+      "requirements": {
+        "human_reviewed_material_claims_min": 50,
+        "source_supported_precision_min": 0.98,
+        "critical_false_approvals_max": 0,
+        "legacy_exact_quotes_retained_min": 346,
+        "current_validator_screen_passed_supported_min": 54,
+        "allowed_false_old_claim_removals_require_human_adjudication": true,
+        "review_required_all_adjudicated": true,
+        "source_confirmed_recoveries_min_if_no_recall_improvement": 4,
+        "heldout_answerable_recall_gain_pp_if_no_four_recoveries": 5,
+        "all_previously_human_approved_claims_preserved": true
+      },
+      "measurements": null
+    },
+    {
+      "id": "Q2",
+      "status": "BLOCKED",
+      "requirements": {
+        "full_pipeline_p95_relative_max": 1.05,
+        "provider_cost_relative_max": 1.05,
+        "peak_memory_relative_max": 1.1,
+        "service_failures_no_regression": true,
+        "matched_model_paths": true,
+        "paired_repeats_min": 2,
+        "backend_tests_pass": true,
+        "frontend_build_pass": true
+      },
+      "measurements": null
+    },
+    {
+      "id": "P0",
+      "status": "BLOCKED",
+      "requirements": {
+        "two_user_live_upload_analysis_e2e": true,
+        "external_smtp_confirmed": true,
+        "google_login_and_user_isolation": true,
+        "provider_503_429_quota_resolved": true,
+        "prod_preview_release_checks": true,
+        "rollback_verified": true,
+        "source_data_preserved": true
+      },
+      "measurements": null
+    }
+  ],
+  "stopping_rule": {
+    "all_gates_pass_before_final_deployment": true,
+    "no_minor_tuning_after_quality_threshold": true,
+    "rollback_on_regression": true
+  },
+  "final_deployed": false,
+  "critical_errors_human_certified": null,
+  "note": "No source-hash-locked human gold or full-current-version Gemini p95/cost measured; no gate passed by historical alias screens."
+}
