@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "record_type": "SOURCE_FINGERPRINT_COMPARISON_NOT_FULL_PIPELINE_BASELINE",
+  "recorded_at": "2026-11-17",
+  "frozen_production": {
+    "branch": "feat/research-workspace-mvp",
+    "commit": "8cd5e37ee8eab3bf4b726b75af89e410ab48396e",
+    "analysis_version": "finance-structured-v6.4.2"
+  },
+  "candidate": {
+    "files": {
+      "main_sha256": "da2390862536a4e9f3c9afa108ea30ff8790b0f896b855c2fb09364419a2d027",
+      "main_git_blob_sha1": "f1a4461f5822305aebdaadf1a7eae0bd28c98e3e",
+      "worker_sha256": "bfdd64e2aedc68d1d135d08123347484097551cf45cd1a71b3e3bc6efff3eddd",
+      "worker_git_blob_sha1": "8b3e2be6e1385b677143e6706494e91a3b7571be",
+      "requirements_sha256": "c8630c15fd1843ff4d899762be7b523c2ec91a7e8b702073c746ca82653da859",
+      "dockerfile_sha256": "202eb028dfc1deb4684b53cbf69b3a6719ca765a64dd8e41f37e109c1100a4b9"
+    },
+    "segments": {
+      "prompt_sha256": "efdb841e8fbe023454991cc71b4370df8de3d5232bf0f77dbae99e0372f18242",
+      "schema_sha256": "8fe29200f6da7825a4615d2ff644eb209d5f7422cbef475c1bf42d4600bae227",
+      "extraction_sha256": "8a3aa7413d62fc46af9bb9ba4735bbc912cc171e93e7d2b4193e06392987c192",
+      "gemini_transport_sha256": "0d77e84b0728114022dcc8024a3f82cb7ab75df924c94b6653843e094f383ca3",
+      "model_config_sha256": "9d074ccb4ca9e54f84de1b0da9cdade9eb15bbfe983a6e7626ec5d591c39d3cf"
+    },
+    "extraction_config": {
+      "MAX_BYTES": 31457280,
+      "MAX_PAGES": 300,
+      "MAX_PAGES_TO_SCAN": 50,
+      "MAX_PAGE_CHARS": 4500,
+      "MAX_LLM_CHARS": 220000
+    },
+    "model_config": {
+      "provider": "gemini",
+      "primary_model": "gemini-3.5-flash-lite",
+      "fallback_model": "gemini-3.6-flash",
+      "analysis_version": "finance-structured-v6.4.2",
+      "secret_values_included": false,
+      "secret_environment_variables_read": []
+    }
+  },
+  "runtime": {
+    "python": "3.12.16",
+    "pymupdf": "1.26.3",
+    "pymupdf_pin": "PyMuPDF==1.26.3",
+    "pin_match": true
+  },
+  "baseline": {
+    "files": {
+      "main_sha256": "3e86a9402af6850527b77beaaf74998ba922dc8d07ab51c789bbc7e53540dba5",
+      "worker_sha256": "f5d15bd6a5343c76dd106d0a24f5c2bdd6d12efe2cbb1bc858b7bb0eb483de42",
+      "requirements_sha256": "c8630c15fd1843ff4d899762be7b523c2ec91a7e8b702073c746ca82653da859",
+      "dockerfile_sha256": "202eb028dfc1deb4684b53cbf69b3a6719ca765a64dd8e41f37e109c1100a4b9"
+    },
+    "segments": {
+      "prompt_sha256": "efdb841e8fbe023454991cc71b4370df8de3d5232bf0f77dbae99e0372f18242",
+      "schema_sha256": "8fe29200f6da7825a4615d2ff644eb209d5f7422cbef475c1bf42d4600bae227",
+      "extraction_sha256": "8a3aa7413d62fc46af9bb9ba4735bbc912cc171e93e7d2b4193e06392987c192",
+      "gemini_transport_sha256": "e6cd55ff3a64616ea83035f3b0d2d9f3bbace985dfb4c86d080937ffcbdff9e4",
+      "model_config_sha256": "9d074ccb4ca9e54f84de1b0da9cdade9eb15bbfe983a6e7626ec5d591c39d3cf"
+    },
+    "extraction_config": {
+      "MAX_BYTES": 31457280,
+      "MAX_PAGES": 300,
+      "MAX_PAGES_TO_SCAN": 50,
+      "MAX_PAGE_CHARS": 4500,
+      "MAX_LLM_CHARS": 220000
+    },
+    "model_config": {
+      "provider": "gemini",
+      "primary_model": "gemini-3.5-flash-lite",
+      "fallback_model": "gemini-3.6-flash",
+      "analysis_version": "finance-structured-v6.4.2",
+      "secret_values_included": false,
+      "secret_environment_variables_read": []
+    }
+  },
+  "comparison": {
+    "analysis_version_unchanged": true,
+    "prompt_sha256_unchanged": true,
+    "schema_sha256_unchanged": true,
+    "extraction_sha256_unchanged": true,
+    "model_config_sha256_unchanged": true,
+    "gemini_transport_sha256_changed": true,
+    "requirements_unchanged": true,
+    "dockerfile_unchanged": true
+  },
+  "interpretation": "The candidate changes the Gemini transport/logging and worker telemetry paths. Prompt, structured schema, PDF extraction implementation/configuration, model names and analysis version are byte-fingerprint identical to frozen production. This is source/config equivalence evidence only, not proof of end-to-end accuracy, cost or latency."
+}
