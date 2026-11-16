@@ -1,3 +1,14 @@
+## 2026-11-16 — Exact-cell review preparation and bounded Stream execution
+- Added source-hash/page/row/column/value/companion exact-cell evaluation, conflict abstention, independent-review record checks, negative-control diagnostics and escaped offline source-first HTML review.
+- Added private source-render/cell packets and a predeclared caption-only page selector, capped at eight pages; gold annotations intentionally remain empty. No human review or finding approval was fabricated.
+- Local new suite: 48 passed. Isolated Railway full backend suite: 193 passed, 1 skipped (opt-in live E2E not enabled), 6 dependency deprecation warnings, 4.00s. Frontend build/user E2E were not run.
+- Exact B01/B02/B09/B10 originals: 86 pages, 23 selected; all-page and selected-page Stream each ran twice per paper with alternating order. 16/16 executions completed, no parser/source/artifact errors. Selected-page matrix projections matched 8/8; prior all-page projections matched 4/4.
+- Sum of subprocess wall times: 20.565219s versus 9.869005s (52.01% less). Maximum child RSS: 219.316 versus 173.758 MiB. These exclude source transfers, selection, rendering, upload and AI pipeline; no full-engine performance or accuracy gain claimed.
+- Four new private JSON packets contain 33 rendered source pages and eight unadjudicated negative-page candidates, 9,915,979 bytes total. Zero independent human-reviewed cells; cell accuracy/recall/negative-page hit rate unavailable; all18 historical review-required findings remain unapproved.
+- Existing paper/analysis/job counts and production API/Worker deployments unchanged; benchmark finished with zero running replicas. Existing private artifacts preserved (10 to14 objects); original PDF bucket still14 objects. No public endpoint/cron, provider call or policy/schema change.
+- Implementation commit 2eb467bb4692c1e01ceff7f07e3f3862f0cfed07. Execution-only experiment/table-cell-review-runner pinned to 8c87af25652957fdbf868ccd0732c6c6e632ece9; NEVER merge its railway.toml into production.
+- Report: benchmark/results/cell-review-preparation-2026-11-16.md. Metrics: cell-review-metrics-2026-11-16.json. Guide: docs/CELL_REVIEW.md. Next: independent source adjudication, omitted-page/legend audit, then full-pipeline and held-out quality/resource/cost gates. No promotion.
+
 ## 2026-11-16 — Exact-corpus open-source table shadow evaluation
 - Optional Camelot hardening and isolated B01–B10 benchmark implemented; 209 pages, source identity/SHA-256 checks, separate processes, wall/RSS/version diagnostics and private raw artifacts.
 - Focused suites: 43 passed locally and 43 passed in Railway BuildKit, including real synthetic-PDF lattice/stream extraction. Full production regression suite was not rerun.

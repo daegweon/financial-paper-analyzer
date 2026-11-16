@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-16",
+  "implementation_commit": "2eb467bb4692c1e01ceff7f07e3f3862f0cfed07",
+  "runner_commit": "8c87af25652957fdbf868ccd0732c6c6e632ece9",
+  "deployment_id": "5155bbf1-6cfd-4e96-858a-7148886ce2fc",
+  "run_id": "cell-review-ef695c09efdd4e42ae6c4dbc619c7b3c",
+  "scope": "Four priority papers; two repeats per variant. Subprocess wall times exclude downloads, page selection, rendering, artifact upload and full AI pipeline. RSS is child high-water mark. No human-reviewed gold.",
+  "tests": {"local_new_unit_passed":48,"backend_passed":193,"backend_skipped":1,"backend_deprecation_warnings":6,"backend_seconds":4.0},
+  "versions": {"camelot-py":"1.0.9","PyMuPDF":"1.26.3","pdfminer.six":"20260107","opencv-python-headless":"5.0.0.93","numpy":"2.5.5","pandas":"3.1.1","pypdfium2":"5.15.2"},
+  "records": [
+    {"id":"B01","pages":31,"selected_pages":[17,18,19,22,23,27,28],"source_renders":9,"negative_candidate_pages_not_gold":[1,13],"candidate_tables_all":35,"candidate_tables_selected":10,"all_wall_seconds":[3.488440,3.450345],"selected_wall_seconds":[1.327286,1.322385],"all_peak_child_rss_mib":[218.316,219.316],"selected_peak_child_rss_mib":[173.758,173.570],"selected_page_matrix_equivalent":[true,true],"prior_all_matrix_equivalent":true,"selection_cap_omissions":[],"render_cap_omissions":[]},
+    {"id":"B02","pages":20,"selected_pages":[8,10,13,16,17,18],"source_renders":10,"negative_candidate_pages_not_gold":[1,2],"candidate_tables_all":24,"candidate_tables_selected":10,"all_wall_seconds":[2.541869,2.374050],"selected_wall_seconds":[1.218995,1.118154],"all_peak_child_rss_mib":[192.121,191.430],"selected_peak_child_rss_mib":[161.914,161.805],"selected_page_matrix_equivalent":[true,true],"prior_all_matrix_equivalent":true,"selection_cap_omissions":[],"render_cap_omissions":[]},
+    {"id":"B09","pages":16,"selected_pages":[6,9,10,12,13],"source_renders":7,"negative_candidate_pages_not_gold":[1,5],"candidate_tables_all":22,"candidate_tables_selected":10,"all_wall_seconds":[2.278092,2.127932],"selected_wall_seconds":[1.231729,1.383099],"all_peak_child_rss_mib":[190.168,190.457],"selected_peak_child_rss_mib":[164.441,162.934],"selected_page_matrix_equivalent":[true,true],"prior_all_matrix_equivalent":true,"selection_cap_omissions":[],"render_cap_omissions":[]},
+    {"id":"B10","pages":19,"selected_pages":[10,11,12,13,15],"source_renders":7,"negative_candidate_pages_not_gold":[1,14],"candidate_tables_all":26,"candidate_tables_selected":11,"all_wall_seconds":[2.125580,2.178911],"selected_wall_seconds":[1.150231,1.117126],"all_peak_child_rss_mib":[194.730,195.211],"selected_peak_child_rss_mib":[159.820,161.641],"selected_page_matrix_equivalent":[true,true],"prior_all_matrix_equivalent":true,"selection_cap_omissions":[],"render_cap_omissions":[]}
+  ],
+  "summary": {"papers":4,"original_pages":86,"selected_pages":23,"source_renders":33,"parser_executions":16,"parser_failures":0,"source_artifact_errors":0,"private_packets":4,"private_packet_bytes":9915979,"all_wall_total_seconds":20.565219,"selected_wall_total_seconds":9.869005,"wall_total_reduction_percent":52.011184514981345,"all_median_wall_seconds":2.326071,"selected_median_wall_seconds":1.225362,"all_max_child_rss_mib":219.316,"selected_max_child_rss_mib":173.758,"selected_page_matrix_comparisons_equal":8,"prior_matrix_comparisons_equal":4,"human_reviewed_targets":0,"exact_cell_accuracy":null,"negative_page_hit_rate":null,"provider_calls":0,"promotion_eligible":false},
+  "before_after_unchanged": {"papers":14,"analyses":103,"completed_jobs":102,"historical_failed_jobs":28,"private_pdf_objects":14},
+  "benchmark_running_replicas_after_completion":0
+}
