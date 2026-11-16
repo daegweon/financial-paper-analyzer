@@ -6,7 +6,7 @@ Execute from the repository root:
 
     python -m benchmark.engine_quality_gate --evidence path/to/measured-evidence.json
 
-An exit code of 1 blocks release. Exit 0 only means the input JSON satisfies the declared *structural checks*, not that its claims are true. A release owner MUST independently authenticate human reviewer identities, gold PDF row/page/column anchors, corpus SHA locks and their Git chronology, provider bills, two-user account isolation and live SMTP, and deployment/rollback logs. Never manufacture records for a passing result. Tests use explicitly synthetic fixtures that are not release evidence.
+An exit code of 1 blocks release. Exit 0 only means the input JSON satisfies the declared *structural checks*, not that its claims are true. The output field `final_deploy_allowed` is **always false**, even for a fully passing synthetic fixture. `structural_checks_passed` is a CI validation signal, not a deploy approval. Release promotion requires a separate independent manual verification and signoff. A release owner MUST independently authenticate human reviewer identities, gold PDF row/page/column anchors, corpus SHA locks and their Git chronology, provider bills, two-user account isolation and live SMTP, and deployment/rollback logs. Never manufacture records for a passing result. Tests use explicitly synthetic fixtures that are not release evidence.
 
 The evidence JSON must include the following objects:
 
