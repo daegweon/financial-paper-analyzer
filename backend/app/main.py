@@ -629,7 +629,7 @@ def _finding_table_reference_keys(value: Any) -> set[str]:
         last = int(match.group(3) or first)
         if last - first <= 20:
             references.update(f"{kind}:{number}" for number in range(first, last + 1))
-    for match in re.finditer(r"(표|그림)\s*(\d+)(?:\s*[-–~~]\s*(\d+))?", text):
+    for match in re.finditer(r"(표|그림)\s*(\d+)(?:\s*[-–~]\s*(\d+))?", text):
         kind = "table" if match.group(1) == "표" else "figure"
         first = int(match.group(2))
         last = int(match.group(3) or first)
