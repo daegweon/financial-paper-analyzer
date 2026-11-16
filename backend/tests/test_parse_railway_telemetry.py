@@ -9,17 +9,17 @@ from benchmark.parse_railway_telemetry import aggregate_logs
 def test_aggregate_job_attempts_tokens_and_pipeline_latency_without_cost_guess():
     logs = [
         {"timestamp": "2026-11-17T00:00:00Z",
-         "message": "INFO:papersignal:Claimed job_id=job-12345678 paper_id=paper-12345678 attempt=1"},
+         "message": "INFO:papersignal:Claimed job_id=11111111-1111-4111-8111-111111111111 paper_id=22222222-2222-4222-8222-222222222222 attempt=1"},
         {"timestamp": "2026-11-17T00:00:02Z",
-         "message": "WARNING:papersignal:Gemini attempt failed job_id=job-12345678 provider_call_id=call1234567890 attempt=1/2 model=gemini-3.5-flash-lite status=503 elapsed_ms=180.5 body=unavailable"},
+         "message": "WARNING:papersignal:Gemini attempt failed job_id=11111111-1111-4111-8111-111111111111 provider_call_id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa attempt=1/2 model=gemini-3.5-flash-lite status=503 elapsed_ms=180.5 body=unavailable"},
         {"timestamp": "2026-11-17T00:00:03Z",
-         "message": "INFO:papersignal:Gemini usage job_id=job-12345678 provider_call_id=call1234567890 attempt=2/2 provider_attempts=2 model=gemini-3.6-flash elapsed_ms=900.0 finish=STOP prompt_tokens=120 candidate_tokens=30 thought_tokens=5 total_tokens=155"},
+         "message": "INFO:papersignal:Gemini usage job_id=11111111-1111-4111-8111-111111111111 provider_call_id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa attempt=2/2 provider_attempts=2 model=gemini-3.6-flash elapsed_ms=900.0 finish=STOP prompt_tokens=120 candidate_tokens=30 thought_tokens=5 total_tokens=155"},
         {"timestamp": "2026-11-17T00:00:04Z",
-         "message": "INFO:papersignal:Gemini attempt succeeded job_id=job-12345678 provider_call_id=call1234567890 attempt=2/2 provider_attempts=2 model=gemini-3.6-flash elapsed_ms=900.0 total_elapsed_ms=1900.0"},
+         "message": "INFO:papersignal:Gemini attempt succeeded job_id=11111111-1111-4111-8111-111111111111 provider_call_id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa attempt=2/2 provider_attempts=2 model=gemini-3.6-flash elapsed_ms=900.0 total_elapsed_ms=1900.0"},
         {"timestamp": "2026-11-17T00:00:10Z",
-         "message": "INFO:papersignal:Analysis job completed job_id=job-12345678 paper_id=paper-12345678 provider=gemini model=gemini-3.6-flash pages=40"},
+         "message": "INFO:papersignal:Analysis job completed job_id=11111111-1111-4111-8111-111111111111 paper_id=22222222-2222-4222-8222-222222222222 provider=gemini model=gemini-3.6-flash pages=40"},
     ]
-    metadata = {"job-12345678": {"paper_sha256": "a" * 64, "commit": "b" * 40, "repeat": 1}}
+    metadata = {"11111111-1111-4111-8111-111111111111": {"paper_sha256": "a" * 64, "commit": "b" * 40, "repeat": 1}}
     result = aggregate_logs(logs, metadata)
     job = result["jobs"][0]
     assert job["status"] == "completed"
@@ -39,17 +39,17 @@ def test_aggregate_job_attempts_tokens_and_pipeline_latency_without_cost_guess()
 def test_aggregate_all_models_failed_and_worker_retry_without_raw_logs():
     logs = [
         {"timestamp": "2026-11-17T01:00:00Z",
-         "message": "INFO:papersignal:Claimed job_id=job-fail-123456 paper_id=paper-987654 attempt=2"},
+         "message": "INFO:papersignal:Claimed job_id=33333333-3333-4333-8333-333333333333 paper_id=44444444-4444-4444-8444-444444444444 attempt=2"},
         {"timestamp": "2026-11-17T01:00:01Z",
-         "message": "WARNING:papersignal:Gemini attempt failed job_id=job-fail-123456 provider_call_id=call9876543210 attempt=1/2 model=gemini-3.5-flash-lite status=503 elapsed_ms=100.0 body=busy"},
+         "message": "WARNING:papersignal:Gemini attempt failed job_id=33333333-3333-4333-8333-333333333333 provider_call_id=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb attempt=1/2 model=gemini-3.5-flash-lite status=503 elapsed_ms=100.0 body=busy"},
         {"timestamp": "2026-11-17T01:00:02Z",
-         "message": "WARNING:papersignal:Gemini attempt failed job_id=job-fail-123456 provider_call_id=call9876543210 attempt=2/2 model=gemini-3.6-flash status=429 elapsed_ms=200.0 body=quota"},
+         "message": "WARNING:papersignal:Gemini attempt failed job_id=33333333-3333-4333-8333-333333333333 provider_call_id=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb attempt=2/2 model=gemini-3.6-flash status=429 elapsed_ms=200.0 body=quota"},
         {"timestamp": "2026-11-17T01:00:02Z",
-         "message": "ERROR:papersignal:All Gemini models failed job_id=job-fail-123456 provider_call_id=call9876543210 attempts=2 total_elapsed_ms=1400.0 failures=gemini-3.5-flash-lite=503; gemini-3.6-flash=429"},
+         "message": "ERROR:papersignal:All Gemini models failed job_id=33333333-3333-4333-8333-333333333333 provider_call_id=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb attempts=2 total_elapsed_ms=1400.0 failures=gemini-3.5-flash-lite=503; gemini-3.6-flash=429"},
         {"timestamp": "2026-11-17T01:00:03Z",
-         "message": "WARNING:papersignal:Analysis job failed job_id=job-fail-123456 status=503 reason=provider unavailable"},
+         "message": "WARNING:papersignal:Analysis job failed job_id=33333333-3333-4333-8333-333333333333 status=503 reason=provider unavailable"},
         {"timestamp": "2026-11-17T01:00:04Z",
-         "message": "WARNING:papersignal:Failed job scheduled for retry job_id=job-fail-123456"},
+         "message": "WARNING:papersignal:Failed job scheduled for retry job_id=33333333-3333-4333-8333-333333333333"},
     ]
     result = aggregate_logs(logs)
     job = result["jobs"][0]
