@@ -376,7 +376,7 @@ def _extract_written_count_tokens(value: str) -> list[str]:
         number
         for word, number in _WRITTEN_COUNT_WORDS.items()
         if re.search(
-            rf"{word}[- ]+(?:{_WRITTEN_COUNT_CONTEXT})",
+            rf"\b{word}\b[- ]+(?:{_WRITTEN_COUNT_CONTEXT})\b",
             text,
         )
     ]
@@ -668,8 +668,8 @@ def _are_duplicate_findings(left: dict[str, Any], right: dict[str, Any]) -> bool
     right_table_refs = _finding_table_reference_keys(right_table)
     left_model = str(left.get("model_or_column", "")).casefold().strip()
     right_model = str(right.get("model_or_column", "")).casefold().strip()
-    left_columns = set(re.findall(r"d+", left_model))
-    right_columns = set(re.findall(r"d+", right_model))
+    left_columns = set(re.findall(r"\d+", left_model))
+    right_columns = set(re.findall(r"\d+", right_model))
     left_table_unknown = not left_table or left_table in {"확인 불가", "unknown", "n/a"}
     right_table_unknown = not right_table or right_table in {"확인 불가", "unknown", "n/a"}
     same_table = (
@@ -880,8 +880,8 @@ def audit_finding(finding: dict[str, Any], pages: list[dict[str, Any]]) -> dict[
     # not mistaken for unsupported effect-size numbers.
     numeric_claim = re.sub(
         r"(?:p\s*[<≤=]\s*[0-9]*\.?[0-9]+"
-        r"|(?:at\s+the\s+)?(?:1|5|10)\s*(?:%|percent)\s*(?:level|수준)?"
-        r"|(?:1|5|10)%\s*수준"
+        r"|(?:at\s+the\s+)?(?<![\d.])(?:1|5|10)\s*(?:%|percent)\s*(?:level|수준)?"
+        r"|(?<![\d.])(?:1|5|10)%\s*수준"
         r"|\b(?:tier|model|column|table)\s*[-(]?\s*\d+\)?(?=\W|$|[가-힣])"
         r"|\bpanel\s+[a-z](?=\W|$|[가-힣])"
         r"|\b(?:one|two|1|2)[- ]country(?:[- ](?:durable|consumption))?(?:[- ]model)?\b"
