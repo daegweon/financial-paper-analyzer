@@ -23,7 +23,7 @@ def test_unsupported_engine_must_not_fall_back_to_baseline():
         rank.read_pages(sample_pdf(),"grobid")
 
 def test_control_char_filter_and_page_limit():
-    assert rank.normalize_page("alpha  \\x00 beta")=="alpha beta"
+    assert rank.normalize_page("alpha  " + chr(0) + " beta")=="alpha beta"
 
 def test_later_candidates_never_claim_accuracy():
     later=rank.blocked_later_candidates()
