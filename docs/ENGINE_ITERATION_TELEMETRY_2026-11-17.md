@@ -32,3 +32,5 @@ This is a measurement-enabling candidate only. No measured latency overhead, ful
 Added benchmark/parse_railway_telemetry.py to turn Railway's timestamp/message export into a safe job-level record. It joins Worker claim/completion/failure events with Gemini provider_call_id/attempt logs, calculates claim-to-terminal pipeline time, counts retries and provider attempts, sums token usage, and retains per-model HTTP outcomes. It does not copy raw log messages or response bodies into output. Provider cost remains null until an explicit dated price schedule is supplied; no prices are guessed.
 
 Synthetic tests cover a 503-to-fallback success, a 503+429 failure with worker retry, and malformed/unrelated logs. These tests are committed but have not run because GitHub Actions is still failing before job creation.
+
+The parser accepts missing Gemini token fields (for example thought_tokens=None) but marks token_usage_complete=false. It never treats absent usage metadata as a verified zero-token request.
