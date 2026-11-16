@@ -10,6 +10,7 @@
 ## Gate Q0 — 동일 조건의 고정 기준 준비 (모든 실험의 선행 요건)
 - 원래의 v6.4.2 운영 SHA, AI 모델명, 프롬프트/구조화 스키마/추출 파라미터, 코퍼스 SHA·페이지 수를 기록하고 베이스라인을 독립 저장합니다. 과거 v6.3.9 모델 출력의 숫자를 v6.4.2 신규 출력으로 잘못 표기하지 않습니다.
 - 원본 B01–B10(10편, 209페이지)을 regression, **별도 신규 논문 최소 2편을 사전 잠금된 held-out**으로 사용합니다. 튜닝 후 held-out을 선택하거나 교체하지 않습니다.
+- H01/H02 exact PDF bytes now locked (H01 40 pages, SHA-256 816e404d2f1dee7df84d52bf4238a75d7d777878cf100b42e3f220cc1da9b127; H02 30 pages, SHA-256 d385806b9a448e399dfc9f6017710561bf15bfd50ec514536303978ad07eb283), lock commit 149311ec2993cac3bd410c10ac7feb202d582fc7. Fresh candidate branch created from frozen production SHA after lock. B01-B10 original PDF hashes still missing; Q0 remains BLOCKED.
 - 2026-11-17 사전 후보 H01/H02를 등록했으나 PDF 원본 바이너리 SHA-256은 아직 확보되지 않았습니다. benchmark/heldout_preregistration_2026-11-17.json의 두 pdf_sha256는 null이므로 Q0는 계속 BLOCKED입니다. exact bytes + PyMuPDF page count + SHA commit lock 완료 전에는 새 release-eligible candidate branch를 만들지 않습니다.
 - 18건의 역사적 review-required finding은 **원본 페이지·숫자 셀·변수 및 모델 열·표 주석·표준오차/표준편차 구분**을 두 명의 실제 독립 검토자에게 각각 확인받아 일치/불일치를 기록합니다. 심사 이름을 AI가 꾸며내는 것은 금지합니다.
 - '스크린 통과'와 골드 정확도를 분리합니다. 기존 346/346 인용 및 54/54 현재 검증기 통과는 이전 분석에 대한 **호환성 기준**이지 독립 사실 정확도가 아닙니다.
