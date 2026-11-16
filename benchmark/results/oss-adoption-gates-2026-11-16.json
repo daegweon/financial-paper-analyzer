@@ -1,0 +1,50 @@
+{
+  "decision_date": "2026-11-16",
+  "scope": "OSS PDF/table parser selection; never full-service quality proof",
+  "final_status": "CLOSED_NO_NEW_OSS_ADOPTION",
+  "production_changed": false,
+  "baseline_runtime": "existing PyMuPDF engine",
+  "comparison": "Camelot Stream all-pages vs selected-pages",
+  "original_papers": 4,
+  "original_pages": 86,
+  "selected_pages": 23,
+  "execution_successes": 16,
+  "extraction_only": {
+    "before_wall_total_seconds": 20.565219,
+    "after_wall_total_seconds": 9.869005,
+    "observed_reduction_percent": 52.011184514981345,
+    "before_max_child_rss_mib": 219.316,
+    "after_max_child_rss_mib": 173.758,
+    "includes_full_pipeline": false
+  },
+  "frozen_source_draft": {
+    "unique_targets": 15,
+    "numeric_cells": 25,
+    "candidate_comparisons": 60,
+    "agreements": 40,
+    "missing": 20,
+    "b01_page18_table2_missing_in_both_variants": true,
+    "independent_human_reviewers": 0,
+    "certified_accuracy": null
+  },
+  "adoption_gates": {
+    "whole_pipeline_quality_verified": false,
+    "source_citation_regression_free": null,
+    "heldout_papers_verified": false,
+    "provider_cost_recorded": false,
+    "end_to_end_latency_gain_verified": false,
+    "authorized_release": false
+  },
+  "can_adopt": false,
+  "unrun_candidates": [
+    "Docling",
+    "MinerU",
+    "Unstructured",
+    "Science Parse"
+  ],
+  "audit_sources": [
+    "benchmark/results/visual-draft-audit-2026-11-16.md",
+    "benchmark/results/cell-review-metrics-2026-11-16.json"
+  ],
+  "disclaimer": "Stream output parity cannot certify completeness; no new extractor is approved."
+}

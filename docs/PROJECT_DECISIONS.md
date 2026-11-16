@@ -47,3 +47,11 @@
 - A completed job does not mean all fields were extracted correctly.
 - Empty findings on an empirical paper must be flagged as incomplete/review, not silently treated as full success.
 - Beta gates include external email confirmation, Google sign-in, live two-user isolation, PDF upload-analysis, backend/frontend build checks, service health and human review of the ten-paper benchmark.
+
+## Open-source adoption gate (2026-11-16; final)
+
+- Close PDF/table parser OSS discovery. Do not deploy Camelot globally or page-selected: the observed extraction-only runtime improvement has not produced verified whole-engine benefit and B01 Table 2 is missing even on an included page.
+- Preserve the existing PyMuPDF analysis stack; do not introduce another OSS dependency without audited exact-source/column/numeric gain, zero supported-finding regression, and full-pipeline latency/memory/failure/provider-cost acceptance on held-out sources. Require independent human gold; assistant drafts are not independently human-reviewed.
+- Previously explored but untested Docling, MinerU, Unstructured and Science Parse are deferred without conclusions about performance. Avoid speculative candidate expansion.
+- Experiment code and runners stay outside production. Direct future work to existing-engine evidence fidelity, 18 review findings, operational telemetry and beta reliability.
+- See `docs/OPEN_SOURCE_ADOPTION_DECISION_2026-11-16.md` for pre/post extraction measures and qualifications. Do not interpret historical v6.3.9 scores as a fresh evaluation of the currently deployed v6.4.2 source.

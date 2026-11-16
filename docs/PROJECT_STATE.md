@@ -1,5 +1,16 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-16 final OSS decision — supersedes the experimental next-task sections below
+
+**CLOSED: no new OSS parser adoption in production.** User direction is to stop broad parser comparisons. Camelot page-selected runs reduced *extraction-only* wall time by 52.01% on four PDFs, but frozen original-source visual drafts show B01 p18 Table 2's five parameter targets missing from BOTH all-page and selected-page Stream. There is no certified cell/whole-engine accuracy gain, and 0 independent human-reviewed cells. Neither Camelot nor other untested parsers are approved. Do not continue caption/geometry recovery experiments as part of the OSS workstream; direct subsequent engineering to the existing production stack and unresolved 18 review-required findings, durable token/cost telemetry and release gates. See docs/OPEN_SOURCE_ADOPTION_DECISION_2026-11-16.md.
+
+**Version correction:** The inspected Railway API/Worker deployment uses Git commit 8cd5e37ee8eab3bf4b726b75af89e410ab48396e, and its source contains `finance-structured-v6.4.2`; prior `v6.3.9` metrics are historical and not a benchmark of that current commit. Historical state text below is preserved for audit but is not a current version assertion.
+
+**No production changes from this closure.** All experimental raw source artifacts stay private. Final experiment-only decision file and machine-readable gate snapshot are in Git. This top section supersedes older "Immediate next task" statements related to parser exploration.
+
+---
+
+
 Last updated: 2026-11-16 (Asia/Seoul), after first actual assistant visual draft audit.
 Production source: feat/research-workspace-mvp; Draft PR #2, do not merge without release gates.
 Current open-source work: experiment/pdf-table-engines.

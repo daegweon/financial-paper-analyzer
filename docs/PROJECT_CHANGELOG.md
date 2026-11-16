@@ -1,3 +1,10 @@
+## 2026-11-16 — Open-source parser evaluation CLOSED, no production adoption
+- User directed ending speculative OSS comparisons. Adopt only a independently verified, overall non-regressing option.
+- Existing locked-source evidence: four-PDF selected Camelot Stream extraction 20.565219s -> 9.869005s combined, but B01 p18 Table2 five primary cells remain missing in both all/selected outputs. No human gold or whole-engine gain. Reject unrestricted and selected Camelot for production; preserve experimental code and data.
+- Docling/MinerU/Unstructured/Science Parse untested and not adopted. No new providers/packages, code, database schema, API, Worker or production deployment changes.
+- Current live Railway commit 8cd5e37..., analysis source says finance-structured-v6.4.2; historical scorecard labelled v6.3.9. Do not confuse those.
+- Stored detailed decision and machine-readable gates. Next focus: native engine source fidelity, 18 review-required findings, usage/cost telemetry and beta E2E. No global maximum claimed.
+
 ## 2026-11-16 — Actual assistant visual audit exposes within-page omission
 - Viewed source-derived crops BEFORE parser candidates: B01 PDF p18/Table2 and B10 p12/Table5. Recorded 15 assistant-draft targets /25 numeric cells, source/render hashes, source geometry and expected-text digests. No human reviewer invented; independent human gold remains0.
 - Added draft_cell_audit.py/run.py, visual_drafts_20261116.json and37 rejection tests (all passed locally,0.08s). Existing human-review gate and production validators unchanged. Railway mandatory pytest build gate passed; exact terminal count not recovered from log excerpt, so no new total claimed. LiveE2E/frontend not run.
