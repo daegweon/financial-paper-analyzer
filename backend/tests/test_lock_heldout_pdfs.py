@@ -61,10 +61,7 @@ def test_duplicate_heldout_pdf_bytes_are_rejected(tmp_path):
 def test_regression_overlap_and_non_pdf_are_rejected(tmp_path):
     make_pdf(tmp_path / "H01.pdf", 2, "One")
     make_pdf(tmp_path / "H02.pdf", 3, "Two")
-    result = lock_heldout_pdfs(manifest(), tmp_path,
-                               regression_sha256={lock_heldout_pdfs(
-                                   manifest(), tmp_path
-                               )["heldout_papers"][0]["pdf_sha256"]})
+    result = lock_heldout_pdfs(manifest(), tmp_path)
     # Recreate a clean directory because the overlap is checked against a separately
     # supplied baseline hash, not a mutation of the source file.
     with pytest.raises(ValueError, match="overlaps the regression corpus"):
