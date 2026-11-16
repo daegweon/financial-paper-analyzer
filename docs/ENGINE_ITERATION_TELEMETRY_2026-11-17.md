@@ -33,6 +33,6 @@ Added two mocked Gemini telemetry tests (503 → fallback success; 503 + 429 →
 
 ## Log aggregation utility
 
-`benchmark/parse_railway_telemetry.py` turns Railway timestamp/message exports into safe job-level records. It joins Worker claim/completion/failure events with Gemini `provider_call_id`/attempt logs, calculates claim-to-terminal pipeline time, counts retries/provider attempts, sums token usage, and retains per-model HTTP outcomes. It does not copy raw log messages or response bodies into output. Provider cost remains null until an explicit dated price schedule is supplied; no prices are guessed.
+`benchmark/parse_railway_telemetry.py` turns Railway timestamp/message exports into safe job-level records. It joins Worker claim/completion/failure events with Gemini `provider_call_id`/attempt logs, calculates worker-claim-to-terminal elapsed time only (not full upload-to-save pipeline latency), counts retries/provider attempts, sums token usage, and retains per-model HTTP outcomes. It does not copy raw log messages or response bodies into output. Provider cost remains null until an explicit dated price schedule is supplied; no prices are guessed.
 
-Missing token fields remain incomplete and are never fabricated as verified zero-token usage. Q0/Q1/Q2/P0 remain BLOCKED. `final_deploy_allowed=false`.
+The output field is deliberately named `claim_to_terminal_ms`; `full_pipeline_latency_ms` remains null because the upload/queue-created timestamp is not currently logged. Do not feed claim-to-terminal time into the Q2 full-pipeline p95 gate. Missing token fields remain incomplete and are never fabricated as verified zero-token usage. Q0/Q1/Q2/P0 remain BLOCKED. `final_deploy_allowed=false`.
