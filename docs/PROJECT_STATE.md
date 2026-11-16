@@ -1,5 +1,14 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-17 NEW USER DECISION — OVERRIDES OLD "ENGINE FROZEN" EXPERIMENT TEXT
+
+**Open-source parser replacement research is OVER. Resume improving the EXISTING PyMuPDF / finance-structured-v6.4.2 analysis engine in a separate, gated development branch.** The engine was frozen during OSS comparisons only; the user has now explicitly authorized resuming its improvement. Hard stop when independently verified quality/resource/production release thresholds are met, followed by final release. Do NOT continue the OSS candidate hunt.
+
+**Canonical cross-session handoff:** `plan/engine-quality-release-handoff` commit `2e71924bf0801bca9798fddeadb9357cf0f5e05a`, `docs/SESSION_HANDOFF_NEXT.md`, `docs/ENGINE_QUALITY_RELEASE_PLAN_2026-11-17.md`, `benchmark/engine_release_gates_2026-11-17.json`. Read these FIRST; previous "immediate next task" and "frozen forever" text below is superseded. This is a GitHub checkpoint, NOT ChatGPT saved memory (project memory is off). No production branch update or automatic deployment authorized by this pointer.
+
+---
+
+
 ## 2026-11-17 FINAL — Five-candidate ranked parser evaluation closed; engine still frozen
 
 User-ordered ranking: pypdfium2 -> pdfplumber -> GROBID -> MinerU -> Marker. First two actually executed on locked ten-paper 209-page source. PyMuPDF baseline: 346/346 previous quotes, 71 directly evidenced findings, 54 screen-passed under v6.4.2; pypdfium2: 292/346, 64, 50; pdfplumber: 14/346, 2, 1. All ten processed per mode, but source-citation quality is lower for both, so neither can replace the frozen parser.
