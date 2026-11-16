@@ -40,3 +40,12 @@ New-branch GitHub Actions run 43969788375 ended with `startup_failure` before cr
 - Paired 10-run extraction+prompt A/B: p50 67.226 ms baseline / 68.100 ms candidate (1.013 ratio); maxima 69.456 / 68.968 ms. No material extraction/prompt regression observed in this one-paper check. It does not measure Gemini or end-to-end latency/cost/memory.
 - Historical v6.4.2 production evidence is limited to B10 only. Two Gemini calls used 32,345 prompt tokens and 7,308 candidate tokens (39,653 total). Per-call elapsed, provider cost and RSS are not present.
 - GitHub Actions runs continue to end in `startup_failure` before jobs are created; local tests are separate. Q0/Q1/Q2/P0 remain blocked.
+
+
+## Latest candidate / CI confirmation (2026-11-17)
+
+- PR #7 remains draft; latest branch head after documentation updates: `343e53a98f32b8175d88ee093f26b6a6df56387e`. Latest code-changing commit: `e7782e1c1531dcc658a52246bfb61faa94d1d932`.
+- GitHub Actions runs `43979921435` and `43979839645` both ended `startup_failure` before any jobs were created (0 jobs). This does not contradict the separate local result: candidate backend suite 123 passed, 1 skipped, 0 failed on Python 3.12.16 / PyMuPDF 1.26.3.
+- Railway production API and Worker remain online on frozen production SHA `8cd5e37ee8eab3bf4b726b75af89e410ab48396e`; candidate not deployed.
+- Q0/Q1/Q2/P0 remain blocked. Do not merge or deploy.
+
