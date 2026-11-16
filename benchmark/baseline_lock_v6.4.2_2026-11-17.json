@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "record_type": "PARTIAL_Q0_BASELINE_LOCK_NOT_FULL_PIPELINE",
+  "recorded_at": "2026-11-17",
+  "frozen_production": {
+    "branch": "feat/research-workspace-mvp",
+    "commit": "8cd5e37ee8eab3bf4b726b75af89e410ab48396e",
+    "analysis_version": "finance-structured-v6.4.2",
+    "pymupdf_requirement": "PyMuPDF==1.26.3"
+  },
+  "heldout_lock": {
+    "manifest_path": "benchmark/heldout_preregistration_2026-11-17.json",
+    "lock_commit": "149311ec2993cac3bd410c10ac7feb202d582fc7",
+    "lock_commit_time_utc": "2026-11-16T21:11:16Z",
+    "papers": [
+      {
+        "id": "H01",
+        "doi": "10.1007/s10614-024-10589-2",
+        "pdf_sha256": "816e404d2f1dee7df84d52bf4238a75d7d777878cf100b42e3f220cc1da9b127",
+        "bytes": 2521298,
+        "pages": 40
+      },
+      {
+        "id": "H02",
+        "doi": "10.1186/s40854-024-00648-w",
+        "pdf_sha256": "d385806b9a448e399dfc9f6017710561bf15bfd50ec514536303978ad07eb283",
+        "bytes": 5223546,
+        "pages": 30
+      }
+    ],
+    "status": "BINARY_HASHES_AND_PAGE_COUNTS_LOCKED",
+    "exact_uploaded_bytes_reverified_in_current_turn": true
+  },
+  "candidate": {
+    "branch": "experiment/engine-quality-v6-4-2-heldout-clean",
+    "branch_base_commit": "325fb7e5bda6dd05cf4888fd658018a2d8e4abbf",
+    "branch_base_descends_from_lock_commit": true,
+    "branch_base_is_docs_only_descendant_of_frozen_production": true,
+    "first_candidate_code_commit": "7dd13343f44702369b8a1415c750d5fdf08371f7",
+    "first_candidate_code_commit_time_utc": "2026-11-16T21:43:36Z",
+    "first_candidate_code_commit_parent": "325fb7e5bda6dd05cf4888fd658018a2d8e4abbf",
+    "latest_main_telemetry_redaction_commit": "be69ebb5df262fd0f86342ba4f3868ce0fb01a45",
+    "latest_telemetry_test_commit": "40bc8d255b3bc02929942947e302789c053f4845",
+    "main_git_blob_sha1": "f1a4461f5822305aebdaadf1a7eae0bd28c98e3e",
+    "test_finance_git_blob_sha1": "f29088c156682ed3fb271a64e7d7175d07626004"
+  },
+  "superseded_candidate": {
+    "branch": "experiment/engine-quality-v6-4-2-heldout-locked",
+    "pr": 5,
+    "status": "INELIGIBLE_GIT_ANCESTRY",
+    "compare_lock_to_candidate": {
+      "status": "diverged",
+      "ahead_by": 56,
+      "behind_by": 18,
+      "merge_base_commit": "8cd5e37ee8eab3bf4b726b75af89e410ab48396e"
+    },
+    "action": "Do not merge; use the clean candidate branch instead."
+  },
+  "source_fingerprints": {
+    "production_main": {
+      "git_blob_sha1": "3d020cc1ecbd3153bb952ae967554b54e382d8dd",
+      "sha256": "3e86a9402af6850527b77beaaf74998ba922dc8d07ab51c789bbc7e53540dba5"
+    },
+    "production_worker": {
+      "git_blob_sha1": "443ae211b17ee86660ffc070596d42f8ffc49c59",
+      "sha256": "f5d15bd6a5343c76dd106d0a24f5c2bdd6d12efe2cbb1bc858b7bb0eb483de42"
+    },
+    "production_requirements": {
+      "git_blob_sha1": "debc81ab00532e6bcfc70c77437f418ea92d399a",
+      "sha256": "c8630c15fd1843ff4d899762be7b523c2ec91a7e8b702073c746ca82653da859"
+    },
+    "production_dockerfile": {
+      "git_blob_sha1": "a28f187e6986e993f14ec458f2b85ee2fde24d1a",
+      "sha256": "54d94cd4707c7200ecbe8b5f0965b00dcecc1e32ee1f63bc31d85ccca0997c99"
+    },
+    "prompt_sha256": "df0e36c9bb0ffc2e920e7d978fc4458118e7ce1ff3a4d78fe774bac49417cdcd",
+    "schema_sha256": "9bbfdc0cabbb27327da91232115cc1b6be55c7ed94b32cb6e65ccc1c3892ad5d",
+    "extraction_config_sha256": "0f79b5ab5508b2134a97d96b937a0f8be85bc605c2314861e3719b2674c8d198",
+    "model_config_sha256": "46e35f9ee77406ba0e7939b66584bae4b5a201105c9f37a141a4609a4aee16ab",
+    "candidate_main_sha256": null,
+    "note": "Candidate source SHA-256 is not yet recaptured after provider-body redaction; git blob SHA-1 is recorded above. Secret values excluded."
+  },
+  "model_config": {
+    "provider": "gemini",
+    "primary_model": "gemini-3.5-flash-lite",
+    "fallback_model": "gemini-3.6-flash",
+    "thinking_level_primary": "minimal",
+    "thinking_level_fallback": "low",
+    "output_token_limits": [
+      16384,
+      24576
+    ],
+    "timeout_seconds": {
+      "connect": 10,
+      "read": 75,
+      "write": 25,
+      "pool": 10
+    },
+    "api_key_values_stored": false
+  },
+  "local_extraction_preflight": {
+    "record_type": "LOCAL_PRODUCTION_EXTRACT_FUNCTION_REPRODUCTION_NOT_FULL_PIPELINE",
+    "extraction_function_source": "Frozen production backend/app/main.py extract_pages (exact logic reproduced)",
+    "runtime": {
+      "pymupdf": "1.26.7",
+      "required_pymupdf": "1.26.3",
+      "pin_match": false,
+      "python": "current isolated Python runtime"
+    },
+    "provider_calls": 0,
+    "measurements": [
+      {
+        "id": "H01",
+        "pages": 40,
+        "pages_scanned": 40,
+        "empty_text_pages": 0,
+        "extracted_chars": 111448,
+        "extracted_text_sha256": "dc9981283a7544b42b7262a99d23e0f6eb94b4618b3b72e78f8c7c7cc069df56",
+        "five_run_extract_ms": [
+          257.438,
+          212.735,
+          217.516,
+          200.172,
+          196.584
+        ],
+        "median_extract_ms": 212.735
+      },
+      {
+        "id": "H02",
+        "pages": 30,
+        "pages_scanned": 30,
+        "empty_text_pages": 0,
+        "extracted_chars": 62589,
+        "extracted_text_sha256": "4b5fdcb1123b00c20adafc7d4311dbb79774a71d3e789af3fba8e61b604fde11",
+        "five_run_extract_ms": [
+          84.105,
+          81.851,
+          83.23,
+          84.524,
+          84.913
+        ],
+        "median_extract_ms": 84.105
+      }
+    ],
+    "note": "Local exact-function reproduction on PyMuPDF 1.26.7 only. Production pin is 1.26.3; these timings are not Q2 baseline and do not measure prompt generation, Gemini, cost, memory, or full pipeline."
+  },
+  "production_log_observations": {
+    "source": "Railway Worker logs, 2026-11-16",
+    "observed_failures": [
+      "2026-11-16T04:53:51Z primary 503 and fallback 429",
+      "2026-11-16T05:29:15Z primary 503 and fallback 503"
+    ],
+    "note": "Historical failures on other jobs, not H01/H02 baseline executions."
+  },
+  "baseline_execution": {
+    "heldout_gemini_analyses_completed": 0,
+    "heldout_full_pipeline_latency_ms": null,
+    "heldout_billable_cost_usd": null,
+    "heldout_peak_rss_mb": null,
+    "original_B01_B10_pdf_binary_hashes_locked": false,
+    "status": "BLOCKED_PENDING_ORIGINAL_CORPUS_LOCK_AND_PINNED_FULL_PIPELINE_MEASUREMENTS"
+  },
+  "quality_gate_status": {
+    "Q0": "BLOCKED",
+    "Q1": "BLOCKED",
+    "Q2": "BLOCKED",
+    "P0": "BLOCKED"
+  },
+  "final_deploy_allowed": false,
+  "warnings": [
+    "The prior PR #5 candidate branch did not descend from the held-out lock commit; it is superseded and must not be merged.",
+    "The clean candidate branch descends from a handoff commit that is itself a docs-only descendant of the frozen production SHA and includes the held-out lock commit.",
+    "Local PyMuPDF 1.26.7 differs from the production pin 1.26.3.",
+    "No H01/H02 Gemini full-pipeline run, billable cost, full latency or peak RSS is available.",
+    "Original B01-B10 PDF binary hashes and independent human gold are still missing.",
+    "No production source, deployment, database row or user file was changed."
+  ]
+}
