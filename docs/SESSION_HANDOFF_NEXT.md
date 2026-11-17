@@ -126,5 +126,17 @@
 - 다음 우선 작업: 새로운 Secret Key 없이도 가능한 분석 작업 재연결 UX, 연구 라이브러리 지속성, 서지/근거 정렬 개선, 기존 고정 PDF 기반 회귀 테스트 및 인간 검토용 증거 패키지 준비. 엔진 품질 골드/전체 모델 A/B/베타 E2E의 충족을 추측하지 말 것.
 - 자세한 진행률 산정: `feat/research-job-status-resilience/docs/PROJECT_PROGRESS_2026-11-17.md`.
 
+## 2026-11-17 — 본 프로젝트 복원 기능 개발 완료 / 진행률 재산정
+
+- 새 Supabase `papersignal-benchmark` Secret Key 연결은 사용자의 요청에 따라 계속 보류. 운영 Supabase와 배포 서비스 변경 없음.
+- 격리된 메인 제품 개발 브랜치 `feat/research-job-status-resilience`, Draft PR **#8**: https://github.com/daegweon/financial-paper-analyzer/pull/8.
+- **브라우저 재접속 후 진행 중 분석 복원 UI 구현**: 논문을 열면 RLS 보호 `analysis_jobs`에서 `queued`/`processing` 작업을 다시 검색, 상세 팝업·논문 목록·작업 이력에서 `이어 확인` 버튼 제공.
+- 새 분석 시작 직전에 현재 작업을 다시 조회하여 기존 Job이 있으면 **새 POST 없이 GET 상태 추적**. 조회 실패 시 안전하게 새 작업 등록 보류. 탭 이동/팝업 닫기 시 오래된 브라우저 상태 폴링을 종료하고 서버 Worker 분석은 유지.
+- 기존 `Failed to fetch` 오류 대신 한국어 설명, 일시적 408/429/5xx 대응 및 제한된 재조회 구현. 기존 PDF/Gemini 엔진 코드 미변경.
+- 독립 Vercel sandbox에서 `npm run lint`: **TypeScript 통과 + 18개 테스트 모두 통과**(기존 인증 5, 신규 분석·복원 13). `npm run build`: **Next.js 16.4.6 운영 빌드 성공**. 실사용 E2E는 아직 미실행.
+- **전체 엔지니어링 추정 72.25% → 72.75% ≈ 73%**. 근거: 제품 UX 작업영역(전체 가중치 25%) 85%→87% 증가, 나머지 영역 추정치 유지. 정밀한 KPI나 출시 확률이 아님. **출시 게이트 Q0/Q1/Q2/P0 = 0/4 완료**, 베타 출시 준비 추정치 ~45% 유지.
+- 변경 근거 문서: `feat/research-job-status-resilience/docs/PROJECT_PROGRESS_2026-11-17.md`. PR #8은 Draft, 출시 게이트 통과 전 본 운영 병합·배포 금지.
+- 다음 제품 개발 우선순위: 실제 브라우저 재접속·동시 탭 E2E, 원문 근거/방법론 UX, 미분석·실패 논문의 회복 흐름. 비운영 DB 비밀키를 재요청하지 말 것.
+
 ## 새 세션 시작 시 그대로 사용할 메시지
 "PaperSignal 개발을 이어가자. GitHub `plan/engine-quality-release-handoff`의 `docs/SESSION_HANDOFF_NEXT.md`, `docs/ENGINE_QUALITY_RELEASE_PLAN_2026-11-17.md`, `docs/PROJECT_STATE.md`와 `benchmark/engine_release_gates_2026-11-17.json`을 먼저 읽어. 오픈소스 교체 검토는 종료, 기존 PyMuPDF/v6.4.2 엔진만 개선. 독립 골드·인용·전체 정확도·비용·실서비스 테스트 임계점 충족 전 배포 금지. 지금 상태 확인 후 다음 목표를 실제 구현하고 검증 결과를 GitHub에 기록해."
