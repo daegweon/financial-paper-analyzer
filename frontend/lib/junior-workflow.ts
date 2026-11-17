@@ -5,7 +5,7 @@
  * explanations and role questions are STATIC learning content, not assertions
  * about a paper or a recommendation to trade any security.
  */
-import { juniorGuideSummary, screenPassedFindingCandidates } from "./junior-guide";
+import { juniorGuideSummary, screenPassedFindingCandidates } from "./junior-guide.ts";
 import type { JuniorGuideResult } from "./junior-guide";
 
 export type JuniorRole = "wealth" | "risk" | "research" | "product" | "technology";
