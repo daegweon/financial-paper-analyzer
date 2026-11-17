@@ -127,3 +127,7 @@ Update PROJECT_STATE.md and append PROJECT_CHANGELOG.md:
 - `frontend/package.json` prebuild executes all TypeScript and frontend unit tests; PDF regression suite now includes multi-digit input and link-expiry cases.
 - QA instructions: `docs/MOBILE_SOURCE_UX_QA_2026-11-17.md`. **Real authenticated mobile browser and citation navigation are PENDING**; no production promotion.
 - Keep engine frozen and beta release gate 0/4. Preserve the 74.5% feature-completion estimate until real QA validates this milestone.
+
+## 2026-11-17 — Preview availability blocker
+
+The account reached Vercel Hobby's daily 100-deployment API limit (HTTP 402 `api-deployments-free-per-day`). The latest confirmed READY Preview corresponds to an intermediate Draft PR #12 commit `b7b95984`, not the final source. Final branch Next.js prebuild/test and real-browser QA are pending; do not claim beta readiness or release. No production deployment was made.
