@@ -130,4 +130,4 @@ Update PROJECT_STATE.md and append PROJECT_CHANGELOG.md:
 
 ## 2026-11-17 — Preview availability blocker
 
-The account reached Vercel Hobby's daily 100-deployment API limit (HTTP 402 `api-deployments-free-per-day`). The latest confirmed READY Preview corresponds to an intermediate Draft PR #12 commit `b7b95984`, not the final source. Final branch Next.js prebuild/test and real-browser QA are pending; do not claim beta readiness or release. No production deployment was made.
+The account reached Vercel Hobby's daily 100-deployment API limit (HTTP 402 `api-deployments-free-per-day`). The latest confirmed READY Preview corresponds to an intermediate Draft PR #12 commit `b7b95984`, not the final source. Final branch was copied to an isolated Vercel Sandbox and passed Next.js 16.4.6 production build, TypeScript and **43/43 frontend unit tests** (auth 5, analysis 13, junior 7, workplace 13, PDF 5). **Fresh Vercel Preview and real-browser QA are still pending**; do not claim beta readiness or release. No production deployment was made.
