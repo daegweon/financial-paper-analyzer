@@ -270,7 +270,7 @@ async def prepare_sources() -> dict[str, Any]:
         },
         "provider_calls": 0,
         "papers": [
-            {k: v for k, v in item.items() if k not in {"gold_facts", "critical_caveats", "raw", "publisher_pdf_url"}}
+            {k: v for k, v in item.items() if k not in {"gold_facts", "critical_caveats", "raw", "publisher_pdf_url", "source_user_id", "source_storage_path", "source_paper_id"}}
             for item in PREPARED.values()
         ],
         "all_hashes_and_page_counts_verified": len(PREPARED) == 12,
