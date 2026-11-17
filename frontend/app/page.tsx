@@ -812,7 +812,15 @@ export default function Home() {
                       <p>{finding.claim}</p>
                       <div className="finding-meta">
                         <span>방향: {finding.direction}</span><span>추정치: {finding.estimate}</span><span>통계적 유의성: {finding.statistical_significance}</span>
-                        {finding.table_reference && <span>표: {finding.table_reference}</span>}
+                        {finding.table_reference && (() => {
+                          const page = finding.evidence?.find((item) => Number.isInteger(item.page) && item.page > 0)?.page;
+                          return page
+                            ? <button type="button" className="finding-source-tag"
+                                onClick={() => showOriginalPdfPage(page)}>
+                                표·그림: {finding.table_reference} · 원문 p.{page} 보기 ↓
+                              </button>
+                            : <span>표·그림: {finding.table_reference}</span>;
+                        })()}
                         {finding.model_or_column && <span>모형·열: {finding.model_or_column}</span>}
                         {finding.verification && <span className={finding.verification.status === "screen_passed" ? "verification-ok" : "verification-review"}>
                           수치·표 맥락: {finding.verification.status === "screen_passed" ? "1차 대조 통과" : "연구자 확인 필요"}
