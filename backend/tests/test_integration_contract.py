@@ -84,6 +84,7 @@ def test_authenticated_request_queues_background_job(monkeypatch):
         async def __aexit__(self, *exc): return None
         async def get(self, url, **kwargs):
             requests_seen.append(("GET", url, kwargs))
+            assert kwargs["headers"]["Authorization"] == "Bearer valid_test_jwt"
             if url.endswith("/auth/v1/user"):
                 return httpx.Response(200, json={"id": user_id})
             if url.endswith("/rest/v1/papers"):
@@ -98,6 +99,8 @@ def test_authenticated_request_queues_background_job(monkeypatch):
             assert url.endswith("/rest/v1/analysis_jobs")
             assert kwargs["json"]["paper_id"] == paper_id
             assert kwargs["json"]["user_id"] == user_id
+            assert kwargs["headers"]["apikey"] == "sb_secret_test"
+            assert "Authorization" not in kwargs["headers"], "A browser JWT must never be used for privileged job writes."
             return httpx.Response(201, json=[{"id": job_id, "status": "queued", "stage": "queued"}])
 
     async def fake_worker(*args):
@@ -105,6 +108,7 @@ def test_authenticated_request_queues_background_job(monkeypatch):
 
     monkeypatch.setattr(module, "SUPABASE_URL", "https://mock.supabase.test")
     monkeypatch.setattr(module, "SUPABASE_KEY", "publishable_mock")
+    monkeypatch.setattr(module, "SERVICE_ROLE_KEY", "sb_secret_test")
     monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
     monkeypatch.setattr(module, "_process_analysis_job", fake_worker)
 
@@ -116,6 +120,42 @@ def test_authenticated_request_queues_background_job(monkeypatch):
     assert res.json() == {"status": "queued", "job_id": job_id, "stage": "queued"}
     assert [method for method, _, _ in requests_seen] == ["GET", "GET", "GET", "POST"]
 
+
+
+
+def test_queue_requires_server_role_key_and_never_falls_back_to_browser_writes(monkeypatch):
+    """Fail closed even when the user's paper is verified and no active job exists."""
+    user_id = "11111111-1111-4111-8111-111111111111"
+    paper_id = "22222222-2222-4222-8222-222222222222"
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *exc): return None
+        async def get(self, url, **kwargs):
+            if url.endswith("/auth/v1/user"):
+                return httpx.Response(200, json={"id": user_id})
+            if url.endswith("/rest/v1/papers"):
+                return httpx.Response(200, json=[{
+                    "id": paper_id, "user_id": user_id,
+                    "storage_path": user_id + "/contract.pdf",
+                }])
+            if url.endswith("/rest/v1/analysis_jobs"):
+                return httpx.Response(200, json=[])
+            raise AssertionError("Unexpected GET " + url)
+        async def post(self, url, **kwargs):
+            raise AssertionError("Never enqueue via a user token if the server key is unavailable.")
+
+    monkeypatch.setattr(module, "SUPABASE_URL", "https://mock.supabase.test")
+    monkeypatch.setattr(module, "SUPABASE_KEY", "publishable_mock")
+    monkeypatch.setattr(module, "SERVICE_ROLE_KEY", "")
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    response = TestClient(module.app).post(
+        "/api/analyze/" + paper_id,
+        headers={"Authorization": "Bearer valid_test_jwt"},
+    )
+    assert response.status_code == 503
+    assert "안전한 분석 작업 등록" in response.json()["detail"]
 
 def test_analysis_job_status_is_scoped_to_authenticated_owner(monkeypatch):
     user_id = "11111111-1111-4111-8111-111111111111"
