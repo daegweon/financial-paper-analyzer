@@ -139,8 +139,8 @@ export function parseStudyProgress(raw: string | null): StudyProgress {
     if (!parsed || typeof parsed !== "object") return emptyStudyProgress();
     const record = parsed as { version?: unknown; completed?: unknown; bestScore?: unknown };
     if (record.version !== 1) return emptyStudyProgress();
-    const completed = Array.isArray(record.completed)
-      ? STUDY_STEP_IDS.filter((id) => record.completed?.includes(id)) : [];
+    const savedSteps: unknown[] = Array.isArray(record.completed) ? record.completed : [];
+    const completed = STUDY_STEP_IDS.filter((id) => savedSteps.includes(id));
     const score = record.bestScore;
     return {
       completed,
