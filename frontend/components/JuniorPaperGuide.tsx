@@ -31,7 +31,7 @@ export function JuniorPaperGuide({ result, sourcePdfUrl }: Props) {
           ? <p>{guide.question}</p>
           : <p className={styles.unknown}>원문 근거가 확인된 연구 질문이 아직 없습니다.</p>}
         {guide.summary && <>
-          <b className={styles.label}>AI 추출 요약 · 반드시 원문 확인</b>
+          <b className={styles.label}>{result.mode === "llm" ? "AI 생성 요약" : "자동 추출 요약"} · 반드시 원문 확인</b>
           <p>{guide.summary}</p>
         </>}
       </article>
