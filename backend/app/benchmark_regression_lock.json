@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "record_type": "LEGACY_REGRESSION_BINARY_LOCK_PENDING_LOCK_COMMIT_REFERENCE",
+  "created_at": "2026-11-17",
+  "source": {
+    "type": "user_uploaded_conversation_attachments",
+    "original_filenames_preserved": true,
+    "binary_hash_method": "SHA-256 over exact original PDF bytes",
+    "pdf_validation": "PyMuPDF open, page count, PDF header, no password encryption",
+    "supabase_metadata_crosscheck": {
+      "bucket": "papers (private)",
+      "filenames_sizes_and_page_counts_match_existing_inventory": true,
+      "binary_identity_against_private_storage_verified": false,
+      "note": "The available Supabase connector exposed only metadata, not private object bytes. This manifest locks the exact PDFs attached in this conversation; matching metadata alone is not claimed as byte-for-byte identity with the private Storage objects."
+    }
+  },
+  "totals": {
+    "paper_count": 10,
+    "total_pages": 209,
+    "total_bytes": 17760530
+  },
+  "lock_commit": "342a2ed30b6e270c9a8f167d2a6cbc8dedeaf80c",
+  "papers": [
+    {
+      "id": "B01",
+      "filename": "B01_factor-sufficiency.pdf",
+      "title": "Factor Sufficiency in Asset Pricing: An Application for the Brazilian Market",
+      "doi": "10.3390/ijfs11040144",
+      "size_bytes": 2999239,
+      "page_count": 31,
+      "sha256": "d729eaa7fa349916e1753775f7d5a4c12b629a3eb7af77f90dec06accacfacf3"
+    },
+    {
+      "id": "B02",
+      "filename": "B02_korea-consumption.pdf",
+      "title": "Durable Consumption-Based Asset Pricing Model with Foreign Factors for the Korean Stock Market",
+      "doi": "10.3390/ijfs11020062",
+      "size_bytes": 606182,
+      "page_count": 20,
+      "sha256": "aa602635a2f64639ee94b666d19ed23be2eaae5b19cccc030b896e84954c7854"
+    },
+    {
+      "id": "B03",
+      "filename": "B03_morocco-carhart.pdf",
+      "title": "Pricing Ability of Carhart Four-Factor and Fama–French Three-Factor Models: Empirical Evidence from Morocco",
+      "doi": "10.3390/ijfs11010020",
+      "size_bytes": 396873,
+      "page_count": 14,
+      "sha256": "489614f7c709d28b77b0092fe2e9e589e3d917d2a906546e67813fd19dfb68dd"
+    },
+    {
+      "id": "B04",
+      "filename": "B04_china-regime.pdf",
+      "title": "Multi-Factor Asset-Pricing Models under Markov Regime Switches: Evidence from the Chinese Stock Market",
+      "doi": "10.3390/ijfs6020054",
+      "size_bytes": 4418309,
+      "page_count": 19,
+      "sha256": "dca200a597c048340f8eae81b09e169149501d0bc3b6809f31e15887521bd123"
+    },
+    {
+      "id": "B05",
+      "filename": "B05_warsaw-liquidity.pdf",
+      "title": "State-Dependent Stock Liquidity Premium: The Case of the Warsaw Stock Exchange",
+      "doi": "10.3390/ijfs8010013",
+      "size_bytes": 1064697,
+      "page_count": 24,
+      "sha256": "0d5c61c34054a6b2534f23b0f895e69cfc6cc78cd6758187f2c9604eb33d7a2c"
+    },
+    {
+      "id": "B06",
+      "filename": "B06_asean-fx.pdf",
+      "title": "Do Financial Crises Matter for Nonlinear Exchange Rate and Stock Market Cointegration? A Heterogeneous Nonlinear Panel Data Model with PMG Approach",
+      "doi": "10.3390/ijfs11010007",
+      "size_bytes": 975524,
+      "page_count": 22,
+      "sha256": "42a8102e4b60dcae6eace1b23ee18e9f9dab4b4e7c968a61994fb1d95320e6c0"
+    },
+    {
+      "id": "B07",
+      "filename": "B07_korea-garch-midas.pdf",
+      "title": "Heterogeneous macroeconomic factors’ effects on stocks across sizes, styles, and sectors in the South Korean market",
+      "doi": "10.1371/journal.pone.0300393",
+      "size_bytes": 3429628,
+      "page_count": 23,
+      "sha256": "10ffc3942b5c74fda8d78e1c875f8c39e05546ff7bcd69fafefc53635d7123ad"
+    },
+    {
+      "id": "B08",
+      "filename": "B08_us-esg.pdf",
+      "title": "The Effects of ESG Scores and ESG Momentum on Stock Returns and Volatility: Evidence from U.S. Markets",
+      "doi": "10.3390/jrfm18070367",
+      "size_bytes": 1202803,
+      "page_count": 21,
+      "sha256": "fccffb87bfceba3b0971d208d357d7953637e33aad10d34f8bdcb27cb2c5d1d6"
+    },
+    {
+      "id": "B09",
+      "filename": "B09_firm-vov.pdf",
+      "title": "Firm Policies and Uncertainty About Risk",
+      "doi": "10.3390/jrfm18020096",
+      "size_bytes": 1076845,
+      "page_count": 16,
+      "sha256": "ab69f803264927a2321240f7f93696551e7691ec27cd221b0002363d329a288e"
+    },
+    {
+      "id": "B10",
+      "filename": "B10_thailand-portfolio.pdf",
+      "title": "Optimal Portfolio Construction Using the Realized Volatility Concept: Empirical Evidence from the Stock Exchange of Thailand",
+      "doi": "10.3390/jrfm18050269",
+      "size_bytes": 1590430,
+      "page_count": 19,
+      "sha256": "cee6e3a7171ccb93c25a1ce306058b615b4ded852c3806691b551aa9fc0c499e"
+    }
+  ],
+  "verification": {
+    "count_matches_expected": true,
+    "unique_ids": true,
+    "unique_filenames": true,
+    "all_pdf_headers_valid": true,
+    "all_pdfs_opened_successfully": true,
+    "all_unencrypted": true,
+    "all_page_counts_match_supabase_metadata": true,
+    "all_byte_lengths_match_supabase_metadata": true,
+    "total_pages": 209,
+    "total_bytes": 17760530
+  },
+  "lock_commit_reference_semantics": "This is the first commit that introduced the complete B01-B10 SHA-256 manifest. This follow-up commit records that immutable lock commit; release-eligible candidates must descend from the follow-up commit."
+}
