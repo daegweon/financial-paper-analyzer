@@ -709,22 +709,37 @@ export default function Home() {
       </div>
     </div>
 
-    {selected && <div className="overlay" onClick={() => { openRequestId.current += 1; setSelected(null); setSourcePdf(null); setSourcePdfError(""); setSourceViewerOpen(false); }}>
-      <section className="details" onClick={event => event.stopPropagation()}>
+    {selected && <div className="overlay" onClick={closeDetails}>
+      <section className="details" role="dialog" aria-modal="true" aria-labelledby="paper-detail-title" tabIndex={-1} ref={detailsRef}
+        onClick={event => event.stopPropagation()}>
         <div className="detail-toolbar no-print">
           {sourcePdf?.paperId === selected.id
             ? <div className="source-pdf-actions">
-                <button type="button" className="source-pdf-button" aria-expanded={sourceViewerOpen}
-                  onClick={() => setSourceViewerOpen((value) => !value)}>
+                <button type="button" className="source-pdf-button" aria-controls="paper-original-pdf" aria-expanded={sourceViewerOpen}
+                  onClick={toggleSourceViewer}>
                   {sourceViewerOpen ? "원문 PDF 접기" : "원문 PDF 함께 보기"}
                 </button>
-                <a className="source-pdf-button source-pdf-external" href={sourcePdf.url} target="_blank" rel="noreferrer">새 탭 ↗</a>
+                <a className="source-pdf-button source-pdf-external" href={originalPdfPageUrl(sourcePdf.url, sourcePage, selected.page_count)}
+                  target="_blank" rel="noreferrer" onClick={event => {
+                    if (pdfLinkNeedsRefresh(sourcePdf.issuedAt)) {
+                      event.preventDefault();
+                      if (!sourcePdfRefreshing) void renewPdfLink(selected);
+                    }
+                  }}>새 탭 ↗</a>
+                <button type="button" className="source-pdf-button" disabled={sourcePdfRefreshing}
+                  onClick={() => void renewPdfLink(selected)} aria-label="원문 PDF 보안 링크 갱신">
+                  {sourcePdfRefreshing ? "갱신 중..." : "링크 갱신"}
+                </button>
               </div>
-            : <span className="source-pdf-status">{sourcePdfError || "원문 PDF 연결 준비 중..."}</span>}
-          <button className="close" onClick={() => { openRequestId.current += 1; setSelected(null); setSourcePdf(null); setSourcePdfError(""); setSourceViewerOpen(false); }}>×</button>
+            : <div className="source-pdf-actions">
+                <span className="source-pdf-status" role="status">{sourcePdfRefreshing ? "원문 PDF 다시 연결 중..." : sourcePdfError || "원문 PDF 연결 준비 중..."}</span>
+                {sourcePdfError && <button type="button" className="source-pdf-button" disabled={sourcePdfRefreshing}
+                  onClick={() => void renewPdfLink(selected)}>다시 연결</button>}
+              </div>}
+          <button type="button" className="close" aria-label="논문 상세 화면 닫기" onClick={closeDetails}>×</button>
         </div>
         <p className="eyebrow">PAPER INTELLIGENCE</p>
-        <h2>{selected.title}</h2>
+        <h2 id="paper-detail-title">{selected.title}</h2>
         <p>연구 설계부터 실증 결과까지 원문 페이지 근거와 함께 검토하세요.</p>
         {activeJob && <div className="active-job-banner no-print" role="status">
           <strong>이미 진행 중인 분석이 있습니다.</strong>
@@ -733,20 +748,22 @@ export default function Home() {
             {busy ? "작업 상태 확인 중..." : "진행 중인 분석 이어 확인 →"}
           </button>
         </div>}
-        {sourceViewerOpen && sourcePdf?.paperId === selected.id && <section className="inline-pdf-viewer no-print" ref={sourceViewerRef} aria-label="업로드한 원본 PDF">
+        {sourceViewerOpen && sourcePdf?.paperId === selected.id && <section className="inline-pdf-viewer no-print" id="paper-original-pdf" ref={sourceViewerRef} aria-label="업로드한 원본 PDF">
           <div className="inline-pdf-heading">
             <div><b>원본 PDF</b><span>업로드한 PDF 페이지를 그대로 표시합니다. 요약이나 HTML로 재구성한 화면이 아닙니다.</span></div>
             <div className="inline-pdf-controls">
               <button type="button" disabled={sourcePage <= 1} onClick={() => setSourcePage((value) => clampPdfPage(value - 1, selected.page_count))}>이전</button>
               <label>페이지
-                <input type="number" inputMode="numeric" min={1} max={selected.page_count ?? undefined}
-                  value={sourcePage}
-                  onChange={(event) => {
-                    if (event.target.value === "") return;
-                    const value = Number(event.target.value);
-                    if (Number.isFinite(value)) setSourcePage(clampPdfPage(value, selected.page_count));
+                <input type="text" inputMode="numeric" pattern="[0-9]*" maxLength={6}
+                  value={sourcePageInput}
+                  onFocus={event => event.currentTarget.select()}
+                  onChange={event => setSourcePageInput(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                  onKeyDown={event => { if (event.key === "Enter") event.currentTarget.blur(); }}
+                  onBlur={() => {
+                    const page = commitPdfPageInput(sourcePageInput, sourcePage, selected.page_count);
+                    setSourcePage(page);
+                    setSourcePageInput(String(page));
                   }}
-                  onBlur={() => setSourcePage((value) => clampPdfPage(value, selected.page_count))}
                   aria-label="원문 PDF 페이지 번호"/>
                 <span>/ {selected.page_count ?? "?"}</span>
               </label>
@@ -762,7 +779,7 @@ export default function Home() {
             loading="lazy"
             referrerPolicy="no-referrer"
           />
-          <p className="inline-pdf-fallback">PDF가 표시되지 않으면 <a href={originalPdfPageUrl(sourcePdf.url, sourcePage, selected.page_count)} target="_blank" rel="noreferrer">원문 PDF를 새 탭에서 여세요.</a></p>
+          <p className="inline-pdf-fallback">모바일 브라우저에서 PDF가 작게 보이거나 열리지 않으면 위의 <b>새 탭</b>으로 원본을 확인하세요. 링크가 만료되면 <b>링크 갱신</b>을 누르세요.</p>
         </section>}
         {jobLookupError && <p className="warning" role="alert">{jobLookupError}</p>}
         {!analysis
