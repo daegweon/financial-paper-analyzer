@@ -1,20 +1,20 @@
 # PaperSignal development progress — 2026-11-17
 
-## Current overall engineering estimate: ~74% (not a release certification)
+## Current overall engineering estimate: ~75% (not a release certification)
 
 This is an explicit, **subjective weighted engineering estimate**, anchored to the previous `docs/PROJECT_STATE.md` 72% estimate; it is not a velocity KPI, measured source accuracy, or percentage of release gates passed.
 
 | Workstream | Weight | Estimated completion | Weighted points |
 |---|---:|---:|---:|
-| Research library, PDF upload, search, comparison, exports and primary UX | 25% | 91% | 22.75 |
+| Research library, PDF upload, search, comparison, exports and primary UX | 25% | 94% | 23.50 |
 | Authentication, private data/RLS, job persistence | 20% | 80% | 16.00 |
 | Financial paper extraction, Gemini normalization and citation verification | 25% | 70% | 17.50 |
 | Real-user workflow verification | 10% | 75% | 7.50 |
 | Human-grounded quantitative quality/performance benchmark | 10% | 55% | 5.50 |
 | Public beta release operations | 10% | 45% | 4.50 |
-| **Total** | **100%** | **73.75%** | **73.75** |
+| **Total** | **100%** | **74.50%** | **74.50** |
 
-Round to **~74%** for communication. The earlier recovery feature lifted the prior estimate to 72.75%; this new +1.0 percentage-point adjustment reflects three independently unit-tested core UX features (model lessons, five job-role question sets, source-grounded briefing/export) lifting the UX sub-estimate from 87% to 91% at a 25% workstream weight. This is still subjective engineering feature-completion accounting, **not measured financial comprehension, factual accuracy or release-readiness**. Do not increase it further without new verified functionality or gates. The category estimates were inherited from the prior project state and may overstate release-readiness.
+Round to **~75%** for communication. The previous junior learning pack lifted the UX sub-estimate to 91%; this additional +0.75 percentage-point adjustment reflects the original PDF side-by-side viewer, page controls and source-citation navigation lifting UX to 94% at a 25% workstream weight. This is subjective engineering feature-completion accounting, **not measured financial comprehension, factual accuracy or release-readiness**. Cross-browser manual verification remains outstanding. Do not increase it further without new verified functionality or gates. The category estimates were inherited from the prior project state and may overstate release-readiness.
 
 ## Release gate status — independent from the above percentage
 
@@ -23,7 +23,7 @@ Round to **~74%** for communication. The earlier recovery feature lifted the pri
 - **Q2 BLOCKED:** no paired full PDF upload → Gemini analysis → saved-result p95, billable cost, peak RSS or accuracy nonregression comparison. Local B07 extraction/prompt comparison is insufficient for Q2.
 - **P0 BLOCKED:** live two-user end-to-end/auth/SMTP, comprehensive release smoke, rollback and capacity/cost checks pending.
 
-**Gate completion: 0/4.** No claim that production launch is 74% approved. Public beta preparation was previously estimated at about **45%** and remains a separate, non-gated subjective estimate.
+**Gate completion: 0/4.** No claim that production launch is 75% approved. Public beta preparation was previously estimated at about **45%** and remains a separate, non-gated subjective estimate.
 
 ## Work completed in this iteration — isolated frontend reliability branch
 
@@ -66,3 +66,13 @@ Previous operational facts: production API + Worker at `8cd5e37`; frontend authe
 - Open-ended 3-question self-check, no invented answers or scores.
 - Isolated Vercel sandbox: frontend `npm run lint` **PASS** including TypeScript and **38/38** tests (5 auth + 13 job recovery + 7 junior guide + 13 workplace pack), `npm run build` **PASS** (Next.js 16.4.6). No browser click-through/live login or independent junior-user comprehension tests.
 - Core UX engineering estimate raised 87%→91%, weighted total **72.75%→73.75% (~74%)**. Keep Q0/Q1/Q2/P0 **0/4** and public beta readiness around 45%.
+
+## Original PDF side-by-side reading — next product milestone
+
+- New stacked branch `feat/junior-inline-pdf-learning`, Draft PR #11 (base is Draft PR #10). Feature source/report: `docs/INLINE_PDF_SOURCE_READING_2026-11-17.md`.
+- Embedded viewer displays the exact uploaded original PDF through browser native PDF rendering in the existing detail modal. Previous/next and bounded page selector use stored page_count; new-tab fallback remains.
+- Citation links in the junior guide and all 17 detailed-report evidence-list sites now open the same inline PDF at the cited page. Table/figure references jump to the first valid evidence page when present.
+- Uses existing user-authorized one-hour private Storage signed URL; no backend, schema, bucket, secrets, model calls or engine changes.
+- Isolated Vercel sandbox: TypeScript + **41/41 tests passed** (5 auth + 13 durable job + 7 junior guide + 13 role/workflow + 3 PDF page-navigation); Next.js 16.4.6 production build passed.
+- Manual authenticated browser smoke across Chrome/Edge/Safari not yet completed. PDF extraction of separate images/table objects and OCR remain unimplemented; do not claim them.
+- Core UX estimate 91%→94%, total weighted engineering estimate **73.75%→74.50% (~75%)**. Release gates Q0/Q1/Q2/P0 remain **0/4**; beta readiness still around 45%.
