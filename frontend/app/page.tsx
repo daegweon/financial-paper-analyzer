@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { db } from "../lib/supabase";
 import { ResearchLibrary } from "../components/ResearchLibrary";
+import { JuniorPaperGuide } from "../components/JuniorPaperGuide";
 import { authCallbackError, cleanAuthErrorUrl } from "../lib/auth-feedback";
 import { AnalysisWatchStopped, findActiveAnalysisJob, startAnalysisJob, waitForAnalysisJob } from "../lib/analysis-job";
 import type { ActiveAnalysisJob } from "../lib/analysis-job";
@@ -619,6 +620,7 @@ export default function Home() {
               <p className="mode">{analysis.result.mode === "llm"
                 ? "AI 구조화 분석 · 인용 근거 검증"
                 : "텍스트 추출 분석 · AI 생성 아님"}</p>
+              <JuniorPaperGuide result={analysis.result} sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} />
               <div className="report-toolbar no-print">
                 <div>
                   <b>연구 분석 보고서</b>
