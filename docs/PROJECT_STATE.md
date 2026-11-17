@@ -1,5 +1,12 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-17 — Q0 Stage 1 complete: B01-B10 preflight verified; H01 binary transfer pending
+
+- Isolated baseline runner: `experiment/v642-full-pipeline-baseline-runner-2026-11-17`, code SHA `fc8d95ee95691750bdbe8db4708eaa79391327f3`. The original frozen v6.4.2 analysis engine and production API/Worker are untouched.
+- Real Railway read-only Storage preflight downloaded each B01–B10 original: **10/10 verified** against locked SHA-256, byte size and PDF pages. H01 publisher endpoint returned a non-PDF; H02 not attempted. No model calls.
+- Added authenticated exact-binary H01/H02 in-memory upload endpoints and a strict non-production DB write guard. Local tests **4 passed**; Railway Docker tests **106 passed, 1 skipped**. The runner uses a recycled test service in the production Railway environment, but writes to production Supabase are blocked by code.
+- No Gemini full baseline, no cost or RSS, no production DB writes. Q0/Q1/Q2/P0 remain BLOCKED. Full details: `docs/BASELINE_PREFLIGHT_STAGE1_2026-11-17.md`.
+
 
 - Added benchmark/parse_railway_telemetry.py on the candidate branch to aggregate Worker claims/completion/retry events with Gemini job/call IDs, model attempt outcomes, latency and token counts. Provider cost remains null until a dated price schedule is supplied. Missing token metadata is explicitly marked incomplete, not treated as a verified zero.
 - Added four synthetic parser tests; these and the telemetry tests are committed but unexecuted because GitHub Actions startup_failure happens before any job is created.
