@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { composeJuniorBrief, explainPaperMethods, juniorRoleGuide, roleOptions } from "../lib/junior-workflow";
+import { composeJuniorBrief, explainPaperMethods, juniorBriefFilename, juniorRoleGuide, roleOptions } from "../lib/junior-workflow";
 import type { JuniorBriefSource, JuniorRole } from "../lib/junior-workflow";
 import { juniorGuideSummary } from "../lib/junior-guide";
 import styles from "./JuniorWorkplaceGuide.module.css";
@@ -27,6 +27,19 @@ export function JuniorWorkplaceGuide({ result, paperTitle }: Props) {
     } catch {
       setCopyStatus("자동 복사를 사용할 수 없습니다. 아래 텍스트에서 직접 선택해 복사하세요.");
     }
+  }
+
+  function saveBriefing() {
+    const blob = new Blob([brief], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = juniorBriefFilename(paperTitle);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setCopyStatus("브리핑 초안을 텍스트 파일로 저장했습니다. 공유 전 원문을 다시 확인해 주세요.");
   }
 
   return <section className={styles.panel} aria-label="주니어를 위한 금융모형과 업무 활용 학습">
@@ -79,9 +92,14 @@ export function JuniorWorkplaceGuide({ result, paperTitle }: Props) {
         <summary>브리핑 내용 미리보기</summary>
         <textarea readOnly value={brief} rows={13} aria-label="논문 업무 공유 브리핑 초안" />
       </details>
-      <button type="button" className={styles.copyButton} onClick={() => void copyBriefing()}>
-        브리핑 초안 복사
-      </button>
+      <div className={styles.briefActions}>
+        <button type="button" className={styles.copyButton} onClick={() => void copyBriefing()}>
+          브리핑 초안 복사
+        </button>
+        <button type="button" className={styles.saveButton} onClick={saveBriefing}>
+          텍스트 파일 저장
+        </button>
+      </div>
       {copyStatus && <p role="status" className={styles.copyStatus}>{copyStatus}</p>}
       <p className={styles.label}>복사된 내용에는 원문 페이지 번호와 직접 인용을 넣습니다. 독립 전문가 검증·투자 판단을 대신하지 않습니다.</p>
     </div>
