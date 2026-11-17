@@ -447,12 +447,53 @@ export default function Home() {
     else if (signedPdf.data?.signedUrl) setSourcePdf({ paperId: paper.id, url: signedPdf.data.signedUrl });
   }
 
+  async function monitorJob(paper: Paper, jobId: string, token: string, openedRequestId: number) {
+    const api = process.env.NEXT_PUBLIC_API_URL;
+    if (!api) throw new Error("분석 API가 아직 연결되지 않았습니다.");
+    const base = api.replace(/\/$/, "");
+    await waitForAnalysisJob({
+      url: base + "/api/analyze/" + paper.id + "/status?job_id=" + encodeURIComponent(jobId),
+      token,
+      shouldContinue: () => openRequestId.current === openedRequestId,
+      onProgress: (progress) => {
+        if (openRequestId.current === openedRequestId) setMessage(progress);
+      },
+    });
+    await refresh();
+    if (openRequestId.current === openedRequestId) {
+      await open({ ...paper, status: "completed" });
+      setMessage("Gemini AI 구조화 분석이 완료됐습니다. 원문 페이지 근거를 확인해 주세요.");
+    }
+  }
+
+  async function resumeAnalysis(paper: Paper, jobId: string) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      if (selected?.id !== paper.id) {
+        const previousId = openRequestId.current;
+        await open(paper);
+        if (openRequestId.current !== previousId + 1) return;
+      }
+      const openedRequestId = openRequestId.current;
+      const { data } = await db().auth.getSession();
+      if (!data.session) throw new Error("로그인이 필요합니다.");
+      setMessage("기존 분석 작업을 다시 확인하고 있습니다. 새 작업을 등록하지 않습니다...");
+      await monitorJob(paper, jobId, data.session.access_token, openedRequestId);
+    } catch (error) {
+      if (!(error instanceof AnalysisWatchStopped)) setMessage((error as Error).message);
+      await refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function analyze() {
-    if (!selected) return;
+    if (!selected || busy) return;
     const paper = selected;
     const openedRequestId = openRequestId.current;
     setBusy(true);
-    setMessage("분석 작업을 등록하고 있습니다...");
+    setMessage("이미 진행 중인 분석이 있는지 확인하고 있습니다...");
     try {
       const { data } = await db().auth.getSession();
       if (!data.session) throw new Error("로그인이 필요합니다.");
@@ -460,26 +501,18 @@ export default function Home() {
       if (!api) throw new Error("분석 API가 아직 연결되지 않았습니다.");
       const base = api.replace(/\/$/, "");
       const token = data.session.access_token;
-      const jobId = await startAnalysisJob({
+      // If this lookup fails, do not risk registering a duplicate job.
+      const existing = await getActiveJob(paper.id);
+      if (openRequestId.current !== openedRequestId) return;
+      setJobLookupError("");
+      if (existing) setActiveJob(existing);
+      const jobId = existing?.id ?? await startAnalysisJob({
         url: base + "/api/analyze/" + paper.id,
         token,
       });
-
-      await waitForAnalysisJob({
-        url: base + "/api/analyze/" + paper.id + "/status?job_id=" + encodeURIComponent(jobId),
-        token,
-        onProgress: (progress) => {
-          if (openRequestId.current === openedRequestId) setMessage(progress);
-        },
-      });
-      await refresh();
-      // Closing a modal or opening another paper must not reopen the old result.
-      if (openRequestId.current === openedRequestId) {
-        await open({ ...paper, status: "completed" });
-        setMessage("Gemini AI 구조화 분석이 완료됐습니다. 원문 페이지 근거를 확인해 주세요.");
-      }
+      await monitorJob(paper, jobId, token, openedRequestId);
     } catch (error) {
-      if (openRequestId.current === openedRequestId) {
+      if (!(error instanceof AnalysisWatchStopped) && openRequestId.current === openedRequestId) {
         setMessage((error as Error).message);
       }
       await refresh();
