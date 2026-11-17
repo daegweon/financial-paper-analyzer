@@ -598,6 +598,14 @@ export default function Home() {
         <p className="eyebrow">PAPER INTELLIGENCE</p>
         <h2>{selected.title}</h2>
         <p>연구 설계부터 실증 결과까지 원문 페이지 근거와 함께 검토하세요.</p>
+        {activeJob && <div className="active-job-banner no-print" role="status">
+          <strong>이미 진행 중인 분석이 있습니다.</strong>
+          <p>상태: {activeJob.status === "queued" ? "대기 중" : activeJob.stage === "gemini_analysis" ? "Gemini AI 분석 중" : "처리 중"} · 브라우저를 닫아도 서버 작업은 계속됩니다.</p>
+          <button type="button" className="primary" disabled={busy} onClick={() => void resumeAnalysis(selected, activeJob.id)}>
+            {busy ? "작업 상태 확인 중..." : "진행 중인 분석 이어 확인 →"}
+          </button>
+        </div>}
+        {jobLookupError && <p className="warning" role="alert">{jobLookupError}</p>}
         {!analysis
           ? <div className="prompt">
               <div>✧</div><h3>논문 분석 준비 완료</h3>
@@ -605,7 +613,7 @@ export default function Home() {
                 ? "AI가 연구 질문, 계량 방법론, 실증 결과, 강건성 검증을 구조화하고 페이지별 인용을 확인합니다."
                 : "현재는 텍스트 추출 모드입니다. Railway에 선택한 AI 제공자의 API 키를 설정하면 구조화된 금융 연구 분석이 활성화됩니다."}</p>
               {busy && <p className="analysis-progress" aria-live="polite">{message}</p>}
-              <button disabled={busy} className="primary" onClick={() => void analyze()}>{busy ? "백그라운드 분석 중..." : "분석 시작 →"}</button>
+              <button disabled={busy || Boolean(activeJob) || Boolean(jobLookupError)} className="primary" onClick={() => void analyze()}>{busy ? "작업 상태 확인 중..." : activeJob ? "기존 분석 진행 중" : jobLookupError ? "작업 확인 필요" : "분석 시작 →"}</button>
             </div>
           : <div className="result">
               <p className="mode">{analysis.result.mode === "llm"
