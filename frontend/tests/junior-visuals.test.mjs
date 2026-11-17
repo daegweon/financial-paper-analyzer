@@ -9,9 +9,11 @@ test("only explicit references make cards; table and chart are distinguished", (
     { claim: "no reference", evidence },
     { table_reference: "Table 3", evidence },
     { table_reference: "Figure 2", evidence },
+    { table_reference: "Fig. 9", evidence },
   ] });
-  assert.equal(cards.length, 2);
+  assert.equal(cards.length, 3);
   assert.equal(cards[0].kind, "table");
+  assert.equal(cards[2].kind, "chart");
   assert.equal(cards[1].kind, "chart");
   assert.equal(cards[0].sourcePage, 12);
 });

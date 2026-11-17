@@ -74,7 +74,7 @@ export function buildVisualReadingCards(
     const cite = firstCitation(finding.evidence);
     const legend = firstCitation(finding.significance_legend_evidence);
     cards.push({
-      kind: /(?:\bfig(?:ure)?\.?\b|\bchart\b|\bplot\b|그림|그래프)/i.test(reference) ? "chart" : "table",
+      kind: /(?:\bfigure\b|\bfig\b\.?|\bchart\b|\bplot\b|그림|그래프)/i.test(reference) ? "chart" : "table",
       reference, claim, column,
       direction: readable(finding.direction, 130),
       estimate: readable(finding.estimate, 130),
