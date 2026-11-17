@@ -6,8 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "tsc --noEmit && npm run test:auth",
-    "test:auth": "node --experimental-strip-types --test tests/auth-feedback.test.mjs"
+    "lint": "tsc --noEmit && npm run test:auth && npm run test:analysis",
+    "test:auth": "node --experimental-strip-types --test tests/auth-feedback.test.mjs",
+    "test:analysis": "node --experimental-strip-types --test tests/analysis-job.test.mjs"
   },
   "dependencies": {
     "next": "16.4.6",
