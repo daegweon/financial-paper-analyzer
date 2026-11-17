@@ -73,3 +73,15 @@
   .roleSelector { width: 100%; }
   .roleSelector select { max-width: none; width: 100%; }
 }
+
+.briefActions { display:flex; gap:9px; flex-wrap:wrap; align-items:center; }
+.saveButton {
+  border: 1px solid #a5c6c1;
+  background: #fff;
+  color: #237b73;
+  font-size: 12px;
+  font-weight: 750;
+  border-radius: 8px;
+  padding: 10px 15px;
+}
+.saveButton:hover { background: #effaf7; }
