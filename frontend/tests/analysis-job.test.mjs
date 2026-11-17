@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   analysisConnectionError,
+  AnalysisWatchStopped,
+  findActiveAnalysisJob,
   startAnalysisJob,
   waitForAnalysisJob,
 } from "../lib/analysis-job.ts";
@@ -148,5 +150,45 @@ test("keeps unfinished jobs in a recoverable state after poll timeout", async ()
       maxPolls: 2,
     }),
     /논문을 다시 열어 결과를 확인/,
+  );
+});
+
+test("finds newest queued or processing job and ignores stale terminal jobs", () => {
+  const jobs = [
+    { id: "old", paper_id: "paper-a", status: "completed", created_at: "2026-11-17T07:01:00Z" },
+    { id: "processing", paper_id: "paper-a", status: "processing", created_at: "2026-11-17T07:02:00Z" },
+    { id: "queued", paper_id: "paper-a", status: "queued", created_at: "2026-11-17T07:03:00Z" },
+    { id: "invalid", paper_id: "paper-a", status: "failed", created_at: "2026-11-17T07:04:00Z" },
+  ];
+  assert.equal(findActiveAnalysisJob(jobs)?.id, "queued");
+  assert.equal(findActiveAnalysisJob([{ id: "done", paper_id: "a", status: "completed", created_at: "2026-11-17" }]), null);
+  assert.equal(findActiveAnalysisJob(null), null);
+});
+
+test("does not issue new GET when the paper modal closes before the next poll", async () => {
+  let calls = 0;
+  let visible = true;
+  await assert.rejects(
+    waitForAnalysisJob({
+      url: "/status", token: "token", onProgress: () => {},
+      fetcher: async () => { calls++; return response({ status: "processing", stage: "gemini_analysis" }); },
+      sleep: async () => { visible = false; },
+      shouldContinue: () => visible,
+    }),
+    (error) => error instanceof AnalysisWatchStopped,
+  );
+  assert.equal(calls, 1);
+});
+
+test("ignores a stale completion after the user changes papers mid-request", async () => {
+  let visible = true;
+  await assert.rejects(
+    waitForAnalysisJob({
+      url: "/status", token: "token", onProgress: () => {},
+      fetcher: async () => { visible = false; return response({ status: "completed", stage: "completed" }); },
+      sleep: noDelay,
+      shouldContinue: () => visible,
+    }),
+    (error) => error instanceof AnalysisWatchStopped,
   );
 });
