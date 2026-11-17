@@ -51,3 +51,23 @@ No new Supabase project or API key is needed. No production database migration, 
 ## Current state
 
 **Staged in code only.** Draft PR; **release gate OPEN**, no production mutation. Current backend regression and SQL grammar tests PASS; external authenticated Preview/Production QA is still PENDING.
+
+## Migration history mismatch (requires reconciliation before remote push)
+
+The existing Supabase project reports migration versions such as
+`20261112155952_initial_paper_analysis_schema` and
+`20261112160036_authenticated_analysis_writes`, whereas repository
+baseline migration filenames begin with `20261113000000_initial_schema.sql`
+and `20261113010000_analysis_jobs.sql`. These are different migration
+history entries even though the schema is already present.
+
+**Do not run `supabase db push` blindly from this branch.** It may try to
+reapply earlier schema migrations. First reconcile the repository migration
+history with the live project's `list_migrations`, or apply only this
+reviewed new migration through an explicitly authorized migration mechanism
+that records its real version exactly once.
+
+At the time of inspection, the new migration version
+`20261117215315_beta_server_owned_result_writes` is **not in the live
+migration list**, and the corresponding client write grants remain active.
+No database privilege was changed by this PR.
