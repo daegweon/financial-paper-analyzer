@@ -255,9 +255,8 @@ def test_live_auth_upload_analysis_and_cross_user_isolation():
                 "original_filename": "papersignal-e2e.pdf",
                 "storage_path": object_path,
                 "content_type": "application/pdf",
+                # These are server-owned defaults, not client-supplied fields.
                 "size_bytes": len(pdf),
-                "page_count": 2,
-                "status": "uploaded",
             }
 
             upload = supabase.post(
