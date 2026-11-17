@@ -15,3 +15,15 @@ export function originalPdfPageUrl(
   const base = signedUrl.split("#", 1)[0];
   return base + "#page=" + clampPdfPage(requestedPage, pageCount);
 }
+
+/** Commit a page field only on Enter/blur so multi-digit mobile input is possible. */
+export function commitPdfPageInput(input: string, currentPage: number, pageCount: number | null | undefined): number {
+  const trimmed = input.trim();
+  if (!/^[0-9]{1,6}$/.test(trimmed)) return clampPdfPage(currentPage, pageCount);
+  return clampPdfPage(Number(trimmed), pageCount);
+}
+
+/** Supabase private Storage URLs are issued for an hour; refresh before expiry. */
+export function pdfLinkNeedsRefresh(issuedAt: number, now: number = Date.now()): boolean {
+  return !Number.isFinite(issuedAt) || now < issuedAt || now - issuedAt >= 50 * 60 * 1000;
+}
