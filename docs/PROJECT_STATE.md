@@ -1,5 +1,16 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-17 — 사용자 지시: 신규 Supabase 키 설정 보류, 본 서비스 개발 복귀
+
+- 사용자 현재 새 `papersignal-benchmark` Supabase 프로젝트의 Secret Key를 입력할 수 없음. **새 QA DB 연결 및 v6.4.2 전체 Gemini 기준선 실험을 보류**하고 반복적인 키 요청 없이 본 프로젝트의 비밀키 불필요 작업으로 계속 진행한다.
+- 전체 개발률은 기존 문서의 주관적 엔지니어링 추정치 **약 72%**를 유지한다. 정확한 방식: 제품 UX 25% × 85% + 인증·사용자 격리 20% × 80% + 분석엔진 25% × 70% + 실사용 흐름 10% × 75% + 정량 검증 10% × 55% + 베타 준비 10% × 45% = **72.25% ≈ 72%**. **출시 게이트 Q0/Q1/Q2/P0는 0/4 통과**이며 베타 준비도는 별도 추정치 45%; 개발률을 출시 승인률로 오해하면 안 됨.
+- 운영 고정 SHA `8cd5e37ee8eab3bf4b726b75af89e410ab48396e`에서 격리 브랜치 `feat/research-job-status-resilience`를 생성하고 PaperSignal 프런트엔드 내구성 향상 구현.
+- Draft PR #8: `https://github.com/daegweon/financial-paper-analyzer/pull/8`. 일시적 408/429/500/502/503/504 및 네트워크 오류의 작업 상태 재조회, 최초 POST 자동 중복 제출 방지, 한국어 `Failed to fetch` 대체 안내, 다른 논문으로 이동/닫기 후 이전 결과 팝업 재오픈 방지.
+- isolated Vercel 샌드박스: `npm run lint` (**tsc 통과 + 테스트 15/15 통과**, 새 10/기존 OAuth 5), `npm run build` (**Next.js 16.4.6 최적화 빌드 성공**). PR diff는 `frontend/*` 4개 파일 + `docs/PROJECT_PROGRESS_2026-11-17.md` **총 5개**뿐; 백엔드/Gemini/PyMuPDF/운영 API/Worker/DB에 수정 없음.
+- 운영 Railway `papersignal-api`와 `papersignal-worker` 모두 online, 기존 배포 ID 유지. PR #8은 Draft, **병합·운영 배포 금지**.
+- 다음 우선 작업: 새로운 Secret Key 없이도 가능한 분석 작업 재연결 UX, 연구 라이브러리 지속성, 서지/근거 정렬 개선, 기존 고정 PDF 기반 회귀 테스트 및 인간 검토용 증거 패키지 준비. 엔진 품질 골드/전체 모델 A/B/베타 E2E의 충족을 추측하지 말 것.
+- 자세한 진행률 산정: `feat/research-job-status-resilience/docs/PROJECT_PROGRESS_2026-11-17.md`.
+
 ## 2026-11-17 — 3단계 독립 Supabase 프로젝트 구축 완료 (새 체크포인트)
 
 - 사용자 승인 후 별도 Supabase 프로젝트 `papersignal-benchmark` 생성: ID `cstaglfqviojdxisckjm`, 조직 `eevee`, 서울 리전, 생성 견적 월 $0, 상태 `ACTIVE_HEALTHY`.
