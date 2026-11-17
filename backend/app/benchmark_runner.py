@@ -37,6 +37,7 @@ STATE: dict[str, Any] = {
     "started_at": None,
     "completed_at": None,
     "progress": [],
+    "preflight_progress": [],
     "results": None,
     "error": None,
     "prepared": None,
@@ -209,6 +210,7 @@ async def prepare_sources() -> dict[str, Any]:
         for row in rows:
             by_name.setdefault(row["original_filename"], row)
         for item in items:
+            STATE["preflight_progress"].append({"id": item["id"], "status": "downloading", "started_at": utc_now()})
             started = time.perf_counter()
             if item["id"].startswith("B"):
                 row = by_name.get(item["filename"])
@@ -242,6 +244,7 @@ async def prepare_sources() -> dict[str, Any]:
             item["download_ms"] = round((time.perf_counter() - started) * 1000, 2)
             item["verification"] = verification
             PREPARED[item["id"]] = {**item, "raw": raw}
+            STATE["preflight_progress"][-1].update({"status": "verified", "finished_at": utc_now(), "download_ms": item["download_ms"]})
     return {
         "record_type": "PREFLIGHT_ONLY_NO_GEMINI_CALLS",
         "analysis_version": engine.ANALYSIS_VERSION,
@@ -734,6 +737,8 @@ async def prepare(token: str | None = Header(default=None, alias="X-Benchmark-To
         raise HTTPException(status_code=409, detail="A benchmark run is already active")
     try:
         PREPARED.clear()
+        STATE["preflight_progress"] = []
+        STATE["error"] = None
         report = await prepare_sources()
         STATE["prepared"] = report
         STATE["status"] = "prepared"
@@ -741,7 +746,8 @@ async def prepare(token: str | None = Header(default=None, alias="X-Benchmark-To
     except Exception as exc:
         STATE["status"] = "prepare_failed"
         STATE["error"] = {"type": type(exc).__name__, "message": str(exc)[:800]}
-        raise HTTPException(status_code=502, detail=f"Benchmark preflight failed: {type(exc).__name__}") from exc
+        logging.getLogger("papersignal.benchmark").exception("Benchmark preflight failed")
+        raise HTTPException(status_code=502, detail=f"Benchmark preflight failed: {type(exc).__name__}: {str(exc)[:500]}") from exc
 
 
 @app.post("/benchmark/run")
@@ -791,3 +797,20 @@ async def results(run_id: str, token: str | None = Header(default=None, alias="X
     if not isinstance(STATE.get("results"), dict):
         raise HTTPException(status_code=409, detail="Benchmark results are not ready")
     return STATE["results"]
+
+
+@app.get("/benchmark/diagnostics")
+async def diagnostics(token: str | None = Header(default=None, alias="X-Benchmark-Token")) -> dict[str, Any]:
+    require_token(token)
+    return {
+        "status": STATE["status"],
+        "error": STATE["error"],
+        "preflight_progress": STATE["preflight_progress"],
+        "prepared_ids": list(PREPARED.keys()),
+        "analysis_version": engine.ANALYSIS_VERSION,
+        "provider": engine.active_ai_provider(),
+        "model": engine.active_ai_model("gemini") if engine.active_ai_provider() == "gemini" else None,
+        "pymupdf_runtime": fitz.VersionBind,
+        "supabase_configured": bool(engine.SUPABASE_URL and engine.SERVICE_ROLE_KEY),
+        "gemini_configured": bool(engine.GEMINI_API_KEY),
+    }
