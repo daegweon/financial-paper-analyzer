@@ -193,3 +193,75 @@
 .active-job-banner strong { display: block; font-size: 13px; }
 .active-job-banner p { margin: 8px 0 13px; font-size: 12px; line-height: 1.7; }
 .active-job-banner .primary { font-size: 12px; padding: 10px 15px; }
+
+/* Original PDF source viewer: render the uploaded PDF, never a reconstructed page. */
+.source-pdf-actions { display: flex; align-items: center; gap: 7px; }
+.source-pdf-button {
+  cursor: pointer;
+  font-family: inherit;
+}
+.source-pdf-external { text-decoration: none; }
+.inline-pdf-viewer {
+  margin: 18px 0 24px;
+  border: 1px solid #dce6ea;
+  border-radius: 11px;
+  background: #f7fafb;
+  overflow: hidden;
+  scroll-margin-top: 14px;
+}
+.inline-pdf-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 15px;
+  border-bottom: 1px solid #e1e9ec;
+  background: #fff;
+}
+.inline-pdf-heading > div:first-child { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.inline-pdf-heading b { font-size: 12px; color: #29495a; }
+.inline-pdf-heading span { font-size: 10px; line-height: 1.5; color: #81919d; }
+.inline-pdf-controls { display: flex; align-items: center; gap: 7px; flex: 0 0 auto; }
+.inline-pdf-controls > button {
+  border: 1px solid #d8e4e7;
+  background: #fff;
+  border-radius: 6px;
+  padding: 7px 10px;
+  color: #42616d;
+  font-size: 10px;
+  font-weight: 700;
+}
+.inline-pdf-controls > button:disabled { opacity: .4; cursor: not-allowed; }
+.inline-pdf-controls label { display: flex; align-items: center; gap: 5px; color: #6f818c; font-size: 10px; }
+.inline-pdf-controls input {
+  width: 52px;
+  border: 1px solid #d8e4e7;
+  border-radius: 6px;
+  padding: 6px 5px;
+  background: #fff;
+  color: #304d5b;
+  font-size: 11px;
+  text-align: center;
+}
+.inline-pdf-frame {
+  display: block;
+  width: 100%;
+  height: min(76vh, 860px);
+  min-height: 500px;
+  border: 0;
+  background: #e8edf0;
+}
+.inline-pdf-fallback {
+  margin: 0;
+  padding: 9px 13px;
+  border-top: 1px solid #e1e9ec;
+  color: #7a8b96;
+  font-size: 10px;
+}
+.inline-pdf-fallback a { color: #187e7a; font-weight: 700; }
+@media(max-width:620px) {
+  .inline-pdf-heading { align-items: flex-start; flex-direction: column; }
+  .inline-pdf-controls { width: 100%; justify-content: flex-end; }
+  .inline-pdf-frame { height: 62vh; min-height: 400px; }
+  .source-pdf-actions { flex-wrap: wrap; }
+}
