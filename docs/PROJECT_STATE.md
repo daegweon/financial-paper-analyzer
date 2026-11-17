@@ -1,5 +1,17 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-17 — 주니어 금융 실무 학습 기능 4종 추가, 전체 개발 추정 ~74%
+
+- 사용자 지시: 개발 진행률을 높이되 **금융 기초가 부족한 주니어 실무자**를 최우선 사용자로 유지.
+- 스택형 격리 브랜치 `feat/junior-role-guides-and-briefing`; **Draft PR #10**: `https://github.com/daegweon/financial-paper-analyzer/pull/10`. PR #9 `feat/junior-first-paper-reading`에 쌓여 있고, PR #9는 PR #8 `feat/research-job-status-resilience`에 쌓여 있음. 세 PR 모두 운영 미병합.
+- 추가 구현: (1) 추출된 방법론 필드에 명시된 금융모형명에만 연결한 '왜 쓰는가·가정·주의점' 교육 카드, (2) WM·리스크·리서치·상품기획·개발데이터 5개 직무별 학습 질문, (3) 원문 연구질문/모형/표본과 자동 1차 대조 통과 인용(최대 2건)·페이지·한계를 포함한 1쪽 브리핑 초안 복사/TXT 내보내기, (4) 학습자가 스스로 원문을 대조하는 3문항 확인.
+- **엄격한 소스 분리:** 논문에서 실제 추출한 내용 / 독립적인 금융지식 설명 / 직무별 가상 점검 질문을 분리. 근거 없는·review_required Finding은 브리핑에서 제외. 원문 인용문의 줄바꿈을 보존하고 화면 자동 근거 대조는 독립 인간 검증이 아님을 명시. 새로운 Gemini 호출/소스 분석 로직 수정/매매 추천 없음.
+- 코드: `frontend/lib/junior-workflow.ts`, `frontend/components/JuniorWorkplaceGuide.tsx`, `frontend/components/JuniorWorkplaceGuide.module.css`, `frontend/tests/junior-workflow.test.mjs`, `frontend/app/page.tsx`; `frontend/package.json`, `frontend/tsconfig.json` 갱신.
+- 별도 Vercel 샌드박스 실측: `npm run lint` **TypeScript 통과 + 단위 테스트 총 38/38 통과**(OAuth 5, durable-job 13, junior reading 7, 새 role-method-briefing 13). `NEXT_TELEMETRY_DISABLED=1 npm run build` **Next.js 16.4.6 성공**. 기존 Gemini/PyMuPDF 백엔드 테스트는 이번 UI-only 변경에서 다시 실행하지 않음.
+- 진행률 기록: 주관적 코어 UX 엔지니어링 추정 87% → 91%(가중치 25%), 전체 **72.75% → 73.75% ≈ 74%**. 기능 완료도 추정치이며 **실사용 주니어 이해도 개선률이나 출시 적합성 인증 아님**. 공개 베타 준비 추정 ~45%, Q0/Q1/Q2/P0 **0/4 통과**, 운영 배포 불가.
+- 자세한 구현·검증: `feat/junior-role-guides-and-briefing/docs/JUNIOR_WORKFLOW_PACK_2026-11-17.md`; 진행률 산정: 같은 브랜치 `docs/PROJECT_PROGRESS_2026-11-17.md`.
+- 추가 QA Supabase Secret Key는 사용자가 지금 입력할 수 없어 **보류 유지**. 다음은 실제 주니어 금융 사용자 검증, 원문 PDF·도표 내비게이션, 자가 학습 도구의 사용성 테스트, 프런트엔드 사용자 E2E·시각적 퇴행 점검. 배포는 Q0/Q1/Q2/P0 합격 후.
+  
 ## 2026-11-17 — 제품 방향 확정: 금융 기초가 부족한 주니어 실무자 우선
 
 - **새 핵심 페르소나:** 금융 지식이 풍부한 전문 퀀트보다, 금융업에 종사하지만 투자·금융공학·계량경제 기초가 부족한 **주니어 실무자**. 제품 약속은 `논문 이해 → 원문 근거 검증 → 업무 적용 시 고려사항`을 학습시키는 것.
