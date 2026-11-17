@@ -204,7 +204,7 @@ export function composeJuniorBrief(result: JuniorBriefSource, title: string, rol
     ...(selected.length
       ? selected.flatMap((finding, i) => [
           (i + 1) + ". " + cleanLine(finding.claim),
-          "   출처 PDF p." + finding.page + " 원문 인용: “" + cleanLine(finding.quote) + "”",
+          "   출처 PDF p." + finding.page + " 원문 인용: “" + finding.quote + "”",
         ])
       : ["표시할 근거 대조 통과 결과 없음. 수치를 추정하지 않음."]),
     ...(guide.reviewNeededFindingCount > 0
@@ -223,4 +223,16 @@ export function composeJuniorBrief(result: JuniorBriefSource, title: string, rol
     "이 초안은 투자 권유·상품 적합성 또는 준법 심사 결과가 아닙니다.",
   ];
   return sections.join("\n");
+}
+
+/** File names are local export labels only, never untrusted storage paths. */
+export function juniorBriefFilename(title: string) {
+  const safe = title
+    .normalize("NFKC")
+    .replace(/[\\/:*?"<>|\u0000-\u001f\u007f]/g, "_")
+    .replace(/\s+/g, " ")
+    .replace(/^\.+|\.+$/g, "")
+    .trim()
+    .slice(0, 60);
+  return (safe || "paper") + "-papersignal-junior-brief.txt";
 }
