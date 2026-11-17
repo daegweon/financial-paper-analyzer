@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { MAX_PDF_BYTES, betaGuideStorageKey, isAcceptedPdf, uploadFailureMessage } from "../lib/beta-ux.ts";
+import { MAX_PDF_BYTES, betaGuideStorageKey, isAcceptedPdf, sourcePdfFailureMessage, uploadFailureMessage } from "../lib/beta-ux.ts";
 
 test("accepts PDF only with correct extension, signature and size", () => {
   assert.equal(isAcceptedPdf("Research.PDF", 1000, "%PDF-"), true);
@@ -38,4 +38,13 @@ test("welcome state is keyed only by validated opaque account ID", () => {
   assert.equal(betaGuideStorageKey(""), null);
   assert.equal(betaGuideStorageKey("../secret"), null);
   assert.equal(betaGuideStorageKey("x".repeat(90)), null);
+});
+
+
+test("signed PDF link errors never reveal private URLs or auth internals", () => {
+  const privateMessage = sourcePdfFailureMessage({ message: "https://x.supabase.co/private?token=secret", status: 500 });
+  const deniedMessage = sourcePdfFailureMessage({ message: "JWT expired accessToken=secret", status: 403 });
+  assert.match(privateMessage, /다시 연결|링크 갱신/);
+  assert.match(deniedMessage, /다시 로그인/);
+  assert.doesNotMatch(privateMessage + deniedMessage, /supabase|secret|JWT|token=|accessToken=/);
 });

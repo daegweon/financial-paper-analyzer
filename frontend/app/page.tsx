@@ -5,7 +5,7 @@ import { db } from "../lib/supabase";
 import { clampPdfPage, commitPdfPageInput, originalPdfPageUrl, pdfLinkNeedsRefresh } from "../lib/pdf-viewer";
 import { ResearchLibrary } from "../components/ResearchLibrary";
 import { BetaGettingStarted } from "../components/BetaGettingStarted";
-import { isAcceptedPdf, uploadFailureMessage } from "../lib/beta-ux";
+import { isAcceptedPdf, sourcePdfFailureMessage, uploadFailureMessage } from "../lib/beta-ux";
 import { JuniorPaperGuide } from "../components/JuniorPaperGuide";
 import { JuniorVisualReading } from "../components/JuniorVisualReading";
 import { JuniorWorkplaceGuide } from "../components/JuniorWorkplaceGuide";
@@ -499,8 +499,9 @@ export default function Home() {
         size_bytes: file.size,
       }).select("id,title,status,storage_path,created_at,page_count").single();
       if (inserted.error) {
-        try { await db().storage.from("papers").remove([path]); }
-        catch { /* best-effort cleanup; do not retry uncertain metadata writes */ }
+        // Insert might have committed before a response was lost. Never delete
+        // the uploaded source automatically and leave a valid paper without its PDF.
+        // Private orphan cleanup requires a separately verified admin procedure.
         throw inserted.error;
       }
       if (currentUserIdRef.current !== ownerId) return;
@@ -549,7 +550,7 @@ export default function Home() {
       const { data, error } = await db().storage.from("papers").createSignedUrl(paper.storage_path, 3600);
       if (openRequestId.current !== requestId || pdfSignRequestId.current !== signRequestId) return;
       if (error || !data?.signedUrl) {
-        setSourcePdfError("원문 PDF 연결에 실패했습니다. 다시 연결을 눌러주세요." + (error ? " " + error.message : ""));
+        setSourcePdfError(sourcePdfFailureMessage(error));
       } else {
         setSourcePdf({ paperId: paper.id, url: data.signedUrl, issuedAt: Date.now() });
       }
@@ -597,7 +598,7 @@ export default function Home() {
     }
     if (pdfSignRequestId.current === signRequestId) {
       if (signedPdf.error || !signedPdf.data?.signedUrl) {
-        setSourcePdfError("원문 PDF 연결에 실패했습니다. 다시 연결을 눌러주세요." + (signedPdf.error ? " " + signedPdf.error.message : ""));
+        setSourcePdfError(sourcePdfFailureMessage(signedPdf.error));
       } else {
         setSourcePdf({ paperId: paper.id, url: signedPdf.data.signedUrl, issuedAt: Date.now() });
       }
@@ -784,12 +785,12 @@ export default function Home() {
           <p>{libraryError}</p>
           <button type="button" disabled={libraryLoading} onClick={() => void refresh()}>목록 다시 불러오기</button>
         </div>}
-        <ResearchLibrary papers={visiblePapers} busy={busy} onOpen={open} onResume={resumeAnalysis} />
         {message && <div className="message" role="status" aria-live="polite">{message}</div>}
         {uploadIssue && <div className="recovery-actions no-print" aria-label="업로드 오류 복구">
           <button type="button" disabled={libraryLoading} onClick={() => void refresh()}>저장된 논문 목록 확인</button>
           <button type="button" disabled={busy} onClick={choosePdfFile}>PDF 다시 선택</button>
-        </div>}
+        </div>
+        <ResearchLibrary key={user.id} papers={visiblePapers} busy={busy} onOpen={open} onResume={resumeAnalysis} />}
       </div>
     </div>
 

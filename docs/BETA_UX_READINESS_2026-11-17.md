@@ -20,3 +20,9 @@ Manual QA still PENDING:
 - GitHub Actions runner startup_failure, custom SMTP email signup, controlled rollback drill.
 
 Run the full Vercel Preview build (prebuild executes TypeScript plus 69 frontend tests). Do not label the product beta-ready until the live scenarios pass.
+
+Follow-up hardening:
+- Key the stateful library component by authenticated user ID to reset cached job and comparison state during account switching.
+- Sanitize signed-PDF failure messages instead of showing raw provider error text.
+- Do not automatically delete Storage files after an ambiguous metadata insert error: the row might have committed without the response; avoid leaving a valid paper with a missing PDF. Orphan cleanup should be separately verified before deletion.
+- Move upload status and recovery buttons above the possibly long paper list.

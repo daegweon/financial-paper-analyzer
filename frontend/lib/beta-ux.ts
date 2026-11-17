@@ -30,3 +30,13 @@ const SAFE_USER_ID = /^[A-Za-z0-9_-]{8,64}$/;
 export function betaGuideStorageKey(userId: string): string | null {
   return SAFE_USER_ID.test(userId) ? "papersignal:beta-guide:v1:" + userId : null;
 }
+
+
+/** Private Storage errors must not expose signed URL fragments or provider internals. */
+export function sourcePdfFailureMessage(error: unknown): string {
+  const reason = errorCode(error);
+  if (/\b(401|403)\b|unauthori[sz]ed|jwt|token.*expired/i.test(reason)) {
+    return "원본 PDF 접근 권한 또는 로그인 상태를 확인하지 못했습니다. 다시 로그인한 뒤 원문을 연결해 주세요.";
+  }
+  return "원본 PDF를 연결하지 못했습니다. 네트워크를 확인하고 '다시 연결' 또는 '링크 갱신'을 눌러주세요.";
+}
