@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { db } from "../lib/supabase";
+import { clampPdfPage, originalPdfPageUrl } from "../lib/pdf-viewer";
 import { ResearchLibrary } from "../components/ResearchLibrary";
 import { JuniorPaperGuide } from "../components/JuniorPaperGuide";
 import { JuniorWorkplaceGuide } from "../components/JuniorWorkplaceGuide";
@@ -229,6 +230,9 @@ export default function Home() {
   const [jobLookupError, setJobLookupError] = useState("");
   const [sourcePdf, setSourcePdf] = useState<{ paperId: string; url: string } | null>(null);
   const [sourcePdfError, setSourcePdfError] = useState("");
+  const [sourceViewerOpen, setSourceViewerOpen] = useState(false);
+  const [sourcePage, setSourcePage] = useState(1);
+  const sourceViewerRef = useRef<HTMLDivElement | null>(null);
   const openRequestId = useRef(0);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -427,6 +431,8 @@ export default function Home() {
     setJobLookupError("");
     setSourcePdf(null);
     setSourcePdfError("");
+    setSourceViewerOpen(false);
+    setSourcePage(1);
     const [result, signedPdf, jobs] = await Promise.all([
       db().from("analyses").select("result,model,created_at")
         .eq("paper_id", paper.id).order("created_at", { ascending: false }).limit(1),
@@ -447,6 +453,15 @@ export default function Home() {
     }
     if (signedPdf.error) setSourcePdfError("원문 PDF 링크를 만들지 못했습니다: " + signedPdf.error.message);
     else if (signedPdf.data?.signedUrl) setSourcePdf({ paperId: paper.id, url: signedPdf.data.signedUrl });
+  }
+
+  function showOriginalPdfPage(page: number) {
+    if (!selected) return;
+    setSourcePage(clampPdfPage(page, selected.page_count));
+    setSourceViewerOpen(true);
+    window.setTimeout(() => {
+      sourceViewerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 0);
   }
 
   async function monitorJob(paper: Paper, jobId: string, token: string, openedRequestId: number) {
@@ -589,13 +604,19 @@ export default function Home() {
       </div>
     </div>
 
-    {selected && <div className="overlay" onClick={() => { openRequestId.current += 1; setSelected(null); setSourcePdf(null); setSourcePdfError(""); }}>
+    {selected && <div className="overlay" onClick={() => { openRequestId.current += 1; setSelected(null); setSourcePdf(null); setSourcePdfError(""); setSourceViewerOpen(false); }}>
       <section className="details" onClick={event => event.stopPropagation()}>
         <div className="detail-toolbar no-print">
           {sourcePdf?.paperId === selected.id
-            ? <a className="source-pdf-button" href={sourcePdf.url} target="_blank" rel="noreferrer">원문 PDF 열기 ↗</a>
+            ? <div className="source-pdf-actions">
+                <button type="button" className="source-pdf-button" aria-expanded={sourceViewerOpen}
+                  onClick={() => setSourceViewerOpen((value) => !value)}>
+                  {sourceViewerOpen ? "원문 PDF 접기" : "원문 PDF 함께 보기"}
+                </button>
+                <a className="source-pdf-button source-pdf-external" href={sourcePdf.url} target="_blank" rel="noreferrer">새 탭 ↗</a>
+              </div>
             : <span className="source-pdf-status">{sourcePdfError || "원문 PDF 연결 준비 중..."}</span>}
-          <button className="close" onClick={() => { openRequestId.current += 1; setSelected(null); setSourcePdf(null); setSourcePdfError(""); }}>×</button>
+          <button className="close" onClick={() => { openRequestId.current += 1; setSelected(null); setSourcePdf(null); setSourcePdfError(""); setSourceViewerOpen(false); }}>×</button>
         </div>
         <p className="eyebrow">PAPER INTELLIGENCE</p>
         <h2>{selected.title}</h2>
@@ -607,6 +628,37 @@ export default function Home() {
             {busy ? "작업 상태 확인 중..." : "진행 중인 분석 이어 확인 →"}
           </button>
         </div>}
+        {sourceViewerOpen && sourcePdf?.paperId === selected.id && <section className="inline-pdf-viewer no-print" ref={sourceViewerRef} aria-label="업로드한 원본 PDF">
+          <div className="inline-pdf-heading">
+            <div><b>원본 PDF</b><span>업로드한 PDF 페이지를 그대로 표시합니다. 요약이나 HTML로 재구성한 화면이 아닙니다.</span></div>
+            <div className="inline-pdf-controls">
+              <button type="button" disabled={sourcePage <= 1} onClick={() => setSourcePage((value) => clampPdfPage(value - 1, selected.page_count))}>이전</button>
+              <label>페이지
+                <input type="number" inputMode="numeric" min={1} max={selected.page_count ?? undefined}
+                  value={sourcePage}
+                  onChange={(event) => {
+                    if (event.target.value === "") return;
+                    const value = Number(event.target.value);
+                    if (Number.isFinite(value)) setSourcePage(clampPdfPage(value, selected.page_count));
+                  }}
+                  onBlur={() => setSourcePage((value) => clampPdfPage(value, selected.page_count))}
+                  aria-label="원문 PDF 페이지 번호"/>
+                <span>/ {selected.page_count ?? "?"}</span>
+              </label>
+              <button type="button" disabled={Boolean(selected.page_count && sourcePage >= selected.page_count)}
+                onClick={() => setSourcePage((value) => clampPdfPage(value + 1, selected.page_count))}>다음</button>
+            </div>
+          </div>
+          <iframe
+            key={selected.id + "-" + sourcePage}
+            className="inline-pdf-frame"
+            title={selected.title + " 원본 PDF " + sourcePage + "페이지"}
+            src={originalPdfPageUrl(sourcePdf.url, sourcePage, selected.page_count)}
+            loading="lazy"
+            referrerPolicy="no-referrer"
+          />
+          <p className="inline-pdf-fallback">PDF가 표시되지 않으면 <a href={originalPdfPageUrl(sourcePdf.url, sourcePage, selected.page_count)} target="_blank" rel="noreferrer">원문 PDF를 새 탭에서 여세요.</a></p>
+        </section>}
         {jobLookupError && <p className="warning" role="alert">{jobLookupError}</p>}
         {!analysis
           ? <div className="prompt">
@@ -621,7 +673,11 @@ export default function Home() {
               <p className="mode">{analysis.result.mode === "llm"
                 ? "AI 구조화 분석 · 인용 근거 검증"
                 : "텍스트 추출 분석 · AI 생성 아님"}</p>
-              <JuniorPaperGuide result={analysis.result} sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} />
+              <JuniorPaperGuide
+                result={analysis.result}
+                sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined}
+                onOpenSourcePage={showOriginalPdfPage}
+              />
               <JuniorWorkplaceGuide result={analysis.result} paperTitle={selected.title} />
               <div className="report-toolbar no-print">
                 <div>
