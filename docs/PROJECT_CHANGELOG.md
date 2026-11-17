@@ -1,3 +1,12 @@
+## 2026-11-17 — Original PDF mobile UX and private-link recovery (Draft PR #12)
+- Frozen engine quality work by explicit user direction; no backend, model, database, queue or worker changes.
+- Added mobile-first login and PDF viewer CSS, touch targets, keyboard modal focus/Escape handling, and focus restoration.
+- Fixed original PDF page input to commit multi-digit values only on Enter/blur; added boundary tests.
+- Added a 50-minute renew threshold and manual re-sign/retry for user-owned private one-hour signed PDF URLs, with request-generation checks on close/switch.
+- Added `npm run lint` to Next.js prebuild so preview builds must run existing frontend unit tests.
+- Documented detailed mobile/auth/PDF/browser smoke matrix in docs/MOBILE_SOURCE_UX_QA_2026-11-17.md; manual checks remain PENDING.
+- Draft PR https://github.com/daegweon/financial-paper-analyzer/pull/12 stacks on #11; do not merge or promote until beta gates clear.
+
 ## 2026-11-16 — v6.3.9 ten-paper benchmark
 - Reanalyzed B01–B10 with finance-structured-v6.3.9; all ten durable analysis jobs completed and prior analyses were retained.
 - Latest deployment commit d9c684e5a4bcccbb95feaed6385429bd8ff85567 is SUCCESS for Railway API and Worker; API health returned HTTP 200.
