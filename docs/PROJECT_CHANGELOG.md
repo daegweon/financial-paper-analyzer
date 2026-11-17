@@ -5,6 +5,7 @@
 - Added a 50-minute renew threshold and manual re-sign/retry for user-owned private one-hour signed PDF URLs, with request-generation checks on close/switch.
 - Added `npm run lint` to Next.js prebuild so preview builds must run existing frontend unit tests.
 - Documented detailed mobile/auth/PDF/browser smoke matrix in docs/MOBILE_SOURCE_UX_QA_2026-11-17.md; manual checks remain PENDING.
+- Isolated Vercel Sandbox re-created current source: TypeScript + all **43/43 frontend tests PASS**, Next.js 16.4.6 optimized production build **PASS**. Fresh hosted Preview blocked by Vercel Hobby daily 100-deployment limit (HTTP 402); not a source build failure.
 - Draft PR https://github.com/daegweon/financial-paper-analyzer/pull/12 stacks on #11; do not merge or promote until beta gates clear.
 
 ## 2026-11-16 — v6.3.9 ten-paper benchmark
