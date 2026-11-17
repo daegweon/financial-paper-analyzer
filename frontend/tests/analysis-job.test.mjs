@@ -135,7 +135,7 @@ test("does not mistake an empty successful response for completion", async () =>
       sleep: noDelay,
       maxPolls: 1,
     }),
-    /계속 진행 중입니다/,
+    /응답 형식이 올바르지 않습니다/,
   );
 });
 
