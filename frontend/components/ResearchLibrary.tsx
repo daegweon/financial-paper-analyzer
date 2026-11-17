@@ -212,10 +212,12 @@ export function ResearchLibrary({
   papers,
   busy,
   onOpen,
+  onResume,
 }: {
   papers: Paper[];
   busy: boolean;
   onOpen: (paper: Paper) => void | Promise<void>;
+  onResume: (paper: Paper, jobId: string) => void | Promise<void>;
 }) {
   const [activeTab, setActiveTab] = useState<"library" | "jobs">("library");
   const [query, setQuery] = useState("");
@@ -463,6 +465,12 @@ export function ResearchLibrary({
                     <span className={styles.paperStatus} data-status={status}>{jobStatusLabel(status, paper.status)}</span>
                     <span className={styles.openIcon} aria-hidden="true">↗</span>
                   </button>
+                  {(job?.status === "queued" || job?.status === "processing") && (
+                    <button type="button" className={styles.resumeJobButton} disabled={busy}
+                      onClick={() => void onResume(paper, job.id)}>
+                      이어 확인 · {jobStageLabel(job.stage)}
+                    </button>
+                  )}
                   {job?.status === "failed" && job.error_message && (
                     <p className={styles.jobError} title={job.error_message}>{job.error_message}</p>
                   )}
@@ -507,8 +515,10 @@ export function ResearchLibrary({
                       )}
                     </div>
                     {paper && (
-                      <button type="button" className={styles.openJobButton} onClick={() => void onOpen(paper)}>
-                        논문 열기
+                      <button type="button" className={styles.openJobButton} disabled={busy}
+                        onClick={() => void ((job.status === "queued" || job.status === "processing")
+                          ? onResume(paper, job.id) : onOpen(paper))}>
+                        {job.status === "queued" || job.status === "processing" ? "진행 확인" : "논문 열기"}
                       </button>
                     )}
                   </article>
