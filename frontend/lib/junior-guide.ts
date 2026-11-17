@@ -18,6 +18,7 @@ export type JuniorFinding = {
 };
 
 export type JuniorGuideResult = {
+  mode?: string;
   summary?: string;
   research_question?: string;
   methodology?: {
