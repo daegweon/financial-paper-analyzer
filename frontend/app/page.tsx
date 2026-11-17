@@ -5,6 +5,7 @@ import { db } from "../lib/supabase";
 import { clampPdfPage, commitPdfPageInput, originalPdfPageUrl, pdfLinkNeedsRefresh } from "../lib/pdf-viewer";
 import { ResearchLibrary } from "../components/ResearchLibrary";
 import { JuniorPaperGuide } from "../components/JuniorPaperGuide";
+import { JuniorVisualReading } from "../components/JuniorVisualReading";
 import { JuniorWorkplaceGuide } from "../components/JuniorWorkplaceGuide";
 import { authCallbackError, cleanAuthErrorUrl } from "../lib/auth-feedback";
 import { AnalysisWatchStopped, findActiveAnalysisJob, startAnalysisJob, waitForAnalysisJob } from "../lib/analysis-job";
@@ -810,6 +811,10 @@ export default function Home() {
               <JuniorPaperGuide
                 result={analysis.result}
                 sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined}
+                onOpenSourcePage={showOriginalPdfPage}
+              />
+              <JuniorVisualReading result={analysis.result}
+                sourcePdfReady={sourcePdf?.paperId === selected.id}
                 onOpenSourcePage={showOriginalPdfPage}
               />
               <JuniorWorkplaceGuide result={analysis.result} paperTitle={selected.title} />
