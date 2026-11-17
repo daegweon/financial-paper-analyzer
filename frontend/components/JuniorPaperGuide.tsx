@@ -52,6 +52,7 @@ export function JuniorPaperGuide({ result, sourcePdfUrl }: Props) {
         {guide.findings.length ? <ol className={styles.findings}>
           {guide.findings.map((finding, index) => <li key={index}>
             <p>{finding.claim}</p>
+            <blockquote className={styles.quote}><b>원문 인용</b><p>{finding.quote}</p></blockquote>
             {sourcePdfUrl
               ? <a href={sourcePdfUrl + "#page=" + finding.page} target="_blank" rel="noreferrer">원문 {finding.page}쪽 대조</a>
               : <span>원문 {finding.page}쪽 근거 · PDF 링크 준비 중</span>}
