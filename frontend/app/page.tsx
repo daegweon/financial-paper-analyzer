@@ -789,8 +789,8 @@ export default function Home() {
         {uploadIssue && <div className="recovery-actions no-print" aria-label="업로드 오류 복구">
           <button type="button" disabled={libraryLoading} onClick={() => void refresh()}>저장된 논문 목록 확인</button>
           <button type="button" disabled={busy} onClick={choosePdfFile}>PDF 다시 선택</button>
-        </div>
-        <ResearchLibrary key={user.id} papers={visiblePapers} busy={busy} onOpen={open} onResume={resumeAnalysis} />}
+        </div>}
+        <ResearchLibrary key={user.id} papers={visiblePapers} busy={busy} onOpen={open} onResume={resumeAnalysis} />
       </div>
     </div>
 
