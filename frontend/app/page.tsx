@@ -405,20 +405,44 @@ export default function Home() {
     }
   }
 
+  async function getActiveJob(paperId: string): Promise<ActiveAnalysisJob | null> {
+    // The authenticated server database is authoritative; browser storage isn't.
+    const { data, error } = await db().from("analysis_jobs")
+      .select("id,paper_id,status,stage,created_at")
+      .eq("paper_id", paperId)
+      .in("status", ["queued", "processing"])
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (error) throw new Error("진행 중인 분석 작업을 확인하지 못했습니다: " + error.message);
+    return findActiveAnalysisJob(data);
+  }
+
   async function open(paper: Paper) {
     const requestId = ++openRequestId.current;
     setSelected(paper);
     setAnalysis(null);
+    setActiveJob(null);
+    setJobLookupError("");
     setSourcePdf(null);
     setSourcePdfError("");
-    const [result, signedPdf] = await Promise.all([
+    const [result, signedPdf, jobs] = await Promise.all([
       db().from("analyses").select("result,model,created_at")
         .eq("paper_id", paper.id).order("created_at", { ascending: false }).limit(1),
       db().storage.from("papers").createSignedUrl(paper.storage_path, 3600),
+      db().from("analysis_jobs").select("id,paper_id,status,stage,created_at")
+        .eq("paper_id", paper.id)
+        .in("status", ["queued", "processing"])
+        .order("created_at", { ascending: false })
+        .limit(1),
     ]);
     if (openRequestId.current !== requestId) return;
     if (result.error) setMessage(result.error.message);
     else if (result.data?.[0]) setAnalysis(result.data[0] as Analysis);
+    if (jobs.error) {
+      setJobLookupError("진행 중인 작업 확인에 실패했습니다. 새 분석을 시작하지 말고 다시 열어 확인해 주세요.");
+    } else {
+      setActiveJob(findActiveAnalysisJob(jobs.data));
+    }
     if (signedPdf.error) setSourcePdfError("원문 PDF 링크를 만들지 못했습니다: " + signedPdf.error.message);
     else if (signedPdf.data?.signedUrl) setSourcePdf({ paperId: paper.id, url: signedPdf.data.signedUrl });
   }
