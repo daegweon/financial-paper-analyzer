@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { db } from "../lib/supabase";
 import { ResearchLibrary } from "../components/ResearchLibrary";
 import { authCallbackError, cleanAuthErrorUrl } from "../lib/auth-feedback";
+import { startAnalysisJob, waitForAnalysisJob } from "../lib/analysis-job";
 import type { User } from "@supabase/supabase-js";
 
 type Evidence = { page: number; quote: string };
@@ -419,6 +420,8 @@ export default function Home() {
 
   async function analyze() {
     if (!selected) return;
+    const paper = selected;
+    const openedRequestId = openRequestId.current;
     setBusy(true);
     setMessage("분석 작업을 등록하고 있습니다...");
     try {
@@ -426,56 +429,30 @@ export default function Home() {
       if (!data.session) throw new Error("로그인이 필요합니다.");
       const api = process.env.NEXT_PUBLIC_API_URL;
       if (!api) throw new Error("분석 API가 아직 연결되지 않았습니다.");
-      const base = api.replace(/\/$/, "");
-      const headers = { Authorization: "Bearer " + data.session.access_token };
-      const response = await fetch(base + "/api/analyze/" + selected.id, {
-        method: "POST",
-        headers,
+      const base = api.replace(/\\/$/, "");
+      const token = data.session.access_token;
+      const jobId = await startAnalysisJob({
+        url: base + "/api/analyze/" + paper.id,
+        token,
       });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.detail ?? "분석 작업을 등록하지 못했습니다.");
-      if (!payload.job_id) throw new Error("서버에서 분석 작업 ID를 받지 못했습니다.");
 
-      const jobId = payload.job_id as string;
-      const stageLabels: Record<string, string> = {
-        queued: "분석 대기열에 등록했습니다...",
-        pdf_download: "PDF 다운로드 및 텍스트 추출 중...",
-        gemini_analysis: "Gemini AI가 금융논문을 분석하고 있습니다. 문서 길이에 따라 시간이 걸릴 수 있습니다...",
-        completed: "분석 완료. 결과를 불러오고 있습니다...",
-        failed: "분석 실패",
-      };
-
-      for (let attempt = 0; attempt < 120; attempt++) {
-        let statusResponse: Response;
-        try {
-          statusResponse = await fetch(
-            base + "/api/analyze/" + selected.id + "/status?job_id=" + encodeURIComponent(jobId),
-            { method: "GET", headers, cache: "no-store" },
-          );
-        } catch {
-          setMessage("분석 서버의 진행 상태를 다시 확인하고 있습니다...");
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          continue;
-        }
-        const state = await statusResponse.json().catch(() => ({}));
-        if (!statusResponse.ok) {
-          throw new Error(state.detail ?? "분석 상태를 조회하지 못했습니다.");
-        }
-        setMessage(stageLabels[state.stage] ?? "분석 작업을 처리하고 있습니다...");
-        if (state.status === "completed") {
-          await refresh();
-          await open({ ...selected, status: "completed" });
-          setMessage("Gemini AI 구조화 분석이 완료됐습니다. 원문 페이지 근거를 확인해 주세요.");
-          return;
-        }
-        if (state.status === "failed") {
-          throw new Error(state.error ?? "분석에 실패했습니다. 잠시 후 다시 시도해 주세요.");
-        }
-        await new Promise(resolve => setTimeout(resolve, 3000));
+      await waitForAnalysisJob({
+        url: base + "/api/analyze/" + paper.id + "/status?job_id=" + encodeURIComponent(jobId),
+        token,
+        onProgress: (progress) => {
+          if (openRequestId.current === openedRequestId) setMessage(progress);
+        },
+      });
+      await refresh();
+      // Closing a modal or opening another paper must not reopen the old result.
+      if (openRequestId.current === openedRequestId) {
+        await open({ ...paper, status: "completed" });
+        setMessage("Gemini AI 구조화 분석이 완료됐습니다. 원문 페이지 근거를 확인해 주세요.");
       }
-      throw new Error("분석이 계속 진행 중입니다. 잠시 후 논문을 다시 열어 결과를 확인해 주세요.");
     } catch (error) {
-      setMessage((error as Error).message);
+      if (openRequestId.current === openedRequestId) {
+        setMessage((error as Error).message);
+      }
       await refresh();
     } finally {
       setBusy(false);
