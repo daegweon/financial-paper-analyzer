@@ -279,3 +279,16 @@ button.evidence-source-link:focus-visible {
   outline-offset: 3px;
   border-radius: 3px;
 }
+
+.finding-source-tag {
+  border: 1px solid #cce3df;
+  border-radius: 20px;
+  padding: 4px 9px;
+  background: #f1f9f7;
+  color: #1d7771;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+.finding-source-tag:hover { background: #e2f3ef; }
+.finding-source-tag:focus-visible { outline: 2px solid #167e83; outline-offset: 2px; }
