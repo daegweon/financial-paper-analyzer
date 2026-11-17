@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { db } from "../lib/supabase";
 import { ResearchLibrary } from "../components/ResearchLibrary";
 import { authCallbackError, cleanAuthErrorUrl } from "../lib/auth-feedback";
-import { startAnalysisJob, waitForAnalysisJob } from "../lib/analysis-job";
+import { AnalysisWatchStopped, findActiveAnalysisJob, startAnalysisJob, waitForAnalysisJob } from "../lib/analysis-job";
+import type { ActiveAnalysisJob } from "../lib/analysis-job";
 import type { User } from "@supabase/supabase-js";
 
 type Evidence = { page: number; quote: string };
@@ -222,6 +223,8 @@ export default function Home() {
   const [papers, setPapers] = useState<Paper[]>([]);
   const [selected, setSelected] = useState<Paper | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [activeJob, setActiveJob] = useState<ActiveAnalysisJob | null>(null);
+  const [jobLookupError, setJobLookupError] = useState("");
   const [sourcePdf, setSourcePdf] = useState<{ paperId: string; url: string } | null>(null);
   const [sourcePdfError, setSourcePdfError] = useState("");
   const openRequestId = useRef(0);
@@ -266,6 +269,8 @@ export default function Home() {
       setPapers([]);
       setSelected(null);
       setAnalysis(null);
+      setActiveJob(null);
+      setJobLookupError("");
       setSourcePdf(null);
       setSourcePdfError("");
     }
@@ -520,7 +525,7 @@ export default function Home() {
           <div><p>완료된 분석</p><strong>{papers.filter(paper => paper.status === "completed").length.toString().padStart(2, "0")}</strong><small>근거 기반 결과</small></div>
           <div className="highlight"><p>RESEARCH INTELLIGENCE</p><h2>From papers<br/>to perspectives.</h2></div>
         </div>
-        <ResearchLibrary papers={papers} busy={busy} onOpen={open} />
+        <ResearchLibrary papers={papers} busy={busy} onOpen={open} onResume={resumeAnalysis} />
         {message && <div className="message" role="status">{message}</div>}
       </div>
     </div>
