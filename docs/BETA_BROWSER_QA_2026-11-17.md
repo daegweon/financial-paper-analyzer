@@ -43,3 +43,25 @@ Do not reuse real customer credentials or private confidential papers. No QA sec
 - If credentials or Vercel access are missing, mark browser tests PENDING; do not report them passed because TypeScript/Next.js build succeeded.
 - GitHub Actions continues to show startup_failure with zero jobs. Diagnose account Actions billing and repository settings before attributing it to app code.
 - Do not merge stacked Draft PRs or promote to production until gates are met.
+
+
+## Read-only infrastructure baseline — November 17, 2026
+This is a snapshot for the eventual release/rollback plan, NOT authorization to deploy or a successful smoke-test result.
+
+Vercel:
+- Current main Production deployment READY: dpl_33BMEgCAGgZVW9XWDk2n2VvFgmZg, commit f5d0345cf4d4f507c0c4a521bfea71adbc14541d.
+- Previous READY Production rollback candidate: dpl_BSDxZJFMPXrpFNvaf6i38iGScANj, commit 8dabcb3b9c7866f20f67a039daa5f1d6e7edee28.
+- This PR's Preview is not Production and must not be assigned the public domain solely because its build is READY.
+
+Railway production environment 0b4f06c3-504a-4610-8995-395c2f4d3d1f:
+- Core papersignal-api latest deployment 17c9134b-f49c-4358-a879-7ca77b55b936: SUCCESS, online, zero failures in the preceding 24 hours.
+- Core papersignal-worker latest deployment dc501061-d434-454a-bc7d-4658b991a2f1: SUCCESS, online, zero failures in the preceding 24 hours.
+- Separate papersignal-table-benchmark experimental service: online, but three recent failed historical deployments during the prior 24 hours. This is not evidence the main API or Worker is down. Keep engine frozen; investigate experimental cost/cleanup separately instead of expanding the beta scope.
+- Railway reported no pending staged changes at inspection time.
+
+Safe release sequence, ONLY after the real QA gates pass:
+1. Re-check the exact Production/Preview commit IDs and all service health states; record tested immutable build, time and manual approval.
+2. Test the staged Production build without assigning the public domain, with production environment configuration and non-sensitive synthetic data.
+3. After explicit approval, promote the exact reviewed Production build to the public domain. A Preview build is not an equivalent staged Production build: promotion can rebuild with different environment variables.
+4. On incident, use the recorded eligible previous Production deployment as the rollback target, then verify login, library and PDF access. Be aware that rollback suspends automatic domain assignment; a subsequent explicit promote is required to restore normal assignment.
+5. No production deployment, promotion, rollback or worker restart was performed during this milestone.
