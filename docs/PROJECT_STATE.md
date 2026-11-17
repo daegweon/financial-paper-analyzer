@@ -1,5 +1,15 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-17 — Stage 2 complete: 12/12 locked PDF preflight, production writes prohibited
+
+- Railway experiment runner `experiment/v642-full-pipeline-baseline-runner-2026-11-17`, code SHA `fc8d95ee95691750bdbe8db4708eaa79391327f3` (not production API/Worker).
+- Exact locked B01–B10 Supabase originals **10/10** verified by SHA-256, byte length and PDF page count. H01 and H02 source PDFs were retrieved from publisher with authentication redirects and their binaries matched the existing locked user-uploaded SHA-256 exactly; uploaded to RAM-only authenticated runner endpoints, HTTP 200 for each.
+- The full `POST /benchmark/prepare` returned HTTP 200 / `all_hashes_and_page_counts_verified=true` / **12/12 verified (279 pages)**, `provider_calls=0`. `/benchmark/diagnostics` reports `status=prepared` and all 12 paper IDs `verified`.
+- Confirmed `POST /benchmark/run` returns **HTTP 403 `Dedicated non-production Supabase required`**. Production Supabase Auth/Storage/rows were NOT mutated; no Gemini analysis executed.
+- Runtime Python 3.12.16 / PyMuPDF 1.26.3. Full report: `docs/BASELINE_PREFLIGHT_STAGE2_2026-11-17.md`.
+- Runner is a separate Railway service in the production Railway environment, **not a non-production Supabase DB**. H01/H02 in-memory bytes and prepared state are lost on runner restart.
+- **Next separate stage:** create an isolated Supabase database, configure dedicated credentials and E2E QA schema, repeat 12/12 preflight, then run the real Gemini baseline. All Q0/Q1/Q2/P0 remain BLOCKED and production API/Worker unchanged.
+
 ## 2026-11-17 — Q0 Stage 1 complete: B01-B10 preflight verified; H01 binary transfer pending
 
 - Isolated baseline runner: `experiment/v642-full-pipeline-baseline-runner-2026-11-17`, code SHA `fc8d95ee95691750bdbe8db4708eaa79391327f3`. The original frozen v6.4.2 analysis engine and production API/Worker are untouched.
