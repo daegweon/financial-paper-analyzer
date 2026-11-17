@@ -2975,10 +2975,19 @@ async def analyze_paper(
                 "stage": active_jobs[0]["stage"],
             }
 
+        # The client JWT is used ONLY to authenticate and check ownership.
+        # Queue creation must use the server-side service role; otherwise a
+        # signed-in browser could POST analysis_jobs directly, bypassing the
+        # authenticated API and its controls. The key is never returned.
+        if not SERVICE_ROLE_KEY:
+            raise HTTPException(
+                status_code=503,
+                detail="안전한 분석 작업 등록이 아직 준비되지 않았습니다.",
+            )
         create_response = await client.post(
             SUPABASE_URL + "/rest/v1/analysis_jobs",
             headers={
-                **supabase_headers(token),
+                **supabase_headers(SERVICE_ROLE_KEY),
                 "Content-Type": "application/json",
                 "Prefer": "return=representation",
             },
