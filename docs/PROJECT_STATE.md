@@ -1,5 +1,17 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-17 — 엔진 튜닝 동결, 제품 기능 중심 전환 및 원문 PDF 읽기 완성
+
+- 사용자 명시 지시: 엔진 개선에 과도한 시간을 더 쓰지 말고, **실제 제품 개발 진행률을 높이는 작업에 집중**. 운영 분석 엔진 `finance-structured-v6.4.2`와 고정 SHA `8cd5e37ee8eab3bf4b726b75af89e410ab48396e`를 동결. 엔진 미세 튜닝, PDF 파서 대체, Gemini 모델 A/B를 우선 작업에서 제외. 제품 기능상 명확한 버그가 확인된 경우에만 별도 승인/테스트 후 처리.
+- 주 사용자: 금융 기초 지식이 부족한 금융업 주니어 실무자. 제품 흐름은 `쉬운 이해 → 원문 근거 확인 → 직무별 활용 → 업무 공유`.
+- 누적 개발 Draft PR: #8 분석 작업 복원, #9 3분 주니어 논문 읽기, #10 직무별 금융모형 해설/업무 브리핑, **#11 원본 PDF 인라인 보기와 근거 페이지 점프**. PR #11은 `feat/junior-inline-pdf-learning`이며 #10에 쌓여 있음. PR #10→#9→#8로 누적. 모든 PR은 Draft, 아직 운영 미병합.
+- PR #11 구현: 원본 업로드 PDF를 브라우저 native PDF viewer로 상세 화면 안에 표시(HTML 재구성 아님), 페이지 이전/다음/번호 입력, 3분 가이드 인용과 상세 분석 내 **17개 근거 목록**에서 클릭하면 같은 viewer가 해당 원문 페이지로 이동. 분석 결과에 있는 표·그림 참조도 근거 페이지가 있으면 점프 가능. 새 탭 fallback 제공.
+- 보안/인프라: 기존 사용자별 private Supabase Storage signed URL만 사용(기존 1시간 TTL). 새 테이블·bucket·secret·API·Gemini 호출 없음. 분석 엔진/PyMuPDF/Worker/backend 미수정.
+- 격리 Vercel sandbox 실측: `npm run lint` TypeScript 통과 + **41/41 tests**(OAuth 5, durable job 13, junior guide 7, role/workflow 13, PDF page helper 3). `npm run build` Next.js 16.4.6 통과. 실제 로그인 브라우저/Chrome·Edge·Safari PDF rendering smoke는 아직 남음.
+- 엔지니어링 진행률 주관적 가중치: UX workstream 91%→94%(25% weight), 총 **73.75%→74.50% ≈ 75%**. 계산: 23.50+16.00+17.50+7.50+5.50+4.50=74.50. 이 값은 코드/기능 구현 추정치이며 주니어 학습 성과나 출시 승인률 아님. 공개 베타 준비는 별도 ~45%, Q0/Q1/Q2/P0 출시 게이트 0/4.
+- 개발 기록: `feat/junior-inline-pdf-learning/docs/INLINE_PDF_SOURCE_READING_2026-11-17.md`, 진행률 `feat/junior-inline-pdf-learning/docs/PROJECT_PROGRESS_2026-11-17.md`.
+- 다음 우선순위: (1) 로그인 사용자 브라우저에서 inline PDF, citations, responsive UI smoke, (2) 논문 내 table/figure references와 evidence 페이지 연결 품질 보강(파서 교체 없이 기존 데이터만), (3) junior flow UX/accessibility/usability, (4) 공개 베타 checklist·support/error states·rollback 준비. **엔진 튜닝은 동결 유지**. 새 Supabase QA Secret Key 트랙도 사용자 요청대로 보류.
+
 ## 2026-11-17 — 주니어 금융 실무 학습 기능 4종 추가, 전체 개발 추정 ~74%
 
 - 사용자 지시: 개발 진행률을 높이되 **금융 기초가 부족한 주니어 실무자**를 최우선 사용자로 유지.
