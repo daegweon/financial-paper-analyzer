@@ -55,3 +55,10 @@ For each test, capture browser/version, viewport, result, console/network errors
 - Backend engine performance is intentionally unchanged.
 - No new secrets or database schema are required.
 - Overall feature-completion estimate remains **74.5% (~75%)** pending live checks. Q0/Q1/Q2/P0 = **0/4**; public beta readiness remains around 45%. These are planning estimates, not measured user outcomes.
+
+## Build-cap verification blocker — 2026-11-17
+
+- Vercel Preview for early markup commit `b7b95984` returned **READY**. This proves only that intermediate commit's Next.js build completed.
+- An explicit Preview build request for the final branch failed with Vercel API **HTTP 402, `api-deployments-free-per-day`** (Hobby daily limit greater than 100). This is a deployment quota, not an application build failure.
+- Later CSS, navigation/renewal, prebuild test enforcement, failure handling and docs commits therefore have **no confirmed fresh Vercel build**. The complete 43-test frontend suite has not been independently executed on the final branch in this session.
+- After deployment quota availability is restored, run the branch's Preview production build (which invokes `prebuild` / `npm run lint`) and the manual scenarios above. Do not upgrade Vercel or change production deployment target merely to bypass a development-preview limit.
