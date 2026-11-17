@@ -1,0 +1,966 @@
+{
+  "benchmark_version": "1.0.0",
+  "created_at": "2026-11-13",
+  "purpose": "Evaluate financial-paper extraction and evidence-grounded structured analysis on public, open-access research papers.",
+  "provider_target": {
+    "provider": "gemini",
+    "primary_model": "gemini-3.5-flash-lite",
+    "fallback_model": "gemini-3.6-flash"
+  },
+  "important_scope": [
+    "This is a candidate benchmark set; PDFs have not yet been uploaded or analyzed in the user's production workspace.",
+    "Ground-truth facts are curated from publisher abstracts and accessible full-text sections; page-level gold citations must be finalized against the exact PDF version.",
+    "Open access does not by itself authorize every downstream use. Confirm the article-specific license on the publisher page before any redistribution.",
+    "Gemini Free Tier prompts and responses may be used to improve Google products and may be human-reviewed. Use public/non-confidential papers only."
+  ],
+  "papers": [
+    {
+      "id": "B01",
+      "slug": "brazil-factor-sufficiency",
+      "title": "Factor Sufficiency in Asset Pricing: An Application for the Brazilian Market",
+      "authors": [
+        "Rafaela Dezidério dos Santos Rocha",
+        "Márcio Laurini"
+      ],
+      "year": 2023,
+      "publisher": "International Journal of Financial Studies (MDPI)",
+      "doi": "10.3390/ijfs11040144",
+      "article_url": "https://www.mdpi.com/2227-7072/11/4/144",
+      "access": "Open Access; verify article-specific reuse license on publisher page",
+      "topic": [
+        "asset pricing",
+        "factor models",
+        "omitted-factor robustness"
+      ],
+      "method_families": [
+        "panel factor model",
+        "Mean Group",
+        "Common Correlated Effects"
+      ],
+      "gold_facts": [
+        {
+          "id": "sample",
+          "category": "data",
+          "weight": 2,
+          "aliases": [
+            "January 2001 to December 2020",
+            "2001–2020",
+            "2001년부터 2020년",
+            "4,950 time periods",
+            "T = 4950",
+            "2001년 1월부터 2020년 12월까지",
+            "총 4,950개 관측치"
+          ]
+        },
+        {
+          "id": "frequency",
+          "category": "data",
+          "weight": 1,
+          "aliases": [
+            "daily frequency",
+            "daily data",
+            "일별 자료",
+            "일별 빈도",
+            "일간 데이터",
+            "일간 빈도"
+          ]
+        },
+        {
+          "id": "source",
+          "category": "data",
+          "weight": 1,
+          "aliases": [
+            "NEFIN",
+            "University of São Paulo",
+            "USP",
+            "상파울루 대학교"
+          ]
+        },
+        {
+          "id": "factors",
+          "category": "variables",
+          "weight": 2,
+          "aliases": [
+            "MKT",
+            "SMB",
+            "HML",
+            "IML",
+            "WML",
+            "시장 초과수익률",
+            "규모",
+            "가치",
+            "유동성",
+            "모멘텀"
+          ]
+        },
+        {
+          "id": "method",
+          "category": "methodology",
+          "weight": 2,
+          "aliases": [
+            "Mean Group",
+            "MG estimator",
+            "Common Correlated Effects",
+            "CCE estimator",
+            "panel-based MG",
+            "CCE-MG",
+            "Giglio and Xiu",
+            "Giglio-Xiu",
+            "누락 요인",
+            "omitted relevant factors"
+          ]
+        },
+        {
+          "id": "finding",
+          "category": "findings",
+          "weight": 2,
+          "aliases": [
+            "market and size factors",
+            "market and SMB",
+            "시장 요인과 규모 요인",
+            "시장과 SMB",
+            "59,400 observations",
+            "59400 observations",
+            "CCE method",
+            "MSE criterion",
+            "평균제곱오차"
+          ]
+        },
+        {
+          "id": "panel_dimensions",
+          "category": "data",
+          "weight": 1,
+          "aliases": [
+            "12 portfolios",
+            "n = 12",
+            "12개 포트폴리오",
+            "59,400 observations",
+            "59400",
+            "12개의 자산 포트폴리오",
+            "12개 자산 포트폴리오"
+          ]
+        },
+        {
+          "id": "estimator_comparison",
+          "category": "findings",
+          "weight": 1,
+          "aliases": [
+            "CCE method for all portfolios",
+            "CCE estimator",
+            "all portfolios",
+            "모든 포트폴리오",
+            "MSE criterion",
+            "평균제곱오차"
+          ]
+        }
+      ],
+      "critical_caveats": [
+        "The panel has 12 portfolios and 4,950 daily periods (59,400 panel observations); do not call 4,950 the total panel observation count.",
+        "The MG estimator finds market and size factors significant; do not generalize that all factor coefficients are significant under CCE.",
+        "The Wald test indicates parameter differences between MG and CCE, consistent with omitted relevant factors."
+      ]
+    },
+    {
+      "id": "B02",
+      "slug": "korea-durable-consumption-foreign-factors",
+      "title": "Durable Consumption-Based Asset Pricing Model with Foreign Factors for the Korean Stock Market",
+      "authors": [
+        "Cheol-Keun Cho",
+        "Bosung Jang"
+      ],
+      "year": 2023,
+      "publisher": "International Journal of Financial Studies (MDPI)",
+      "doi": "10.3390/ijfs11020062",
+      "article_url": "https://www.mdpi.com/2227-7072/11/2/62",
+      "access": "Open Access; verify article-specific reuse license on publisher page",
+      "topic": [
+        "Korean equities",
+        "consumption-based asset pricing",
+        "foreign investor risk"
+      ],
+      "method_families": [
+        "Epstein-Zin preferences",
+        "two-country consumption model",
+        "GMM",
+        "Kan-Robotti-Shanken tests"
+      ],
+      "gold_facts": [
+        {
+          "id": "sample",
+          "category": "data",
+          "weight": 2,
+          "aliases": [
+            "2001–2015",
+            "2001 to 2015",
+            "2001년부터 2015년",
+            "KOSPI",
+            "KOSDAQ",
+            "non-financial firms",
+            "비금융 기업"
+          ]
+        },
+        {
+          "id": "test_assets",
+          "category": "data",
+          "weight": 1,
+          "aliases": [
+            "25 Fama-French portfolios",
+            "25개 Fama-French 포트폴리오",
+            "5×5 size and book-to-market",
+            "5x5 size"
+          ]
+        },
+        {
+          "id": "method",
+          "category": "methodology",
+          "weight": 2,
+          "aliases": [
+            "two-country durable consumption model",
+            "2국가 내구재 소비 모형",
+            "Epstein-Zin",
+            "GMM"
+          ]
+        },
+        {
+          "id": "foreign_factor",
+          "category": "findings",
+          "weight": 2,
+          "aliases": [
+            "foreign factors",
+            "U.S. durable consumption",
+            "미국 내구재 소비",
+            "해외 요인"
+          ]
+        },
+        {
+          "id": "model_comparison",
+          "category": "findings",
+          "weight": 2,
+          "aliases": [
+            "comparable to the Fama-French three-factor model",
+            "Fama-French 3요인 모형과 비교 가능한",
+            "KRS test",
+            "Kan-Robotti-Shanken"
+          ]
+        }
+      ],
+      "critical_caveats": [
+        "Do not claim the two-country model uniformly outperforms Fama-French three-factor model; the comparison depends on test assets.",
+        "Do not describe the foreign-factor result as proof of causality."
+      ]
+    },
+    {
+      "id": "B03",
+      "slug": "morocco-carhart-fama-french",
+      "title": "Pricing Ability of Carhart Four-Factor and Fama–French Three-Factor Models: Empirical Evidence from Morocco",
+      "authors": [
+        "Mimoun Benali",
+        "Karima Lahboub",
+        "Abdelhamid El Bouhadi"
+      ],
+      "year": 2023,
+      "publisher": "International Journal of Financial Studies (MDPI)",
+      "doi": "10.3390/ijfs11010020",
+      "article_url": "https://www.mdpi.com/2227-7072/11/1/20",
+      "access": "Open Access; article page identifies Creative Commons Attribution (CC BY) license",
+      "topic": [
+        "asset pricing",
+        "factor regression",
+        "Moroccan equity market"
+      ],
+      "method_families": [
+        "OLS",
+        "Fama-French three-factor",
+        "Carhart four-factor"
+      ],
+      "gold_facts": [
+        {
+          "id": "sample",
+          "category": "data",
+          "weight": 2,
+          "aliases": [
+            "59 of the 75 firms",
+            "59 firms",
+            "59개 기업",
+            "January 2008 to December 2017",
+            "2008–2017",
+            "2008년부터 2017년",
+            "monthly data",
+            "월별 자료"
+          ]
+        },
+        {
+          "id": "method",
+          "category": "methodology",
+          "weight": 2,
+          "aliases": [
+            "ordinary least squares",
+            "OLS",
+            "Carhart four-factor",
+            "Carhart 4요인",
+            "Fama-French three-factor",
+            "Fama-French 3요인",
+            "F-tests",
+            "adjusted R-squared"
+          ]
+        },
+        {
+          "id": "comparison",
+          "category": "findings",
+          "weight": 2,
+          "aliases": [
+            "C4F model has somewhat greater explanatory power",
+            "Carhart model has greater explanatory power",
+            "Carhart 모형의 설명력이 더 높",
+            "조정 R 제곱",
+            "adjusted R-squared",
+            "C4F 모형이 FF3F 모형에 비해 설명력이 다소 우수",
+            "C4F model outperforms the FF3F model in four out of six portfolios"
+          ]
+        },
+        {
+          "id": "limitation",
+          "category": "limitations",
+          "weight": 2,
+          "aliases": [
+            "barely have a partial hold",
+            "limited ability to predict the cross-sections of returns",
+            "cannot reliably anticipate the cross-sections",
+            "횡단면 수익률을 신뢰성 있게 예측할 수 없다",
+            "설명력에 한계",
+            "수익률의 단면을 온전히 예측하는 데는 한계",
+            "수익률의 단면을 예측하는 데는 한계"
+          ]
+        }
+      ],
+      "critical_caveats": [
+        "The study examines 59 of 75 Casablanca Stock Exchange firms over January 2008–December 2017.",
+        "The Carhart four-factor model has somewhat higher adjusted R-squared than FF3, but both models have limited explanatory/predictive ability for cross-sectional returns.",
+        "Do not infer that statistical significance of individual portfolio regressions means the model reliably prices the full cross-section."
+      ]
+    },
+    {
+      "id": "B04",
+      "slug": "china-markov-regime-asset-pricing",
+      "title": "Multi-Factor Asset-Pricing Models under Markov Regime Switches: Evidence from the Chinese Stock Market",
+      "authors": [
+        "Jieting Chen",
+        "Yuichiro Kawaguchi"
+      ],
+      "year": 2018,
+      "publisher": "International Journal of Financial Studies (MDPI)",
+      "doi": "10.3390/ijfs6020054",
+      "article_url": "https://www.mdpi.com/2227-7072/6/2/54",
+      "access": "Open Access; verify article-specific reuse license on publisher page",
+      "topic": [
+        "asset pricing",
+        "regime switching",
+        "Chinese equity market"
+      ],
+      "method_families": [
+        "Markov regime-switching CAPM",
+        "Markov regime-switching Fama-French three-factor"
+      ],
+      "gold_facts": [
+        {
+          "id": "sample",
+          "category": "data",
+          "weight": 2,
+          "aliases": [
+            "July 1995 to March 2015",
+            "1995–2015",
+            "1995년 7월",
+            "2015년 3월",
+            "monthly basis",
+            "월별"
+          ]
+        },
+        {
+          "id": "regimes",
+          "category": "methodology",
+          "weight": 2,
+          "aliases": [
+            "two regimes",
+            "two-state",
+            "bear market",
+            "bull market",
+            "약세장",
+            "강세장",
+            "2개 국면"
+          ]
+        },
+        {
+          "id": "method",
+          "category": "methodology",
+          "weight": 2,
+          "aliases": [
+            "Markov regime-switching",
+            "Markov switching",
+            "MR-CAPM",
+            "MR-FF3"
+          ]
+        },
+        {
+          "id": "duration",
+          "category": "findings",
+          "weight": 1,
+          "aliases": [
+            "34.05",
+            "18.01",
+            "18.89",
+            "9.36",
+            "expected duration",
+            "기대 지속 기간"
+          ]
+        },
+        {
+          "id": "out_of_sample",
+          "category": "findings",
+          "weight": 1,
+          "aliases": [
+            "April 2015 to December 2017",
+            "2015.04–2017.12",
+            "out-of-sample",
+            "표본 외"
+          ]
+        }
+      ],
+      "critical_caveats": [
+        "Do not treat bull and bear regimes as directly observed labels; they are latent regimes inferred by the model.",
+        "Keep the MR-CAPM and MR-FF3 duration estimates distinct."
+      ]
+    },
+    {
+      "id": "B05",
+      "slug": "warsaw-state-dependent-liquidity-premium",
+      "title": "State-Dependent Stock Liquidity Premium: The Case of the Warsaw Stock Exchange",
+      "authors": [
+        "Szymon Stereńczak"
+      ],
+      "year": 2020,
+      "publisher": "International Journal of Financial Studies (MDPI)",
+      "doi": "10.3390/ijfs8010013",
+      "article_url": "https://www.mdpi.com/2227-7072/8/1/13",
+      "access": "Open Access; verify article-specific reuse license on publisher page",
+      "topic": [
+        "liquidity premium",
+        "market microstructure",
+        "emerging markets"
+      ],
+      "method_families": [
+        "unbalanced panel",
+        "fixed effects",
+        "HAC robust standard errors",
+        "Markov-switching market regimes"
+      ],
+      "gold_facts": [
+        {
+          "id": "sample",
+          "category": "data",
+          "weight": 2,
+          "aliases": [
+            "2001 to 2016",
+            "2001–2016",
+            "2001년부터 2016년",
+            "all common stocks",
+            "all stocks listed on the Warsaw Stock Exchange",
+            "바르샤바 증권거래소"
+          ]
+        },
+        {
+          "id": "method",
+          "category": "methodology",
+          "weight": 2,
+          "aliases": [
+            "fixed effects",
+            "FE estimator",
+            "HAC",
+            "heteroskedasticity and autocorrelation",
+            "불균형 패널"
+          ]
+        },
+        {
+          "id": "premium",
+          "category": "findings",
+          "weight": 2,
+          "aliases": [
+            "0.019",
+            "0.019 percentage points monthly",
+            "월 0.019%포인트",
+            "4.65%",
+            "2.93%"
+          ]
+        },
+        {
+          "id": "regime",
+          "category": "findings",
+          "weight": 2,
+          "aliases": [
+            "not statistically significant",
+            "no statistically significant difference",
+            "bull and bear",
+            "강세장과 약세장",
+            "유의한 차이가 없다"
+          ]
+        }
+      ],
+      "critical_caveats": [
+        "The liquidity premium is statistically significant but economically small.",
+        "Do not claim that the premium increases during bear markets; the study does not find a significant bull-bear difference."
+      ]
+    },
+    {
+      "id": "B06",
+      "slug": "asean-exchange-rate-stock-cointegration",
+      "title": "Do Financial Crises Matter for Nonlinear Exchange Rate and Stock Market Cointegration? A Heterogeneous Nonlinear Panel Data Model with PMG Approach",
+      "authors": [
+        "Mosab I. Tabash",
+        "Umaid A. Sheikh",
+        "Ali Matar",
+        "Adel Ahmed",
+        "Dang Khoa Tran"
+      ],
+      "year": 2023,
+      "publisher": "International Journal of Financial Studies (MDPI)",
+      "doi": "10.3390/ijfs11010007",
+      "article_url": "https://www.mdpi.com/2227-7072/11/1/7",
+      "access": "Open Access; article page identifies Creative Commons Attribution (CC BY) license",
+      "topic": [
+        "exchange rates",
+        "stock indices",
+        "financial crisis",
+        "cointegration"
+      ],
+      "method_families": [
+        "panel ARDL with PMG",
+        "panel NARDL with PMG",
+        "BDS nonlinearity test",
+        "asymmetric Granger causality"
+      ],
+      "gold_facts": [
+        {
+          "id": "sample",
+          "category": "data",
+          "weight": 2,
+          "aliases": [
+            "ASEAN-5",
+            "Thailand",
+            "Singapore",
+            "Philippines",
+            "Malaysia",
+            "Indonesia",
+            "2002 to 2020",
+            "January 2002 to January 2020"
+          ]
+        },
+        {
+          "id": "method",
+          "category": "methodology",
+          "weight": 2,
+          "aliases": [
+            "panel ARDL",
+            "PARDL",
+            "panel NARDL",
+            "PNARDL",
+            "PMG",
+            "BDS test",
+            "Hsiao test"
+          ]
+        },
+        {
+          "id": "symmetry",
+          "category": "findings",
+          "weight": 2,
+          "aliases": [
+            "symmetrical PARDL",
+            "unable to formulate long-run cointegration",
+            "no long-run cointegration",
+            "대칭 패널 ARDL"
+          ]
+        },
+        {
+          "id": "asymmetry",
+          "category": "findings",
+          "weight": 2,
+          "aliases": [
+            "asymmetrical cointegration",
+            "precrisis",
+            "pre-crisis",
+            "overall sample",
+            "비대칭 공적분",
+            "위기 이전"
+          ]
+        }
+      ],
+      "critical_caveats": [
+        "Do not claim asymmetric long-run cointegration is established in every regime; the post-crisis result differs.",
+        "The article has inconsistent observation counts between its abstract and methods section; flag this rather than silently harmonizing the counts."
+      ]
+    },
+    {
+      "id": "B07",
+      "slug": "korea-macroeconomic-garch-midas",
+      "title": "Heterogeneous macroeconomic factors’ effects on stocks across sizes, styles, and sectors in the South Korean market",
+      "authors": [
+        "Chulyoung Cho",
+        "Jinseok Yang",
+        "Beakcheol Jang"
+      ],
+      "year": 2024,
+      "publisher": "PLOS ONE",
+      "doi": "10.1371/journal.pone.0300393",
+      "article_url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0300393",
+      "pdf_url": "https://journals.plos.org/plosone/article/file?id=10.1371%2Fjournal.pone.0300393&type=printable",
+      "access": "Open Access; Creative Commons Attribution License (CC BY)",
+      "topic": [
+        "Korean stock market",
+        "macroeconomic variables",
+        "volatility forecasting"
+      ],
+      "method_families": [
+        "multivariate GARCH-MIDAS",
+        "adaptive LASSO",
+        "fractional differentiation",
+        "out-of-sample forecasting"
+      ],
+      "gold_facts": [
+        {
+          "id": "sample",
+          "category": "data",
+          "weight": 2,
+          "aliases": [
+            "January 2009 to September 2022",
+            "2009–2022",
+            "2009년부터 2022년 9월",
+            "S&P Korea BMI"
+          ]
+        },
+        {
+          "id": "out_of_sample",
+          "category": "data",
+          "weight": 1,
+          "aliases": [
+            "October 2022 to December 2022",
+            "2022년 10월부터 12월",
+            "three months",
+            "3개월"
+          ]
+        },
+        {
+          "id": "method",
+          "category": "methodology",
+          "weight": 2,
+          "aliases": [
+            "GARCH-MIDAS",
+            "adaptive lasso",
+            "adaptive LASSO",
+            "fractional differentiation",
+            "분수 차분"
+          ]
+        },
+        {
+          "id": "findings",
+          "category": "findings",
+          "weight": 2,
+          "aliases": [
+            "housing price-sales index",
+            "housing price sales",
+            "realized volatility",
+            "주택 매매가격 지수",
+            "실현변동성"
+          ]
+        },
+        {
+          "id": "limitation",
+          "category": "limitations",
+          "weight": 1,
+          "aliases": [
+            "endogeneity",
+            "omitted variables",
+            "three-month",
+            "short forecasting period",
+            "내생성",
+            "표본 외 예측 기간"
+          ]
+        }
+      ],
+      "critical_caveats": [
+        "The authors explicitly note that omitted-variable endogeneity cannot be fully eliminated.",
+        "Do not overstate the three-month out-of-sample forecasting window."
+      ]
+    },
+    {
+      "id": "B08",
+      "slug": "us-esg-scores-momentum-returns-volatility",
+      "title": "The Effects of ESG Scores and ESG Momentum on Stock Returns and Volatility: Evidence from U.S. Markets",
+      "authors": [
+        "Luis Jacob Escobar-Saldívar",
+        "Dacio Villarreal-Samaniego",
+        "Roberto J. Santillán-Salgado"
+      ],
+      "year": 2025,
+      "publisher": "Journal of Risk and Financial Management (MDPI)",
+      "doi": "10.3390/jrfm18070367",
+      "article_url": "https://www.mdpi.com/1911-8074/18/7/367",
+      "access": "Open Access; Creative Commons Attribution (CC BY) license",
+      "topic": [
+        "ESG",
+        "stock returns",
+        "volatility",
+        "panel regression"
+      ],
+      "method_families": [
+        "multifactor models",
+        "pooled OLS",
+        "fixed effects",
+        "random effects"
+      ],
+      "gold_facts": [
+        {
+          "id": "sample",
+          "category": "data",
+          "weight": 2,
+          "aliases": [
+            "3,856 stocks",
+            "3856 stocks",
+            "3,856개 종목",
+            "U.S. exchanges",
+            "미국 거래소"
+          ]
+        },
+        {
+          "id": "period",
+          "category": "data",
+          "weight": 2,
+          "aliases": [
+            "December 2002 to December 2022",
+            "2002–2022",
+            "2002년 12월부터 2022년 12월",
+            "81 quarters",
+            "81개 분기"
+          ]
+        },
+        {
+          "id": "method",
+          "category": "methodology",
+          "weight": 2,
+          "aliases": [
+            "pooled OLS",
+            "fixed effects",
+            "random effects",
+            "panel regression",
+            "패널 회귀"
+          ]
+        },
+        {
+          "id": "esg_returns",
+          "category": "findings",
+          "weight": 2,
+          "aliases": [
+            "ESG scores and stock returns are negatively related",
+            "ESG 점수와 주식 수익률은 음",
+            "ESG Momentum and returns are positively related",
+            "ESG 모멘텀과 수익률은 양",
+            "정태적 ESG 점수는 장기 주식 수익률과 음",
+            "ESG 모멘텀은 수익률과 양",
+            "ESG scores and stock returns and between ESG Momentum and volatility"
+          ]
+        },
+        {
+          "id": "esg_volatility",
+          "category": "findings",
+          "weight": 2,
+          "aliases": [
+            "ESG Momentum and volatility are negatively related",
+            "ESG 모멘텀과 변동성은 음",
+            "ESG scores and volatility are positively related",
+            "ESG 점수와 변동성은 양",
+            "ESG 모멘텀은 변동성을 감소시키는 효과",
+            "ESG scores and volatility",
+            "ESG Momentum and volatility",
+            "ESG 점수와 변동성"
+          ]
+        }
+      ],
+      "critical_caveats": [
+        "Preserve the different directions for ESG level and ESG momentum; they are not interchangeable.",
+        "Describe the findings as associations unless the paper's design supports a causal claim."
+      ]
+    },
+    {
+      "id": "B09",
+      "slug": "firm-policies-uncertainty-about-risk",
+      "title": "Firm Policies and Uncertainty About Risk",
+      "authors": [
+        "Adam Harper",
+        "Yilun Lu",
+        "Sumit Tembhurne"
+      ],
+      "year": 2025,
+      "publisher": "Journal of Risk and Financial Management (MDPI)",
+      "doi": "10.3390/jrfm18020096",
+      "article_url": "https://www.mdpi.com/1911-8074/18/2/96",
+      "access": "Open Access; verify article-specific reuse license on publisher page",
+      "topic": [
+        "corporate finance",
+        "volatility of volatility",
+        "debt policy",
+        "investor sentiment"
+      ],
+      "method_families": [
+        "high-dimensional fixed effects",
+        "option-implied volatility",
+        "panel regression"
+      ],
+      "gold_facts": [
+        {
+          "id": "sample",
+          "category": "data",
+          "weight": 2,
+          "aliases": [
+            "6,023 firms",
+            "6023 firms",
+            "6,023개 기업",
+            "January 2000 to December 2022",
+            "2000–2022"
+          ]
+        },
+        {
+          "id": "data_sources",
+          "category": "data",
+          "weight": 1,
+          "aliases": [
+            "IvyDB OptionMetrics",
+            "OptionMetrics",
+            "Compustat",
+            "Baker and Wurgler",
+            "Baker-Wurgler"
+          ]
+        },
+        {
+          "id": "vov",
+          "category": "concept",
+          "weight": 2,
+          "aliases": [
+            "volatility of implied volatility",
+            "VOV",
+            "내재변동성의 변동성",
+            "변동성의 변동성"
+          ]
+        },
+        {
+          "id": "method",
+          "category": "methodology",
+          "weight": 2,
+          "aliases": [
+            "high-dimensional fixed effects",
+            "HDFE",
+            "고차원 고정효과"
+          ]
+        },
+        {
+          "id": "findings",
+          "category": "findings",
+          "weight": 2,
+          "aliases": [
+            "aggressive debt policies increase VOV",
+            "공격적인 부채 정책",
+            "moderate WCFP",
+            "중간 수준의 운전자본 금융정책",
+            "investor sentiment",
+            "투자자 심리"
+          ]
+        }
+      ],
+      "critical_caveats": [
+        "VOV is the volatility of option-implied volatility, not the same as ordinary realized volatility.",
+        "The highest VOV is associated with moderate working-capital financing policies, not necessarily the most aggressive policy."
+      ]
+    },
+    {
+      "id": "B10",
+      "slug": "thailand-realized-volatility-portfolio-optimization",
+      "title": "Optimal Portfolio Construction Using the Realized Volatility Concept: Empirical Evidence from the Stock Exchange of Thailand",
+      "authors": [
+        "Sanae Rujivan",
+        "Thapakon Khuatongkeaw",
+        "Athinan Sutchada"
+      ],
+      "year": 2025,
+      "publisher": "Journal of Risk and Financial Management (MDPI)",
+      "doi": "10.3390/jrfm18050269",
+      "article_url": "https://www.mdpi.com/1911-8074/18/5/269",
+      "access": "Open Access; verify article-specific reuse license on publisher page",
+      "topic": [
+        "portfolio optimization",
+        "realized volatility",
+        "risk-adjusted returns"
+      ],
+      "method_families": [
+        "constrained optimization",
+        "realized volatility minimization",
+        "variance-based benchmark"
+      ],
+      "gold_facts": [
+        {
+          "id": "universe",
+          "category": "data",
+          "weight": 2,
+          "aliases": [
+            "SET50",
+            "Stock Exchange of Thailand 50",
+            "태국 SET50"
+          ]
+        },
+        {
+          "id": "method",
+          "category": "methodology",
+          "weight": 2,
+          "aliases": [
+            "minimizing realized volatility",
+            "expected return constraints",
+            "실현변동성 최소화",
+            "기대수익률 제약"
+          ]
+        },
+        {
+          "id": "comparison",
+          "category": "methodology",
+          "weight": 1,
+          "aliases": [
+            "variance-based optimization",
+            "분산 기반 최적화"
+          ]
+        },
+        {
+          "id": "results",
+          "category": "findings",
+          "weight": 2,
+          "aliases": [
+            "higher Sharpe ratios",
+            "higher risk-adjusted returns",
+            "샤프 비율이 높",
+            "위험조정수익률"
+          ]
+        },
+        {
+          "id": "scope",
+          "category": "data",
+          "weight": 1,
+          "aliases": [
+            "two to five stocks",
+            "2 to 5 stocks",
+            "1% to 5%",
+            "1%–5%",
+            "2~5개 종목",
+            "1~5% 목표수익률"
+          ]
+        }
+      ],
+      "critical_caveats": [
+        "This is a portfolio-optimization comparison using historical data, not proof of future outperformance.",
+        "Do not turn the paper's findings into personalized investment advice."
+      ]
+    }
+  ]
+}
