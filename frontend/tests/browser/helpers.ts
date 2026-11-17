@@ -37,13 +37,13 @@ export async function signIn(page: Page, email: string, password: string) {
   await expect(page.getByRole("heading", { name: "나의 연구 라이브러리" })).toBeVisible({ timeout: 30_000 });
 }
 
-export async function openPaper(page: Page, title: string) {
-  if (!title) throw new Error("PAPERSIGNAL_QA_PAPER_TITLE must name a pre-existing analyzed QA PDF.");
-  // Always use an existing paper: browser QA never uploads or re-analyzes.
-  const row = page.getByRole("button").filter({ hasText: title }).first();
+export async function openPaper(page: Page, paperId: string) {
+  if (!/^[a-f0-9-]{36}$/i.test(paperId)) throw new Error("Browser QA requires an existing opaque paper UUID.");
+  // The fixture is a pre-existing public/synthetic PDF. Never log its title or source text.
+  const row = page.locator('button[data-paper-id="' + paperId + '"]');
   await expect(row).toBeVisible();
   await row.click();
-  const dialog = page.getByRole("dialog", { name: title, exact: true });
+  const dialog = page.locator('section[role="dialog"][aria-labelledby="paper-detail-title"]');
   await expect(dialog).toBeVisible();
   return { row, dialog };
 }

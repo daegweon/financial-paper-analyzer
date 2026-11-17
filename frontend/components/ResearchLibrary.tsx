@@ -456,7 +456,7 @@ export function ResearchLibrary({
                       onChange={() => toggleSelected(paper.id)}
                     />
                   </label>
-                  <button type="button" className={styles.paperButton} onClick={() => void onOpen(paper)}>
+                  <button type="button" className={styles.paperButton} data-paper-id={paper.id} onClick={() => void onOpen(paper)}>
                     <span className={styles.pdfIcon}>PDF</span>
                     <span className={styles.paperInfo}>
                       <strong>{paper.title}</strong>

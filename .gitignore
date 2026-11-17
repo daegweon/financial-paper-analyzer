@@ -10,3 +10,9 @@ __pycache__/
 .pytest_cache/
 .vercel/
 .DS_Store
+
+# Browser QA artifacts may contain private browser state; never commit.
+frontend/.playwright-test-results/
+frontend/playwright-report/
+frontend/test-results/
+frontend/playwright/.auth/

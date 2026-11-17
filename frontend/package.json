@@ -6,13 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "tsc --noEmit && npm run test:auth && npm run test:analysis && npm run test:junior && npm run test:workflow && npm run test:pdf && npm run test:beta",
+    "lint": "tsc --noEmit && npm run test:auth && npm run test:analysis && npm run test:junior && npm run test:workflow && npm run test:pdf && npm run test:beta && npm run test:qa-target",
     "test:auth": "node --experimental-strip-types --test tests/auth-feedback.test.mjs",
     "test:analysis": "node --experimental-strip-types --test tests/analysis-job.test.mjs",
     "test:junior": "node --experimental-strip-types --test tests/junior-guide.test.mjs tests/junior-visuals.test.mjs",
     "test:workflow": "node --experimental-strip-types --test tests/junior-workflow.test.mjs tests/junior-learning.test.mjs",
     "test:pdf": "node --experimental-strip-types --test tests/pdf-viewer.test.mjs",
     "test:beta": "node --experimental-strip-types --test tests/beta-ux.test.mjs",
+    "test:qa-target": "node --experimental-strip-types --test tests/browser-qa-target.test.mjs",
+    "test:browser:anonymous": "playwright test tests/browser/anonymous.spec.ts",
+    "test:browser:authenticated": "playwright test tests/browser/authenticated.spec.ts",
+    "test:browser:tenant": "playwright test tests/browser/tenant.spec.ts",
     "prebuild": "npm run lint"
   },
   "dependencies": {
@@ -26,6 +30,7 @@
     "@types/node": "22.15.30",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "@playwright/test": "1.65.1"
   }
 }
