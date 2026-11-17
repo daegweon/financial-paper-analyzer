@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { explainPaperMethods, juniorRoleGuide, roleOptions, composeJuniorBrief } from "../lib/junior-workflow.ts";
+import { explainPaperMethods, juniorRoleGuide, roleOptions, composeJuniorBrief, juniorBriefFilename } from "../lib/junior-workflow.ts";
 
 const sourceFinding = (claim, page, quote, status = "screen_passed") => ({
   claim,
@@ -125,4 +125,21 @@ test("brief does not introduce any financial advice or generated numeric predict
   assert.ok(brief.includes("준법 심사 결과가 아닙니다"));
   assert.ok(brief.includes("미래 수익·투자 성과를 보장하지 않습니다"));
   assert.doesNotMatch(brief, /\d+%/);
+});
+
+
+test("briefing preserves source quote line breaks without rewriting the citation", () => {
+  const excerpt = "Regression table:\n0.8% estimate\np = 0.04";
+  const brief = composeJuniorBrief({
+    findings: [sourceFinding("The estimated relation was 0.8%.", 12, excerpt)],
+  }, "Paper");
+  assert.ok(brief.includes(excerpt));
+});
+
+test("local export filenames reject path and control characters", () => {
+  const filename = juniorBriefFilename("../../risky\\name:2026?<>|.pdf");
+  assert.ok(filename.endsWith("-papersignal-junior-brief.txt"));
+  assert.doesNotMatch(filename, /[\/\\:*?"<>|\u0000-\u001F\u007F]/);
+  assert.ok(filename.length < 100);
+  assert.equal(juniorBriefFilename("...."), "paper-papersignal-junior-brief.txt");
 });
