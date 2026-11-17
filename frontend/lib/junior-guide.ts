@@ -67,7 +67,7 @@ function validEvidence(evidence: unknown): JuniorEvidence[] {
   );
 }
 
-export function reviewedFindingCandidates(result: JuniorGuideResult): Array<{
+export function screenPassedFindingCandidates(result: JuniorGuideResult): Array<{
   claim: string;
   page: number;
   quote: string;
@@ -84,7 +84,7 @@ export function reviewedFindingCandidates(result: JuniorGuideResult): Array<{
     ) return [];
     const citation = validEvidence(finding.evidence)[0];
     return citation ? [{ claim: finding.claim.trim(), page: citation.page, quote: citation.quote.trim() }] : [];
-  }).slice(0, 3);
+  });
 }
 
 export function suggestedJuniorTerms(result: JuniorGuideResult): JuniorTerm[] {
@@ -105,7 +105,8 @@ export function juniorGuideSummary(result: JuniorGuideResult) {
   const question = result.research_question?.trim() || "";
   const summary = result.summary?.trim() || "";
   const method = result.methodology;
-  const findings = reviewedFindingCandidates(result);
+  const eligibleFindings = screenPassedFindingCandidates(result);
+  const findings = eligibleFindings.slice(0, 3);
   const totalFindings = result.findings?.length ?? 0;
   const limitations = (result.limitations ?? [])
     .map((entry) => entry.description?.trim())
@@ -122,7 +123,8 @@ export function juniorGuideSummary(result: JuniorGuideResult) {
       strategy: method?.empirical_strategy?.trim() || null,
     },
     findings,
-    unverifiedFindingCount: Math.max(0, totalFindings - findings.length),
+    reviewNeededFindingCount: Math.max(0, totalFindings - eligibleFindings.length),
+    additionalScreenedFindingsCount: Math.max(0, eligibleFindings.length - findings.length),
     limitations,
     terms: suggestedJuniorTerms(result),
   };
