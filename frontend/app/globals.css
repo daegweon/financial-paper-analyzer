@@ -336,3 +336,6 @@ button.evidence-source-link:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .inline-pdf-viewer { scroll-behavior: auto; }
 }
+
+.source-pdf-actions { flex-wrap: wrap; }
+.source-pdf-error { color: #99442f; flex-basis: 100%; line-height: 1.5; overflow-wrap: anywhere; }
