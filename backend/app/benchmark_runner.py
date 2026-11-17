@@ -13,12 +13,12 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 from uuid import uuid4
 
 import fitz
 import httpx
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Request
 
 from app import main as engine
 
@@ -43,6 +43,9 @@ STATE: dict[str, Any] = {
     "prepared": None,
 }
 PREPARED: dict[str, dict[str, Any]] = {}
+UPLOADED_HELDOUT: dict[str, bytes] = {}
+MAX_HELDOUT_BYTES = 30 * 1024 * 1024
+PRODUCTION_SUPABASE_REF = "hwmtayrecsfxernhssro"
 RUN_TASK: asyncio.Task | None = None
 STATE_LOCK = asyncio.Lock()
 
@@ -230,16 +233,24 @@ async def prepare_sources() -> dict[str, Any]:
                 item["source_user_id"] = row["user_id"]
                 item["source_storage_path"] = path
             else:
-                pdf = await client.get(
-                    item["publisher_pdf_url"],
-                    headers={
-                        "User-Agent": "Mozilla/5.0 PaperSignal-Benchmark/1.0",
-                        "Accept": "application/pdf,*/*;q=0.8",
-                    },
-                )
-                if pdf.status_code != 200:
-                    raise RuntimeError(f"{item['id']}: publisher PDF download failed ({pdf.status_code})")
-                raw = pdf.content
+                uploaded = UPLOADED_HELDOUT.get(item["id"])
+                if uploaded is not None:
+                    raw = uploaded
+                    item["source_kind"] = "locked_user_uploaded_pdf"
+                else:
+                    pdf = await client.get(
+                        item["publisher_pdf_url"],
+                        headers={
+                            "User-Agent": "Mozilla/5.0 PaperSignal-Benchmark/1.0",
+                            "Accept": "application/pdf,*/*;q=0.8",
+                        },
+                    )
+                    if pdf.status_code != 200 or not pdf.content.startswith(b"%PDF-"):
+                        raise RuntimeError(
+                            f"{item['id']}: publisher returned no PDF; "
+                            f"upload exact locked original to /benchmark/heldout/{item['id']}"
+                        )
+                    raw = pdf.content
             verification = verify_pdf(item["id"], raw, item["sha256"], item["bytes"], item["pages"])
             item["download_ms"] = round((time.perf_counter() - started) * 1000, 2)
             item["verification"] = verification
@@ -750,9 +761,71 @@ async def prepare(token: str | None = Header(default=None, alias="X-Benchmark-To
         raise HTTPException(status_code=502, detail=f"Benchmark preflight failed: {type(exc).__name__}: {str(exc)[:500]}") from exc
 
 
+@app.post("/benchmark/heldout/{paper_id}")
+async def upload_locked_heldout(
+    paper_id: str,
+    request: Request,
+    token: str | None = Header(default=None, alias="X-Benchmark-Token"),
+) -> dict[str, Any]:
+    """Accept only exact locked PDF bytes; keep them in RAM, never in Git or Storage."""
+    require_token(token)
+    if STATE["status"] == "running":
+        raise HTTPException(status_code=409, detail="Benchmark is already running")
+    if paper_id not in {"H01", "H02"}:
+        raise HTTPException(status_code=404, detail="Unknown held-out PDF ID")
+    if request.headers.get("content-type", "").split(";")[0].strip() != "application/pdf":
+        raise HTTPException(status_code=415, detail="Expected application/pdf")
+    paper = next((x for x in HELDOUT_LOCK["heldout_papers"] if x["id"] == paper_id), None)
+    if paper is None:
+        raise HTTPException(status_code=404, detail="Locked held-out not registered")
+    chunks: list[bytes] = []
+    length = 0
+    async for chunk in request.stream():
+        length += len(chunk)
+        if length > MAX_HELDOUT_BYTES:
+            raise HTTPException(status_code=413, detail="PDF exceeds configured byte limit")
+        chunks.append(chunk)
+    raw = b"".join(chunks)
+    try:
+        verified = verify_pdf(
+            paper_id, raw, paper["pdf_sha256"], paper["pdf_byte_length"],
+            paper["actual_page_count"],
+        )
+    except (RuntimeError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    UPLOADED_HELDOUT[paper_id] = raw
+    STATE["status"] = "idle"
+    STATE["prepared"] = None
+    PREPARED.clear()
+    return {
+        "status": "verified_in_memory",
+        "id": paper_id,
+        "sha256": verified["sha256"],
+        "bytes": verified["bytes"],
+        "page_count": verified["page_count"],
+        "storage_mutated": False,
+    }
+
+
+def isolated_write_guard() -> None:
+    """Fail closed: no benchmark users/jobs may be created in production."""
+    if os.getenv("BENCHMARK_ENABLE_ISOLATED_WRITES") != "true":
+        raise RuntimeError("Isolated benchmark writes are disabled")
+    host = (urlparse(engine.SUPABASE_URL).hostname or "").lower()
+    allowed = os.getenv("BENCHMARK_ALLOWED_SUPABASE_HOST", "").lower().strip()
+    if not allowed or host != allowed:
+        raise RuntimeError("Dedicated benchmark Supabase host not configured")
+    if not host.endswith(".supabase.co") or host.split(".", 1)[0] == PRODUCTION_SUPABASE_REF:
+        raise RuntimeError("Production Supabase writes are prohibited")
+
+
 @app.post("/benchmark/run")
 async def run(token: str | None = Header(default=None, alias="X-Benchmark-Token")) -> dict[str, Any]:
     require_token(token)
+    try:
+        isolated_write_guard()
+    except RuntimeError:
+        raise HTTPException(status_code=403, detail="Dedicated non-production Supabase required")
     global RUN_TASK
     if len(PREPARED) != 12 or STATE["status"] != "prepared":
         raise HTTPException(status_code=409, detail="All 12 exact locked PDFs must pass preflight first")
