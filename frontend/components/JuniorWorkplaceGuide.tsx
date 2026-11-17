@@ -3,19 +3,22 @@
 import { useMemo, useState } from "react";
 import { composeJuniorBrief, explainPaperMethods, juniorBriefFilename, juniorRoleGuide, roleOptions } from "../lib/junior-workflow";
 import type { JuniorBriefSource, JuniorRole } from "../lib/junior-workflow";
-import { juniorGuideSummary } from "../lib/junior-guide";
+import { JuniorLearningPath } from "./JuniorLearningPath";
 import styles from "./JuniorWorkplaceGuide.module.css";
 
 type Props = {
   result: JuniorBriefSource;
   paperTitle: string;
+  userId: string;
+  paperId: string;
+  sourcePdfReady: boolean;
+  onOpenSourcePage?: (page: number) => void;
 };
 
-export function JuniorWorkplaceGuide({ result, paperTitle }: Props) {
+export function JuniorWorkplaceGuide({ result, paperTitle, userId, paperId, sourcePdfReady, onOpenSourcePage }: Props) {
   const [role, setRole] = useState<JuniorRole>("wealth");
   const [copyStatus, setCopyStatus] = useState("");
   const methods = useMemo(() => explainPaperMethods(result), [result]);
-  const paper = useMemo(() => juniorGuideSummary(result), [result]);
   const guide = juniorRoleGuide(role);
   const brief = useMemo(() => composeJuniorBrief(result, paperTitle, role), [result, paperTitle, role]);
 
@@ -85,6 +88,11 @@ export function JuniorWorkplaceGuide({ result, paperTitle }: Props) {
       <p className={styles.deliverable}><b>연습 산출물</b> {guide.deliverable}</p>
     </div>
 
+    <JuniorLearningPath key={userId + ":" + paperId + ":" + role}
+      userId={userId} paperId={paperId} role={role} result={result}
+      sourcePdfReady={sourcePdfReady} onOpenSourcePage={onOpenSourcePage}
+    />
+
     <div className={styles.briefSection}>
       <h4>논문 1쪽 공유 브리핑 초안</h4>
       <p className={styles.label}>논문에서 추출한 원문 정보, 자동 1차 대조 통과 인용, 일반 직무 질문을 구분합니다. 길이는 논문 내용에 따라 1쪽을 넘을 수 있습니다.</p>
@@ -104,16 +112,6 @@ export function JuniorWorkplaceGuide({ result, paperTitle }: Props) {
       <p className={styles.label}>복사된 내용에는 원문 페이지 번호와 직접 인용을 넣습니다. 독립 전문가 검증·투자 판단을 대신하지 않습니다.</p>
     </div>
 
-    <details className={styles.selfCheck}>
-      <summary>3문항으로 이해 점검하기</summary>
-      <ol>
-        <li>이 논문의 연구 질문을 원문 내용에 근거해 한 문장으로 설명할 수 있나요?</li>
-        <li>사용한 모형과 핵심 가정을 구별할 수 있나요? {methods[0] ? "(" + methods[0].title + "부터 확인)" : "(방법론은 원문에서 다시 확인)"}</li>
-        <li>{paper.findings.length
-          ? "첫 번째 근거 연결 결과를 PDF " + paper.findings[0].page + "쪽에서 직접 찾아 해석할 수 있나요?"
-          : "검증된 실증 결과가 없을 때 무엇을 모른다고 밝혀야 할까요?"}</li>
-      </ol>
-      <p>정답 자동 채점 기능은 제공하지 않습니다. 논문 원문을 보고 스스로 대조해 주세요.</p>
-    </details>
+
   </section>;
 }

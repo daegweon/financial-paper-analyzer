@@ -10,7 +10,7 @@
     "test:auth": "node --experimental-strip-types --test tests/auth-feedback.test.mjs",
     "test:analysis": "node --experimental-strip-types --test tests/analysis-job.test.mjs",
     "test:junior": "node --experimental-strip-types --test tests/junior-guide.test.mjs tests/junior-visuals.test.mjs",
-    "test:workflow": "node --experimental-strip-types --test tests/junior-workflow.test.mjs",
+    "test:workflow": "node --experimental-strip-types --test tests/junior-workflow.test.mjs tests/junior-learning.test.mjs",
     "test:pdf": "node --experimental-strip-types --test tests/pdf-viewer.test.mjs",
     "prebuild": "npm run lint"
   },

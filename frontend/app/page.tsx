@@ -817,7 +817,11 @@ export default function Home() {
                 sourcePdfReady={sourcePdf?.paperId === selected.id}
                 onOpenSourcePage={showOriginalPdfPage}
               />
-              <JuniorWorkplaceGuide result={analysis.result} paperTitle={selected.title} />
+              <JuniorWorkplaceGuide result={analysis.result} paperTitle={selected.title}
+                userId={user?.id ?? ""} paperId={selected.id}
+                sourcePdfReady={sourcePdf?.paperId === selected.id}
+                onOpenSourcePage={showOriginalPdfPage}
+              />
               <div className="report-toolbar no-print">
                 <div>
                   <b>연구 분석 보고서</b>
