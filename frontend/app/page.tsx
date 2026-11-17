@@ -549,11 +549,15 @@ export default function Home() {
     }
   }
 
-  function showOriginalPdfPage(page: number) {
-    if (!selected) return;
-    if (sourcePdf?.paperId === selected.id && pdfLinkNeedsRefresh(sourcePdf.issuedAt) && !sourcePdfRefreshing) {
+  function maybeRenewSourcePdf() {
+    if (selected && sourcePdf?.paperId === selected.id && pdfLinkNeedsRefresh(sourcePdf.issuedAt) && !sourcePdfRefreshing) {
       void renewPdfLink(selected);
     }
+  }
+
+  function showOriginalPdfPage(page: number) {
+    if (!selected) return;
+    maybeRenewSourcePdf();
     setSourcePage(clampPdfPage(page, selected.page_count));
     setSourceViewerOpen(true);
     window.setTimeout(() => {
@@ -563,9 +567,7 @@ export default function Home() {
 
   function toggleSourceViewer() {
     if (!selected) return;
-    if (!sourceViewerOpen && sourcePdf?.paperId === selected.id && pdfLinkNeedsRefresh(sourcePdf.issuedAt) && !sourcePdfRefreshing) {
-      void renewPdfLink(selected);
-    }
+    if (!sourceViewerOpen) maybeRenewSourcePdf();
     setSourceViewerOpen((value) => !value);
   }
 
@@ -752,7 +754,7 @@ export default function Home() {
           <div className="inline-pdf-heading">
             <div><b>원본 PDF</b><span>업로드한 PDF 페이지를 그대로 표시합니다. 요약이나 HTML로 재구성한 화면이 아닙니다.</span></div>
             <div className="inline-pdf-controls">
-              <button type="button" disabled={sourcePage <= 1} onClick={() => setSourcePage((value) => clampPdfPage(value - 1, selected.page_count))}>이전</button>
+              <button type="button" disabled={sourcePage <= 1} onClick={() => { maybeRenewSourcePdf(); setSourcePage((value) => clampPdfPage(value - 1, selected.page_count)); }}>이전</button>
               <label>페이지
                 <input type="text" inputMode="numeric" pattern="[0-9]*" maxLength={6}
                   value={sourcePageInput}
@@ -761,6 +763,7 @@ export default function Home() {
                   onKeyDown={event => { if (event.key === "Enter") event.currentTarget.blur(); }}
                   onBlur={() => {
                     const page = commitPdfPageInput(sourcePageInput, sourcePage, selected.page_count);
+                    if (page !== sourcePage) maybeRenewSourcePdf();
                     setSourcePage(page);
                     setSourcePageInput(String(page));
                   }}
@@ -768,7 +771,7 @@ export default function Home() {
                 <span>/ {selected.page_count ?? "?"}</span>
               </label>
               <button type="button" disabled={Boolean(selected.page_count && sourcePage >= selected.page_count)}
-                onClick={() => setSourcePage((value) => clampPdfPage(value + 1, selected.page_count))}>다음</button>
+                onClick={() => { maybeRenewSourcePdf(); setSourcePage((value) => clampPdfPage(value + 1, selected.page_count)); }}>다음</button>
             </div>
           </div>
           <iframe
