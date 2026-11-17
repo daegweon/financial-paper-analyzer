@@ -65,3 +65,28 @@ Safe release sequence, ONLY after the real QA gates pass:
 3. After explicit approval, promote the exact reviewed Production build to the public domain. A Preview build is not an equivalent staged Production build: promotion can rebuild with different environment variables.
 4. On incident, use the recorded eligible previous Production deployment as the rollback target, then verify login, library and PDF access. Be aware that rollback suspends automatic domain assignment; a subsequent explicit promote is required to restore normal assignment.
 5. No production deployment, promotion, rollback or worker restart was performed during this milestone.
+
+## Executed isolated browser smoke — November 18, 2026
+
+An isolated Vercel Sandbox received only frontend source. No production environment secrets, private PDFs, live Supabase credentials or customer accounts were included.
+
+Anonymous tests against local Next.js at localhost:3000 and a dummy public Supabase URL:
+- desktop Chromium: 2/2 PASS (login/signup toggle and 320px viewport overflow)
+- Android Chromium emulation: 2/2 PASS
+- iPhone WebKit emulation: 2/2 PASS
+- Total anonymous: 6/6 PASS.
+
+An additional local-only Playwright test intercepts requests to a synthetic Supabase endpoint at 127.0.0.1:54321 and provides fake users A/B, a fake paper, analysis and PDF.
+- desktop Chromium: 3/3 PASS
+- Android Chromium: 3/3 PASS
+- iPhone WebKit: 3/3 PASS
+- Tested: synthetic sign-in, paper reading, PDF page/citation jump, logout, manual signing retry and A/B UI isolation.
+- Total synthetic authenticated-like UI integration: 9/9 PASS.
+- Combined isolated local browser tests: **15/15 PASS**. These tests did not run on protected Vercel Preview.
+
+Reproduction steps in a disposable local test process:
+1. Launch the frontend dev server with NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_local_qa_only and NEXT_PUBLIC_API_URL=http://127.0.0.1:54322.
+2. Set PAPERSIGNAL_BROWSER_QA=1, PAPERSIGNAL_BROWSER_QA_URL=http://localhost:3000 and PAPERSIGNAL_BROWSER_QA_MOCKS=1.
+3. Run npm run test:browser:anonymous and npm run test:browser:mock.
+
+**Do not mark real OAuth, Supabase authentication, Storage/RLS authorization, actual uploaded PDF bytes, 50-minute link renewal or mobile Safari devices as PASS.** They remain PENDING and require authorized QA credentials, Preview authentication, and device testing.

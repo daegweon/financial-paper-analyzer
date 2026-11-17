@@ -17,6 +17,7 @@
     "test:browser:anonymous": "playwright test tests/browser/anonymous.spec.ts",
     "test:browser:authenticated": "playwright test tests/browser/authenticated.spec.ts",
     "test:browser:tenant": "playwright test tests/browser/tenant.spec.ts",
+    "test:browser:mock": "playwright test tests/browser/mock-authenticated.spec.ts",
     "prebuild": "npm run lint"
   },
   "dependencies": {
