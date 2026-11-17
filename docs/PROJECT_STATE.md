@@ -1,17 +1,28 @@
 # PaperSignal — Project State / Session Handoff
 
-Last updated: 2026-11-16 (Asia/Seoul)
-Source of truth: Git branch feat/research-workspace-mvp
-Open development PR: https://github.com/daegweon/financial-paper-analyzer/pull/2 (Draft; do not merge without release gates)
+Last updated: 2026-11-17 (Asia/Seoul)
+Source of truth for current user-facing work: feat/mobile-pdf-reading-recovery (Draft PR #12, stacked on #11 → #10 → #9 → #8 → #2)
+Current UX PR: https://github.com/daegweon/financial-paper-analyzer/pull/12 (Draft; do not merge without beta gates)
 
 ## Product north star
 
 Build an evidence-first financial research workspace that accurately extracts research design, methodology, empirical findings, statistical significance and page-level PDF evidence; supports cross-paper comparison and a durable private research library. Prefer verifiable incompleteness over fabricated claims.
 
+## Product-first priority override — 2026-11-17
+
+**Analysis engine tuning is frozen.** Do not pursue further v6.x quality experiments unless the user explicitly lifts the freeze. Implement in this exact sequence:
+
+1. Usability: real login, open original PDF, jump to source evidence, responsive/mobile and keyboard testing.
+2. Junior-friendly interpretation of paper tables and charts, with source-grounded facts separated from generic finance education.
+3. Role-specific learning paths and paper comprehension checks.
+4. Beta readiness: error recovery, onboarding, accessibility, deployment and rollback.
+
+Existing Draft PRs #8–#11 cover durable job recovery, junior learning guides, role explainers and inline source reading. New Draft PR #12 improves mobile layout, original PDF navigation input, keyboard focus and private signed-link renewal. Its code changes are not equivalent to passing live browser QA.
+
 ## Current progress estimate
 
-Overall: approximately 72% (engineering estimate, not a measured product KPI).
-- Core service and user workflows: ~85%
+Overall: approximately 74.5% (subjective engineering feature-completion estimate, **not** live-user verification).
+- Core service and user workflows: ~94%
 - Authentication and tenant isolation: ~80%
 - Analysis engine reliability: ~70%
 - Real-user workflow verification: ~75%
@@ -108,3 +119,11 @@ Update PROJECT_STATE.md and append PROJECT_CHANGELOG.md:
 - immediately after architecture/provider/schema decisions;
 - after every production deployment, migration, or user-data E2E;
 - before a session handoff.
+
+## 2026-11-17 — New session handoff: Draft PR #12
+
+- Branch: `feat/mobile-pdf-reading-recovery`, Draft PR: https://github.com/daegweon/financial-paper-analyzer/pull/12, based on #11.
+- Client-only changes: compact mobile login, responsive PDF controls, dialog keyboard focus/close, page-field commit-on-blur, signed-link refresh/retry, stale request guards.
+- `frontend/package.json` prebuild executes all TypeScript and frontend unit tests; PDF regression suite now includes multi-digit input and link-expiry cases.
+- QA instructions: `docs/MOBILE_SOURCE_UX_QA_2026-11-17.md`. **Real authenticated mobile browser and citation navigation are PENDING**; no production promotion.
+- Keep engine frozen and beta release gate 0/4. Preserve the 74.5% feature-completion estimate until real QA validates this milestone.
