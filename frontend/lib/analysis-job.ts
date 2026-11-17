@@ -9,6 +9,35 @@ export type AnalysisJobState = {
   detail?: string;
 };
 
+export type ActiveAnalysisJob = {
+  id: string;
+  paper_id: string;
+  status: "queued" | "processing";
+  stage?: string | null;
+  created_at: string;
+};
+
+export function findActiveAnalysisJob(rows: unknown): ActiveAnalysisJob | null {
+  if (!Array.isArray(rows)) return null;
+  const jobs = rows.filter((row): row is ActiveAnalysisJob =>
+    Boolean(row && typeof row === "object" &&
+      typeof row.id === "string" && row.id.trim() &&
+      typeof row.paper_id === "string" && row.paper_id.trim() &&
+      (row.status === "queued" || row.status === "processing") &&
+      typeof row.created_at === "string")
+  );
+  // Supabase usually sorts rows, but select newest defensively.
+  return jobs.sort((a, b) => b.created_at.localeCompare(a.created_at))[0] ?? null;
+}
+
+/** Stopping the browser watch never cancels the server-side job. */
+export class AnalysisWatchStopped extends Error {
+  constructor() {
+    super("작업 상태 확인을 중단했습니다. 서버 분석은 계속 진행될 수 있습니다.");
+    this.name = "AnalysisWatchStopped";
+  }
+}
+
 type Fetcher = (url: string, init: RequestInit) => Promise<Response>;
 type Sleeper = (milliseconds: number) => Promise<void>;
 
@@ -88,6 +117,7 @@ export async function waitForAnalysisJob({
   intervalMs = DEFAULT_INTERVAL_MS,
   maxPolls = DEFAULT_MAX_POLLS,
   maxConsecutiveErrors = DEFAULT_MAX_CONSECUTIVE_ERRORS,
+  shouldContinue = () => true,
 }: {
   url: string;
   token: string;
@@ -97,10 +127,12 @@ export async function waitForAnalysisJob({
   intervalMs?: number;
   maxPolls?: number;
   maxConsecutiveErrors?: number;
+  shouldContinue?: () => boolean;
 }): Promise<AnalysisJobState> {
   let consecutiveErrors = 0;
 
   for (let attempt = 0; attempt < maxPolls; attempt++) {
+    if (!shouldContinue()) throw new AnalysisWatchStopped();
     let response: Response;
     try {
       response = await fetcher(url, {
@@ -116,6 +148,7 @@ export async function waitForAnalysisJob({
       continue;
     }
 
+    if (!shouldContinue()) throw new AnalysisWatchStopped();
     const body: unknown = await response.json().catch(() => ({}));
     if (!response.ok) {
       if (TRANSIENT_CODES.has(response.status)) {
