@@ -522,7 +522,8 @@ export default function Home() {
     setSourceViewerOpen(false);
     setSourcePage(1);
     setSourcePageInput("1");
-    const [result, signedPdf, jobs] = await Promise.all([
+    try {
+      const [result, signedPdf, jobs] = await Promise.all([
       db().from("analyses").select("result,model,created_at")
         .eq("paper_id", paper.id).order("created_at", { ascending: false }).limit(1),
       db().storage.from("papers").createSignedUrl(paper.storage_path, 3600),
@@ -545,6 +546,13 @@ export default function Home() {
         setSourcePdfError("원문 PDF 연결에 실패했습니다. 다시 연결을 눌러주세요." + (signedPdf.error ? " " + signedPdf.error.message : ""));
       } else {
         setSourcePdf({ paperId: paper.id, url: signedPdf.data.signedUrl, issuedAt: Date.now() });
+      }
+    }
+    } catch {
+      if (openRequestId.current !== requestId) return;
+      setJobLookupError("네트워크 오류로 분석 작업 상태를 확인하지 못했습니다. 문서를 다시 열어주세요.");
+      if (pdfSignRequestId.current === signRequestId) {
+        setSourcePdfError("네트워크 오류로 원문 PDF를 연결하지 못했습니다. 다시 연결을 눌러주세요.");
       }
     }
   }
@@ -732,6 +740,7 @@ export default function Home() {
                   onClick={() => void renewPdfLink(selected)} aria-label="원문 PDF 보안 링크 갱신">
                   {sourcePdfRefreshing ? "갱신 중..." : "링크 갱신"}
                 </button>
+                {sourcePdfError && <span className="source-pdf-status source-pdf-error" role="alert">{sourcePdfError}</span>}
               </div>
             : <div className="source-pdf-actions">
                 <span className="source-pdf-status" role="status">{sourcePdfRefreshing ? "원문 PDF 다시 연결 중..." : sourcePdfError || "원문 PDF 연결 준비 중..."}</span>
