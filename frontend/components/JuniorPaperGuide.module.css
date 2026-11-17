@@ -31,3 +31,7 @@
 .practice .limitations{padding:10px;border:1px solid #f1e8d5;background:#fffbf2;border-radius:6px;font-size:11px;line-height:1.75;color:#756247}
 .practice .limitations b{display:block;margin-bottom:4px}
 @media(max-width:620px){.guide{padding:14px}.heading{flex-direction:column}.terms{grid-template-columns:1fr}.method{grid-template-columns:64px 1fr}}
+
+.quote{margin:8px 0 7px;border-left:3px solid #b6d9d2;background:#f7fbfa;border-radius:0 6px 6px 0;padding:9px 11px}
+.quote b{font-size:10px;color:#39867b}
+.quote p{margin:4px 0 0!important;color:#496874;font-size:11px;line-height:1.65;white-space:pre-wrap}
