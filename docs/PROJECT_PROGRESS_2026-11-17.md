@@ -1,20 +1,20 @@
 # PaperSignal development progress — 2026-11-17
 
-## Current overall engineering estimate: ~73% (not a release certification)
+## Current overall engineering estimate: ~74% (not a release certification)
 
 This is an explicit, **subjective weighted engineering estimate**, anchored to the previous `docs/PROJECT_STATE.md` 72% estimate; it is not a velocity KPI, measured source accuracy, or percentage of release gates passed.
 
 | Workstream | Weight | Estimated completion | Weighted points |
 |---|---:|---:|---:|
-| Research library, PDF upload, search, comparison, exports and primary UX | 25% | 87% | 21.75 |
+| Research library, PDF upload, search, comparison, exports and primary UX | 25% | 91% | 22.75 |
 | Authentication, private data/RLS, job persistence | 20% | 80% | 16.00 |
 | Financial paper extraction, Gemini normalization and citation verification | 25% | 70% | 17.50 |
 | Real-user workflow verification | 10% | 75% | 7.50 |
 | Human-grounded quantitative quality/performance benchmark | 10% | 55% | 5.50 |
 | Public beta release operations | 10% | 45% | 4.50 |
-| **Total** | **100%** | **72.75%** | **72.75** |
+| **Total** | **100%** | **73.75%** | **73.75** |
 
-Round to **~73%** for communication. The +0.5 percentage-point change reflects an estimated two-point increase in the core UX workstream from the new persistent-job recovery feature and passing regression/build tests. This is still a subjective engineering estimate, **not** a measured release-readiness improvement. Do not increase it further without new independently verified functionality or gates. The category estimates were inherited from the prior project state and may overstate release-readiness.
+Round to **~74%** for communication. The earlier recovery feature lifted the prior estimate to 72.75%; this new +1.0 percentage-point adjustment reflects three independently unit-tested core UX features (model lessons, five job-role question sets, source-grounded briefing/export) lifting the UX sub-estimate from 87% to 91% at a 25% workstream weight. This is still subjective engineering feature-completion accounting, **not measured financial comprehension, factual accuracy or release-readiness**. Do not increase it further without new verified functionality or gates. The category estimates were inherited from the prior project state and may overstate release-readiness.
 
 ## Release gate status — independent from the above percentage
 
@@ -23,7 +23,7 @@ Round to **~73%** for communication. The +0.5 percentage-point change reflects a
 - **Q2 BLOCKED:** no paired full PDF upload → Gemini analysis → saved-result p95, billable cost, peak RSS or accuracy nonregression comparison. Local B07 extraction/prompt comparison is insufficient for Q2.
 - **P0 BLOCKED:** live two-user end-to-end/auth/SMTP, comprehensive release smoke, rollback and capacity/cost checks pending.
 
-**Gate completion: 0/4.** No claim that production launch is 73% approved. Public beta preparation was previously estimated at about **45%** and remains a separate, non-gated subjective estimate.
+**Gate completion: 0/4.** No claim that production launch is 74% approved. Public beta preparation was previously estimated at about **45%** and remains a separate, non-gated subjective estimate.
 
 ## Work completed in this iteration — isolated frontend reliability branch
 
@@ -56,3 +56,13 @@ Previous operational facts: production API + Worker at `8cd5e37`; frontend authe
 - Independent Vercel sandbox: `npm run lint` **passed** (TypeScript + 5 existing auth tests + 13 analysis-job tests = **18/18**), and `npm run build` **passed** (Next.js 16.4.6). No live multiuser E2E or runtime production telemetry was performed.
 - No backend source, prompts, Gemini provider configuration, PostgreSQL migration, Railway production deployment or live Supabase user records changed.
 - **Remaining:** scoped live E2E of reload, reconnect, duplicate analysis race and RLS. Q0/Q1/Q2/P0 all still BLOCKED. Draft PR #8 must not be merged to production while the agreed release gates remain blocked.
+
+## Junior workplace learning pack — further verified development
+
+- Stacked branch `feat/junior-role-guides-and-briefing` (base `feat/junior-first-paper-reading`), source: `docs/JUNIOR_WORKFLOW_PACK_2026-11-17.md`.
+- Deterministic, general-finance methodology lessons: why, assumptions and limits for GARCH/GARCH-MIDAS, CAPM, Fama–French, VAR, LASSO, DiD, event studies, portfolio optimization, regression. Match only extracted methodology fields; no extra Gemini calls or new paper facts.
+- Five role-specific junior study guides: WM, risk, research/strategy, products/planning and technology/data. Clearly separate potential use questions from evidence-backed paper claims.
+- Source-grounded sharing brief: original title, DOI when known, original research question, sample/method/period, up to 2 automatically screen-passed findings with stored original page quote, limitations, role prompts, caveats. Excludes unverified findings, never claims human verification; preview, clipboard copy and offline plain-text download.
+- Open-ended 3-question self-check, no invented answers or scores.
+- Isolated Vercel sandbox: frontend `npm run lint` **PASS** including TypeScript and **38/38** tests (5 auth + 13 job recovery + 7 junior guide + 13 workplace pack), `npm run build` **PASS** (Next.js 16.4.6). No browser click-through/live login or independent junior-user comprehension tests.
+- Core UX engineering estimate raised 87%→91%, weighted total **72.75%→73.75% (~74%)**. Keep Q0/Q1/Q2/P0 **0/4** and public beta readiness around 45%.
