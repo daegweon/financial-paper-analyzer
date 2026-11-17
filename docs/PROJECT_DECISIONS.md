@@ -15,6 +15,8 @@
 
 ## Explicit user decisions
 
+- 2026-11-17: Freeze analysis engine performance tuning. Prioritize (1) real login/PDF/source navigation/mobile usability, (2) junior explanations for figures and tables, (3) role-based learning paths and comprehension, (4) beta accessibility/recovery/deployment/rollback. Do not trade several user-facing features for marginal model score gains.
+
 - Supabase stays on Free. Do not upgrade to Pro for Leaked Password Protection.
 - Leaked Password Protection remains disabled; accept one security-advisor WARN as a documented residual risk. Do not claim the setting is enabled.
 - Google OAuth is an enabled login method alongside email/password.
