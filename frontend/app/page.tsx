@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { db } from "../lib/supabase";
-import { clampPdfPage, originalPdfPageUrl } from "../lib/pdf-viewer";
+import { clampPdfPage, commitPdfPageInput, originalPdfPageUrl, pdfLinkNeedsRefresh } from "../lib/pdf-viewer";
 import { ResearchLibrary } from "../components/ResearchLibrary";
 import { JuniorPaperGuide } from "../components/JuniorPaperGuide";
 import { JuniorWorkplaceGuide } from "../components/JuniorWorkplaceGuide";
@@ -244,12 +244,16 @@ export default function Home() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [activeJob, setActiveJob] = useState<ActiveAnalysisJob | null>(null);
   const [jobLookupError, setJobLookupError] = useState("");
-  const [sourcePdf, setSourcePdf] = useState<{ paperId: string; url: string } | null>(null);
+  const [sourcePdf, setSourcePdf] = useState<{ paperId: string; url: string; issuedAt: number } | null>(null);
   const [sourcePdfError, setSourcePdfError] = useState("");
+  const [sourcePdfRefreshing, setSourcePdfRefreshing] = useState(false);
   const [sourceViewerOpen, setSourceViewerOpen] = useState(false);
   const [sourcePage, setSourcePage] = useState(1);
+  const [sourcePageInput, setSourcePageInput] = useState("1");
+  const detailsRef = useRef<HTMLElement | null>(null);
   const sourceViewerRef = useRef<HTMLDivElement | null>(null);
   const openRequestId = useRef(0);
+  const pdfSignRequestId = useRef(0);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [engineMode, setEngineMode] = useState<"gemini" | "openai" | "extractive" | "unknown">("unknown");
@@ -288,6 +292,7 @@ export default function Home() {
     if (user) void refresh();
     else {
       openRequestId.current += 1;
+      pdfSignRequestId.current += 1;
       setPapers([]);
       setSelected(null);
       setAnalysis(null);
@@ -295,8 +300,41 @@ export default function Home() {
       setJobLookupError("");
       setSourcePdf(null);
       setSourcePdfError("");
+      setSourcePdfRefreshing(false);
+      setSourceViewerOpen(false);
     }
   }, [user]);
+
+  useEffect(() => { setSourcePageInput(String(sourcePage)); }, [sourcePage]);
+
+  // Keep keyboard navigation inside the authenticated paper dialog, including on mobile.
+  useEffect(() => {
+    if (!selected) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    detailsRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); closeDetails(); return; }
+      if (event.key !== "Tab" || !detailsRef.current) return;
+      const focusables = Array.from(detailsRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), iframe, [tabindex]:not([tabindex="-1"])',
+      )).filter((element) => element.getClientRects().length > 0);
+      if (!focusables.length) { event.preventDefault(); detailsRef.current.focus(); return; }
+      const first = focusables[0], last = focusables[focusables.length - 1];
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === detailsRef.current)) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault(); first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus();
+    };
+  }, [selected?.id]);
 
   async function refresh() {
     const { data, error } = await db().from("papers")
@@ -439,16 +477,51 @@ export default function Home() {
     return findActiveAnalysisJob(data);
   }
 
+  function closeDetails() {
+    openRequestId.current += 1;
+    pdfSignRequestId.current += 1;
+    setSelected(null);
+    setSourcePdf(null);
+    setSourcePdfError("");
+    setSourcePdfRefreshing(false);
+    setSourceViewerOpen(false);
+  }
+
+  async function renewPdfLink(paper: Paper) {
+    const requestId = openRequestId.current;
+    const signRequestId = ++pdfSignRequestId.current;
+    setSourcePdfRefreshing(true);
+    setSourcePdfError("");
+    try {
+      const { data, error } = await db().storage.from("papers").createSignedUrl(paper.storage_path, 3600);
+      if (openRequestId.current !== requestId || pdfSignRequestId.current !== signRequestId) return;
+      if (error || !data?.signedUrl) {
+        setSourcePdfError("원문 PDF 연결에 실패했습니다. 다시 연결을 눌러주세요." + (error ? " " + error.message : ""));
+      } else {
+        setSourcePdf({ paperId: paper.id, url: data.signedUrl, issuedAt: Date.now() });
+      }
+    } catch {
+      if (openRequestId.current === requestId && pdfSignRequestId.current === signRequestId) {
+        setSourcePdfError("원문 PDF 연결 중 네트워크 오류가 발생했습니다. 다시 연결을 눌러주세요.");
+      }
+    } finally {
+      if (openRequestId.current === requestId && pdfSignRequestId.current === signRequestId) setSourcePdfRefreshing(false);
+    }
+  }
+
   async function open(paper: Paper) {
     const requestId = ++openRequestId.current;
+    const signRequestId = ++pdfSignRequestId.current;
     setSelected(paper);
     setAnalysis(null);
     setActiveJob(null);
     setJobLookupError("");
     setSourcePdf(null);
     setSourcePdfError("");
+    setSourcePdfRefreshing(false);
     setSourceViewerOpen(false);
     setSourcePage(1);
+    setSourcePageInput("1");
     const [result, signedPdf, jobs] = await Promise.all([
       db().from("analyses").select("result,model,created_at")
         .eq("paper_id", paper.id).order("created_at", { ascending: false }).limit(1),
@@ -467,17 +540,33 @@ export default function Home() {
     } else {
       setActiveJob(findActiveAnalysisJob(jobs.data));
     }
-    if (signedPdf.error) setSourcePdfError("원문 PDF 링크를 만들지 못했습니다: " + signedPdf.error.message);
-    else if (signedPdf.data?.signedUrl) setSourcePdf({ paperId: paper.id, url: signedPdf.data.signedUrl });
+    if (pdfSignRequestId.current === signRequestId) {
+      if (signedPdf.error || !signedPdf.data?.signedUrl) {
+        setSourcePdfError("원문 PDF 연결에 실패했습니다. 다시 연결을 눌러주세요." + (signedPdf.error ? " " + signedPdf.error.message : ""));
+      } else {
+        setSourcePdf({ paperId: paper.id, url: signedPdf.data.signedUrl, issuedAt: Date.now() });
+      }
+    }
   }
 
   function showOriginalPdfPage(page: number) {
     if (!selected) return;
+    if (sourcePdf?.paperId === selected.id && pdfLinkNeedsRefresh(sourcePdf.issuedAt) && !sourcePdfRefreshing) {
+      void renewPdfLink(selected);
+    }
     setSourcePage(clampPdfPage(page, selected.page_count));
     setSourceViewerOpen(true);
     window.setTimeout(() => {
       sourceViewerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }, 0);
+  }
+
+  function toggleSourceViewer() {
+    if (!selected) return;
+    if (!sourceViewerOpen && sourcePdf?.paperId === selected.id && pdfLinkNeedsRefresh(sourcePdf.issuedAt) && !sourcePdfRefreshing) {
+      void renewPdfLink(selected);
+    }
+    setSourceViewerOpen((value) => !value);
   }
 
   async function monitorJob(paper: Paper, jobId: string, token: string, openedRequestId: number) {
