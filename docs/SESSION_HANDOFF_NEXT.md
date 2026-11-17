@@ -138,5 +138,16 @@
 - 변경 근거 문서: `feat/research-job-status-resilience/docs/PROJECT_PROGRESS_2026-11-17.md`. PR #8은 Draft, 출시 게이트 통과 전 본 운영 병합·배포 금지.
 - 다음 제품 개발 우선순위: 실제 브라우저 재접속·동시 탭 E2E, 원문 근거/방법론 UX, 미분석·실패 논문의 회복 흐름. 비운영 DB 비밀키를 재요청하지 말 것.
 
+## 2026-11-17 — 제품 방향 확정: 금융 기초가 부족한 주니어 실무자 우선
+
+- **새 핵심 페르소나:** 금융 지식이 풍부한 전문 퀀트보다, 금융업에 종사하지만 투자·금융공학·계량경제 기초가 부족한 **주니어 실무자**. 제품 약속은 `논문 이해 → 원문 근거 검증 → 업무 적용 시 고려사항`을 학습시키는 것.
+- 이 방향은 단순한 카피 수정이 아니라 전체 UX·로드맵 우선순위 변경이다. 다만 기존 분석 엔진의 정확도, 인용 근거, 저장 보존 원칙은 그대로 유지하며 Q0/Q1/Q2/P0 품질 기준을 낮추지 않는다.
+- 기능 구현: `feat/junior-first-paper-reading` / **Draft PR #9**, 기존 Draft PR #8에 스택. 새 `주니어를 위한 3분 논문 읽기`를 결과 상세 화면 최상단에 배치. 원문 기반 연구 질문·방법·검증 화면 1차 통과 결과 최대 3건과 실제 인용문/PDF 페이지, 개념 학습 카드, 업무 적용 전 질문 3개 제공.
+- 신규 학습 콘텐츠는 반드시 **원문 유래 주장**, **일반 금융 교육용 개념**, **실무 적용을 위한 가상 점검 질문**으로 표시를 분리. `screen_passed`는 독립 인간 검증이 아니라 자동 1차 스크린이며, 누락·검증 불충분 결과는 추측으로 대체하지 않음. 매매·투자 추천 없음.
+- 실제 isolated Vercel sandbox 검증: `npm run lint` TypeScript 통과 + **25/25 단위 테스트**(기존 5 OAuth/13 durable-job + 신규 7 주니어 가이드). `npm run build` Next.js 16.4.6 통과. 생산환경 배포 안 함.
+- 전략 문서 `feat/junior-first-paper-reading/docs/JUNIOR_FIRST_PRODUCT_DIRECTION_2026-11-17.md`. PR #9: `https://github.com/daegweon/financial-paper-analyzer/pull/9`.
+- **다음 개발 우선순위:** (1) 자주 등장하는 모델을 “왜 이 방법을 쓰는가/가정과 한계”로 설명, (2) 직무별 WM·리스크·리서치·상품/기술 연결 학습, (3) 원문 인용 PDF·표·그래프 탐색, (4) 한 장짜리 근거·한계 구분 보고서. 그다음 문서 질문/퀴즈. 모호하거나 검증되지 않은 인용·수치의 자동 미화 금지.
+- 개발 추정 진행률 **약 73% 유지** (정식 주니어 사용자 대상 이해도 테스트 미실시). 출시 게이트 **0/4** 미충족 및 운영 SHA 고정. 새 Supabase 키 요청/실험 트랙은 사용자 요청대로 보류.
+  
 ## 새 세션 시작 시 그대로 사용할 메시지
 "PaperSignal 개발을 이어가자. GitHub `plan/engine-quality-release-handoff`의 `docs/SESSION_HANDOFF_NEXT.md`, `docs/ENGINE_QUALITY_RELEASE_PLAN_2026-11-17.md`, `docs/PROJECT_STATE.md`와 `benchmark/engine_release_gates_2026-11-17.json`을 먼저 읽어. 오픈소스 교체 검토는 종료, 기존 PyMuPDF/v6.4.2 엔진만 개선. 독립 골드·인용·전체 정확도·비용·실서비스 테스트 임계점 충족 전 배포 금지. 지금 상태 확인 후 다음 목표를 실제 구현하고 검증 결과를 GitHub에 기록해."
