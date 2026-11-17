@@ -429,7 +429,7 @@ export default function Home() {
       if (!data.session) throw new Error("로그인이 필요합니다.");
       const api = process.env.NEXT_PUBLIC_API_URL;
       if (!api) throw new Error("분석 API가 아직 연결되지 않았습니다.");
-      const base = api.replace(/\\/$/, "");
+      const base = api.replace(/\/$/, "");
       const token = data.session.access_token;
       const jobId = await startAnalysisJob({
         url: base + "/api/analyze/" + paper.id,
