@@ -181,3 +181,15 @@
 .form .google-button:hover:not(:disabled){background:#f8fafb;border-color:#cbd6de}
 .form .google-button:disabled{cursor:wait;opacity:.55}
 .google-mark{font-size:21px;font-weight:800;line-height:1;background:conic-gradient(from -45deg,#4285f4 0 25%,#34a853 25% 50%,#fbbc05 50% 75%,#ea4335 75%);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+.active-job-banner {
+  margin: 18px 0;
+  padding: 16px 18px;
+  background: #eef9f6;
+  border: 1px solid #b6e0d7;
+  border-radius: 10px;
+  color: #206a63;
+}
+.active-job-banner strong { display: block; font-size: 13px; }
+.active-job-banner p { margin: 8px 0 13px; font-size: 12px; line-height: 1.7; }
+.active-job-banner .primary { font-size: 12px; padding: 10px 15px; }
