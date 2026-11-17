@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { db } from "../lib/supabase";
 import { clampPdfPage, commitPdfPageInput, originalPdfPageUrl, pdfLinkNeedsRefresh } from "../lib/pdf-viewer";
 import { ResearchLibrary } from "../components/ResearchLibrary";
+import { BetaGettingStarted } from "../components/BetaGettingStarted";
+import { isAcceptedPdf, uploadFailureMessage } from "../lib/beta-ux";
 import { JuniorPaperGuide } from "../components/JuniorPaperGuide";
 import { JuniorVisualReading } from "../components/JuniorVisualReading";
 import { JuniorWorkplaceGuide } from "../components/JuniorWorkplaceGuide";
@@ -241,6 +243,17 @@ export default function Home() {
   const [resendingConfirmation, setResendingConfirmation] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [papers, setPapers] = useState<Paper[]>([]);
+  const [papersOwnerId, setPapersOwnerId] = useState<string | null>(null);
+  const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const [libraryError, setLibraryError] = useState("");
+  const [uploadIssue, setUploadIssue] = useState(false);
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
+  const libraryRequestId = useRef(0);
+  const previousUserIdRef = useRef<string | null>(null);
+  const currentUserIdRef = useRef<string | null>(null);
+  currentUserIdRef.current = user?.id ?? null;
+  const visiblePapers = papersOwnerId === user?.id ? papers : [];
   const [selected, setSelected] = useState<Paper | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [activeJob, setActiveJob] = useState<ActiveAnalysisJob | null>(null);
@@ -290,27 +303,35 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (user) void refresh();
-    else {
-      openRequestId.current += 1;
-      pdfSignRequestId.current += 1;
-      setPapers([]);
-      setSelected(null);
-      setAnalysis(null);
-      setActiveJob(null);
-      setJobLookupError("");
-      setSourcePdf(null);
-      setSourcePdfError("");
-      setSourcePdfRefreshing(false);
-      setSourceViewerOpen(false);
-    }
-  }, [user]);
+    // Invalidate all private UI data whenever auth identity changes, including
+    // account-to-account switches without an intervening null session.
+    if (previousUserIdRef.current && previousUserIdRef.current !== user?.id) setMessage("");
+    previousUserIdRef.current = user?.id ?? null;
+    libraryRequestId.current += 1;
+    openRequestId.current += 1;
+    pdfSignRequestId.current += 1;
+    setPapers([]);
+    setPapersOwnerId(null);
+    setLibraryError("");
+    setLibraryLoading(false);
+    setUploadIssue(false);
+    setSelected(null);
+    setSelectedOwnerId(null);
+    setAnalysis(null);
+    setActiveJob(null);
+    setJobLookupError("");
+    setSourcePdf(null);
+    setSourcePdfError("");
+    setSourcePdfRefreshing(false);
+    setSourceViewerOpen(false);
+    if (user?.id) void refresh();
+  }, [user?.id]);
 
   useEffect(() => { setSourcePageInput(String(sourcePage)); }, [sourcePage]);
 
   // Keep keyboard navigation inside the authenticated paper dialog, including on mobile.
   useEffect(() => {
-    if (!selected) return;
+    if (!selected || selectedOwnerId !== user?.id) return;
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -335,14 +356,36 @@ export default function Home() {
       document.body.style.overflow = previousOverflow;
       previousFocus?.focus();
     };
-  }, [selected?.id]);
+  }, [selected?.id, selectedOwnerId, user?.id]);
 
   async function refresh() {
-    const { data, error } = await db().from("papers")
-      .select("id,title,status,storage_path,created_at,page_count")
-      .order("created_at", { ascending: false });
-    if (error) setMessage(error.message);
-    else setPapers((data ?? []) as Paper[]);
+    const ownerId = currentUserIdRef.current;
+    if (!ownerId) return;
+    const requestId = ++libraryRequestId.current;
+    setLibraryLoading(true);
+    setLibraryError("");
+    try {
+      const { data, error } = await db().from("papers")
+        .select("id,title,status,storage_path,created_at,page_count")
+        .eq("user_id", ownerId)
+        .order("created_at", { ascending: false });
+      if (requestId !== libraryRequestId.current || ownerId !== currentUserIdRef.current) return;
+      if (error) throw error;
+      setPapers((data ?? []) as Paper[]);
+      setPapersOwnerId(ownerId);
+    } catch {
+      if (requestId === libraryRequestId.current && ownerId === currentUserIdRef.current) {
+        setLibraryError("논문 목록을 불러오지 못했습니다. 네트워크와 로그인 상태를 확인하고 다시 시도해 주세요.");
+      }
+    } finally {
+      if (requestId === libraryRequestId.current && ownerId === currentUserIdRef.current) {
+        setLibraryLoading(false);
+      }
+    }
+  }
+
+  function choosePdfFile() {
+    if (!busy) uploadInputRef.current?.click();
   }
 
   async function auth(event: React.FormEvent) {
@@ -429,38 +472,46 @@ export default function Home() {
 
   async function upload(file?: File) {
     if (!file || !user) return;
-    if (
-      file.size > 31457280 || file.size < 1 ||
-      !file.name.toLowerCase().endsWith(".pdf") ||
-      new TextDecoder().decode(await file.slice(0, 5).arrayBuffer()) !== "%PDF-"
-    ) {
-      setMessage("30MB 이하의 유효한 PDF만 올려 주세요.");
-      return;
-    }
+    const ownerId = user.id;
+    let stage: "validation" | "storage" | "metadata" = "validation";
     setBusy(true);
+    setUploadIssue(false);
     setMessage("");
-    const path = user.id + "/" + crypto.randomUUID() + ".pdf";
     try {
+      const signature = new TextDecoder().decode(await file.slice(0, 5).arrayBuffer());
+      if (!isAcceptedPdf(file.name, file.size, signature)) {
+        setMessage("30MB 이하의 유효한 PDF 파일을 선택해 주세요.");
+        setUploadIssue(true);
+        return;
+      }
+      const path = ownerId + "/" + crypto.randomUUID() + ".pdf";
+      stage = "storage";
       const storage = await db().storage.from("papers").upload(path, file, {
         contentType: "application/pdf", upsert: false,
       });
       if (storage.error) throw storage.error;
+      stage = "metadata";
       const inserted = await db().from("papers").insert({
-        user_id: user.id,
+        user_id: ownerId,
         title: file.name.replace(/\.pdf$/i, "").slice(0, 500),
         original_filename: file.name,
         storage_path: path,
         size_bytes: file.size,
       }).select("id,title,status,storage_path,created_at,page_count").single();
       if (inserted.error) {
-        await db().storage.from("papers").remove([path]);
+        try { await db().storage.from("papers").remove([path]); }
+        catch { /* best-effort cleanup; do not retry uncertain metadata writes */ }
         throw inserted.error;
       }
+      if (currentUserIdRef.current !== ownerId) return;
       await refresh();
       await open(inserted.data as Paper);
       setMessage("논문 업로드 완료. 분석을 시작할 수 있습니다.");
     } catch (error) {
-      setMessage((error as Error).message);
+      if (currentUserIdRef.current === ownerId) {
+        setMessage(uploadFailureMessage(stage, error));
+        setUploadIssue(true);
+      }
     } finally {
       setBusy(false);
     }
@@ -482,6 +533,7 @@ export default function Home() {
     openRequestId.current += 1;
     pdfSignRequestId.current += 1;
     setSelected(null);
+    setSelectedOwnerId(null);
     setSourcePdf(null);
     setSourcePdfError("");
     setSourcePdfRefreshing(false);
@@ -514,6 +566,7 @@ export default function Home() {
     const requestId = ++openRequestId.current;
     const signRequestId = ++pdfSignRequestId.current;
     setSelected(paper);
+    setSelectedOwnerId(currentUserIdRef.current);
     setAnalysis(null);
     setActiveJob(null);
     setJobLookupError("");
@@ -678,7 +731,7 @@ export default function Home() {
         <span className="google-mark" aria-hidden="true">G</span>
         {authLoading ? "Google 계정 연결 중..." : "Google로 계속하기"}
       </button>
-      <p className="note">{message}</p>
+      <p className="note" role="status" aria-live="polite">{message}</p>
       <p className="toggle"><button type="button" onClick={() => { setSignup(!signup); setConfirmationPending(false); setMessage(""); }}>{signup ? "로그인으로 돌아가기" : "계정이 없나요? 회원가입"}</button></p>
       {confirmationPending && <div className="auth-confirmation" role="status">
         <p>인증 메일 링크를 열면 이메일 확인 후 PaperSignal 연구 공간으로 돌아옵니다.</p>
@@ -690,6 +743,7 @@ export default function Home() {
   </main>;
 
   return <main className="workspace">
+    <a href="#workspace-content" className="skip-link">연구 공간 본문으로 이동</a>
     <aside>
       <div className="brand">◈ Paper<span>Signal</span></div>
       <p className="eyebrow">WORKSPACE</p>
@@ -697,30 +751,49 @@ export default function Home() {
       <footer><p>{user.email}</p><button onClick={() => void db().auth.signOut()}>로그아웃</button></footer>
     </aside>
     <div className="content">
-      <header>Workspace / <b>논문 라이브러리</b>
-        <span className={engineMode === "gemini" || engineMode === "openai" ? "engine-ready" : "engine-pending"}>
+      <header className="workspace-header">
+        <span className="workspace-breadcrumbs">Workspace / <b>논문 라이브러리</b></span>
+        <span className={"workspace-engine " + (engineMode === "gemini" || engineMode === "openai" ? "engine-ready" : "engine-pending")}>
           ● {engineMode === "gemini" ? "Gemini AI 분석 활성화" : engineMode === "openai" ? "OpenAI 분석 활성화" : engineMode === "extractive" ? "텍스트 추출 모드" : "API 상태 확인 중"}
         </span>
+        <button type="button" className="mobile-sign-out" onClick={() => void db().auth.signOut()}>로그아웃</button>
       </header>
-      <div className="body">
+      <div className="body" id="workspace-content" tabIndex={-1}>
         {engineMode === "gemini" && <div className="provider-notice"><b>Gemini 무료 티어 데이터 안내</b><p>현재 설정에서는 업로드한 논문에서 추출한 텍스트와 AI 응답이 Google 제품 개선에 사용되거나 사람 검토자가 처리할 수 있습니다. 공개·비기밀 논문만 업로드하고, 사내 미공개 자료나 개인정보가 포함된 문서는 올리지 마세요.</p></div>}
+        <BetaGettingStarted userId={user.id} paperCount={visiblePapers.length}
+          readyCount={visiblePapers.filter(paper => paper.status === "completed").length}
+          busy={busy} onChoosePdf={choosePdfFile}/>
         <div className="heading">
-          <div><p className="eyebrow">RESEARCH LIBRARY</p><h1>나의 연구 라이브러리</h1><p>금융 논문을 수집하고 근거 기반 인사이트를 축적하세요.</p></div>
-          <label className="upload-button">＋ 논문 추가
-            <input type="file" accept=".pdf,application/pdf" hidden disabled={busy} onChange={event => void upload(event.target.files?.[0])}/>
-          </label>
+          <div><p className="eyebrow">RESEARCH LIBRARY</p><h1 id="paper-library-heading">나의 연구 라이브러리</h1><p>금융 논문을 수집하고 근거 기반 인사이트를 축적하세요.</p></div>
+          <button type="button" className="upload-button" disabled={busy} onClick={choosePdfFile}>＋ 논문 추가</button>
+          <input ref={uploadInputRef} type="file" accept=".pdf,application/pdf" hidden
+            aria-label="분석할 PDF 파일 선택" disabled={busy}
+            onChange={event => {
+              const file = event.currentTarget.files?.[0];
+              event.currentTarget.value = ""; // allow re-selecting the same PDF
+              void upload(file);
+            }}/>
         </div>
         <div className="stats">
-          <div><p>전체 논문</p><strong>{papers.length.toString().padStart(2, "0")}</strong><small>보관 중인 논문</small></div>
-          <div><p>완료된 분석</p><strong>{papers.filter(paper => paper.status === "completed").length.toString().padStart(2, "0")}</strong><small>근거 기반 결과</small></div>
+          <div><p>전체 논문</p><strong>{visiblePapers.length.toString().padStart(2, "0")}</strong><small>보관 중인 논문</small></div>
+          <div><p>완료된 분석</p><strong>{visiblePapers.filter(paper => paper.status === "completed").length.toString().padStart(2, "0")}</strong><small>근거 기반 결과</small></div>
           <div className="highlight"><p>RESEARCH INTELLIGENCE</p><h2>From papers<br/>to perspectives.</h2></div>
         </div>
-        <ResearchLibrary papers={papers} busy={busy} onOpen={open} onResume={resumeAnalysis} />
-        {message && <div className="message" role="status">{message}</div>}
+        {libraryLoading && <p role="status" className="library-loading">논문 목록을 불러오는 중입니다...</p>}
+        {libraryError && <div className="library-recovery no-print" role="alert">
+          <p>{libraryError}</p>
+          <button type="button" disabled={libraryLoading} onClick={() => void refresh()}>목록 다시 불러오기</button>
+        </div>}
+        <ResearchLibrary papers={visiblePapers} busy={busy} onOpen={open} onResume={resumeAnalysis} />
+        {message && <div className="message" role="status" aria-live="polite">{message}</div>}
+        {uploadIssue && <div className="recovery-actions no-print" aria-label="업로드 오류 복구">
+          <button type="button" disabled={libraryLoading} onClick={() => void refresh()}>저장된 논문 목록 확인</button>
+          <button type="button" disabled={busy} onClick={choosePdfFile}>PDF 다시 선택</button>
+        </div>}
       </div>
     </div>
 
-    {selected && <div className="overlay" onClick={closeDetails}>
+    {selected && selectedOwnerId === user.id && <div className="overlay" onClick={closeDetails}>
       <section className="details" role="dialog" aria-modal="true" aria-labelledby="paper-detail-title" tabIndex={-1} ref={detailsRef}
         onClick={event => event.stopPropagation()}>
         <div className="detail-toolbar no-print">

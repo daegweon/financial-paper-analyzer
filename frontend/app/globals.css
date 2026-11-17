@@ -339,3 +339,27 @@ button.evidence-source-link:focus-visible {
 
 .source-pdf-actions { flex-wrap: wrap; }
 .source-pdf-error { color: #99442f; flex-basis: 100%; line-height: 1.5; overflow-wrap: anywhere; }
+
+
+/* Beta accessibility, recovery actions and mobile sign out. */
+.skip-link{position:fixed;left:12px;top:-100px;z-index:200;padding:12px 16px;background:#fff;color:#154f52;border:3px solid #178484;border-radius:8px}
+.skip-link:focus{top:12px}
+.content header.workspace-header{display:flex;align-items:center;flex-wrap:wrap;gap:10px;min-height:70px;height:auto;padding:16px 5%}
+.content header.workspace-header .workspace-breadcrumbs{float:none;margin-right:auto;color:#536b79}
+.content header.workspace-header .workspace-engine{float:none;text-align:right;color:#42796e;white-space:normal}
+.mobile-sign-out{display:none}
+.upload-button{min-height:44px;cursor:pointer}
+.upload-button:focus-visible,.mobile-sign-out:focus-visible,.recovery-actions button:focus-visible,.library-recovery button:focus-visible,.workspace aside button:focus-visible{outline:3px solid #166e86;outline-offset:3px}
+.library-loading{font-size:12px;line-height:1.65;color:#506c7a;margin:12px 0}
+.library-recovery{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0;padding:12px 15px;background:#fff9ed;border:1px solid #ecd3a9;border-radius:9px;color:#76582a}
+.library-recovery p{font-size:12px;line-height:1.7;margin:0;flex:1 1 230px}
+.library-recovery button,.recovery-actions button{min-height:44px;padding:10px 12px;border:1px solid #b2d4ce;background:#fff;border-radius:8px;color:#196d63;font-size:12px;font-weight:700;cursor:pointer}
+.recovery-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+@media(max-width:620px){
+  .content header.workspace-header{padding:12px 18px;min-height:64px}
+  .content header.workspace-header .workspace-breadcrumbs{flex:1 1 auto}
+  .content header.workspace-header .workspace-engine{order:3;text-align:left;flex:1 1 100%;font-size:11px}
+  .mobile-sign-out{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:70px;padding:10px;border:1px solid #c8dbdf;border-radius:7px;background:#fff;color:#315e65;font-size:12px;font-weight:700;cursor:pointer}
+  .upload-button{width:100%;max-width:100%}
+}
+@media(prefers-reduced-motion:reduce){.skip-link{scroll-behavior:auto}}

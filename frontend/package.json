@@ -6,12 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "tsc --noEmit && npm run test:auth && npm run test:analysis && npm run test:junior && npm run test:workflow && npm run test:pdf",
+    "lint": "tsc --noEmit && npm run test:auth && npm run test:analysis && npm run test:junior && npm run test:workflow && npm run test:pdf && npm run test:beta",
     "test:auth": "node --experimental-strip-types --test tests/auth-feedback.test.mjs",
     "test:analysis": "node --experimental-strip-types --test tests/analysis-job.test.mjs",
     "test:junior": "node --experimental-strip-types --test tests/junior-guide.test.mjs tests/junior-visuals.test.mjs",
     "test:workflow": "node --experimental-strip-types --test tests/junior-workflow.test.mjs tests/junior-learning.test.mjs",
     "test:pdf": "node --experimental-strip-types --test tests/pdf-viewer.test.mjs",
+    "test:beta": "node --experimental-strip-types --test tests/beta-ux.test.mjs",
     "prebuild": "npm run lint"
   },
   "dependencies": {
