@@ -1,5 +1,16 @@
 # PaperSignal — Project State / Session Handoff
 
+## 2026-11-17 — 3단계 독립 Supabase 프로젝트 구축 완료 (새 체크포인트)
+
+- 사용자 승인 후 별도 Supabase 프로젝트 `papersignal-benchmark` 생성: ID `cstaglfqviojdxisckjm`, 조직 `eevee`, 서울 리전, 생성 견적 월 $0, 상태 `ACTIVE_HEALTHY`.
+- 운영 저장소 SQL 9개 + 전용 private JSON artifact bucket 1개 마이그레이션 적용. 신규 `papers`/`analyses`/`analysis_jobs`/`analysis_job_checkpoints` 모두 RLS ON, 사용자/논문/분석/Job 0건, PDF/결과 버킷 비공개.
+- Worker RPC 4개는 `anon`/`authenticated` 실행 불가, `service_role`만 허용함을 실측 확인. Security Advisor 0건, Performance Advisor는 빈 DB 미사용 인덱스 11개 INFO.
+- Railway 실험 서비스 `papersignal-table-benchmark`의 `SUPABASE_URL` 및 publishable key를 신규 QA 프로젝트로 변경. 운영 서비스 역할 키를 사용하지 않도록 `SUPABASE_SERVICE_ROLE_KEY`를 무효 플레이스홀더로 교체. `BENCHMARK_ALLOWED_SUPABASE_HOST=cstaglfqviojdxisckjm.supabase.co`, `BENCHMARK_ENABLE_ISOLATED_WRITES=false`로 쓰기 계속 차단.
+- **사용자 조치 필요:** 새 Supabase 프로젝트 Secret Key를 Railway `papersignal-table-benchmark → Variables → SUPABASE_SERVICE_ROLE_KEY`에 직접 입력. 키는 대화로 보내지 않음. 현재 도구는 새 Secret Key 값을 조회할 수 없음.
+- 이후 전용 서비스 재배포, 12편 SHA 사전 검증 재실행, 1편 Gemini E2E 스모크, 12편 v6.4.2 전체 기준선 순서. Q0/Q1/Q2/P0 모두 BLOCKED.
+- 운영 API/Worker, 운영 Supabase 사용자/논문/분석 데이터 변경 없음.
+- 검증 근거: `docs/BASELINE_SUPABASE_STAGE3_2026-11-17.md`.
+
 ## 2026-11-17 — Stage 2 complete: 12/12 locked PDF preflight, production writes prohibited
 
 - Railway experiment runner `experiment/v642-full-pipeline-baseline-runner-2026-11-17`, code SHA `fc8d95ee95691750bdbe8db4708eaa79391327f3` (not production API/Worker).
