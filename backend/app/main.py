@@ -2646,6 +2646,8 @@ async def health() -> dict[str, Any]:
         "fallback_model": GEMINI_FALLBACK_MODEL if provider == "gemini" else None,
         "free_tier_data_notice": provider == "gemini",
         "analysis_version": ANALYSIS_VERSION,
+        # Deployment-readiness signal: does not expose the key itself.
+        "queue_write_mode": "service_role" if SERVICE_ROLE_KEY else "unavailable",
     }
 
 

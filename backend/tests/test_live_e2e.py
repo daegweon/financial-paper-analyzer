@@ -23,8 +23,42 @@ ENABLED = os.getenv("PAPERSIGNAL_E2E_ENABLED") == "1"
 def _required(name: str) -> str:
     value = os.getenv(name, "").strip()
     if not value:
-        pytest.skip(f"Missing opt-in E2E configuration: {name}")
+        # An explicitly started live E2E must fail, not silently pass as skipped.
+        pytest.fail(f"Required live E2E configuration missing: {name}")
     return value
+
+
+LIVE_SUPABASE_ORIGIN = "https://hwmtayrecsfxernhssro.supabase.co"
+LIVE_API_ORIGIN = "https://papersignal-api-production.up.railway.app"
+LIVE_E2E_ACKNOWLEDGMENT = "RUN_SYNTHETIC_LIVE_E2E"
+
+
+def _validate_live_e2e_target(
+    supabase_url: str, api_url: str, acknowledgment: str
+) -> None:
+    """Reject unreviewed targets before any user or PDF can be created."""
+    if acknowledgment != LIVE_E2E_ACKNOWLEDGMENT:
+        raise RuntimeError("Live E2E requires explicit synthetic-test approval.")
+    if supabase_url != LIVE_SUPABASE_ORIGIN or api_url != LIVE_API_ORIGIN:
+        raise RuntimeError(
+            "Live E2E target is not the reviewed Supabase/Railway project. "
+            "No users or files have been created."
+        )
+
+
+def _assert_server_ready_for_live_e2e(api: httpx.Client) -> None:
+    """Fail before creating disposable accounts unless the new API is live."""
+    try:
+        response = api.get("/health")
+        response.raise_for_status()
+        body = response.json()
+    except (httpx.HTTPError, ValueError) as error:
+        raise RuntimeError("Live API health preflight failed.") from error
+    if not isinstance(body, dict) or body.get("queue_write_mode") != "service_role":
+        raise RuntimeError(
+            "Live API has not confirmed the server-owned analysis queue release. "
+            "Do not create live E2E users or apply the database grants migration."
+        )
 
 
 def _make_pdf() -> bytes:
@@ -128,6 +162,63 @@ def _response(status_code: int, payload: dict | None = None) -> httpx.Response:
     )
 
 
+
+def test_live_e2e_target_requires_explicit_acknowledgment():
+    with pytest.raises(RuntimeError, match="explicit synthetic-test approval"):
+        _validate_live_e2e_target(
+            LIVE_SUPABASE_ORIGIN, LIVE_API_ORIGIN, ""
+        )
+    _validate_live_e2e_target(
+        LIVE_SUPABASE_ORIGIN, LIVE_API_ORIGIN, LIVE_E2E_ACKNOWLEDGMENT
+    )
+
+
+@pytest.mark.parametrize(
+    "supabase_url,api_url",
+    [
+        ("http://hwmtayrecsfxernhssro.supabase.co", LIVE_API_ORIGIN),
+        (LIVE_SUPABASE_ORIGIN + ".example.org", LIVE_API_ORIGIN),
+        (LIVE_SUPABASE_ORIGIN, LIVE_API_ORIGIN + "/api"),
+        (LIVE_SUPABASE_ORIGIN, "https://evil.railway.app"),
+        ("https://staging.supabase.co", LIVE_API_ORIGIN),
+    ],
+)
+def test_live_e2e_refuses_unauthorized_targets(supabase_url, api_url):
+    with pytest.raises(RuntimeError, match="not the reviewed"):
+        _validate_live_e2e_target(
+            supabase_url, api_url, LIVE_E2E_ACKNOWLEDGMENT
+        )
+
+
+def test_live_e2e_health_requires_server_owned_queue():
+    class FakeClient:
+        def __init__(self, payload, status=200):
+            self.payload = payload
+            self.status = status
+
+        def get(self, path):
+            assert path == "/health"
+            return httpx.Response(
+                self.status, json=self.payload,
+                request=httpx.Request("GET", LIVE_API_ORIGIN + path),
+            )
+
+    _assert_server_ready_for_live_e2e(
+        FakeClient({"status": "ok", "queue_write_mode": "service_role"})
+    )
+    with pytest.raises(RuntimeError, match="has not confirmed"):
+        _assert_server_ready_for_live_e2e(FakeClient({"status": "ok"}))
+    with pytest.raises(RuntimeError, match="health preflight failed"):
+        _assert_server_ready_for_live_e2e(FakeClient({"detail": "Unavailable"}, 503))
+
+
+def test_missing_explicit_live_e2e_configuration_fails_instead_of_skipping(monkeypatch):
+    monkeypatch.delenv("PAPERSIGNAL_QA_MISSING", raising=False)
+    with pytest.raises(BaseException) as error:
+        _required("PAPERSIGNAL_QA_MISSING")
+    assert "Required live E2E configuration missing" in str(error.value)
+
+
 def test_admin_headers_keep_secret_key_out_of_bearer_header():
     headers = _admin_headers("sb_secret_test", "sb_publishable_test")
     assert headers["apikey"] == "sb_secret_test"
@@ -213,6 +304,9 @@ def test_live_auth_upload_analysis_and_cross_user_isolation():
     service_key = _required("SUPABASE_SERVICE_ROLE_KEY")
     api_url = _required("PAPERSIGNAL_API_URL").rstrip("/")
     timeout_seconds = int(os.getenv("E2E_TIMEOUT_SECONDS", "900"))
+    _validate_live_e2e_target(
+        supabase_url, api_url, os.getenv("PAPERSIGNAL_E2E_APPROVED", "")
+    )
 
     pdf = _make_pdf()
     admin = _admin_headers(service_key, publishable_key)
@@ -232,6 +326,8 @@ def test_live_auth_upload_analysis_and_cross_user_isolation():
     with httpx.Client(base_url=supabase_url, timeout=45) as supabase, httpx.Client(
         base_url=api_url, timeout=45
     ) as api:
+        # The server must be upgraded before any live E2E mutation can occur.
+        _assert_server_ready_for_live_e2e(api)
         try:
             # Provision isolated users without disabling email confirmation.
             # Admin creation marks only these disposable QA users as confirmed.

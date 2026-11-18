@@ -4,6 +4,25 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      e2e_target:
+        description: "Select none for CI-only checks; production requires separately reviewed QA."
+        type: choice
+        required: true
+        default: none
+        options:
+          - none
+          - production
+      confirm_live_e2e:
+        description: "I approve creation and deletion of two synthetic users/PDF on the production project."
+        type: boolean
+        required: true
+        default: false
+      acknowledgment:
+        description: "Type RUN_SYNTHETIC_LIVE_E2E to allow the production QA test."
+        type: string
+        required: false
+        default: ""
 permissions:
   contents: read
 jobs:
@@ -96,11 +115,19 @@ jobs:
           docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/tests/verify_beta_write_isolation.sql
 
   live-e2e:
-    if: github.event_name == 'workflow_dispatch'
+    # Secrets and production mutations are allowed ONLY by explicit opt-in on
+    # the protected main branch. All PR and ordinary dispatch runs skip this job.
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      inputs.e2e_target == 'production' &&
+      inputs.confirm_live_e2e == true &&
+      inputs.acknowledgment == 'RUN_SYNTHETIC_LIVE_E2E'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
       PAPERSIGNAL_E2E_ENABLED: "1"
+      PAPERSIGNAL_E2E_APPROVED: RUN_SYNTHETIC_LIVE_E2E
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -114,4 +141,18 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r backend/requirements-dev.txt
+      - name: Verify explicit live E2E approval and strict target allowlist
+        run: |
+          python - <<'PY'
+          import os
+          import sys
+          sys.path.insert(0, 'backend')
+          from tests.test_live_e2e import _validate_live_e2e_target, LIVE_E2E_ACKNOWLEDGMENT
+          _validate_live_e2e_target(
+              os.getenv("SUPABASE_URL", "").rstrip("/"),
+              os.getenv("PAPERSIGNAL_API_URL", "").rstrip("/"),
+              os.getenv("PAPERSIGNAL_E2E_APPROVED", ""),
+          )
+          print("Live E2E target/approval preflight accepted. No private values printed.")
+          PY
       - run: cd backend && pytest -q tests/test_live_e2e.py

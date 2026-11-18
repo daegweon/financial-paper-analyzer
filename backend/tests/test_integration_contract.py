@@ -72,6 +72,20 @@ def test_unauthed_api_request_is_denied(monkeypatch):
     assert TestClient(module.app).get("/health").json()["status"] == "ok"
 
 
+
+def test_health_reports_server_queue_write_readiness_without_exposing_secrets(monkeypatch):
+    client = TestClient(module.app)
+    monkeypatch.setattr(module, "SERVICE_ROLE_KEY", "")
+    no_key = client.get("/health")
+    assert no_key.status_code == 200
+    assert no_key.json()["queue_write_mode"] == "unavailable"
+    monkeypatch.setattr(module, "SERVICE_ROLE_KEY", "sb_secret_qa_only")
+    ready = client.get("/health")
+    assert ready.status_code == 200
+    assert ready.json()["queue_write_mode"] == "service_role"
+    assert "sb_secret_qa_only" not in str(ready.json())
+
+
 def test_authenticated_request_queues_background_job(monkeypatch):
     user_id = "11111111-1111-4111-8111-111111111111"
     paper_id = "22222222-2222-4222-8222-222222222222"
