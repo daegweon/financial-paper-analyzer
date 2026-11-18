@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-11-19",
+  "repository": "daegweon/financial-paper-analyzer",
+  "source_of_truth": "docs/PROJECT_PROGRESS.json",
+  "release_candidate": {
+    "branch": "release/beta-candidate-20261119",
+    "pull_request": 18,
+    "base": "main",
+    "review_state": "draft",
+    "last_independently_verified_sha": "5463226c62c17e9286170e20142b23c8e34f5bd9"
+  },
+  "methodology": "Weighted engineering milestone completion, NOT launch readiness. Each workstream has maximum points; achieved points sum to overall_percent. Increase only after verified evidence.",
+  "overall_percent": 84,
+  "workstreams": [
+    {
+      "id": "core_platform",
+      "label": "핵심 플랫폼·사용자 흐름",
+      "weight": 25,
+      "earned": 23,
+      "evidence": [
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44404002239"
+      ],
+      "remaining": "운영 계정 전체 사용자 흐름 확인"
+    },
+    {
+      "id": "finance_engine",
+      "label": "금융논문 분석 기반 엔진",
+      "weight": 15,
+      "earned": 13,
+      "evidence": [
+        "benchmark/results/scorecard-v6.3.9-2026-11-16.md"
+      ],
+      "remaining": "18건 독립 근거 검토·Gemini 비용·쿼터 방안; 엔진 개선 동결"
+    },
+    {
+      "id": "junior_learning",
+      "label": "주니어 학습·원문 PDF",
+      "weight": 20,
+      "earned": 18,
+      "evidence": [
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44403257361"
+      ],
+      "remaining": "실제 모바일 PDF·접근성 검증"
+    },
+    {
+      "id": "privacy_integrity",
+      "label": "데이터 격리·결과 무결성",
+      "weight": 15,
+      "earned": 11,
+      "evidence": [
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44369654205"
+      ],
+      "remaining": "신규 API 운영 확인 후 보안 권한 마이그레이션; 실제 HTTP 2계정 격리"
+    },
+    {
+      "id": "automated_ci",
+      "label": "자동 회귀·CI 검사",
+      "weight": 15,
+      "earned": 15,
+      "evidence": [
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44404002239"
+      ],
+      "remaining": "매 PR 회귀 테스트 유지"
+    },
+    {
+      "id": "beta_operations",
+      "label": "실제 E2E·베타 출시 준비",
+      "weight": 10,
+      "earned": 4,
+      "evidence": [
+        "https://github.com/daegweon/financial-paper-analyzer/pull/18"
+      ],
+      "remaining": "실제 OAuth·SMTP·원본 PDF·2계정 E2E·릴리스·롤백"
+    }
+  ],
+  "release_gates": [
+    {
+      "id": "backend_frontend_ci",
+      "label": "백엔드·프런트엔드 GitHub Actions",
+      "status": "passed",
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44404002239"
+    },
+    {
+      "id": "synthetic_browser",
+      "label": "합성 인증 브라우저 24/24 E2E",
+      "status": "passed",
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44403257361"
+    },
+    {
+      "id": "postgres_policy",
+      "label": "격리 PostgreSQL 보안 권한 테스트",
+      "status": "passed",
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44369654205"
+    },
+    {
+      "id": "vercel_preview",
+      "label": "출시 후보 Vercel Preview READY",
+      "status": "passed",
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/pull/18"
+    },
+    {
+      "id": "live_auth_pdf",
+      "label": "실제 로그인·PDF·2계정 HTTP 격리",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "api_migration",
+      "label": "신규 API 배포 및 DB 권한 제한",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "external_smtp",
+      "label": "외부 이메일 가입·SMTP",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "native_mobile",
+      "label": "iOS Safari·Android 실기기",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "staged_prod_rollback",
+      "label": "불변 프로덕션 스테이징·롤백",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "research_audit_budget",
+      "label": "인용 인간 감수·AI 비용·사용량 계획",
+      "status": "pending",
+      "evidence": null
+    }
+  ],
+  "next_action": "Review and deploy server-only API before database privilege revocation; verify its health queue_write_mode, then explicitly approve and execute disposable-user live E2E. Preserve existing data.",
+  "response_protocol": "Every substantial PaperSignal response starts with overall_percent and passed/total release gates from this file. Explain that percentage estimates engineering completion, not live launch permission.",
+  "invariants": [
+    "Analysis engine frozen",
+    "No automatic live E2E or user mutations from PR jobs",
+    "No DB migration before verified new API",
+    "No production promotion without real E2E",
+    "Do not raise GitHub Actions $1 budget automatically",
+    "Never delete historical user PDFs/analyses"
+  ],
+  "history": [
+    {
+      "date": "2026-11-19",
+      "percent": 84,
+      "evidence": "Passing CI 24/24 browser and PostgreSQL but live E2E and production security migration still pending"
+    }
+  ]
+}
