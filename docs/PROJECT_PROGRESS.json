@@ -8,7 +8,8 @@
     "pull_request": 18,
     "base": "main",
     "review_state": "draft",
-    "last_independently_verified_sha": "5463226c62c17e9286170e20142b23c8e34f5bd9"
+    "last_independently_verified_sha": "54669ddae533e1ffe2b1062c6b3b7b309e54b73c",
+    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44411991617"
   },
   "methodology": "Weighted engineering milestone completion, NOT launch readiness. Each workstream has maximum points; achieved points sum to overall_percent. Increase only after verified evidence.",
   "overall_percent": 84,
@@ -79,19 +80,19 @@
       "id": "backend_frontend_ci",
       "label": "백엔드·프런트엔드 GitHub Actions",
       "status": "passed",
-      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44404002239"
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44411991617"
     },
     {
       "id": "synthetic_browser",
       "label": "합성 인증 브라우저 24/24 E2E",
       "status": "passed",
-      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44403257361"
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44411991617"
     },
     {
       "id": "postgres_policy",
       "label": "격리 PostgreSQL 보안 권한 테스트",
       "status": "passed",
-      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44369654205"
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44411991617"
     },
     {
       "id": "vercel_preview",
@@ -151,6 +152,11 @@
       "date": "2026-11-19",
       "percent": 84,
       "evidence": "Passing CI 24/24 browser and PostgreSQL but live E2E and production security migration still pending"
+    },
+    {
+      "date": "2026-11-19",
+      "percent": 84,
+      "evidence": "Validated PR #18 commit 54669ddae533e1ffe2b1062c6b3b7b309e54b73c: GitHub CI #44411991617 success, 112 backend passed and 1 skipped, 75 frontend, 24/24 Playwright, isolated PostgreSQL and progress validator 84% / 4 of 10."
     }
   ]
 }

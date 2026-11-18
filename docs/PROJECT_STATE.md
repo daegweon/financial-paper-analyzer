@@ -158,3 +158,8 @@ The account reached Vercel Hobby's daily 100-deployment API limit (HTTP 402 `api
 - Manual `workflow_dispatch` live E2E is now limited to main, approved target `production`, boolean consent and the exact acknowledgment `RUN_SYNTHETIC_LIVE_E2E`. New Python preflight refuses missing configuration or any unexpected Supabase/Railway URL; before creating test users it demands `/health.queue_write_mode == service_role`.
 - Candidate API `/health` includes a non-secret `queue_write_mode` readiness field. **Running production API is not yet confirmed to support this field**, so actual authenticated E2E remains PENDING and the staged database grant change MUST NOT be applied first.
 - Rejected automatic account creation, Production deployment, Worker change, real PDF mutation or DB schema/grant changes in this development milestone. See `docs/LIVE_E2E_SAFE_HANDOFF_2026-11-19.md`.
+
+### 2026-11-19 — Green CI proof for the protected live-E2E guard and progress ledger
+
+- Draft PR #18 code commit `54669ddae533e1ffe2b1062c6b3b7b309e54b73c` independently verified in GitHub Actions: https://github.com/daegweon/financial-paper-analyzer/actions/runs/44411991617 . Python **112 passed / 1 skipped** (real live E2E intentionally skipped), frontend **75/75**, browser Playwright **24/24**, isolated PostgreSQL db-policy **PASS**. New progress validator printed **PROJECT_PROGRESS_VALIDATED 84% engineering, 4/10 release gates**.
+- Verified Vercel feature Preview READY on this commit; production remains on older main and old Railway API/Worker, so new `/health.queue_write_mode` is NOT yet claimed live. Live Auth/PDF/E2E, SMTP, migration, device and rollback gates remain PENDING.

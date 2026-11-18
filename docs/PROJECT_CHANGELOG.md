@@ -1,4 +1,5 @@
 ## 2026-11-19 — Reliable cross-session progress and opt-in live E2E
+- GitHub Actions validated the new live-E2E preflight/consent and progress ledger at commit `54669ddae533e1ffe2b1062c6b3b7b309e54b73c` (run #44411991617): 112 backend tests passed (1 skipped), 75 frontend, 24/24 browser, isolated PostgreSQL PASS; progress ledger validator confirms 84% engineering and 4/10 release gates.
 - Added canonical `docs/PROJECT_PROGRESS.json` for 84% weighted engineering completion and 4/10 verified beta gates; root `AGENTS.md` tells new sessions to resume from these files.
 - Added `scripts/check-project-progress.mjs` validation to existing frontend GitHub CI. Engineering progress cannot drift from weighted milestones without failing CI.
 - Introduced explicit main-only manual workflow dispatch authorization with production target and exact consent acknowledgment. Python E2E now fails on missing config and refuses non-reviewed destinations before any test user is created.
