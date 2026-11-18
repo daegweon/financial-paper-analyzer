@@ -36,6 +36,35 @@ jobs:
       - run: npm run lint
       - run: npm run build
 
+  browser-qa:
+    name: Browser QA — local synthetic accounts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      PAPERSIGNAL_BROWSER_QA: "1"
+      PAPERSIGNAL_BROWSER_QA_URL: http://localhost:3000
+      PAPERSIGNAL_BROWSER_QA_MOCKS: "1"
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_local_qa_only
+      NEXT_PUBLIC_API_URL: http://127.0.0.1:54322
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "24"
+      - name: Install pinned app and browser dependencies
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium webkit
+      - name: Run 15 browser workflows (localhost synthetic data only)
+        run: bash scripts/test-browser-ci.sh
+
   db-policy:
     runs-on: ubuntu-latest
     timeout-minutes: 12

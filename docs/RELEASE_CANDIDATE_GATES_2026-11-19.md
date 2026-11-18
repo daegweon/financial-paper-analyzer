@@ -37,3 +37,7 @@ Release candidate: https://github.com/daegweon/financial-paper-analyzer/pull/18 
 ## Decision
 
 **Technical candidate assembled, not yet beta launch-ready.** Automated gates pass, real auth/Storage E2E and release-time server/database sequencing remain pending.
+
+## Browser smoke as an automatic PR gate — 2026-11-19
+
+The release candidate now runs 15 synthetic, localhost-only Playwright scenarios on three browser profiles in a dedicated `browser-qa` GitHub Actions job; first CI execution is pending. See `docs/BETA_BROWSER_CI_2026-11-19.md`. This does not satisfy live authentication, PDF Storage or device release gates.
