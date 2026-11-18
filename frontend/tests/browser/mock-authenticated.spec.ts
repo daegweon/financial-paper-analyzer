@@ -147,4 +147,73 @@ test.describe("isolated synthetic Supabase browser flows", () => {
     await expect(page.locator('[data-paper-id="'+paperB+'"]')).toBeVisible();
     await expect(page.locator('[data-paper-id="'+paperA+'"]')).toHaveCount(0);
   });
+  test("junior study progress stays with the same user after reopen, never another user", async ({page}) => {
+    await mockSupabase(page);
+    await login(page, "qa-a@example.invalid");
+    await page.locator('[data-paper-id="' + paperA + '"]').click();
+    const dialog = page.locator("section.details[role=dialog]");
+    const learning = dialog.locator('section[aria-labelledby="study-route-heading"]');
+    await expect(learning).toBeVisible();
+    await expect(learning.getByText("0 / 4 단계", { exact: true })).toBeVisible();
+    await expect(learning.locator('article input[type="checkbox"]')).toHaveCount(4);
+    await learning.locator('article input[type="checkbox"]').first().check();
+    await expect(learning.getByText("1 / 4 단계", { exact: true })).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    await page.locator('[data-paper-id="' + paperA + '"]').click();
+    await expect(dialog.locator('section[aria-labelledby="study-route-heading"]')
+      .getByText("1 / 4 단계", { exact: true })).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await page.getByRole("button", {name:"로그아웃",exact:true}).first().click();
+    await expect(page.getByRole("heading", {name:"다시 만나서 반갑습니다."})).toBeVisible();
+    await login(page, "qa-b@example.invalid");
+    await page.locator('[data-paper-id="' + paperB + '"]').click();
+    const otherLearning = page.locator('section[aria-labelledby="study-route-heading"]');
+    await expect(otherLearning.getByText("0 / 4 단계", { exact: true })).toBeVisible();
+    await expect(otherLearning.locator('article input[type="checkbox"]').first()).not.toBeChecked();
+  });
+
+  test("junior role-specific quiz grades explanations and separates role progress", async ({page}) => {
+    await mockSupabase(page);
+    await login(page, "qa-a@example.invalid");
+    await page.locator('[data-paper-id="' + paperA + '"]').click();
+    const dialog = page.locator("section.details[role=dialog]");
+    const workplace = dialog.locator('section[aria-label="주니어를 위한 금융모형과 업무 활용 학습"]');
+    const select = workplace.getByRole("combobox", {name:"관심 직무"});
+    const learning = workplace.locator('section[aria-labelledby="study-route-heading"]');
+    await expect(select).toHaveValue("wealth");
+    await learning.locator('article input[type="checkbox"]').first().check();
+    await expect(learning.getByText("1 / 4 단계", {exact:true})).toBeVisible();
+
+    await select.selectOption("technology");
+    await expect(learning.getByText("0 / 4 단계", {exact:true})).toBeVisible();
+    await expect(learning.locator("fieldset")).toHaveCount(4);
+    for (let i = 0; i < 4; i++) {
+      await learning.locator("fieldset").nth(i).locator('input[type="radio"]').first().check();
+    }
+    await learning.getByRole("button", {name:"채점하고 해설 보기"}).click();
+    await expect(learning.getByText(/이번 점검: \d \/ 4점/)).toBeVisible();
+
+    await select.selectOption("wealth");
+    await expect(learning.getByText("1 / 4 단계", {exact:true})).toBeVisible();
+    await select.selectOption("technology");
+    await expect(learning.getByText("0 / 4 단계", {exact:true})).toBeVisible();
+    await learning.getByRole("button", {name:"이 직무의 학습 기록 초기화"}).click();
+    await expect(learning.getByText("이 논문과 직무의 학습 기록을 초기화했습니다.")).toBeVisible();
+  });
+
+  test("junior study source-page action opens the original cited PDF page", async ({page}) => {
+    await mockSupabase(page);
+    await login(page, "qa-a@example.invalid");
+    await page.locator('[data-paper-id="' + paperA + '"]').click();
+    const dialog = page.locator("section.details[role=dialog]");
+    const learning = dialog.locator('section[aria-labelledby="study-route-heading"]');
+    const sourceAction = learning.getByRole("button", {name:"원문 페이지 열기"}).first();
+    await expect(sourceAction).toBeEnabled();
+    await sourceAction.click();
+    await expect(dialog.locator("iframe.inline-pdf-frame")).toHaveAttribute("src", /#page=2$/);
+  });
+
 });
