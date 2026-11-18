@@ -62,7 +62,7 @@ jobs:
         run: |
           npm install --no-audit --no-fund
           npx playwright install --with-deps chromium webkit
-      - name: Run 15 browser workflows (localhost synthetic data only)
+      - name: Run isolated Chromium/WebKit browser workflows
         run: bash scripts/test-browser-ci.sh
 
   db-policy:

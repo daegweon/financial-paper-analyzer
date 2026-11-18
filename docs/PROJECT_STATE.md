@@ -143,3 +143,10 @@ The account reached Vercel Hobby's daily 100-deployment API limit (HTTP 402 `api
 - Staged migration supabase/migrations/20261117215315_beta_server_owned_result_writes.sql must be applied ONLY AFTER the new API server-role job creation flow is deployed and verified. Existing live migration history versions do not match the repository's earlier baseline filenames. Never execute a blanket db push.
 - Browser QA 15/15 tests passed in local isolated Chromium/WebKit synthetic scenarios, not live OAuth or private PDF. The actual two-user authenticated HTTP E2E, external SMTP signup, Safari/Android devices, source PDF rendering, 50-minute signed-link refresh and rollback rehearsal remain PENDING.
 - Keep financial analysis engine improvements frozen. Product completion and evidence-grounded junior learning remain priorities. See docs/RELEASE_CANDIDATE_GATES_2026-11-19.md for current gate matrix; earlier snapshot numbers and references to #12 are historical only.
+
+## 2026-11-19 — Automated beginner study-path browser regression gate
+
+- Release candidate PR #18 automatically executes 24 Playwright UI scenarios as a separate GitHub `browser-qa` job: 8 each on desktop Chromium, Android-emulated Chromium and iPhone-emulated WebKit, using strict localhost-only synthetic Supabase routes.
+- Added junior learning-path acceptance tests: four-step progress persists when reopening A's paper, account B remains isolated, role changes preserve independent progress, four-question quiz can grade and reset, and study-path source-page navigation opens the cited original PDF under mock conditions.
+- Verified GitHub Actions run https://github.com/daegweon/financial-paper-analyzer/actions/runs/44403257361 : **24/24 PASS**; Python, frontend and isolated PostgreSQL authorization jobs pass; opt-in live E2E skipped. Prior first CI 15/15 pass at run #44402413548.
+- Live OAuth/SMTP, signed private PDF content, real mobile devices and service-first security-migration rollout remain **PENDING**. The engine and Production were not modified.

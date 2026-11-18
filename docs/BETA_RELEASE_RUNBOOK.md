@@ -1,5 +1,7 @@
 # PaperSignal beta release gate
 
+**Current checkpoint (2026-11-19):** GitHub Actions runner incident below is RESOLVED; the account budget had been $0 with usage blocked and the owner raised it to $1. Current PR #18 automatic CI includes api, frontend, disposable PostgreSQL db-policy, and **24/24 Playwright browser QA**: https://github.com/daegweon/financial-paper-analyzer/actions/runs/44403257361 . Real authenticated E2E, external SMTP, private source PDF and service-first DB migration remain PENDING; earlier incident text is historical.
+
 ## Current automated verification
 
 - Backend unit and contract suite: run with `cd backend && pytest`.

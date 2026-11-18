@@ -13,7 +13,7 @@ Release candidate: https://github.com/daegweon/financial-paper-analyzer/pull/18 
 | Candidate Vercel Preview production build | READY | Feature-preview deployment, not Production or authenticated E2E |
 | Core Railway API and Worker current deployment | Online | Production health overview, 0 failures in recent 24h; still old code, not candidate |
 | Supabase advisors | No ERROR or CRITICAL | Health 0 findings, security one accepted Leaked Password Protection WARN (Free-tier limitation) |
-| Local isolated browser UI tests | 15/15 PASS | Chromium desktop, Android-emulated Chromium, iPhone-emulated WebKit with synthetic Supabase responses, not real accounts |
+| GitHub browser QA | 24/24 PASS | https://github.com/daegweon/financial-paper-analyzer/actions/runs/44403257361 — desktop Chromium, Android-emulated Chromium, iPhone-emulated WebKit; synthetic users only, not real auth |
 
 ## Mandatory pending live gates (not passed)
 
@@ -40,4 +40,4 @@ Release candidate: https://github.com/daegweon/financial-paper-analyzer/pull/18 
 
 ## Browser smoke as an automatic PR gate — 2026-11-19
 
-The release candidate now runs 15 synthetic, localhost-only Playwright scenarios on three browser profiles in a dedicated `browser-qa` GitHub Actions job; first CI execution is pending. See `docs/BETA_BROWSER_CI_2026-11-19.md`. This does not satisfy live authentication, PDF Storage or device release gates.
+The release candidate now runs **24 synthetic localhost-only Playwright scenarios** on three browser profiles in the dedicated `browser-qa` GitHub Actions job. All **24/24 PASS** on run https://github.com/daegweon/financial-paper-analyzer/actions/runs/44403257361 , covering junior progress, role quiz and source-page navigation. See `docs/BETA_BROWSER_CI_2026-11-19.md`. This does not satisfy live authentication, PDF Storage or device release gates.

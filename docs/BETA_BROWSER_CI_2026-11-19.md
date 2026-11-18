@@ -1,28 +1,28 @@
 # Browser QA as an automatic PaperSignal CI gate — 2026-11-19
 
-Pull-request Checks now includes a separate `browser-qa` job with Playwright 1.65.1 running the actual Next.js UI on Ubuntu Chromium and WebKit.
+**Latest verification:** 24/24 Playwright scenarios PASS in real GitHub Actions run https://github.com/daegweon/financial-paper-analyzer/actions/runs/44403257361 (commit e069c96). The previous initial 15/15 suite also passed: https://github.com/daegweon/financial-paper-analyzer/actions/runs/44402413548 .
 
-## Test matrix
+## Browser matrix
 
-| Browser | Anonymous UI / narrow 320px | Synthetic login → original PDF citation → logout | Signing retry | A→B account switch |
+| Browser profile | Anonymous UI / 320px | Auth / PDF / retry / tenant | Junior study / quiz / citation | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Desktop Chromium | 2 | 1 | 1 | 1 |
-| Android-emulated Chromium | 2 | 1 | 1 | 1 |
-| iPhone-emulated WebKit | 2 | 1 | 1 | 1 |
+| Desktop Chromium | 2 | 3 | 3 | 8 |
+| Android-emulated Chromium | 2 | 3 | 3 | 8 |
+| iPhone-emulated WebKit | 2 | 3 | 3 | 8 |
+| **All profiles** | **6** | **9** | **9** | **24** |
 
-Total: 15 browser cases. This is emulation, not physical Android/iPhone devices.
+Junior-focused checks verify 4-step learning completion persists after reopening the same paper, account B cannot inherit A's saved progress, switching from WM to technology leaves each role's progress independent, four-question quiz grading and reset work, and a learning-plan citation opens the right original PDF page **under synthetic mock conditions**.
 
-## Hard isolation
+## Isolation and use
 
-- The CI script refuses all targets unless `PAPERSIGNAL_BROWSER_QA_URL=http://localhost:3000` and the Supabase/API URLs and public key equal fixed synthetic values.
-- Client requests to fake Supabase are intercepted by Playwright inside the browser, with synthetic users, papers, analysis, PDF and response failures.
-- No real auth accounts, passwords, Supabase/Railway environment secrets, service-role key, private PDF, production mutations, videos, traces or screenshots. The temporary dev-server log is erased.
-- Runs every PR and blocks merging if a browser scenario fails. Browser installation is limited to Chromium and WebKit. The owner-set GitHub Actions $1 budget is not changed.
+- The CI shell script refuses execution unless all browser QA flags, URLs and the publishable key match exact dummy localhost values: `PAPERSIGNAL_BROWSER_QA=1`, URL `http://localhost:3000`, mocks `1`, Supabase `http://127.0.0.1:54321`, fake publishable key `sb_publishable_local_qa_only`, API `http://127.0.0.1:54322`.
+- `frontend/scripts/test-browser-ci.sh` starts the actual Next.js app locally; Playwright intercepts Supabase Auth/REST/Storage with synthetic identity, paper, evidence and PDF responses.
+- No production Supabase/Railway URLs, secrets, account creation, real uploaded files, customer data, screenshots, videos or saved auth state. The temporary dev-server log is removed.
+- A failing scenario turns the GitHub Checks run red. Requiring status checks for merging is an additional repository branch-protection/ruleset setting; CI alone does not enforce a merge block.
+- The job has a 15-minute limit and does not raise the user's GitHub Actions $1 budget. The project runs in a normal GitHub-hosted Ubuntu runner.
 
-## Execution
+## Reproduction
 
-From frontend after `npm install` and `npx playwright install --with-deps chromium webkit`, use the exact fixed environment variables in `.github/workflows/checks.yml`, then run `bash scripts/test-browser-ci.sh`.
+From `frontend`, run `npm install`, `npx playwright install --with-deps chromium webkit`, set the exact dummy values listed in `.github/workflows/checks.yml`, then run `bash scripts/test-browser-ci.sh`. Browser test code lives in `frontend/tests/browser`.
 
-**Scope limitation:** Passing does not prove real OAuth, actual private PDF bytes or signed URL authorization, two-user Supabase HTTP RLS, long-duration link renewal, real iPhone Safari rendering, SMTP delivery, or any live production deployment.
-
-The first GitHub Actions result must be observed before marking the new CI gate PASS.
+**Important:** These are real browsers exercising **synthetic** login/storage, not real OAuth, a private uploaded PDF or an actual iOS Safari/Android device. Live Supabase RLS over HTTP, signed PDF bytes, SMTP, long-session link expiry and staged Production rollout remain separate release gates.

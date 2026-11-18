@@ -1,4 +1,6 @@
 ## 2026-11-19 — GitHub Actions recovery, real PostgreSQL permissions QA, beta integration
+- Added an automatic localhost-only `browser-qa` CI job. Initial 15/15 browser tests passed in run #44402413548; extended suite with junior progress, role quiz, tenant and source-page cases to **24/24 PASS** in run #44403257361.
+- Candidate still keeps actual live Supabase E2E separate and opt-in; no user accounts, server deployment, Worker, DB migration or Production domain touched.
 - Found GitHub account Actions budget configured $0 with Usage blocked. User increased to $1; new minimal test workflow passed, followed by full API/frontend CI. Closed GitHub issue #1.
 - Added db-policy CI job using an isolated PostgreSQL 17 service container; baseline SQL plus staged server-owned write migration and two synthetic RLS owners verified on PR #17, without touching live Supabase.
 - Created consolidated Draft PR #18 targeting main and integrated latest main as second merge parent; main no longer ahead of the release candidate. All three automatic CI jobs passed on PR #18; live-e2e intentionally skipped.
