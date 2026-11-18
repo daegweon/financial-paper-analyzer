@@ -1,8 +1,8 @@
 # PaperSignal — Project State / Session Handoff
 
-Last updated: 2026-11-17 (Asia/Seoul)
-Source of truth for current user-facing work: feat/mobile-pdf-reading-recovery (Draft PR #12, stacked on #11 → #10 → #9 → #8 → #2)
-Current UX PR: https://github.com/daegweon/financial-paper-analyzer/pull/12 (Draft; do not merge without beta gates)
+Last updated: 2026-11-19 (Asia/Seoul)
+Current consolidated candidate: release/beta-candidate-20261119 (Draft PR #18 directly against main; includes earlier stacked feature branches)
+Current release candidate PR: https://github.com/daegweon/financial-paper-analyzer/pull/18 (Draft; do not merge without live E2E and production safety gates)
 
 ## Product north star
 
@@ -19,7 +19,7 @@ Build an evidence-first financial research workspace that accurately extracts re
 
 Existing Draft PRs #8–#11 cover durable job recovery, junior learning guides, role explainers and inline source reading. New Draft PR #12 improves mobile layout, original PDF navigation input, keyboard focus and private signed-link renewal. Its code changes are not equivalent to passing live browser QA.
 
-## Current progress estimate
+## Historical progress estimate — 2026-11-17 (not a current release score)
 
 Overall: approximately 74.5% (subjective engineering feature-completion estimate, **not** live-user verification).
 - Core service and user workflows: ~94%
@@ -77,7 +77,7 @@ Do not raise these percentages without new verified evidence. The v6.3.9 benchma
 3. Persist per-job model/token/provider-attempt/latency/cost telemetry and define sustainable quotas; B02 hit Gemini Free Tier quota before succeeding on retry.
 4. Complete a live two-user E2E with disposable accounts and real API/Worker upload-analysis.
 5. Configure custom SMTP and verify external mailbox signup/confirmation; Supabase Free built-in SMTP is limited to team-member recipients and 2 emails/hour.
-6. Resolve GitHub Actions runner provisioning: synthetic BuildFailed, startup_failure, zero jobs. Railway BuildKit is the backend fallback.
+6. GitHub Actions runner issue RESOLVED 2026-11-19; keep api, frontend and isolated db-policy CI green on the release candidate.
 7. Verify production domain auth, Google sign-in, logout/relogin, PDF upload and analysis.
 
 ### P1 — product quality and operations
@@ -131,3 +131,15 @@ Update PROJECT_STATE.md and append PROJECT_CHANGELOG.md:
 ## 2026-11-17 — Preview availability blocker
 
 The account reached Vercel Hobby's daily 100-deployment API limit (HTTP 402 `api-deployments-free-per-day`). The latest confirmed READY Preview corresponds to an intermediate Draft PR #12 commit `b7b95984`, not the final source. Final branch was copied to an isolated Vercel Sandbox and passed Next.js 16.4.6 production build, TypeScript and **43/43 frontend unit tests** (auth 5, analysis 13, junior 7, workplace 13, PDF 5). **Fresh Vercel Preview and real-browser QA are still pending**; do not claim beta readiness or release. No production deployment was made.
+
+## 2026-11-19 — Current authoritative release candidate checkpoint
+
+- Active integration PR: https://github.com/daegweon/financial-paper-analyzer/pull/18 (Draft, base main). The latest main was integrated with an actual two-parent merge commit fa526369; main...candidate is 0 commits behind. Earlier Draft PRs #10–#17 remain unmerged historical work branches.
+- GitHub Actions startup_failure **RESOLVED**: GitHub personal account had Actions budget $0, usage blocked. User changed it to $1. The minimal runner passed (https://github.com/daegweon/financial-paper-analyzer/actions/runs/44368096096) and full GitHub PR Checks passed (https://github.com/daegweon/financial-paper-analyzer/actions/runs/44370323274). The GitHub runner issue #1 is closed.
+- CI contains three automatic jobs: api pytest, frontend TypeScript/tests/Next.js build and isolated PostgreSQL 17 db-policy using real baseline SQL+migration and synthetic tenant data. All three passed. Opt-in live-e2e remains SKIPPED on PR runs, not falsely marked PASS.
+- Vercel release-candidate Preview READY at commit fa526369 (protected by Vercel SSO). Production/main and the public domain were not changed.
+- Railway production API and Worker online; recent 24-hour failures = 0, no staged changes. Core API/Worker deployments remain the previous production versions, not the release-candidate backend code.
+- Supabase project hwmtayrecsfxernhssro has security WARN only for Leaked Password Protection disabled (previously accepted Free-plan limitation); health advisor has 0 findings. Production client grants still allow direct analyses/job INSERT and paper status UPDATE: **the staged security migration has NOT been applied**.
+- Staged migration supabase/migrations/20261117215315_beta_server_owned_result_writes.sql must be applied ONLY AFTER the new API server-role job creation flow is deployed and verified. Existing live migration history versions do not match the repository's earlier baseline filenames. Never execute a blanket db push.
+- Browser QA 15/15 tests passed in local isolated Chromium/WebKit synthetic scenarios, not live OAuth or private PDF. The actual two-user authenticated HTTP E2E, external SMTP signup, Safari/Android devices, source PDF rendering, 50-minute signed-link refresh and rollback rehearsal remain PENDING.
+- Keep financial analysis engine improvements frozen. Product completion and evidence-grounded junior learning remain priorities. See docs/RELEASE_CANDIDATE_GATES_2026-11-19.md for current gate matrix; earlier snapshot numbers and references to #12 are historical only.

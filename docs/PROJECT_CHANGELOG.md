@@ -1,3 +1,10 @@
+## 2026-11-19 — GitHub Actions recovery, real PostgreSQL permissions QA, beta integration
+- Found GitHub account Actions budget configured $0 with Usage blocked. User increased to $1; new minimal test workflow passed, followed by full API/frontend CI. Closed GitHub issue #1.
+- Added db-policy CI job using an isolated PostgreSQL 17 service container; baseline SQL plus staged server-owned write migration and two synthetic RLS owners verified on PR #17, without touching live Supabase.
+- Created consolidated Draft PR #18 targeting main and integrated latest main as second merge parent; main no longer ahead of the release candidate. All three automatic CI jobs passed on PR #18; live-e2e intentionally skipped.
+- Vercel Preview READY; Railway API and Worker online with no recent failures. No production promotion, database migration, authentication-user creation, or confidential PDF access.
+- Supabase production permission migration, real two-user HTTP E2E, external SMTP and mobile device QA remain open release gates.
+
 ## 2026-11-17 — Original PDF mobile UX and private-link recovery (Draft PR #12)
 - Frozen engine quality work by explicit user direction; no backend, model, database, queue or worker changes.
 - Added mobile-first login and PDF viewer CSS, touch targets, keyboard modal focus/Escape handling, and focus restoration.
