@@ -145,10 +145,14 @@ jobs:
         run: |
           python - <<'PY'
           import os
-          import sys
-          sys.path.insert(0, 'backend')
-          from tests.test_live_e2e import _validate_live_e2e_target, LIVE_E2E_ACKNOWLEDGMENT
-          _validate_live_e2e_target(
+          import importlib.util
+          spec = importlib.util.spec_from_file_location(
+              "papersignal_live_e2e", "backend/tests/test_live_e2e.py"
+          )
+          assert spec is not None and spec.loader is not None
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          module._validate_live_e2e_target(
               os.getenv("SUPABASE_URL", "").rstrip("/"),
               os.getenv("PAPERSIGNAL_API_URL", "").rstrip("/"),
               os.getenv("PAPERSIGNAL_E2E_APPROVED", ""),
