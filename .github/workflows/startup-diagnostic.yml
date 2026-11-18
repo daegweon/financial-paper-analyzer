@@ -1,0 +1,16 @@
+name: Startup Diagnostic
+on:
+  push:
+    branches:
+      - ci/actions-startup-diagnostic-20261118
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  startup:
+    name: Minimal runner startup
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Print runner confirmation
+        run: echo "GITHUB_ACTIONS_RUNNER_STARTED"
