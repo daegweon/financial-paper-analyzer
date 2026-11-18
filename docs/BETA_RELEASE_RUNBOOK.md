@@ -264,3 +264,10 @@ quality; those two papers need a separate finding-level quality review.
 - Durable cross-session project handoff is maintained in
   `docs/PROJECT_STATE.md`, `docs/PROJECT_DECISIONS.md`, and
   `docs/PROJECT_CHANGELOG.md`. Read them before starting a new session.
+
+## Safe manual live E2E preflight and progress persistence (2026-11-19)
+
+- New `workflow_dispatch` inputs on the reviewed main branch default to skipping production E2E. To enable synthetic production test users/PDF intentionally, choose target production, check explicit mutation consent and type `RUN_SYNTHETIC_LIVE_E2E`; secrets remain scoped only to that job.
+- The suite immediately refuses missing secrets, unexpected Supabase/Railway targets and absence of `queue_write_mode=service_role` on the **live** API `/health`. No user is created until these checks succeed.
+- This configuration has NOT been run against a live user/Storage project; its fail-closed guards and fixture regression tests are exercised by ordinary CI. The API must first be separately deployed with server-owned queue INSERT capability. Do NOT run old server with revoked client grants.
+- Canonical engineering progress: `docs/PROJECT_PROGRESS.json` (84% engineering estimate, 4/10 release gates); root `AGENTS.md` documents mandatory new-session source of truth and reporting. The progress ledger is validated by GitHub frontend CI.

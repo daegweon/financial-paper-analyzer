@@ -57,3 +57,9 @@
 - Treat client analysis/job INSERT grants as a material integrity/LLM-spend risk. Deploy and verify new server-only API job creation before restricting production DB privileges; never execute historical migrations blindly against Supabase because remote migration history differs.
 - Track isolated postgres DB policy tests as a permanent third CI gate and preserve `live-e2e` as opt-in to avoid unattended production mutations.
 - Actions budget is $1 instead of $0, which allows runners to start but could permit billed overages; never automatically increase it.
+
+## 2026-11-19 — Project status source-of-truth and security gate
+
+- Store weighted engineering progress only in `docs/PROJECT_PROGRESS.json`, separate from independently passed beta release gates. Always report both in future user-facing project responses; do not invent a higher score from activity without test/evidence.
+- Root `AGENTS.md` directs agents to read the progress JSON, latest `PROJECT_STATE.md` and changelog on a new session. Validate the file in GitHub frontend CI.
+- Production-mutating E2E remains an explicit main-branch-only manual opt-in. Refuse target mismatch and absence of non-secret server-owned queue readiness signal before creating disposable Auth users, files or AI work.

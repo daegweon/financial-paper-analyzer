@@ -150,3 +150,11 @@ The account reached Vercel Hobby's daily 100-deployment API limit (HTTP 402 `api
 - Added junior learning-path acceptance tests: four-step progress persists when reopening A's paper, account B remains isolated, role changes preserve independent progress, four-question quiz can grade and reset, and study-path source-page navigation opens the cited original PDF under mock conditions.
 - Verified GitHub Actions run https://github.com/daegweon/financial-paper-analyzer/actions/runs/44403257361 : **24/24 PASS**; Python, frontend and isolated PostgreSQL authorization jobs pass; opt-in live E2E skipped. Prior first CI 15/15 pass at run #44402413548.
 - Live OAuth/SMTP, signed private PDF content, real mobile devices and service-first security-migration rollout remain **PENDING**. The engine and Production were not modified.
+
+## 2026-11-19 — Verified durable state and safer manual live E2E
+
+- Canonical weighted development estimate is stored in `docs/PROJECT_PROGRESS.json`: **84/100 engineering points** and **4/10 independently verified release gates**. This is not a public beta release sign-off. The score does not increase merely because new code was drafted.
+- Root `AGENTS.md` instructs future coding sessions to read this state, decisions, changelog, progress JSON and release gates before working and to report both percentage and gates each time. `scripts/check-project-progress.mjs` checks weight and earned-point sums and refuses unsupported release-gate PASS claims; it now runs in frontend GitHub CI.
+- Manual `workflow_dispatch` live E2E is now limited to main, approved target `production`, boolean consent and the exact acknowledgment `RUN_SYNTHETIC_LIVE_E2E`. New Python preflight refuses missing configuration or any unexpected Supabase/Railway URL; before creating test users it demands `/health.queue_write_mode == service_role`.
+- Candidate API `/health` includes a non-secret `queue_write_mode` readiness field. **Running production API is not yet confirmed to support this field**, so actual authenticated E2E remains PENDING and the staged database grant change MUST NOT be applied first.
+- Rejected automatic account creation, Production deployment, Worker change, real PDF mutation or DB schema/grant changes in this development milestone. See `docs/LIVE_E2E_SAFE_HANDOFF_2026-11-19.md`.

@@ -1,3 +1,10 @@
+## 2026-11-19 — Reliable cross-session progress and opt-in live E2E
+- Added canonical `docs/PROJECT_PROGRESS.json` for 84% weighted engineering completion and 4/10 verified beta gates; root `AGENTS.md` tells new sessions to resume from these files.
+- Added `scripts/check-project-progress.mjs` validation to existing frontend GitHub CI. Engineering progress cannot drift from weighted milestones without failing CI.
+- Introduced explicit main-only manual workflow dispatch authorization with production target and exact consent acknowledgment. Python E2E now fails on missing config and refuses non-reviewed destinations before any test user is created.
+- Candidate API health now publishes a non-secret `queue_write_mode` readiness marker; actual E2E refuses to provision synthetic accounts unless the newly reviewed server-owned API is confirmed live.
+- No real E2E user, Production deploy, SQL migration, Worker change or new Gemini analysis was triggered.
+
 ## 2026-11-19 — GitHub Actions recovery, real PostgreSQL permissions QA, beta integration
 - Added an automatic localhost-only `browser-qa` CI job. Initial 15/15 browser tests passed in run #44402413548; extended suite with junior progress, role quiz, tenant and source-page cases to **24/24 PASS** in run #44403257361.
 - Candidate still keeps actual live Supabase E2E separate and opt-in; no user accounts, server deployment, Worker, DB migration or Production domain touched.

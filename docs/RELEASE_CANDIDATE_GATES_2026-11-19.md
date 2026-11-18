@@ -41,3 +41,9 @@ Release candidate: https://github.com/daegweon/financial-paper-analyzer/pull/18 
 ## Browser smoke as an automatic PR gate — 2026-11-19
 
 The release candidate now runs **24 synthetic localhost-only Playwright scenarios** on three browser profiles in the dedicated `browser-qa` GitHub Actions job. All **24/24 PASS** on run https://github.com/daegweon/financial-paper-analyzer/actions/runs/44403257361 , covering junior progress, role quiz and source-page navigation. See `docs/BETA_BROWSER_CI_2026-11-19.md`. This does not satisfy live authentication, PDF Storage or device release gates.
+
+## Progress baseline and safe real-account gate — 2026-11-19
+
+- Engineering milestone completion **84%**, real beta release gates **4/10 passed**. Source: `docs/PROJECT_PROGRESS.json`; the figure is evidence-weighted estimation and is not approval to release.
+- Manual production E2E requires GitHub `workflow_dispatch` on reviewed main, target `production`, `confirm_live_e2e=true` and acknowledgment `RUN_SYNTHETIC_LIVE_E2E`. Existing `backend/tests/test_live_e2e.py` additionally enforces exact Supabase/Railway URLs and `/health.queue_write_mode=service_role` before it creates any disposable users.
+- **Still PENDING:** the running Railway API has not been verified as new server-owned job-writer code. Do not apply the client-write revocation migration before the updated API is actually deployed and verified. Authenticated private PDF, Google/email, SMTP and mobile release gates remain open.
