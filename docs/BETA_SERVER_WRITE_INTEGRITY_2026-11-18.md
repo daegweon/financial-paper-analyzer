@@ -71,3 +71,7 @@ At the time of inspection, the new migration version
 `20261117215315_beta_server_owned_result_writes` is **not in the live
 migration list**, and the corresponding client write grants remain active.
 No database privilege was changed by this PR.
+
+## GitHub Actions runner recovery — 2026-11-19
+
+After the account owner increased the Actions budget from $0 to $1.00, the independent one-step diagnostic on branch `ci/actions-startup-diagnostic-20261118` actually executed a GitHub-hosted job successfully: run https://github.com/daegweon/financial-paper-analyzer/actions/runs/44368096096 (workflow Startup Diagnostic, single echo step, conclusion success). The prior synthetic BuildFailed/startup_failure/0-jobs incident was caused by the $0 blocked Actions budget (strongly supported by before/after re-test). A fresh PR Checks run must still pass before calling the full product CI green. The $1 budget can permit charges outside free included usage; do not raise it automatically.
