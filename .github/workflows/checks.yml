@@ -36,6 +36,36 @@ jobs:
       - run: npm run lint
       - run: npm run build
 
+  db-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: isolated-test-only
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Run real baseline schema + beta permission checks against disposable PostgreSQL 17
+        env:
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/tests/bootstrap_beta_grant_fixture.sql
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/migrations/20261113000000_initial_schema.sql
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/migrations/20261113010000_analysis_jobs.sql
+          # Existing Supabase service_role has these grants through platform defaults.
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -c 'GRANT SELECT, INSERT, UPDATE, DELETE ON public.analysis_jobs TO service_role;'
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/migrations/20261117215315_beta_server_owned_result_writes.sql
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/tests/verify_beta_write_isolation.sql
+
   live-e2e:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
