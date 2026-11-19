@@ -57,6 +57,21 @@ jobs:
       - run: npm run lint
       - run: npm run build
 
+  api-readonly-live:
+    name: Live API HTTPS preflight (GET only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    # No repository secrets. Fixed public hostname, fixed GET routes.
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+      - name: Assert live API health and deny anonymous job-status access
+        run: python backend/scripts/read_only_release_probe.py
+
   browser-qa:
     name: Browser QA — local synthetic accounts
     runs-on: ubuntu-latest
