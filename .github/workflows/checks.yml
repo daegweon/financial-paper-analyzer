@@ -38,6 +38,8 @@ jobs:
           python-version: "3.12"
       - run: pip install -r backend/requirements-dev.txt
       - run: cd backend && pytest
+      - name: Verify candidate ASGI server and local authorization over real HTTP
+        run: python backend/scripts/smoke_candidate_http.py
   frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 20
