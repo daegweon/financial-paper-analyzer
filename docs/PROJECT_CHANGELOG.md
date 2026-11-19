@@ -1,3 +1,8 @@
+## 2026-11-19 — Verify actual zero-downtime quota rollout order (CI pending)
+- Changed the isolated PostgreSQL CI sequence to install quota RPC under old browser write grants and run the full quota contract **before** granting write lockdown; repeat after revocation to catch migration-order incompatibilities.
+- Expanded privileged queue regression to reject wrong-owner enqueue attempts in both phases. This asserts data isolation even for an authorized service_role caller.
+- Candidate branch commits `be4ae7cc`, `e5882501`. CI is pending; engineering score stays 90%, beta gates stay 4/10 until independently verified. No live database, production frontend, users or Worker modified.
+
 - Full 90% candidate verification https://github.com/daegweon/financial-paper-analyzer/actions/runs/44528847670 PASS: backend 146/1 live skipped, frontend quota-meter tests/build, disposable PostgreSQL quota/RLS, 33 browser tests, live API read-only probe. Progress ledger points at verified commit `e40ec8f`.
 
 ## 2026-11-19 — Visible analysis quota meter and 90% project milestone
