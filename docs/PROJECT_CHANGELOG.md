@@ -1,3 +1,7 @@
+## 2026-11-20 — Fix authenticated library empty-state contrast
+- Inspected failed CI run #44615759026: one Android Chromium axe WCAG 2.1 AA contrast issue (`#93a2af` on white, 2.61:1) in the empty-state helper text; remaining 32 browser scenarios passed, including iPhone WebKit equivalent.
+- Updated `.empty` helper text color to `#596b7a` to meet normal-text contrast requirements. Commit `46f306f736ef28a5fb34f75a1dd2c24ab1ba9b01`. Awaiting fresh CI evidence; no score increase until it passes.
+
 ## 2026-11-20 — Verify actual zero-downtime quota rollout order
 - Updated isolated PostgreSQL CI to install additive service-only quota RPC before browser-write revocation and execute the quota/ownership contract in both phases.
 - Added a cross-owner enqueue denial assertion for the privileged service-role caller. Initial SQL delimiter typo was fixed; rerun is green.
