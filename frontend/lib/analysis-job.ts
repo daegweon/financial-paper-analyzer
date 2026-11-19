@@ -93,6 +93,13 @@ export async function startAnalysisJob({
 
   const body: unknown = await response.json().catch(() => ({}));
   if (!response.ok) {
+    // The queue RPC returns HTTP 429 with an actionable Korean quota detail.
+    // Surface that limit immediately instead of misclassifying it as a
+    // transient network failure. Never retry this POST automatically.
+    if (response.status === 429) {
+      const detail = readableDetail(body, "");
+      if (detail) throw new Error(detail);
+    }
     if (TRANSIENT_CODES.has(response.status)) {
       throw new Error(
         "분석 작업 등록 응답이 일시적으로 실패했습니다. 기존 작업이 등록됐을 수 있으니 연구 라이브러리의 작업 상태를 먼저 확인해 주세요."
