@@ -8,8 +8,8 @@
     "pull_request": 18,
     "base": "main",
     "review_state": "draft",
-    "last_independently_verified_sha": "30255ce6e6fb2f79794819f37c5a2de12aa3bc84",
-    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44533862423",
+    "last_independently_verified_sha": "46f306f736ef28a5fb34f75a1dd2c24ab1ba9b01",
+    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44616620751",
     "production_api": {
       "service_id": "81b678e2-7136-436d-9058-7d20647dc1b7",
       "immutable_commit": "ace3fbd5dab3ea71efa3a49da8363259ea5f9732",
@@ -223,6 +223,11 @@
       "date": "2026-11-20",
       "percent": 90,
       "evidence": "Verified candidate commit 30255ce6e6fb2f79794819f37c5a2de12aa3bc84 on GitHub Actions #44533862423 SUCCESS: API, frontend TypeScript/tests/build, 33 browser Playwright scenarios, read-only live API probe, and PostgreSQL 17 DB policy all passed. DB CI now tests additive quota RPC and ownership/idempotency/daily/active caps before client-write revocation, then repeats quota contract after revocation. Live E2E deliberately skipped. Engineering remains 90%; independently passed release gates remain 4/10."
+    },
+    {
+      "date": "2026-11-20",
+      "percent": 90,
+      "evidence": "Latest candidate commit 46f306f736ef28a5fb34f75a1dd2c24ab1ba9b01 passed full GitHub Actions #44616620751: API, frontend lint/typecheck/tests/build, PostgreSQL 17 policy, live API GET-only preflight, and all 33 Playwright synthetic browser scenarios across desktop Chromium, Android Chromium and iPhone WebKit. Fixed a real Android WCAG 2.1 AA contrast issue (empty-state text 2.61:1 to compliant darker color) without weakening axe assertions. Live production E2E remains intentionally skipped; no release gate count increase. Engineering remains 90%, release gates 4/10."
     }
   ]
 }
