@@ -226,3 +226,10 @@ The account reached Vercel Hobby's daily 100-deployment API limit (HTTP 402 `api
 
 - Candidate code + visible usage meter commit `e40ec8f62c9dffe12de9adf8ec4ba07e69a9f044` completed full GitHub Actions successfully: https://github.com/daegweon/financial-paper-analyzer/actions/runs/44528847670 . Backend 146 passed/1 live E2E skipped, frontend TypeScript/quota tests/build, PostgreSQL quota and RLS, 33 Playwright tests, strict live API GET preflight all passed. Progress validator 90% / 4 of 10.
 - `docs/PROJECT_PROGRESS.json` now points at this exact commit/run. No Production DB migration, real user E2E, Worker update or analysis-engine changes.
+
+## 2026-11-19 — Additive quota rollout parity (CI pending)
+
+- Consolidated Draft PR #18 includes the production-order regression: apply the additive service-only quota RPC **before** removing legacy client grants, check quotas, then revoke grants and check the same contract again. This is an isolated disposable PostgreSQL test; no live Supabase change.
+- A wrong-owner paper queue attempt must raise `PAPERSIGNAL_PAPER_NOT_FOUND` in both phases, even when the call originates from service_role. This guards the API's ownership contract.
+- Commits `be4ae7c`, `e588250`; CI result must be verified before crediting any additional completion points. Canonical engineering baseline remains **90%**, real beta gates **4/10**.
+- Real live E2E remains blocked on human approval/review of PR #19, securely configured secrets, and manual dispatch. No new Production DB migration, Vercel Production promotion or Worker code change is authorized by this CI enhancement.
