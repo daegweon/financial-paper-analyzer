@@ -291,3 +291,10 @@ The account reached Vercel Hobby's daily 100-deployment API limit (HTTP 402 `api
 - Implemented content-free Gemini per-model attempt status/latency, provider-reported prompt/candidate/thought/total tokens, and analysis job duration logs. Added offline JSON usage report utility, latency median/P95 and job-duration median/P95, failure-rate aggregation and regression tests. Added usage report guide.
 - Weighted engineering progress increased **91% → 92%** by crediting one beta-operations milestone. Actual independently passed beta release gates remain **4/10**. Durable per-job billing ledger and versioned price schedule are still outstanding; no unsupported USD estimate is made.
 - All human approvals remain deferred as requested. No production migration, deploy, user creation, Worker change or user-data mutation.
+
+## 2026-11-20 — CI runner efficiency and safe cancellation
+
+- Added a concurrency group to `.github/workflows/checks.yml`: superseded automatic pull-request/push runs for the same PR/ref are cancelled so runner minutes are spent on the newest candidate commit.
+- Explicit `workflow_dispatch` runs are excluded from automatic cancellation. This protects manually approved live E2E runs from being cancelled by later commits.
+- Full functional CI remains independently green on code head `f540fa85b11ffd9af50c1cc5807aeabc3b3e125b` in run [#44619544125](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44619544125); the workflow-only concurrency change is being verified separately in run [#44626146475](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44626146475).
+- No progress points are added for this efficiency-only change until its CI validates. Human approval/production gates remain deferred.
