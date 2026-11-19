@@ -284,3 +284,10 @@ The account reached Vercel Hobby's daily 100-deployment API limit (HTTP 402 `api
 - Added `docs/AI_USAGE_REPORT_GUIDE_2026-11-20.md`. The utility does not connect to Railway, store customer content, infer USD charges or mutate production. Cost estimation remains deferred until an approved, versioned pricing source and durable ledger exist.
 - Final candidate CI run [#44619361916](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44619361916): API tests **148 passed / 1 deliberately skipped**; DB policy and read-only live API checks passed; frontend build and synthetic browser job were still running at checkpoint. Do not credit engineering points until the full run is complete and green.
 - All human approvals remain explicitly deferred per user instruction. No production migration, deployment, account creation, Worker update or model-engine behavior change.
+
+## 2026-11-20 — AI operations observability milestone verified (92%)
+
+- Full candidate CI [#44619544125](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44619544125) passed on candidate head `f540fa85b11ffd9af50c1cc5807aeabc3b3e125b`: API **148 passed / 1 deliberately skipped**, frontend lint/build, PostgreSQL policy, live API read-only preflight and all 33 synthetic browser scenarios green; live production E2E remains skipped.
+- Implemented content-free Gemini per-model attempt status/latency, provider-reported prompt/candidate/thought/total tokens, and analysis job duration logs. Added offline JSON usage report utility, latency median/P95 and job-duration median/P95, failure-rate aggregation and regression tests. Added usage report guide.
+- Weighted engineering progress increased **91% → 92%** by crediting one beta-operations milestone. Actual independently passed beta release gates remain **4/10**. Durable per-job billing ledger and versioned price schedule are still outstanding; no unsupported USD estimate is made.
+- All human approvals remain deferred as requested. No production migration, deploy, user creation, Worker change or user-data mutation.
