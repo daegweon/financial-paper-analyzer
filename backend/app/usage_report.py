@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import statistics
 from collections import defaultdict
@@ -23,7 +24,7 @@ def _percentile(values: list[int], percentile: float) -> int | None:
     ordered = sorted(values)
     if percentile == 0.50:
         return round(statistics.median(ordered))
-    index = max(0, min(len(ordered) - 1, __import__("math").ceil(len(ordered) * percentile) - 1))
+    index = max(0, min(len(ordered) - 1, math.ceil(len(ordered) * percentile) - 1))
     return ordered[index]
 
 
