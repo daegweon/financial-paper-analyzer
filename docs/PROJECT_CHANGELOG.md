@@ -1,4 +1,10 @@
-## 2026-11-19 — Verify actual zero-downtime quota rollout order (CI pending)
+## 2026-11-20 — Verify actual zero-downtime quota rollout order
+- Updated isolated PostgreSQL CI to install additive service-only quota RPC before browser-write revocation and execute the quota/ownership contract in both phases.
+- Added a cross-owner enqueue denial assertion for the privileged service-role caller. Initial SQL delimiter typo was fixed; rerun is green.
+- GitHub Actions [#44533862423](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44533862423) SUCCESS: API, frontend, live read-only API probe, PostgreSQL policy and 33 synthetic browser scenarios passed; real live E2E deliberately skipped.
+- Canonical progress ledger updated to commit `30255ce6e6fb2f79794819f37c5a2de12aa3bc84`; engineering remains 90%, real beta gates 4/10. No production data/schema, Worker or Vercel Production changed.
+
+
 - Changed the isolated PostgreSQL CI sequence to install quota RPC under old browser write grants and run the full quota contract **before** granting write lockdown; repeat after revocation to catch migration-order incompatibilities.
 - Expanded privileged queue regression to reject wrong-owner enqueue attempts in both phases. This asserts data isolation even for an authorized service_role caller.
 - Candidate branch commits `be4ae7cc`, `e5882501`. CI is pending; engineering score stays 90%, beta gates stay 4/10 until independently verified. No live database, production frontend, users or Worker modified.
