@@ -86,3 +86,12 @@ The release candidate now runs **24 synthetic localhost-only Playwright scenario
 - Engineering **90%**, verified beta gates **4/10**. Latest CI https://github.com/daegweon/financial-paper-analyzer/actions/runs/44528193012 PASS: 146 backend/1 live skipped, frontend build+quota tests, disposable DB quota/RLS, 33 browser, live API probe.
 - Research library now shows rolling 24-hour use out of 5 and concurrent use out of 2. Server remains authoritative via service-role-only RPC; user-facing 429 is actionable, no duplicate POST retry.
 - Live Supabase migration ledger currently lists 9 versions ending `20261113234956`; new quota RPC migration and client-write revocation have not been applied. Current Railway API is still pinned to `ace3fbd5` and does not call the RPC. Human approval and careful additive migration → API deployment → real E2E → grant revocation sequence are required.
+
+## 2026-11-20 — Latest verified accessibility and phased-migration baseline
+
+- Latest fully completed candidate CI [#44616620751](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44616620751) passed API, frontend, disposable PostgreSQL policy, live API GET-only preflight and all 33 synthetic browser scenarios across desktop Chromium, Android Chromium and iPhone WebKit.
+- Fixed Android authenticated-library empty-state WCAG 2.1 AA contrast from 2.61:1 to compliant text color; automated axe assertions remain enabled.
+- Engineering progress is **91%** under the canonical weighted ledger; independently passed beta release gates remain **4/10**. Synthetic CI does not satisfy live Auth/PDF E2E or native-device validation.
+- The phased quota migration contract is also green in [#44533862423](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44533862423): additive service-only quota RPC before client-write revocation, then repeated quota/ownership tests after revocation. This is disposable PostgreSQL only, not a Production migration.
+- A later docs-only candidate CI [#44617366265](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44617366265) has API, DB policy and live read-only API checks green; frontend is green; browser job is still running at checkpoint. Do not count it as a complete run until browser QA finishes.
+- PR #19 remains Draft; live E2E requires human review/merge, four protected repository secrets and explicit workflow dispatch. No production schema/data, Worker or Vercel Production changes are authorized by CI.
