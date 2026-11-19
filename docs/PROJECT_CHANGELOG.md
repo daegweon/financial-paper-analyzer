@@ -1,3 +1,10 @@
+## 2026-11-19 — Read-only live API preflight, candidate ASGI smoke and two-phase DB QA
+- Verified current Railway API is healthy (GET `/health` 200, unauthenticated GET job-status 401), but still lacks the new `queue_write_mode` marker. Confirmed source branches remain `feat/research-workspace-mvp`; no automatic deployment of PR #18.
+- Added strictly pinned live API GET-only CI check with no keys, account, PDF or mutation; separate fake-config Uvicorn process proves new candidate runtime publishes server-owned queue writer and denies anonymous access.
+- Expanded isolated PostgreSQL 17 CI to verify service-role job insert under old grants BEFORE applying the staged permission revocation, and re-test owner uploads/reads and server-only writes AFTER. All checks passed in https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952.
+- 129 backend regression tests passed/1 live test skipped; frontend and Playwright 24/24 passed. No Railway/DB/Worker production changes.
+- Weighted engineering estimate advanced **84% → 85%** on verified release-preparation work; true live release gates remain **4/10**. See `docs/PROJECT_PROGRESS.json` and API-only cutover runbook.
+
 ## 2026-11-19 — Reliable cross-session progress and opt-in live E2E
 - GitHub Actions validated the new live-E2E preflight/consent and progress ledger at commit `54669ddae533e1ffe2b1062c6b3b7b309e54b73c` (run #44411991617): 112 backend tests passed (1 skipped), 75 frontend, 24/24 browser, isolated PostgreSQL PASS; progress ledger validator confirms 84% engineering and 4/10 release gates.
 - Added canonical `docs/PROJECT_PROGRESS.json` for 84% weighted engineering completion and 4/10 verified beta gates; root `AGENTS.md` tells new sessions to resume from these files.

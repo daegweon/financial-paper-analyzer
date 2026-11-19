@@ -44,6 +44,13 @@ The release candidate now runs **24 synthetic localhost-only Playwright scenario
 
 ## Progress baseline and safe real-account gate — 2026-11-19
 
-- Engineering milestone completion **84%**, real beta release gates **4/10 passed**. Source: `docs/PROJECT_PROGRESS.json`; the figure is evidence-weighted estimation and is not approval to release.
+- Engineering milestone completion **85%**, real beta release gates **4/10 passed**. Source: `docs/PROJECT_PROGRESS.json`; the figure is evidence-weighted estimation and is not approval to release.
 - Manual production E2E requires GitHub `workflow_dispatch` on reviewed main, target `production`, `confirm_live_e2e=true` and acknowledgment `RUN_SYNTHETIC_LIVE_E2E`. Existing `backend/tests/test_live_e2e.py` additionally enforces exact Supabase/Railway URLs and `/health.queue_write_mode=service_role` before it creates any disposable users.
 - **Still PENDING:** the running Railway API has not been verified as new server-owned job-writer code. Do not apply the client-write revocation migration before the updated API is actually deployed and verified. Authenticated private PDF, Google/email, SMTP and mobile release gates remain open.
+
+## Verified API deployment preflight (2026-11-19)
+
+- New `api-readonly-live` GitHub job confirms the **existing** Railway API is healthy and unauthorized GET job-status requests return 401. Actual result: `queue_writer=legacy_missing_marker`, analysis engine `finance-structured-v6.4.2`; do not treat it as deployed server-owned API.
+- Isolated candidate Uvicorn smoke with synthetic env confirmed server-owned health signal and anonymous denial. Disposable PostgreSQL 17 verified server-role queue insertion **before** client grant revocation and enforced client-write denial **after**. Entire suite https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952 PASS (129 backend, 24/24 browsers, database, frontend, live read-only probe; 1 live E2E skipped).
+- **Railway production is the only configured environment.** Core API and Worker source branches remain `feat/research-workspace-mvp`. Do not mutate Worker or simply merge PR #18 hoping API updates.
+- Manual rollout steps and rollback constraints: `docs/RAILWAY_API_CUTOVER_2026-11-19.md`. Real authenticated two-user HTTPS E2E, new API deployment, DB migration, SMTP and mobile remain PENDING.

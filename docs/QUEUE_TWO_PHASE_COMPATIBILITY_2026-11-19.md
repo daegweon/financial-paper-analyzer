@@ -13,3 +13,7 @@
 - All SQL executes only inside disposable postgres:17 GitHub Actions, with no Supabase credentials or customer documents.
 
 Actual Railway server deployment, real API authentication, Gemini usage, remote migration history and live Supabase grant changes remain **PENDING**. CI success is proof of schema compatibility, not a substitute for live two-user verification.
+
+## Confirmed GitHub run 2026-11-19
+
+- https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952 — all automatic jobs PASS. Actual live API queue marker is `legacy_missing_marker`; candidate local ASGI marker is `service_role`; pre/post revocation disposable PostgreSQL compatibility checks both PASS. Live authenticated E2E remains SKIPPED; no Production modification.

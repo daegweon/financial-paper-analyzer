@@ -63,3 +63,10 @@
 - Store weighted engineering progress only in `docs/PROJECT_PROGRESS.json`, separate from independently passed beta release gates. Always report both in future user-facing project responses; do not invent a higher score from activity without test/evidence.
 - Root `AGENTS.md` directs agents to read the progress JSON, latest `PROJECT_STATE.md` and changelog on a new session. Validate the file in GitHub frontend CI.
 - Production-mutating E2E remains an explicit main-branch-only manual opt-in. Refuse target mismatch and absence of non-secret server-owned queue readiness signal before creating disposable Auth users, files or AI work.
+
+## 2026-11-19 — Live API cutover must be service-specific
+
+- Keep the current Railway Worker on its deployed stable image and existing branch. The candidate API/Worker production services both track `feat/research-workspace-mvp`, not the consolidated `release/beta-candidate-20261119`. Any API cutover requires an explicit API-service-only change plan, verified readiness probe, and rollback ID.
+- A new GitHub CI job probes the live public API strictly with GET and no credentials; a missing queue-writer marker is expected until new API deploy and must NOT be interpreted as permission to apply DB grant revocation.
+- Test candidate API via isolated Uvicorn and synthetic credentials; schema transition checks must cover both pre-revocation (new server queue usable) and post-revocation (browser writes denied).
+- Engineering progress +1 to 85% after immutable CI evidence; release gate count still 4/10. No actual user E2E, DB migration or Production deploy.

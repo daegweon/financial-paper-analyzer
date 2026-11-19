@@ -1,6 +1,6 @@
 # PaperSignal — real-user E2E safety checkpoint (2026-11-19)
 
-**Current state:** Draft PR #18; core API/Worker still on previous Railway Production image, not yet proven to emit `queue_write_mode=service_role`. No Production migration and no new real E2E Auth users. Engineering progress 84%, release gates 4/10 passed (`docs/PROJECT_PROGRESS.json`).
+**Current state:** Draft PR #18; core API/Worker still on previous Railway Production image, not yet proven to emit `queue_write_mode=service_role`. No Production migration and no new real E2E Auth users. Engineering progress 85%, release gates 4/10 passed (`docs/PROJECT_PROGRESS.json`).
 
 ## Safe workflow for the next execution
 
@@ -19,4 +19,10 @@
 
 ## Cross-session restart
 
-New session must read `AGENTS.md`, `docs/PROJECT_PROGRESS.json`, `docs/PROJECT_STATE.md`, `docs/PROJECT_DECISIONS.md` and `docs/PROJECT_CHANGELOG.md` and inspect live CI/deployment state. Every progress report shows **84% engineering / 4 of 10 live release gates** until verified milestones change the ledger.
+New session must read `AGENTS.md`, `docs/PROJECT_PROGRESS.json`, `docs/PROJECT_STATE.md`, `docs/PROJECT_DECISIONS.md` and `docs/PROJECT_CHANGELOG.md` and inspect live CI/deployment state. Every progress report shows **85% engineering / 4 of 10 live release gates** until verified milestones change the ledger.
+
+## Current API-only readiness proof
+
+- Live `/health` still returns no `queue_write_mode` (legacy), though HTTP 200 and no-auth status 401 passed. PR #18 candidate runtime, with dummy config, returns service_role; do not confuse these.
+- Exact successful CI: https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952. Two-stage isolated grant verification passed; no production migration/deploy. GitHub main-only manual workflow requires a reviewed bootstrap or trusted explicit runner before it can use unmerged candidate guard code.
+- Keep 85% engineering and 4/10 passed release gates from `docs/PROJECT_PROGRESS.json` as next-session baseline.

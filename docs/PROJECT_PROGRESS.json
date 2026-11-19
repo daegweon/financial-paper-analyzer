@@ -8,11 +8,11 @@
     "pull_request": 18,
     "base": "main",
     "review_state": "draft",
-    "last_independently_verified_sha": "54669ddae533e1ffe2b1062c6b3b7b309e54b73c",
-    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44411991617"
+    "last_independently_verified_sha": "35767d902dfaa2b2cd7596856e5dd7fce4b05e2b",
+    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952"
   },
   "methodology": "Weighted engineering milestone completion, NOT launch readiness. Each workstream has maximum points; achieved points sum to overall_percent. Increase only after verified evidence.",
-  "overall_percent": 84,
+  "overall_percent": 85,
   "workstreams": [
     {
       "id": "core_platform",
@@ -68,11 +68,12 @@
       "id": "beta_operations",
       "label": "실제 E2E·베타 출시 준비",
       "weight": 10,
-      "earned": 4,
+      "earned": 5,
       "evidence": [
-        "https://github.com/daegweon/financial-paper-analyzer/pull/18"
+        "https://github.com/daegweon/financial-paper-analyzer/pull/18",
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952"
       ],
-      "remaining": "실제 OAuth·SMTP·원본 PDF·2계정 E2E·릴리스·롤백"
+      "remaining": "운영 API 교체 승인·실제 2계정 HTTPS E2E·외부 SMTP·모바일·롤백"
     }
   ],
   "release_gates": [
@@ -80,7 +81,7 @@
       "id": "backend_frontend_ci",
       "label": "백엔드·프런트엔드 GitHub Actions",
       "status": "passed",
-      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44411991617"
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952"
     },
     {
       "id": "synthetic_browser",
@@ -92,7 +93,7 @@
       "id": "postgres_policy",
       "label": "격리 PostgreSQL 보안 권한 테스트",
       "status": "passed",
-      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44411991617"
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952"
     },
     {
       "id": "vercel_preview",
@@ -137,7 +138,7 @@
       "evidence": null
     }
   ],
-  "next_action": "Review and deploy server-only API before database privilege revocation; verify its health queue_write_mode, then explicitly approve and execute disposable-user live E2E. Preserve existing data.",
+  "next_action": "Review API-only Railway deployment (production is the only environment, currently tracks feat/research-workspace-mvp). With explicit change approval, deploy the candidate API only while old grants remain; require live queue_write_mode=service_role, then consented two-user E2E, only then reconcile/apply single grant revocation. Do not redeploy Worker.",
   "response_protocol": "Every substantial PaperSignal response starts with overall_percent and passed/total release gates from this file. Explain that percentage estimates engineering completion, not live launch permission.",
   "invariants": [
     "Analysis engine frozen",
@@ -157,6 +158,11 @@
       "date": "2026-11-19",
       "percent": 84,
       "evidence": "Validated PR #18 commit 54669ddae533e1ffe2b1062c6b3b7b309e54b73c: GitHub CI #44411991617 success, 112 backend passed and 1 skipped, 75 frontend, 24/24 Playwright, isolated PostgreSQL and progress validator 84% / 4 of 10."
+    },
+    {
+      "date": "2026-11-19",
+      "percent": 85,
+      "evidence": "Read-only production API GET probes confirmed health 200/anon 401 but legacy_missing_marker; real candidate Uvicorn emitted service_role and anon 401; disposable PostgreSQL pre/post migration checks passed; 129 backend + 24 browser tests, GitHub Actions #44458536952. Live launch gates remain 4/10."
     }
   ]
 }

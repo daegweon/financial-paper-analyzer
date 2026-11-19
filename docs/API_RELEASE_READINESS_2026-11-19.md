@@ -21,3 +21,7 @@ python backend/scripts/read_only_release_probe.py --require-server-owned
 ```
 
 A green local candidate ASGI smoke does NOT equal a deployed, authorized real job insert. A deployed `queue_write_mode=service_role` marker does NOT equal verified Storage RLS or successful real PDF analysis. Follow with a separately approved two-account HTTPS E2E before applying the DB migration. Do not change Railway source branch, deploy to Production, or modify client grants automatically.
+
+## Confirmed GitHub run 2026-11-19
+
+- https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952 — all automatic jobs PASS. Actual live API queue marker is `legacy_missing_marker`; candidate local ASGI marker is `service_role`; pre/post revocation disposable PostgreSQL compatibility checks both PASS. Live authenticated E2E remains SKIPPED; no Production modification.

@@ -31,3 +31,7 @@ python backend/scripts/read_only_release_probe.py --require-server-owned
 If the strict check fails, **do not apply** `supabase/migrations/20261117215315_beta_server_owned_result_writes.sql`. Verify API release source SHA and required secret variable names and do a reviewed rollback if necessary. Even if strict check passes, execute authorized two-user real HTTP E2E before restricting client grants.
 
 The current PR-only check does NOT deploy, reconfigure the Railway source branch, create a paid staging environment, or mutate production. Railway source configuration must be explicitly reviewed before rollout.
+
+## Confirmed GitHub run 2026-11-19
+
+- https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952 — all automatic jobs PASS. Actual live API queue marker is `legacy_missing_marker`; candidate local ASGI marker is `service_role`; pre/post revocation disposable PostgreSQL compatibility checks both PASS. Live authenticated E2E remains SKIPPED; no Production modification.
