@@ -143,3 +143,11 @@
 - Security advisor currently reports one accepted WARN: Leaked Password Protection disabled. No schema change, grant/revoke, user creation, file access, job enqueue or other mutation was performed.
 - Next safe order remains: human approve controlled DB change → apply only additive quota RPC after migration-history reconciliation → deploy API that calls it → verify quota in live E2E → after separate approval and successful two-user E2E revoke client writes. Never run blanket `supabase db push`.
 - Engineering 91%, beta gates 4/10. This audit adds verified operational knowledge but does not pass a release gate.
+
+## 2026-11-20 — AI usage and latency observability (CI pending)
+
+- Added content-free Gemini attempt telemetry: model, HTTP status/transport error class and per-attempt latency; successful usage log includes prompt/candidate/thought/total tokens and latency. Analysis job completion/failure/crash logs now include end-to-end duration.
+- Added backend regression assertions using synthetic provider usage metadata. No prompt, model selection, retry behavior, output schema, DB schema, API key or customer content is changed.
+- Added `docs/AI_USAGE_OBSERVABILITY_2026-11-20.md`. This is log-based operational visibility, not a durable usage ledger or USD cost calculation; persistent per-job billing telemetry remains a separate pre-beta schema/API task.
+- Code commits: `e1865bcc` and `440b4b3c`; documentation commit `c171540f`. CI run #44618394243 has API/frontend/db-policy/live read-only jobs green; browser QA was still running at checkpoint. Do not credit progress until full run succeeds.
+- All human approvals and production changes remain deferred as requested. No Production migration, Railway deployment, Worker change or user-data mutation.
