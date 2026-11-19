@@ -31,7 +31,7 @@
     }
   },
   "methodology": "Weighted engineering milestone completion, NOT launch readiness. Each workstream has maximum points; achieved points sum to overall_percent. Increase only after verified evidence.",
-  "overall_percent": 90,
+  "overall_percent": 91,
   "workstreams": [
     {
       "id": "core_platform",
@@ -59,11 +59,11 @@
       "id": "junior_learning",
       "label": "주니어 학습·원문 PDF",
       "weight": 20,
-      "earned": 18,
+      "earned": 19,
       "evidence": [
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44403257361"
       ],
-      "remaining": "실제 모바일 PDF·접근성 검증"
+      "remaining": "실제 iOS Safari·Android Chrome 기기에서 원본 PDF 렌더링·페이지 이동·서명 URL 갱신 확인"
     },
     {
       "id": "privacy_integrity",
@@ -228,6 +228,11 @@
       "date": "2026-11-20",
       "percent": 90,
       "evidence": "Latest candidate commit 46f306f736ef28a5fb34f75a1dd2c24ab1ba9b01 passed full GitHub Actions #44616620751: API, frontend lint/typecheck/tests/build, PostgreSQL 17 policy, live API GET-only preflight, and all 33 Playwright synthetic browser scenarios across desktop Chromium, Android Chromium and iPhone WebKit. Fixed a real Android WCAG 2.1 AA contrast issue (empty-state text 2.61:1 to compliant darker color) without weakening axe assertions. Live production E2E remains intentionally skipped; no release gate count increase. Engineering remains 90%, release gates 4/10."
+    },
+    {
+      "date": "2026-11-20",
+      "percent": 91,
+      "evidence": "Awarded one additional junior-learning engineering point after full CI #44616620751 verified the previously failing Android Chromium WCAG 2.1 AA contrast assertion and all 33 synthetic browser scenarios across desktop Chromium, Android Chromium and iPhone WebKit. This closes automated cross-browser accessibility validation; native iOS Safari/Android device PDF rendering, navigation and signed-link renewal remain pending. Actual beta release gates remain 4/10."
     }
   ]
 }
