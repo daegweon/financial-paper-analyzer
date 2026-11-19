@@ -8,8 +8,8 @@
     "pull_request": 18,
     "base": "main",
     "review_state": "draft",
-    "last_independently_verified_sha": "46f306f736ef28a5fb34f75a1dd2c24ab1ba9b01",
-    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44616620751",
+    "last_independently_verified_sha": "f540fa85b11ffd9af50c1cc5807aeabc3b3e125b",
+    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44619544125",
     "production_api": {
       "service_id": "81b678e2-7136-436d-9058-7d20647dc1b7",
       "immutable_commit": "ace3fbd5dab3ea71efa3a49da8363259ea5f9732",
@@ -31,7 +31,7 @@
     }
   },
   "methodology": "Weighted engineering milestone completion, NOT launch readiness. Each workstream has maximum points; achieved points sum to overall_percent. Increase only after verified evidence.",
-  "overall_percent": 91,
+  "overall_percent": 92,
   "workstreams": [
     {
       "id": "core_platform",
@@ -90,15 +90,16 @@
       "id": "beta_operations",
       "label": "실제 E2E·베타 출시 준비",
       "weight": 10,
-      "earned": 7,
+      "earned": 8,
       "evidence": [
         "https://github.com/daegweon/financial-paper-analyzer/pull/18",
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952",
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44467502056",
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44472720847",
-        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44473470809"
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44473470809",
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44619544125"
       ],
-      "remaining": "승인·PR #19 병합·Actions 비밀키 설정·실제 두 계정 E2E, 그 뒤 DB 권한 제한·SMTP·실기기·롤백"
+      "remaining": "영구 per-job 비용 원장·정확한 가격표 연동, 사람 승인/실운영 E2E·DB 전환·SMTP·실기기·롤백"
     }
   ],
   "release_gates": [
@@ -233,6 +234,11 @@
       "date": "2026-11-20",
       "percent": 91,
       "evidence": "Awarded one additional junior-learning engineering point after full CI #44616620751 verified the previously failing Android Chromium WCAG 2.1 AA contrast assertion and all 33 synthetic browser scenarios across desktop Chromium, Android Chromium and iPhone WebKit. This closes automated cross-browser accessibility validation; native iOS Safari/Android device PDF rendering, navigation and signed-link renewal remain pending. Actual beta release gates remain 4/10."
+    },
+    {
+      "date": "2026-11-20",
+      "percent": 92,
+      "evidence": "Awarded one beta-operations engineering point after full CI #44619544125 passed on candidate head f540fa85b11ffd9af50c1cc5807aeabc3b3e125b: backend 148 passed/1 deliberately skipped, frontend lint/build, PostgreSQL policy, read-only live API probe and 33 synthetic browser scenarios all green. Added content-free Gemini per-model token/attempt/latency telemetry, full-job duration, offline log report CLI and tests. This is operational observability, not a durable cost ledger or live release gate. Release gates remain 4/10."
     }
   ]
 }
