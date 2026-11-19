@@ -1,3 +1,9 @@
+## 2026-11-19 — Atomic analysis quotas and user-facing 429 handling
+- Added server-only Postgres RPC `enqueue_analysis_job` with per-user advisory locking, active-job idempotency, 5-per-24h daily cap and 2-active-job cap; browser roles cannot execute it.
+- Candidate FastAPI calls RPC and maps quota errors to HTTP 429; browser shows exact user-safe quota detail rather than generic transient warning, without retrying POST. Added 3 frontend regression cases.
+- PostgreSQL disposable CI verifies RPC grants, idempotency, daily/active caps and post-migration integrity. Latest run https://github.com/daegweon/financial-paper-analyzer/actions/runs/44526397733 SUCCESS: backend 146/1 skipped, 33 browser, frontend, DB and live API read-only checks pass.
+- Engineering score 89%; actual live beta release gates still 4/10. Quota migration is candidate-only and not applied to Production.
+
 ## 2026-11-19 — Isolated manual E2E launcher and recoverable fixture cleanup
 - Added scoped cleanup helper to real E2E: owner/paper-scoped service deletions, exact generated PDF path validation, safe nonterminal Worker retention, independent DB/Storage cleanup and preserved Auth users on errors. Regression tests include partial failures/invalid paths.
 - Draft PR #18 commit `431059a` passed GitHub CI #44472720847: 143 backend PASS, 1 opt-in live E2E skipped, 24/24 browser, frontend, PostgreSQL, live read-only API readiness.

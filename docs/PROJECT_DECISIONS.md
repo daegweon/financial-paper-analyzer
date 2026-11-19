@@ -91,3 +91,10 @@
 - Store GitHub secrets only via repository Actions secret UI; never in assistant chat, GitHub PR text, workflow inputs or dependency-install environment. E2E mutations require target selection, approval checkbox, exact SHA and acknowledgment.
 - Test fixture cleanup is scope-bound to returned QA user IDs, exact generated PDF path and paper ID; retain identities for manual recovery on partial DB/Storage cleanup failures and retain all fixtures during nonterminal jobs.
 - No actual live E2E or Supabase migration was executed. Engineering progress 88%, independent release gates unchanged 4/10.
+
+## 2026-11-19 — Analysis quota guardrails
+
+- Analysis queue quota is enforced atomically inside a service-role-only Postgres RPC, not by a browser-only counter. One active job per same paper is idempotently returned; daily maximum is 5 per rolling 24h and concurrent active maximum is 2 per user. Advisory transaction lock serializes per-user admission.
+- Candidate UI must show the backend's HTTP 429 detail immediately; do not classify quota denial as generic transient and never automatically retry the analysis POST.
+- Additive quota migration must be reconciled with the live Supabase migration history and explicitly approved before applying. Old production API still inserts directly, so deploy order is additive RPC migration → API RPC caller → verify → live two-user E2E → separate client grant revocation.
+- Progress 89% engineering; release gates unchanged 4/10 because Production schema/API quota rollout and real auth E2E remain pending.

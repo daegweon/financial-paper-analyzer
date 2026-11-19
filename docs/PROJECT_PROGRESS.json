@@ -8,8 +8,8 @@
     "pull_request": 18,
     "base": "main",
     "review_state": "draft",
-    "last_independently_verified_sha": "431059a1116a50f39fd56d565c35a1afc081b8fc",
-    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44472720847",
+    "last_independently_verified_sha": "7b51529200548a26d0361130ff46003f700c0340",
+    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44526397733",
     "production_api": {
       "service_id": "81b678e2-7136-436d-9058-7d20647dc1b7",
       "immutable_commit": "ace3fbd5dab3ea71efa3a49da8363259ea5f9732",
@@ -31,17 +31,18 @@
     }
   },
   "methodology": "Weighted engineering milestone completion, NOT launch readiness. Each workstream has maximum points; achieved points sum to overall_percent. Increase only after verified evidence.",
-  "overall_percent": 88,
+  "overall_percent": 89,
   "workstreams": [
     {
       "id": "core_platform",
       "label": "핵심 플랫폼·사용자 흐름",
       "weight": 25,
-      "earned": 23,
+      "earned": 24,
       "evidence": [
-        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44404002239"
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44404002239",
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44526397733"
       ],
-      "remaining": "운영 계정 전체 사용자 흐름 확인"
+      "remaining": "실제 운영 사용자 흐름·신규 큐 마이그레이션 및 API 단계 배포 검증"
     },
     {
       "id": "finance_engine",
@@ -161,7 +162,7 @@
       "evidence": null
     }
   ],
-  "next_action": "Human: review and merge standalone Draft PR #19 ONLY (not #18), securely configure 4 Actions secrets and explicitly approve/manual-dispatch two-account synthetic E2E using pinned audited source. After real PASS, reconcile/apply single Supabase grant-revocation migration, rerun E2E. No live fixture created yet.",
+  "next_action": "Human approval remains for standalone E2E PR #19 and repository secrets. Separately reconcile Supabase remote migration history; only after explicit approval apply additive quota RPC migration while legacy API remains compatible, deploy new RPC caller API, verify quotas and real 2-account E2E, then separately revoke client direct writes.",
   "response_protocol": "Every substantial PaperSignal response starts with overall_percent and passed/total release gates from this file. Explain that percentage estimates engineering completion, not live launch permission.",
   "invariants": [
     "Analysis engine frozen",
@@ -201,6 +202,11 @@
       "date": "2026-11-19",
       "percent": 88,
       "evidence": "Independent standalone manual main-branch E2E workflow Draft PR #19 created and CI #44473470809 success (57 backend); release source #431059a 143 backend + 24 Playwright green in #44472720847. QA cleanup handles partial failures with scoped deletes and recovery. No live account created, 4/10 launch gates remain."
+    },
+    {
+      "date": "2026-11-19",
+      "percent": 89,
+      "evidence": "Per-user server-side analysis quota RPC and UI feedback verified on GitHub Actions #44526397733: 146 backend passed/1 live E2E skipped, 33 Playwright browser tests passed, frontend quota UX tests, disposable PostgreSQL pre/post grant and quota tests, live API preflight. No Production migration or user data changed."
     }
   ]
 }

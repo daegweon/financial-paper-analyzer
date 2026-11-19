@@ -285,3 +285,10 @@ quality; those two papers need a separate finding-level quality review.
 - User actions (review/merge PR #19, configure secrets, manually dispatch) described in `docs/HUMAN_E2E_HANDOFF_2026-11-19.md`. No automatic run, no live temporary accounts and no AI calls have occurred.
 - Fixture cleanup is now resistant to partial failures, preserves QA Auth users on DB/Storage cleanup error and retains all fixtures when the Worker is nonterminal. Tested by independent HTTPX mock transports, not actual production.
 - Engineering completion 88%, beta release gates 4/10, tracked in `docs/PROJECT_PROGRESS.json`.
+
+## Analysis quota migration sequence (2026-11-19)
+
+- New candidate migration `20261119100000_server_owned_analysis_quota.sql` creates a service_role-only SECURITY DEFINER queue RPC with per-user serialized admission, 5 jobs/rolling 24h and max 2 active jobs. Same paper active job returns existing job.
+- New candidate API calls the RPC; UI surfaces daily/active 429 details without resubmitting. Disposable PostgreSQL and frontend tests pass.
+- **Not yet live:** production API remains pinned to old commit `ace3fbd5` and the additive migration has not been applied. First reconcile remote Supabase migration history and explicitly approve additive migration. Apply only this file while old API is still compatible with direct service_role INSERT, then deploy RPC caller API and verify. Real 2-account E2E, then client grant revocation, only afterwards.
+- Evidence: https://github.com/daegweon/financial-paper-analyzer/actions/runs/44526397733 . Engineering 89%, real release gates 4/10.
