@@ -23,6 +23,13 @@ on:
         type: string
         required: false
         default: ""
+# Keep only the newest automatic PR/push verification to avoid spending runner minutes
+# on superseded commits. Explicit manual dispatches (including live E2E) are never
+# auto-cancelled by this policy.
+concurrency:
+  group: papersignal-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+
 permissions:
   contents: read
 jobs:
