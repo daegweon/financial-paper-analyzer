@@ -21,3 +21,10 @@
 - Existing PaperSignal Railway API/Worker online; server-owned `/health` marker confirmed. Frontend Preview ready and CI regression tests green.
 - Original user papers, result history and Worker's deployed code remain intact. No production DB permission migration has been executed.
 - Next step after **real** live E2E PASS: reconcile Supabase remote migration history, review/apply only `supabase/migrations/20261117215315_beta_server_owned_result_writes.sql`, check postmigration grants and rerun the authorized E2E. Never blanket `db push` or roll the API back to the old browser-writer release after revocation.
+
+## 2026-11-20 current checkpoint
+
+- Current weighted engineering completion: **91%**; independently passed live beta gates: **4/10**. Canonical source: `docs/PROJECT_PROGRESS.json`.
+- Latest completed full CI [#44616620751](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44616620751) passed all 33 synthetic browser scenarios, including Android WCAG contrast, plus API, frontend, PostgreSQL policy and read-only live API checks. This is not real-user E2E.
+- PR #19 is still Draft and its manual workflow is not active on `main`. No actual temporary Auth users/PDF or Gemini job has been created by this workflow.
+- Continue only after a human reviews/merges PR #19, configures the four protected Actions secrets, and explicitly dispatches the pinned test. Do not apply either Production migration before its separate approval and correct sequence.
