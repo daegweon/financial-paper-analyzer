@@ -1,4 +1,11 @@
 
+## 2026-11-20 — Automated accessibility milestone credited
+
+- Full cross-browser CI [#44616620751](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44616620751) passed: all 33 Playwright synthetic browser scenarios across desktop Chromium, Android Chromium and iPhone WebKit, alongside API, frontend and PostgreSQL checks. The Android WCAG 2.1 AA contrast regression is fixed with strict axe assertions unchanged.
+- Weighted engineering completion is now **91%** (up from 90%) because the automated cross-browser accessibility milestone is independently verified. The junior-learning workstream is 19/20; the remaining point is real iOS Safari/Android device PDF rendering, navigation and signed-link renewal.
+- Actual beta release gates remain **4/10**. This engineering score is not live launch approval. Real two-user E2E, production quota migration, SMTP, native devices, rollback and research audit/budget remain outstanding.
+- Progress ledger validator CI for updated score is running on commit `65c49596be875407026a34601f8a0b329972bb08`; do not claim that validation run is green until its result is confirmed.
+
 ## 2026-11-20 — Cross-browser accessibility fix verified
 
 - Candidate commit `46f306f736ef28a5fb34f75a1dd2c24ab1ba9b01` passed full GitHub Actions [#44616620751](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44616620751): API, frontend lint/typecheck/tests/build, PostgreSQL 17 policy, live API GET-only preflight and all 33 synthetic browser scenarios.
