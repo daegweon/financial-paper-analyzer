@@ -158,7 +158,7 @@
 }
 .compareButton, .exportButton {
   border-color: #126c6a;
-  background: #188b89;
+  background: #126c6a;
   color: #fff;
 }
 .compareButton:disabled, .refreshButton:disabled {
