@@ -260,3 +260,11 @@ The account reached Vercel Hobby's daily 100-deployment API limit (HTTP 402 `api
 - A wrong-owner paper queue attempt must raise `PAPERSIGNAL_PAPER_NOT_FOUND` in both phases, even when the call originates from service_role. This guards the API's ownership contract.
 - Commits `be4ae7c`, `e588250`; CI result must be verified before crediting any additional completion points. Canonical engineering baseline remains **90%**, real beta gates **4/10**.
 - Real live E2E remains blocked on human approval/review of PR #19, securely configured secrets, and manual dispatch. No new Production DB migration, Vercel Production promotion or Worker code change is authorized by this CI enhancement.
+
+## 2026-11-20 — Read-only Production Supabase migration and grant audit
+
+- Connected to the existing `financial-paper-analyzer` Supabase project (`hwmtayrecsfxernhssro`, Seoul, PostgreSQL 17) and inspected migration history without writes. Exactly nine migrations are recorded, latest `20261113234956 cleanup_terminal_analysis_job_checkpoints`; neither `20261119100000_server_owned_analysis_quota` nor `20261117215315_beta_server_owned_result_writes` is applied.
+- Read-only `information_schema.role_table_grants` confirms `authenticated` still has `INSERT` on `analyses`, `analysis_jobs` and `papers`. The intended server-only quota RPC is not present in `public` yet. This confirms the DB permission gate is genuinely pending, not merely undocumented.
+- Security advisor currently reports one accepted WARN: Leaked Password Protection disabled. No schema change, grant/revoke, user creation, file access, job enqueue or other mutation was performed.
+- Next safe order remains: human approve controlled DB change → apply only additive quota RPC after migration-history reconciliation → deploy API that calls it → verify quota in live E2E → after separate approval and successful two-user E2E revoke client writes. Never run blanket `supabase db push`.
+- Engineering 91%, beta gates 4/10. This audit adds verified operational knowledge but does not pass a release gate.
