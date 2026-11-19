@@ -110,12 +110,12 @@ def test_authenticated_request_queues_background_job(monkeypatch):
             raise AssertionError("Unexpected GET " + url)
         async def post(self, url, **kwargs):
             requests_seen.append(("POST", url, kwargs))
-            assert url.endswith("/rest/v1/analysis_jobs")
-            assert kwargs["json"]["paper_id"] == paper_id
-            assert kwargs["json"]["user_id"] == user_id
+            assert url.endswith("/rest/v1/rpc/enqueue_analysis_job")
+            assert kwargs["json"]["p_paper_id"] == paper_id
+            assert kwargs["json"]["p_user_id"] == user_id
             assert kwargs["headers"]["apikey"] == "sb_secret_test"
-            assert "Authorization" not in kwargs["headers"], "A browser JWT must never be used for privileged job writes."
-            return httpx.Response(201, json=[{"id": job_id, "status": "queued", "stage": "queued"}])
+            assert "Authorization" not in kwargs["headers"], "A browser JWT must never be used for privileged queue RPC."
+            return httpx.Response(200, json=[{"id": job_id, "status": "queued", "stage": "queued"}])
 
     async def fake_worker(*args):
         return None
@@ -170,6 +170,68 @@ def test_queue_requires_server_role_key_and_never_falls_back_to_browser_writes(m
     )
     assert response.status_code == 503
     assert "안전한 분석 작업 등록" in response.json()["detail"]
+
+
+
+@pytest.mark.parametrize(
+    ("queue_message", "expected_detail"),
+    [
+        ("PAPERSIGNAL_DAILY_LIMIT", "24시간 내 분석 요청 한도(5건)에 도달했습니다."),
+        ("PAPERSIGNAL_ACTIVE_LIMIT", "동시에 진행할 수 있는 분석은 최대 2건입니다."),
+    ],
+)
+def test_analysis_queue_limits_return_user_safe_429(monkeypatch, queue_message, expected_detail):
+    user_id = "11111111-1111-4111-8111-111111111111"
+    paper_id = "22222222-2222-4222-8222-222222222222"
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *exc): return None
+        async def get(self, url, **kwargs):
+            if url.endswith("/auth/v1/user"): return httpx.Response(200, json={"id": user_id})
+            if url.endswith("/rest/v1/papers"):
+                return httpx.Response(200, json=[{"id":paper_id,"user_id":user_id,"storage_path":user_id+"/contract.pdf"}])
+            if url.endswith("/rest/v1/analysis_jobs"): return httpx.Response(200, json=[])
+            raise AssertionError("Unexpected GET " + url)
+        async def post(self, url, **kwargs):
+            assert url.endswith("/rest/v1/rpc/enqueue_analysis_job")
+            assert kwargs["headers"]["apikey"] == "sb_secret_test"
+            assert "Authorization" not in kwargs["headers"]
+            return httpx.Response(400, json={"code":"P0001","message":queue_message})
+    monkeypatch.setattr(module,"SUPABASE_URL","https://mock.supabase.test")
+    monkeypatch.setattr(module,"SUPABASE_KEY","publishable_mock")
+    monkeypatch.setattr(module,"SERVICE_ROLE_KEY","sb_secret_test")
+    monkeypatch.setattr(module.httpx,"AsyncClient",FakeClient)
+    response=TestClient(module.app).post("/api/analyze/"+paper_id,headers={"Authorization":"Bearer valid_test_jwt"})
+    assert response.status_code == 429
+    assert expected_detail in response.json()["detail"]
+
+
+def test_analysis_queue_rpc_returns_existing_job_after_race(monkeypatch):
+    user_id="11111111-1111-4111-8111-111111111111"
+    paper_id="22222222-2222-4222-8222-222222222222"
+    job_id="44444444-4444-4444-8444-444444444444"
+    class FakeClient:
+        def __init__(self,*args,**kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self,*exc): return None
+        async def get(self,url,**kwargs):
+            if url.endswith("/auth/v1/user"): return httpx.Response(200,json={"id":user_id})
+            if url.endswith("/rest/v1/papers"):
+                return httpx.Response(200,json=[{"id":paper_id,"user_id":user_id,"storage_path":user_id+"/contract.pdf"}])
+            if url.endswith("/rest/v1/analysis_jobs"): return httpx.Response(200,json=[])
+            raise AssertionError("Unexpected GET "+url)
+        async def post(self,url,**kwargs):
+            assert url.endswith("/rest/v1/rpc/enqueue_analysis_job")
+            return httpx.Response(200,json=[{"id":job_id,"status":"processing","stage":"gemini_analysis"}])
+    monkeypatch.setattr(module,"SUPABASE_URL","https://mock.supabase.test")
+    monkeypatch.setattr(module,"SUPABASE_KEY","publishable_mock")
+    monkeypatch.setattr(module,"SERVICE_ROLE_KEY","sb_secret_test")
+    monkeypatch.setattr(module.httpx,"AsyncClient",FakeClient)
+    response=TestClient(module.app).post("/api/analyze/"+paper_id,headers={"Authorization":"Bearer valid_test_jwt"})
+    assert response.status_code == 202
+    assert response.json() == {"status":"processing","job_id":job_id,"stage":"gemini_analysis"}
+
 
 def test_analysis_job_status_is_scoped_to_authenticated_owner(monkeypatch):
     user_id = "11111111-1111-4111-8111-111111111111"

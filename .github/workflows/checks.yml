@@ -134,6 +134,8 @@ jobs:
           docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/tests/verify_pre_revoke_server_enqueue.sql
           # Phase 2: after reviewed API/E2E, revoke direct browser write privileges.
           docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/migrations/20261117215315_beta_server_owned_result_writes.sql
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/migrations/20261119100000_server_owned_analysis_quota.sql
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/tests/verify_analysis_queue_quota.sql
           docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/tests/verify_beta_write_isolation.sql
 
   live-e2e:

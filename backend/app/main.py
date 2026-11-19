@@ -2986,44 +2986,42 @@ async def analyze_paper(
                 status_code=503,
                 detail="안전한 분석 작업 등록이 아직 준비되지 않았습니다.",
             )
+        # The database RPC serializes per-user requests and enforces quotas atomically.
         create_response = await client.post(
-            SUPABASE_URL + "/rest/v1/analysis_jobs",
+            SUPABASE_URL + "/rest/v1/rpc/enqueue_analysis_job",
             headers={
                 **supabase_headers(SERVICE_ROLE_KEY),
                 "Content-Type": "application/json",
                 "Prefer": "return=representation",
             },
-            json={"paper_id": str(paper_id), "user_id": user_id, "status": "queued", "stage": "queued"},
+            json={"p_paper_id": str(paper_id), "p_user_id": user_id},
         )
-        if create_response.status_code == 409:
-            # A concurrent request may have won the partial unique-index race.
-            duplicate_response = await client.get(
-                SUPABASE_URL + "/rest/v1/analysis_jobs",
-                headers=supabase_headers(token),
-                params={
-                    "paper_id": "eq." + str(paper_id),
-                    "user_id": "eq." + user_id,
-                    "status": "in.(queued,processing)",
-                    "select": "id,status,stage",
-                    "order": "created_at.desc",
-                    "limit": "1",
-                },
-            )
-            duplicate_jobs = await check_response(duplicate_response, "duplicate active job lookup")
-            if duplicate_jobs:
-                return {
-                    "status": duplicate_jobs[0]["status"],
-                    "job_id": duplicate_jobs[0]["id"],
-                    "stage": duplicate_jobs[0]["stage"],
-                }
-
-        created = await check_response(create_response, "analysis job insert")
+        if create_response.status_code in {400, 404}:
+            try:
+                queue_error = create_response.json().get("message", "")
+            except (ValueError, AttributeError):
+                queue_error = ""
+            if queue_error == "PAPERSIGNAL_DAILY_LIMIT":
+                raise HTTPException(
+                    status_code=429,
+                    detail="24시간 내 분석 요청 한도(5건)에 도달했습니다. 잠시 후 다시 시도해 주세요.",
+                )
+            if queue_error == "PAPERSIGNAL_ACTIVE_LIMIT":
+                raise HTTPException(
+                    status_code=429,
+                    detail="동시에 진행할 수 있는 분석은 최대 2건입니다. 진행 중인 작업을 완료한 뒤 다시 시도해 주세요.",
+                )
+            if queue_error == "PAPERSIGNAL_PAPER_NOT_FOUND":
+                raise HTTPException(status_code=404, detail="해당 논문이 없습니다.")
+        created = await check_response(create_response, "analysis job enqueue RPC")
         if not isinstance(created, list) or not created:
             raise HTTPException(status_code=502, detail="분석 작업을 등록하지 못했습니다.")
         job_id = created[0]["id"]
+        job_status = created[0].get("status") or "queued"
+        job_stage = created[0].get("stage") or "queued"
 
     log.info("Analysis job queued job_id=%s paper_id=%s", job_id, paper_id)
-    return {"status": "queued", "job_id": job_id, "stage": "queued"}
+    return {"status": job_status, "job_id": job_id, "stage": job_stage}
 
 
 @app.get("/api/analyze/{paper_id}/status")
