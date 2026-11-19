@@ -151,3 +151,11 @@
 - Added `docs/AI_USAGE_OBSERVABILITY_2026-11-20.md`. This is log-based operational visibility, not a durable usage ledger or USD cost calculation; persistent per-job billing telemetry remains a separate pre-beta schema/API task.
 - Code commits: `e1865bcc` and `440b4b3c`; documentation commit `c171540f`. CI run #44618394243 has API/frontend/db-policy/live read-only jobs green; browser QA was still running at checkpoint. Do not credit progress until full run succeeds.
 - All human approvals and production changes remain deferred as requested. No Production migration, Railway deployment, Worker change or user-data mutation.
+
+## 2026-11-20 — Offline AI usage report and telemetry test
+
+- Added `backend/app/usage_report.py`, a dependency-free offline summarizer for exported Railway API text logs. It groups provider-reported token totals, per-model attempt counts/HTTP error rate, request latency median/p95 and full job-duration median/p95.
+- Added `backend/tests/test_usage_report.py` for primary/fallback models, HTTP errors, token aggregation, incomplete metadata and content-free handling. Corrected latency aggregation so a successful request is counted once (attempt line only), with true median calculation for even-sized samples.
+- Added `docs/AI_USAGE_REPORT_GUIDE_2026-11-20.md`. The utility does not connect to Railway, store customer content, infer USD charges or mutate production. Cost estimation remains deferred until an approved, versioned pricing source and durable ledger exist.
+- Final candidate CI run [#44619361916](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44619361916): API tests **148 passed / 1 deliberately skipped**; DB policy and read-only live API checks passed; frontend build and synthetic browser job were still running at checkpoint. Do not credit engineering points until the full run is complete and green.
+- All human approvals remain explicitly deferred per user instruction. No production migration, deployment, account creation, Worker update or model-engine behavior change.
