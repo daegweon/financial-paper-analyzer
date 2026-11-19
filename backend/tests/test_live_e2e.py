@@ -144,8 +144,10 @@ def _delete_user(
 def _remove_storage_object(
     client: httpx.Client, object_path: str, admin_headers: dict[str, str]
 ) -> None:
-    # Supabase Storage removes objects via POST /object/{bucket} with prefixes.
-    response = client.post(
+    # The Supabase Storage batch-delete endpoint requires DELETE, not POST.
+    # Delete through the Storage API so the underlying PDF is removed too.
+    response = client.request(
+        "DELETE",
         "/storage/v1/object/papers",
         headers=admin_headers,
         json={"prefixes": [object_path]},
@@ -272,26 +274,41 @@ def test_delete_user_targets_only_requested_auth_user():
     assert client.call[0] == "/auth/v1/admin/users/11111111-1111-4111-8111-111111111111"
 
 
-def test_remove_storage_object_uses_supabase_storage_remove_api():
-    class FakeClient:
-        def __init__(self):
-            self.call = None
+def test_remove_storage_object_uses_supabase_storage_delete_api():
+    seen = []
 
-        def post(self, path, **kwargs):
-            self.call = (path, kwargs)
-            return _response(200, {})
+    def mock_transport(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        assert request.method == "DELETE"
+        assert request.url.path == "/storage/v1/object/papers"
+        assert request.headers["apikey"] == "sb_secret_test"
+        assert request.read()
+        import json
+        assert json.loads(request.content)["prefixes"] == [
+            "11111111-1111-4111-8111-111111111111/test.pdf"
+        ]
+        return httpx.Response(200, json=[])
 
-    client = FakeClient()
-    _remove_storage_object(
-        client,
-        "11111111-1111-4111-8111-111111111111/test.pdf",
-        {"apikey": "sb_secret_test"},
-    )
-    path, kwargs = client.call
-    assert path == "/storage/v1/object/papers"
-    assert kwargs["json"]["prefixes"] == [
-        "11111111-1111-4111-8111-111111111111/test.pdf"
-    ]
+    with httpx.Client(
+        transport=httpx.MockTransport(mock_transport), base_url=LIVE_SUPABASE_ORIGIN,
+    ) as client:
+        _remove_storage_object(
+            client,
+            "11111111-1111-4111-8111-111111111111/test.pdf",
+            {"apikey": "sb_secret_test"},
+        )
+    assert len(seen) == 1
+
+
+def test_remove_storage_object_rejects_failed_cleanup():
+    with httpx.Client(
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(405, json={"message": "not allowed"})
+        ),
+        base_url=LIVE_SUPABASE_ORIGIN,
+    ) as client:
+        with pytest.raises(httpx.HTTPStatusError):
+            _remove_storage_object(client, "synthetic/test.pdf", {"apikey": "test"})
 
 
 @pytest.mark.skipif(
