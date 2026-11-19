@@ -1,3 +1,10 @@
+## 2026-11-19 — Isolated manual E2E launcher and recoverable fixture cleanup
+- Added scoped cleanup helper to real E2E: owner/paper-scoped service deletions, exact generated PDF path validation, safe nonterminal Worker retention, independent DB/Storage cleanup and preserved Auth users on errors. Regression tests include partial failures/invalid paths.
+- Draft PR #18 commit `431059a` passed GitHub CI #44472720847: 143 backend PASS, 1 opt-in live E2E skipped, 24/24 browser, frontend, PostgreSQL, live read-only API readiness.
+- Created **separate Draft PR #19 on main** with `workflow_dispatch`-only, pin to immutable audited E2E SHA `431059a`, confirmation/target guards and secret scopes. PR #19 CI #44473470809 passed 57 Python tests. This avoids merging unfinished product PR #18 before the real E2E gate.
+- Human action still needed to review/merge PR #19, configure 4 GitHub repository Actions secrets and explicitly approve/manual-run E2E. No production Auth, Storage, database or AI mutation occurred.
+- Increased weighted engineering score 87% → 88% for verified release-execution mechanism, without increasing the 4/10 confirmed beta release gates.
+
 ## 2026-11-19 — E2E cleanup protocol fixed and original PDF authorization checks
 - Fixed Supabase Storage batch cleanup protocol from POST to DELETE and added MockTransport regression tests for method/body/HTTP failures.
 - Strengthened live E2E with owner-only PDF byte retrieval and signed-link issuance, 60-second signed PDF exact-byte check, and non-owner GET/signing denial; all run before Gemini/Worker queue.

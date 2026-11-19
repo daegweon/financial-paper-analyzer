@@ -39,3 +39,9 @@ New session must read `AGENTS.md`, `docs/PROJECT_PROGRESS.json`, `docs/PROJECT_S
 - Before invoking any real analysis queue, the E2E validates owner raw PDF bytes, private access denial, authorized signed download bytes and blocked non-owner signature issuance. Signed link contents remain secret and are never printed.
 - E2E security/regression checks passed in https://github.com/daegweon/financial-paper-analyzer/actions/runs/44467502056. Real E2E still NOT run on Production; current fixture counts across Auth/Storage/papers/jobs were 0 in read-only SQL checks.
 - Current canonical engineering score 87%, verified release gates 4/10; next task is manually approved live E2E, then targeted grant migration only after success.
+
+## Human execution gateway (2026-11-19)
+
+- Full beta PR #18 remains Draft, but a minimal Draft PR #19 https://github.com/daegweon/financial-paper-analyzer/pull/19 can register a standalone manual workflow on `main` after a human merges it. Its fixed source is PR #18 SHA `431059a1116a50f39fd56d565c35a1afc081b8fc`; main is NOT asked to merge unfinished product code.
+- The pinned test checks fixture cleanup recovery and original signed PDF, user A/B authorization and durable real Worker completion. GitHub PR tests pass (backend 143/1 skip, browsers 24/24); no live E2E yet.
+- Exact human actions are in `docs/HUMAN_E2E_HANDOFF_2026-11-19.md`. Current canonical progress 88% engineering and 4/10 passed beta gates.

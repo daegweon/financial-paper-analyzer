@@ -84,3 +84,10 @@
 - Every real authenticated temporary-account E2E must assert owner access to actual private PDF bytes and signed URL, plus denial of non-owner PDF reads and signature issuance. A shared signed bearer URL does not remain owner-session-bound; never claim otherwise.
 - Keep live E2E explicitly manual and unrun until the owner approves temporary Auth/Storage mutation and secure runner secrets. E2E suite hardening does not qualify as a passed live release gate.
 - Increase engineering completion from 86% to 87% after CI verification, with 4/10 real launch gates unchanged.
+
+## 2026-11-19 — Independent human-approved E2E gateway
+
+- Keep full product PR #18 Draft until real verified beta gates pass. A narrow standalone `workflow_dispatch` PR #19 targets main, allowing only a pinned reviewed E2E commit and explicit human approvals without prematurely merging all unfinished product changes.
+- Store GitHub secrets only via repository Actions secret UI; never in assistant chat, GitHub PR text, workflow inputs or dependency-install environment. E2E mutations require target selection, approval checkbox, exact SHA and acknowledgment.
+- Test fixture cleanup is scope-bound to returned QA user IDs, exact generated PDF path and paper ID; retain identities for manual recovery on partial DB/Storage cleanup failures and retain all fixtures during nonterminal jobs.
+- No actual live E2E or Supabase migration was executed. Engineering progress 88%, independent release gates unchanged 4/10.

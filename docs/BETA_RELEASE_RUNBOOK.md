@@ -278,3 +278,10 @@ quality; those two papers need a separate finding-level quality review.
 - The real test checks exact owner PDF bytes, owner signed URL and signed PDF bytes, non-owner direct download and signing denial **before** queuing an AI analysis.
 - https://github.com/daegweon/financial-paper-analyzer/actions/runs/44467502056 verified 133 backend passes (1 live test skipped), 24 browser, frontend and DB policy. **This is fixture code verification only**; live production account creation and Gemini analysis have not occurred.
 - Engineering percent 87%, 4/10 release gates. Existing Supabase temporary E2E fixtures count 0 on read-only inspection. Proceed only with explicit authorized live test environment and account credentials via secure runner secrets, never paste them in chat.
+
+## Separate manual-only verified E2E launcher (2026-11-19)
+
+- New Draft PR #19 contains only a standalone GitHub `workflow_dispatch` registration and static guard tests, NOT the entire unfinished product. It uses the fully pinned E2E test SHA `431059a1116a50f39fd56d565c35a1afc081b8fc` and requires explicit target/approval/exact SHA/acknowledgment.
+- User actions (review/merge PR #19, configure secrets, manually dispatch) described in `docs/HUMAN_E2E_HANDOFF_2026-11-19.md`. No automatic run, no live temporary accounts and no AI calls have occurred.
+- Fixture cleanup is now resistant to partial failures, preserves QA Auth users on DB/Storage cleanup error and retains all fixtures when the Worker is nonterminal. Tested by independent HTTPX mock transports, not actual production.
+- Engineering completion 88%, beta release gates 4/10, tracked in `docs/PROJECT_PROGRESS.json`.

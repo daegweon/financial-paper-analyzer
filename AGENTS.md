@@ -18,3 +18,9 @@
 - Live E2E that provisions temporary users/PDF requires explicit manual approval and strict target checks; never run on automatic PR CI.
 - Deploy and confirm server-owned analysis queue API **before** applying the database write-grant migration. Existing remote migration versions differ from historical GitHub baseline files; do not blanket `supabase db push`.
 - Never expose service secrets, raise the GitHub Actions $1 budget, promote Production or change customer data without authorization.
+
+## 2026-11-19 human-gated real E2E checkpoint
+
+- Engineering progress source currently 88%, beta gates 4/10. Always load the latest JSON; no claim of real beta readiness.
+- Additional narrow Draft PR #19 (`chore/manual-e2e-launcher-20261119`) targets main to register a **manual-only** E2E workflow without merging Draft PR #18. GitHub CI passed. The pinned E2E code is commit `431059a1116a50f39fd56d565c35a1afc081b8fc`.
+- Human steps are in `docs/HUMAN_E2E_HANDOFF_2026-11-19.md`; never manually create Auth users, invoke Gemini or apply DB migration until explicit human permission and secure runner secrets are supplied.
