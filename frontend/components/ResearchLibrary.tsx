@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { db } from "../lib/supabase";
+import { getAnalysisQuotaUsage } from "../lib/analysis-quota";
 import styles from "./ResearchLibrary.module.css";
 
 type Paper = {
@@ -233,6 +234,8 @@ export function ResearchLibrary({
   const comparisonTriggerRef = useRef<HTMLElement | null>(null);
   const [compareLoading, setCompareLoading] = useState(false);
   const [compareError, setCompareError] = useState("");
+
+  const quotaUsage = getAnalysisQuotaUsage(jobs, Date.now());
 
   const refreshJobs = useCallback(async () => {
     setJobsLoading(true);
@@ -550,6 +553,7 @@ export function ResearchLibrary({
             </button>
           </div>
           {jobsError && <p className={styles.error} role="alert">{jobsError}</p>}
+          <p className={styles.quotaUsage} role="status">최근 24시간 {quotaUsage.dailyUsed}/5회 사용 · 동시 진행 {quotaUsage.activeCount}/2건</p>
           {jobs.length === 0 ? (
             <div className={styles.empty}>
               <strong>분석 작업 이력이 없습니다.</strong>

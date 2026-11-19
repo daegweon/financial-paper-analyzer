@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "tsc --noEmit && npm run test:auth && npm run test:analysis && npm run test:junior && npm run test:workflow && npm run test:pdf && npm run test:beta && npm run test:qa-target",
+    "lint": "tsc --noEmit && npm run test:auth && npm run test:analysis && npm run test:analysis-quota && npm run test:junior && npm run test:workflow && npm run test:pdf && npm run test:beta && npm run test:qa-target",
     "test:auth": "node --experimental-strip-types --test tests/auth-feedback.test.mjs",
     "test:analysis": "node --experimental-strip-types --test tests/analysis-job.test.mjs",
     "test:junior": "node --experimental-strip-types --test tests/junior-guide.test.mjs tests/junior-visuals.test.mjs",
@@ -19,7 +19,8 @@
     "test:browser:tenant": "playwright test tests/browser/tenant.spec.ts",
     "test:browser:mock": "playwright test tests/browser/mock-authenticated.spec.ts",
     "test:browser:ci": "playwright test tests/browser/anonymous.spec.ts tests/browser/mock-authenticated.spec.ts",
-    "prebuild": "npm run lint"
+    "prebuild": "npm run lint",
+    "test:analysis-quota": "node --experimental-strip-types --test tests/analysis-quota.test.mjs"
   },
   "dependencies": {
     "next": "16.4.6",

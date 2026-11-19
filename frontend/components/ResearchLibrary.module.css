@@ -476,3 +476,14 @@
 }
 .resumeJobButton:hover:not(:disabled) { background: #d9f0eb; }
 .resumeJobButton:disabled { cursor: wait; opacity: .55; }
+
+.quotaUsage {
+  margin: 10px 0 12px;
+  padding: 8px 10px;
+  border: 1px solid #d8e4e8;
+  border-radius: 8px;
+  background: #f5f9fa;
+  color: #425a68;
+  font-size: 11px;
+  line-height: 1.5;
+}
