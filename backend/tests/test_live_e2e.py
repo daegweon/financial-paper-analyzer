@@ -364,6 +364,88 @@ def test_remove_storage_object_rejects_failed_cleanup():
             _remove_storage_object(client, "synthetic/test.pdf", {"apikey": "test"})
 
 
+def test_private_pdf_acl_and_signed_bytes_with_mock_storage():
+    original = _make_pdf()
+    object_path = "11111111-1111-4111-8111-111111111111/synthetic.pdf"
+    visited: list[tuple[str, str]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        visited.append((request.method, request.url.path))
+        assert request.url.host == "hwmtayrecsfxernhssro.supabase.co"
+        is_owner = request.headers.get("authorization") == "Bearer qa-owner"
+        if request.url.path.startswith("/storage/v1/object/authenticated/papers/"):
+            return httpx.Response(200, content=original) if is_owner else httpx.Response(403)
+        if request.method == "POST" and request.url.path.startswith(
+            "/storage/v1/object/sign/papers/"
+        ):
+            if not is_owner:
+                return httpx.Response(403)
+            assert request.read() == b'{"expiresIn":60}'
+            return httpx.Response(200, json={
+                "signedURL": "/object/sign/papers/" + object_path + "?token=fixture"
+            })
+        if request.method == "GET" and request.url.path.startswith(
+            "/storage/v1/object/sign/papers/"
+        ):
+            return httpx.Response(200, content=original)
+        raise AssertionError("Unexpected Storage mock request")
+
+    with httpx.Client(
+        base_url=LIVE_SUPABASE_ORIGIN, transport=httpx.MockTransport(handler)
+    ) as client:
+        _check_private_pdf_http(
+            client, object_path, original, "publishable-fixture",
+            "qa-owner", "qa-other"
+        )
+    assert [method for method, _ in visited] == ["GET", "GET", "POST", "GET", "POST"]
+
+
+def test_private_pdf_rejects_other_user_signed_link():
+    original = _make_pdf()
+    object_path = "11111111-1111-4111-8111-111111111111/synthetic.pdf"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        is_owner = request.headers.get("authorization") == "Bearer qa-owner"
+        if "/object/authenticated/papers/" in request.url.path:
+            return httpx.Response(200, content=original) if is_owner else httpx.Response(403)
+        if request.method == "POST":
+            return httpx.Response(200, json={
+                "signedURL": "/object/sign/papers/" + object_path + "?token=fixture"
+            })
+        return httpx.Response(200, content=original)
+
+    with httpx.Client(
+        base_url=LIVE_SUPABASE_ORIGIN, transport=httpx.MockTransport(handler)
+    ) as client:
+        with pytest.raises(AssertionError, match="non-owner unexpectedly obtained"):
+            _check_private_pdf_http(
+                client, object_path, original, "fixture", "qa-owner", "qa-other"
+            )
+
+
+def test_private_pdf_rejects_unexpected_signed_link_path():
+    original = _make_pdf()
+    object_path = "11111111-1111-4111-8111-111111111111/synthetic.pdf"
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request.url.path)
+        if request.method == "GET":
+            return httpx.Response(200, content=original) if len(seen) == 1 else httpx.Response(403)
+        return httpx.Response(200, json={
+            "signedURL": "/object/sign/papers/other-user/unrelated.pdf?token=fixture"
+        })
+
+    with httpx.Client(
+        base_url=LIVE_SUPABASE_ORIGIN, transport=httpx.MockTransport(handler)
+    ) as client:
+        with pytest.raises(AssertionError, match="unexpected path"):
+            _check_private_pdf_http(
+                client, object_path, original, "fixture", "qa-owner", "qa-other"
+            )
+    assert len(seen) == 3
+
+
 @pytest.mark.skipif(
     not ENABLED,
     reason="Set PAPERSIGNAL_E2E_ENABLED=1 to run the disposable-user live E2E test.",
