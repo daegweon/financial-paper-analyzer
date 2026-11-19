@@ -1,3 +1,8 @@
+## 2026-11-20 — WCAG contrast correction verified across browser profiles
+- Fresh full GitHub Actions [#44616620751](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44616620751) SUCCESS on candidate code commit `46f306f736ef28a5fb34f75a1dd2c24ab1ba9b01`.
+- API, frontend lint/typecheck/tests/build, disposable PostgreSQL policy, live API GET-only preflight and 33 Playwright browser scenarios passed. The Android Chromium axe contrast issue is fixed; no accessibility test was disabled or relaxed.
+- Live production E2E remains deliberately skipped. Engineering progress 90%, release gates 4/10. No production mutations.
+
 ## 2026-11-20 — Fix authenticated library empty-state contrast
 - Inspected failed CI run #44615759026: one Android Chromium axe WCAG 2.1 AA contrast issue (`#93a2af` on white, 2.61:1) in the empty-state helper text; remaining 32 browser scenarios passed, including iPhone WebKit equivalent.
 - Updated `.empty` helper text color to `#596b7a` to meet normal-text contrast requirements. Commit `46f306f736ef28a5fb34f75a1dd2c24ab1ba9b01`. Awaiting fresh CI evidence; no score increase until it passes.
