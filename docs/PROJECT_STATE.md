@@ -1,4 +1,11 @@
 
+## 2026-11-20 — Cross-browser accessibility fix verified
+
+- Candidate commit `46f306f736ef28a5fb34f75a1dd2c24ab1ba9b01` passed full GitHub Actions [#44616620751](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44616620751): API, frontend lint/typecheck/tests/build, PostgreSQL 17 policy, live API GET-only preflight and all 33 synthetic browser scenarios.
+- The prior Android Chromium WCAG 2.1 AA empty-state contrast regression is resolved by changing helper text from `#93a2af` to `#596b7a`; original axe assertions remain strict. Desktop Chromium, Android Chromium and iPhone WebKit suites passed.
+- Engineering remains **90%** and actual beta release gates **4/10**. This is automated synthetic-browser verification, not native device or real authenticated production E2E.
+- Live E2E remains skipped pending human merge of PR #19, protected repository secrets and explicit dispatch. No production schema/data, Worker or Vercel Production change.
+
 ## 2026-11-20 — Accessibility regression fix (verification pending)
 
 - Latest candidate CI run `44615759026` found one reproducible WCAG 2.1 AA contrast failure in the authenticated Research Library empty-state helper text on Android Chromium: `#93a2af` on white, 2.61:1 (required 4.5:1). The same scenario passed on iPhone WebKit; 32/33 browser cases passed on Android profile.
