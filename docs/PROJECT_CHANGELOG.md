@@ -1,3 +1,5 @@
+- Full 90% candidate verification https://github.com/daegweon/financial-paper-analyzer/actions/runs/44528847670 PASS: backend 146/1 live skipped, frontend quota-meter tests/build, disposable PostgreSQL quota/RLS, 33 browser tests, live API read-only probe. Progress ledger points at verified commit `e40ec8f`.
+
 ## 2026-11-19 — Visible analysis quota meter and 90% project milestone
 - Added research-library usage meter for rolling 24h 5-job allowance and 2 concurrent jobs, derived from RLS-visible user job rows.
 - Added `analysis-quota.ts` pure helper and 4 tests for window boundaries, active counts, exhausted limits and shared policy constants; included in frontend lint/prebuild.

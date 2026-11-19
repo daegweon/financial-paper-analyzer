@@ -221,3 +221,8 @@ The account reached Vercel Hobby's daily 100-deployment API limit (HTTP 402 `api
 - Latest full CI https://github.com/daegweon/financial-paper-analyzer/actions/runs/44528193012 SUCCESS: backend **146 passed / 1 live E2E skipped**, frontend TypeScript + quota UX tests/build PASS, PostgreSQL queue RPC quotas and RLS PASS, Playwright **33 passed**, strict live API GET preflight PASS. No live E2E mutations.
 - Engineering **89% → 90%**; the core platform/user feedback milestone is now complete. Real beta release gates remain **4/10**.
 - **Production quota rollout is still pending:** remote Supabase migration history currently lists only nine versions through `20261113234956`; quota RPC version `20261119100000` and result-write revocation migration are absent. The running Railway API remains pinned to `ace3fbd5` and uses direct service-role INSERT, not the new quota RPC. Do not apply production migration without explicit change approval and remote-history reconciliation.
+
+## 2026-11-19 — Final verification of 90% quota-meter candidate
+
+- Candidate code + visible usage meter commit `e40ec8f62c9dffe12de9adf8ec4ba07e69a9f044` completed full GitHub Actions successfully: https://github.com/daegweon/financial-paper-analyzer/actions/runs/44528847670 . Backend 146 passed/1 live E2E skipped, frontend TypeScript/quota tests/build, PostgreSQL quota and RLS, 33 Playwright tests, strict live API GET preflight all passed. Progress validator 90% / 4 of 10.
+- `docs/PROJECT_PROGRESS.json` now points at this exact commit/run. No Production DB migration, real user E2E, Worker update or analysis-engine changes.

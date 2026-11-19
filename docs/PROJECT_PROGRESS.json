@@ -8,8 +8,8 @@
     "pull_request": 18,
     "base": "main",
     "review_state": "draft",
-    "last_independently_verified_sha": "d953f9533af122fb57223ce65fe669d9a5038d67",
-    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44528193012",
+    "last_independently_verified_sha": "e40ec8f62c9dffe12de9adf8ec4ba07e69a9f044",
+    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44528847670",
     "production_api": {
       "service_id": "81b678e2-7136-436d-9058-7d20647dc1b7",
       "immutable_commit": "ace3fbd5dab3ea71efa3a49da8363259ea5f9732",
@@ -213,6 +213,11 @@
       "date": "2026-11-19",
       "percent": 90,
       "evidence": "User-visible quota meter (rolling 24h 0-5, active 0-2) plus pure logic tests shipped; latest full GitHub CI #44528193012 success: 146 backend passed/1 live skipped, 33 Playwright passed, frontend build/quota tests, disposable PostgreSQL queue quota/RLS, strict live API probe. Production quota migration not applied; release gates remain 4/10."
+    },
+    {
+      "date": "2026-11-19",
+      "percent": 90,
+      "evidence": "Latest complete run #44528847670 on candidate code+usage meter commit e40ec8f: backend 146 passed/1 live skipped, frontend lint/typecheck/build incl. quota meter tests, PostgreSQL service-only queue quotas/RLS, 33 Playwright browser cases, strict live API probe all green. Progress validator reports 90% / 4 of 10. Live E2E skipped."
     }
   ]
 }
