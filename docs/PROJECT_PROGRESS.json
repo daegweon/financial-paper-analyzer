@@ -8,8 +8,8 @@
     "pull_request": 18,
     "base": "main",
     "review_state": "draft",
-    "last_independently_verified_sha": "35767d902dfaa2b2cd7596856e5dd7fce4b05e2b",
-    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952",
+    "last_independently_verified_sha": "ab9913f61dbdd88ef1e7444440dc9ce6988e5a51",
+    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44467502056",
     "production_api": {
       "service_id": "81b678e2-7136-436d-9058-7d20647dc1b7",
       "immutable_commit": "ace3fbd5dab3ea71efa3a49da8363259ea5f9732",
@@ -22,7 +22,7 @@
     }
   },
   "methodology": "Weighted engineering milestone completion, NOT launch readiness. Each workstream has maximum points; achieved points sum to overall_percent. Increase only after verified evidence.",
-  "overall_percent": 86,
+  "overall_percent": 87,
   "workstreams": [
     {
       "id": "core_platform",
@@ -79,12 +79,13 @@
       "id": "beta_operations",
       "label": "실제 E2E·베타 출시 준비",
       "weight": 10,
-      "earned": 5,
+      "earned": 6,
       "evidence": [
         "https://github.com/daegweon/financial-paper-analyzer/pull/18",
-        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952"
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952",
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44467502056"
       ],
-      "remaining": "운영 API 교체 승인·실제 2계정 HTTPS E2E·외부 SMTP·모바일·롤백"
+      "remaining": "실제 승인된 두 계정 업로드·분석 HTTP E2E, 그 후 DB 권한 제한, SMTP·모바일·릴리스 복구 검증"
     }
   ],
   "release_gates": [
@@ -92,19 +93,19 @@
       "id": "backend_frontend_ci",
       "label": "백엔드·프런트엔드 GitHub Actions",
       "status": "passed",
-      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952"
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44467502056"
     },
     {
       "id": "synthetic_browser",
       "label": "합성 인증 브라우저 24/24 E2E",
       "status": "passed",
-      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44411991617"
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44467502056"
     },
     {
       "id": "postgres_policy",
       "label": "격리 PostgreSQL 보안 권한 테스트",
       "status": "passed",
-      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952"
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44467502056"
     },
     {
       "id": "vercel_preview",
@@ -149,7 +150,7 @@
       "evidence": null
     }
   ],
-  "next_action": "Railway core API is now SUCCESS on immutable ace3fbd5 (queue_writer=service_role confirmed over HTTPS); Worker unchanged, pre-migration DB grants still enabled. Next: explicitly approved disposable two-user auth/PDF HTTP E2E; only then reconcile/apply one SQL client-write revocation and re-run E2E. Do not roll back API to pre-service-role after revocation.",
+  "next_action": "With explicit approval and GitHub Actions repository secrets, run disposable real two-user Auth/Storage/Worker E2E using tested DELETE cleanup and signed PDF checks; then reconcile remote migrations and apply only reviewed server-owned write grant revocation. Do not run live mutation unapproved.",
   "response_protocol": "Every substantial PaperSignal response starts with overall_percent and passed/total release gates from this file. Explain that percentage estimates engineering completion, not live launch permission.",
   "invariants": [
     "Analysis engine frozen",
@@ -179,6 +180,11 @@
       "date": "2026-11-19",
       "percent": 86,
       "evidence": "Core Railway API only deployed (deployment 0b5716db-b720-49db-b15c-babf77b26e5a, SHA ace3fbd5, SUCCESS), strict live HTTPS /health queue_write_mode=service_role and anon job-status 401 verified in Actions #44462359704; Worker unchanged; DB user write grants still open. Release gates 4/10."
+    },
+    {
+      "date": "2026-11-19",
+      "percent": 87,
+      "evidence": "Found and repaired live-E2E PDF cleanup using POST instead of Storage DELETE; added real PDF byte/signed-link/nonowner HTTP assertions with MockTransport tests; CI #44467502056 all passed (133 backend, 1 real E2E skipped; 24 Playwright, frontend and PostgreSQL). Read-only Supabase fixture counts 0. No production mutations."
     }
   ]
 }

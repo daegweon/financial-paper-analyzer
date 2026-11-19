@@ -32,3 +32,10 @@ New session must read `AGENTS.md`, `docs/PROJECT_PROGRESS.json`, `docs/PROJECT_S
 - The live API is no longer a legacy deployment: `0b5716db-b720-49db-b15c-babf77b26e5a` SUCCESS and queue writer `service_role` confirmed by public HTTPS. Worker unchanged. This satisfies the **preflight**, not the full E2E.
 - Main-only `workflow_dispatch` guard is not merged because PR #18 remains Draft. Do not dispatch old main workflow or run GitHub production E2E without approved secure execution and temporary account handling.
 - Canonical progress now 86% / 4 of 10 release gates. The next verified milestone will be real two-user Auth/Storage/queue E2E; DB migration is blocked until it passes.
+
+## Storage E2E contract fix (2026-11-19)
+
+- Previous fixture incorrectly used POST to bulk-delete PDFs. Now uses Storage DELETE with `prefixes`, verified against current Supabase Storage API and MockTransport unit test.
+- Before invoking any real analysis queue, the E2E validates owner raw PDF bytes, private access denial, authorized signed download bytes and blocked non-owner signature issuance. Signed link contents remain secret and are never printed.
+- E2E security/regression checks passed in https://github.com/daegweon/financial-paper-analyzer/actions/runs/44467502056. Real E2E still NOT run on Production; current fixture counts across Auth/Storage/papers/jobs were 0 in read-only SQL checks.
+- Current canonical engineering score 87%, verified release gates 4/10; next task is manually approved live E2E, then targeted grant migration only after success.

@@ -1,3 +1,9 @@
+## 2026-11-19 — E2E cleanup protocol fixed and original PDF authorization checks
+- Fixed Supabase Storage batch cleanup protocol from POST to DELETE and added MockTransport regression tests for method/body/HTTP failures.
+- Strengthened live E2E with owner-only PDF byte retrieval and signed-link issuance, 60-second signed PDF exact-byte check, and non-owner GET/signing denial; all run before Gemini/Worker queue.
+- Verified CI #44467502056: 133 backend tests pass (1 live E2E skipped), 24 browser tests, DB policy, frontend, API read-only all green. Read-only production Supabase fixture count returned 0 in all four categories.
+- Engineering progress updated to 87% (+1 beta operations); actual release gates remain 4/10, because live auth/PDF test and DB migration have NOT executed.
+
 ## 2026-11-19 — Pinned Railway API-only rollout confirmed
 - Applied exactly one staged Railway source update to core API (pinned `ace3fbd5`); deployment `0b5716db-b720-49db-b15c-babf77b26e5a` SUCCESS. Core Worker unchanged at `dc501061-d434-454a-bc7d-4658b991a2f1`. No new infra, no changes to Vercel Production, no DB migration.
 - Strengthened `api-readonly-live` PR CI to require real HTTPS queue writer marker `service_role`; observed real HTTP `/health` and anon status 401 in Actions #44462359704. Last-hour Railway API HTTP 5xx count 0 in 10 observed requests.

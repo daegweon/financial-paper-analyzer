@@ -61,3 +61,10 @@ The release candidate now runs **24 synthetic localhost-only Playwright scenario
 - GitHub `api-readonly-live` now strictly requires `queue_write_mode=service_role`; public `/health` returned this marker and anonymous GET job-status denied with HTTP 401. Verification: https://github.com/daegweon/financial-paper-analyzer/actions/runs/44462359704 .
 - API 5xx sample was 0/10 in one-hour window; do not generalize beyond that sample. Release candidate PR #18 remains Draft; Railway API is pinned to `ace3fbd5` not latest PR docs commit.
 - **Not yet passed:** user A actual upload/analysis, user B denial over Supabase HTTP and signed Storage, and client write permission revocation. The live Supabase authenticated grants remain open; do not apply `20261117215315_beta_server_owned_result_writes.sql` before approved E2E.
+
+## Original PDF signed-source and cleanup readiness (2026-11-19)
+
+- Engineering **87%** / release gates **4/10 passed**. Source of truth: `docs/PROJECT_PROGRESS.json`.
+- Actual HTTP Storage test will now require owner original bytes + owner signed URL and signed bytes, non-owner cannot GET or request a signed link. Cleanup uses documented Storage **DELETE** endpoint for test-created PDF, not POST. Unit tests use `httpx.MockTransport` with no external data.
+- All automatic checks passed: https://github.com/daegweon/financial-paper-analyzer/actions/runs/44467502056 (133 backend tests pass, 1 real E2E skipped, 24/24 synthetic-browser tests, database policy and frontend).
+- Read-only actual Supabase inspection found 0 temporary E2E Auth users / papers / Storage files / active jobs. **Real live E2E remains pending** and its manual run still requires approval and scoped keys.

@@ -77,3 +77,10 @@
 - Require the live HTTP `queue_write_mode=service_role` marker in `api-readonly-live` PR CI. This is a real deployed-code readiness signal, not evidence of a successful authenticated analysis or Storage authorization.
 - Retain current client grants until authorized real two-user HTTP E2E passes; only then apply single reviewed SQL migration, never blanket remote db push. Rollback to old API after revocation is incompatible.
 - Record progress **86% engineering / 4 of 10 passed beta launch gates**. Do not mark `api_migration` PASSED until both live HTTP E2E and client grant revocation are complete.
+
+## 2026-11-19 — Real E2E signed Storage and cleanup correctness
+
+- The Storage HTTP batch-remove operation MUST use `DELETE /storage/v1/object/papers` with a `prefixes` JSON array. Do not remove only `storage.objects` metadata in SQL: this would orphan actual files.
+- Every real authenticated temporary-account E2E must assert owner access to actual private PDF bytes and signed URL, plus denial of non-owner PDF reads and signature issuance. A shared signed bearer URL does not remain owner-session-bound; never claim otherwise.
+- Keep live E2E explicitly manual and unrun until the owner approves temporary Auth/Storage mutation and secure runner secrets. E2E suite hardening does not qualify as a passed live release gate.
+- Increase engineering completion from 86% to 87% after CI verification, with 4/10 real launch gates unchanged.

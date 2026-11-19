@@ -271,3 +271,10 @@ quality; those two papers need a separate finding-level quality review.
 - The suite immediately refuses missing secrets, unexpected Supabase/Railway targets and absence of `queue_write_mode=service_role` on the **live** API `/health`. No user is created until these checks succeed.
 - This configuration has NOT been run against a live user/Storage project; its fail-closed guards and fixture regression tests are exercised by ordinary CI. The API must first be separately deployed with server-owned queue INSERT capability. Do NOT run old server with revoked client grants.
 - Canonical engineering progress: `docs/PROJECT_PROGRESS.json` (84% engineering estimate, 4/10 release gates); root `AGENTS.md` documents mandatory new-session source of truth and reporting. The progress ledger is validated by GitHub frontend CI.
+
+## E2E Storage cleanup verified in source (2026-11-19)
+
+- `_remove_storage_object` now sends `DELETE /storage/v1/object/papers` with JSON `prefixes`. Old POST endpoint was incorrect and could fail cleanup. Never delete only storage SQL metadata.
+- The real test checks exact owner PDF bytes, owner signed URL and signed PDF bytes, non-owner direct download and signing denial **before** queuing an AI analysis.
+- https://github.com/daegweon/financial-paper-analyzer/actions/runs/44467502056 verified 133 backend passes (1 live test skipped), 24 browser, frontend and DB policy. **This is fixture code verification only**; live production account creation and Gemini analysis have not occurred.
+- Engineering percent 87%, 4/10 release gates. Existing Supabase temporary E2E fixtures count 0 on read-only inspection. Proceed only with explicit authorized live test environment and account credentials via secure runner secrets, never paste them in chat.
