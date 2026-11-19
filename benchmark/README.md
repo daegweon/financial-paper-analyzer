@@ -114,3 +114,14 @@ python benchmark/build_review_packet.py \
 ```
 
 The packet includes a per-finding reviewer decision and notes area. It deliberately marks zero findings as approved: generation is administrative assistance only and never changes an analysis verification status. Review every claim against the exact publisher PDF before recording a decision.
+
+## Generate the offline quality dashboard
+
+After producing the evaluator scorecard, render a standalone HTML dashboard:
+
+```bash
+python benchmark/evaluate.py --results benchmark/results/analysis_results.json --out benchmark/results/scorecard.json
+python benchmark/quality_dashboard.py --scorecard benchmark/results/scorecard.json --out benchmark/results/quality-dashboard.html
+```
+
+The dashboard reports only metrics present in the scorecard. Missing PDF page text and missing human reviews remain **미측정**; they are never treated as zero or inferred from alias coverage. It shows per-paper missing Gold facts and does not approve findings. Open the generated HTML locally; no service or network connection is required.
