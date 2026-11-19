@@ -132,9 +132,14 @@ jobs:
           docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -c 'GRANT SELECT, INSERT, UPDATE, DELETE ON public.analysis_jobs TO service_role;'
           # Phase 1: API migration is safe under pre-existing browser grants.
           docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/tests/verify_pre_revoke_server_enqueue.sql
-          # Phase 2: after reviewed API/E2E, revoke direct browser write privileges.
-          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/migrations/20261117215315_beta_server_owned_result_writes.sql
+          # Phase 2: additive quota RPC is installed BEFORE the API switches to it.
+          # Verify service-only invocation, deduplication and both quota caps while
+          # legacy client grants still exist; this models the real zero-downtime cutover.
           docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/migrations/20261119100000_server_owned_analysis_quota.sql
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/tests/verify_analysis_queue_quota.sql
+          # Phase 3: ONLY after reviewed API deployment and real authenticated E2E,
+          # revoke browser writer privileges, then rerun the SAME quota contract.
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/migrations/20261117215315_beta_server_owned_result_writes.sql
           docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/tests/verify_analysis_queue_quota.sql
           docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/tests/verify_beta_write_isolation.sql
 
