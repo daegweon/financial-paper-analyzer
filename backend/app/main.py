@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import unicodedata
+import time
 from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import quote
@@ -2078,6 +2079,7 @@ async def _generate_gemini(
         }
         if index:
             await asyncio.sleep(1.0)
+        attempt_started = time.monotonic()
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(
@@ -2095,8 +2097,11 @@ async def _generate_gemini(
                 model_name, error_type,
             )
             failures.append((model_name, "timeout", error_type))
+            log.info("Gemini attempt telemetry provider=gemini model=%s outcome=transport_error error_type=%s latency_ms=%d", model_name, error_type, round((time.monotonic() - attempt_started) * 1000))
             continue
 
+        latency_ms = round((time.monotonic() - attempt_started) * 1000)
+        log.info("Gemini attempt telemetry provider=gemini model=%s http_status=%d latency_ms=%d", model_name, response.status_code, latency_ms)
         if response.status_code in (429, 500, 502, 503, 504, 404):
             body = response.text[:700]
             log.warning(
@@ -2135,13 +2140,14 @@ async def _generate_gemini(
         finish_reason = candidate.get("finishReason")
         usage = payload.get("usageMetadata", {})
         log.info(
-            "Gemini usage model=%s finish=%s prompt_tokens=%s candidate_tokens=%s thought_tokens=%s total_tokens=%s",
+            "Gemini usage provider=gemini model=%s finish=%s prompt_tokens=%s candidate_tokens=%s thought_tokens=%s total_tokens=%s latency_ms=%d",
             model_name,
             finish_reason,
             usage.get("promptTokenCount"),
             usage.get("candidatesTokenCount"),
             usage.get("thoughtsTokenCount"),
             usage.get("totalTokenCount"),
+            latency_ms,
         )
         if finish_reason == "MAX_TOKENS":
             detail = (
@@ -2732,6 +2738,7 @@ async def _process_analysis_job(
 ) -> None:
     """Resume from durable checkpoints and make result persistence idempotent."""
     headers = supabase_headers(token)
+    job_started_at = time.monotonic()
     try:
         async with httpx.AsyncClient(timeout=60) as client:
             # If a previous attempt committed the result but crashed before the
@@ -2901,12 +2908,13 @@ async def _process_analysis_job(
                  "worker_id": None, "lease_expires_at": None},
             )
         log.info(
-            "Analysis job completed job_id=%s paper_id=%s provider=%s model=%s pages=%d",
+            "Analysis job completed job_id=%s paper_id=%s provider=%s model=%s pages=%d duration_ms=%d",
             job_id, paper_id, result.get("provider", "extractive"), model_name, page_count,
+            round((time.monotonic() - job_started_at) * 1000),
         )
     except HTTPException as exc:
         error_message = str(exc.detail)[:1200]
-        log.warning("Analysis job failed job_id=%s status=%d reason=%s", job_id, exc.status_code, error_message)
+        log.warning("Analysis job failed job_id=%s status=%d duration_ms=%d reason=%s", job_id, exc.status_code, round((time.monotonic() - job_started_at) * 1000), error_message)
         try:
             await _patch_owned_row(
                 "analysis_jobs", job_id, user_id, token,
@@ -2917,7 +2925,7 @@ async def _process_analysis_job(
         except Exception:
             log.exception("Could not persist failed analysis job job_id=%s", job_id)
     except Exception as exc:
-        log.exception("Analysis job crashed job_id=%s", job_id)
+        log.exception("Analysis job crashed job_id=%s duration_ms=%d", job_id, round((time.monotonic() - job_started_at) * 1000))
         error_message = str(exc)[:1200] or "분석 중 서버 오류가 발생했습니다."
         try:
             await _patch_owned_row(
