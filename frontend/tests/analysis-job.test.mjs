@@ -192,3 +192,46 @@ test("ignores a stale completion after the user changes papers mid-request", asy
     (error) => error instanceof AnalysisWatchStopped,
   );
 });
+
+
+test("surfaces daily analysis quota as an actionable message without retry", async () => {
+  let calls = 0;
+  await assert.rejects(
+    startAnalysisJob({
+      url: "/api/analyze/paper-a", token: "test-token",
+      fetcher: async () => {
+        calls++;
+        return response({ detail: "24시간 내 분석 요청 한도(5건)에 도달했습니다. 잠시 후 다시 시도해 주세요." }, 429);
+      },
+    }),
+    /24시간 내 분석 요청 한도\(5건\)/,
+  );
+  assert.equal(calls, 1);
+});
+
+test("surfaces concurrent active-job quota as an actionable message without retry", async () => {
+  let calls = 0;
+  await assert.rejects(
+    startAnalysisJob({
+      url: "/api/analyze/paper-b", token: "test-token",
+      fetcher: async () => {
+        calls++;
+        return response({ detail: "동시에 진행할 수 있는 분석은 최대 2건입니다. 진행 중인 작업을 완료한 뒤 다시 시도해 주세요." }, 429);
+      },
+    }),
+    /동시에 진행할 수 있는 분석은 최대 2건입니다/,
+  );
+  assert.equal(calls, 1);
+});
+
+test("keeps generic 429 POST failures recoverable when no explicit detail exists", async () => {
+  let calls = 0;
+  await assert.rejects(
+    startAnalysisJob({
+      url: "/api/analyze/paper-a", token: "test-token",
+      fetcher: async () => { calls++; return response({}, 429); },
+    }),
+    /기존 작업이 등록됐을 수 있으니/,
+  );
+  assert.equal(calls, 1);
+});
