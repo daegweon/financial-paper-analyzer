@@ -138,3 +138,15 @@ python benchmark/diagnose.py \
 ```
 
 The report flags missing direct evidence, quotations not found on their stated PDF page, and numeric result fields (estimate/coefficient/significance/statistic/p-value) whose values are absent from the direct quotation. It deliberately does not treat structural counts in prose as regression estimates unless they are explicitly stored in numeric result fields. The diagnostic is conservative triage, not a semantic judge; it never approves a finding or changes the analysis.
+
+## Compare engine versions on paired papers
+
+Evaluate the baseline and candidate exports separately, then compare their scorecards:
+
+```bash
+python benchmark/evaluate.py --results benchmark/results/v1.json --out benchmark/results/v1-scorecard.json
+python benchmark/evaluate.py --results benchmark/results/v2.json --out benchmark/results/v2-scorecard.json
+python benchmark/compare_scorecards.py --baseline benchmark/results/v1-scorecard.json --candidate benchmark/results/v2-scorecard.json --out benchmark/results/v1-v2-comparison.json
+```
+
+Only papers with measured values in both scorecards contribute to each metric's paired aggregate. Missing scores are excluded rather than treated as zero. The report includes per-paper deltas and improved/regressed/unchanged counts. It is descriptive and does not establish causal model improvement; alias coverage is only a screening signal, page precision requires exact PDF text, and human scores require explicit reviewer input.
