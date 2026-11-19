@@ -19,7 +19,7 @@ INSERT INTO public.papers(id,user_id,title,original_filename,storage_path,size_b
  ('20222222-2222-4222-8222-222222222222','22222222-2222-4222-8222-222222222222','Active B','b.pdf','22222222-2222-4222-8222-222222222222/b.pdf',10),
  ('20222222-2222-4222-8222-222222222223','22222222-2222-4222-8222-222222222222','Active C','c.pdf','22222222-2222-4222-8222-222222222222/c.pdf',10);
 SET LOCAL ROLE service_role;
-DO $
+DO $$
 DECLARE first_job uuid; duplicate_job uuid; denied boolean:=false; not_found boolean:=false;
 BEGIN
  -- Even the privileged caller must not enqueue a job for another owner's paper.
