@@ -8,8 +8,8 @@
     "pull_request": 18,
     "base": "main",
     "review_state": "draft",
-    "last_independently_verified_sha": "7b51529200548a26d0361130ff46003f700c0340",
-    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44526397733",
+    "last_independently_verified_sha": "d953f9533af122fb57223ce65fe669d9a5038d67",
+    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44528193012",
     "production_api": {
       "service_id": "81b678e2-7136-436d-9058-7d20647dc1b7",
       "immutable_commit": "ace3fbd5dab3ea71efa3a49da8363259ea5f9732",
@@ -31,18 +31,19 @@
     }
   },
   "methodology": "Weighted engineering milestone completion, NOT launch readiness. Each workstream has maximum points; achieved points sum to overall_percent. Increase only after verified evidence.",
-  "overall_percent": 89,
+  "overall_percent": 90,
   "workstreams": [
     {
       "id": "core_platform",
       "label": "핵심 플랫폼·사용자 흐름",
       "weight": 25,
-      "earned": 24,
+      "earned": 25,
       "evidence": [
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44404002239",
-        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44526397733"
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44526397733",
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44528193012"
       ],
-      "remaining": "실제 운영 사용자 흐름·신규 큐 마이그레이션 및 API 단계 배포 검증"
+      "remaining": "실제 운영 사용자 전체 흐름과 운영 반영 후 최종 회귀 검증"
     },
     {
       "id": "finance_engine",
@@ -162,7 +163,7 @@
       "evidence": null
     }
   ],
-  "next_action": "Human approval remains for standalone E2E PR #19 and repository secrets. Separately reconcile Supabase remote migration history; only after explicit approval apply additive quota RPC migration while legacy API remains compatible, deploy new RPC caller API, verify quotas and real 2-account E2E, then separately revoke client direct writes.",
+  "next_action": "Human review/merge PR #19, configure four protected Actions secrets, and explicitly dispatch pinned live two-account E2E. Separately reconcile remote migration history (currently only nine versions through 20261113234956); after approved DB change apply additive quota RPC, deploy RPC-calling API, verify live quota enforcement; after real Auth/Storage E2E apply client write revocation. Do not apply any Production migration without approval.",
   "response_protocol": "Every substantial PaperSignal response starts with overall_percent and passed/total release gates from this file. Explain that percentage estimates engineering completion, not live launch permission.",
   "invariants": [
     "Analysis engine frozen",
@@ -207,6 +208,11 @@
       "date": "2026-11-19",
       "percent": 89,
       "evidence": "Per-user server-side analysis quota RPC and UI feedback verified on GitHub Actions #44526397733: 146 backend passed/1 live E2E skipped, 33 Playwright browser tests passed, frontend quota UX tests, disposable PostgreSQL pre/post grant and quota tests, live API preflight. No Production migration or user data changed."
+    },
+    {
+      "date": "2026-11-19",
+      "percent": 90,
+      "evidence": "User-visible quota meter (rolling 24h 0-5, active 0-2) plus pure logic tests shipped; latest full GitHub CI #44528193012 success: 146 backend passed/1 live skipped, 33 Playwright passed, frontend build/quota tests, disposable PostgreSQL queue quota/RLS, strict live API probe. Production quota migration not applied; release gates remain 4/10."
     }
   ]
 }

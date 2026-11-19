@@ -1,3 +1,9 @@
+## 2026-11-19 — Visible analysis quota meter and 90% project milestone
+- Added research-library usage meter for rolling 24h 5-job allowance and 2 concurrent jobs, derived from RLS-visible user job rows.
+- Added `analysis-quota.ts` pure helper and 4 tests for window boundaries, active counts, exhausted limits and shared policy constants; included in frontend lint/prebuild.
+- Full CI https://github.com/daegweon/financial-paper-analyzer/actions/runs/44528193012 SUCCESS: backend 146/1 skipped live E2E, frontend quota/TypeScript/build, disposable PostgreSQL quota/RLS, 33 Playwright browser tests and strict live API probe pass.
+- Engineering score 90%; real beta launch gates remain 4/10. Production quota migration is NOT applied; deployed API remains old RPC-incompatible commit `ace3fbd5`.
+
 ## 2026-11-19 — Atomic analysis quotas and user-facing 429 handling
 - Added server-only Postgres RPC `enqueue_analysis_job` with per-user advisory locking, active-job idempotency, 5-per-24h daily cap and 2-active-job cap; browser roles cannot execute it.
 - Candidate FastAPI calls RPC and maps quota errors to HTTP 429; browser shows exact user-safe quota detail rather than generic transient warning, without retrying POST. Added 3 frontend regression cases.

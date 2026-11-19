@@ -98,3 +98,10 @@
 - Candidate UI must show the backend's HTTP 429 detail immediately; do not classify quota denial as generic transient and never automatically retry the analysis POST.
 - Additive quota migration must be reconciled with the live Supabase migration history and explicitly approved before applying. Old production API still inserts directly, so deploy order is additive RPC migration → API RPC caller → verify → live two-user E2E → separate client grant revocation.
 - Progress 89% engineering; release gates unchanged 4/10 because Production schema/API quota rollout and real auth E2E remain pending.
+
+## 2026-11-19 — User-visible quota meter and rollout migration order
+
+- The research library should show the user's own rolling 24h usage (`n/5`) and active job count (`n/2`) from RLS-visible rows. This is informative only; the server-side SECURITY DEFINER RPC is the enforcement authority.
+- Keep UI quota constants in sync with server policy (5/day, 2 active) and unit tests.
+- Remote Supabase migration ledger has nine entries through `20261113234956`; new quota and result-write migrations are not yet applied. Reconcile history explicitly and receive human production-change approval before applying additive RPC migration; only then deploy API RPC caller. No blanket migration push.
+- Engineering completion 90%; live beta release gates 4/10 because quota is candidate-only and actual live E2E/write-revocation remain pending.

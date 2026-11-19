@@ -80,3 +80,9 @@ The release candidate now runs **24 synthetic localhost-only Playwright scenario
 - Engineering **89%**, real beta release gates **4/10 passed**. Latest CI https://github.com/daegweon/financial-paper-analyzer/actions/runs/44526397733 SUCCESS: 146 backend tests/1 live E2E skipped, 33 browser tests, frontend, live API read-only and PostgreSQL policy checks.
 - Candidate includes service-only queue RPC with per-user atomic limits (5/24h, 2 active), same-paper idempotency and user-safe HTTP 429 messages; UI surfaces explicit limits without duplicate POST retries.
 - Production quota migration is not applied and currently deployed API does not call the RPC. Must reconcile Supabase remote migrations and receive production DB change approval before applying additive migration and deploying API. Do not treat CI proof as live quota enforcement.
+
+## Usage meter and server-enforced quota controls (2026-11-19)
+
+- Engineering **90%**, verified beta gates **4/10**. Latest CI https://github.com/daegweon/financial-paper-analyzer/actions/runs/44528193012 PASS: 146 backend/1 live skipped, frontend build+quota tests, disposable DB quota/RLS, 33 browser, live API probe.
+- Research library now shows rolling 24-hour use out of 5 and concurrent use out of 2. Server remains authoritative via service-role-only RPC; user-facing 429 is actionable, no duplicate POST retry.
+- Live Supabase migration ledger currently lists 9 versions ending `20261113234956`; new quota RPC migration and client-write revocation have not been applied. Current Railway API is still pinned to `ace3fbd5` and does not call the RPC. Human approval and careful additive migration → API deployment → real E2E → grant revocation sequence are required.

@@ -292,3 +292,10 @@ quality; those two papers need a separate finding-level quality review.
 - New candidate API calls the RPC; UI surfaces daily/active 429 details without resubmitting. Disposable PostgreSQL and frontend tests pass.
 - **Not yet live:** production API remains pinned to old commit `ace3fbd5` and the additive migration has not been applied. First reconcile remote Supabase migration history and explicitly approve additive migration. Apply only this file while old API is still compatible with direct service_role INSERT, then deploy RPC caller API and verify. Real 2-account E2E, then client grant revocation, only afterwards.
 - Evidence: https://github.com/daegweon/financial-paper-analyzer/actions/runs/44526397733 . Engineering 89%, real release gates 4/10.
+
+## Visible quota status and current remote migration ledger (2026-11-19)
+
+- Research library shows own usage `n/5` over rolling 24 hours and active jobs `n/2`; helper tests are included in frontend CI.
+- Current Supabase remote migration list contains 9 versions: `20261112155952`, `20261112160036`, `20261113021557`, `20261113161739`, `20261113222551`, `20261113222605`, `20261113222644`, `20261113222754`, `20261113234956`. New `20261119100000` quota RPC and `20261117215315` result-write migration are not listed. Reconcile before applying; never blanket db push.
+- Running Railway API still on immutable `ace3fbd5` (direct service-role insert) and does not enforce new quota RPC. Apply additive RPC only after explicit DB approval, then deploy candidate API; test; separately revoke client writes after actual two-user E2E.
+- Engineering 90%, live release gates 4/10.
