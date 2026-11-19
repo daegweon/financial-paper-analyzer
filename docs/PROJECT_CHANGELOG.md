@@ -173,3 +173,11 @@
 - Explicit `workflow_dispatch` runs are excluded from automatic cancellation. This protects manually approved live E2E runs from being cancelled by later commits.
 - Full functional CI remains independently green on code head `f540fa85b11ffd9af50c1cc5807aeabc3b3e125b` in run [#44619544125](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44619544125); the workflow-only concurrency change is being verified separately in run [#44626146475](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44626146475).
 - No progress points are added for this efficiency-only change until its CI validates. Human approval/production gates remain deferred.
+
+## 2026-11-20 — Human evidence review packet generator (CI pending)
+
+- Added `benchmark/build_review_packet.py`: consumes the exported B01–B10 analysis JSON and creates a Markdown reviewer packet preserving each finding's claim, table reference, model/column, estimate, significance, direction and direct page quotations. Missing evidence is called out explicitly.
+- Added per-finding human decision and notes fields plus a consistent checklist for sample, method, coefficient, standard errors, significance legend, citation page and causal-language review.
+- The generator explicitly approves zero findings and never changes verification status; it is a reviewer aid, not an automated judge. Added two backend regression tests and documented invocation in `benchmark/README.md`.
+- Latest full candidate CI [#44619544125](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44619544125) remains green (148 backend passed/1 deliberately skipped, frontend, PostgreSQL, read-only API and 33 browser scenarios). New review-packet test is running in [#44628894414](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44628894414); do not credit another progress point until its full run passes.
+- Human approvals, real PDF audit and production changes remain deferred. No production database, deployed service or customer data changed.
