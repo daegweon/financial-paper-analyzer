@@ -1,3 +1,8 @@
+## 2026-11-20 — Engineering progress 90% → 91%
+- Credited one junior-learning milestone point after full CI #44616620751 passed all 33 synthetic Playwright scenarios across desktop Chromium, Android Chromium and iPhone WebKit, including strict axe WCAG 2.1 AA accessibility checks after fixing the Android empty-state contrast regression.
+- Junior learning is now 19/20; only native iOS Safari/Android device PDF rendering, navigation and signed-link renewal remain for this workstream. Actual beta release gates stay 4/10.
+- Updated canonical weighted ledger. Its progress-validator CI is queued on commit `65c49596be875407026a34601f8a0b329972bb08`; this follow-up check is pending.
+
 ## 2026-11-20 — WCAG contrast correction verified across browser profiles
 - Fresh full GitHub Actions [#44616620751](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44616620751) SUCCESS on candidate code commit `46f306f736ef28a5fb34f75a1dd2c24ab1ba9b01`.
 - API, frontend lint/typecheck/tests/build, disposable PostgreSQL policy, live API GET-only preflight and 33 Playwright browser scenarios passed. The Android Chromium axe contrast issue is fixed; no accessibility test was disabled or relaxed.
