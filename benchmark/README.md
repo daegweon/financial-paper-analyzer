@@ -102,3 +102,15 @@ This set is intended for public research papers only. Gemini Free Tier inputs an
 - [ ] Upload ten PDFs and run Gemini
 - [ ] Human-review every critical fact and citation
 - [ ] Publish a measured quality report
+
+## Generate a human evidence-review packet
+
+After exporting analyses as JSON, create a Markdown packet that preserves each finding's table reference, model/column, estimate, significance and direct PDF quotations:
+
+```bash
+python benchmark/build_review_packet.py \
+  --results benchmark/results/analysis_results.json \
+  --out benchmark/results/human-review-packet.md
+```
+
+The packet includes a per-finding reviewer decision and notes area. It deliberately marks zero findings as approved: generation is administrative assistance only and never changes an analysis verification status. Review every claim against the exact publisher PDF before recording a decision.
