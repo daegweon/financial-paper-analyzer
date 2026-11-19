@@ -532,6 +532,144 @@ def test_private_pdf_rejects_unexpected_signed_link_path():
     assert len(seen) == 3
 
 
+@pytest.mark.parametrize("fail_resource", [None, "analysis_jobs", "storage"])
+def test_cleanup_deletes_only_owned_fixture_and_preserves_users_on_failure(fail_resource):
+    owner = "11111111-1111-4111-8111-111111111111"
+    second = "22222222-2222-4222-8222-222222222222"
+    paper = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+    path = owner + "/papersignal-e2e-" + "a" * 32 + ".pdf"
+    calls = []
+
+    def transport(req: httpx.Request) -> httpx.Response:
+        calls.append(req)
+        assert req.method == "DELETE"
+        if req.url.path.startswith("/rest/v1/"):
+            assert req.url.params.get("user_id") == "eq." + owner
+            assert req.url.params.get(
+                "id" if req.url.path.endswith("/papers") else "paper_id"
+            ) == "eq." + paper
+        if req.url.path == "/storage/v1/object/papers":
+            import json
+            assert json.loads(req.content) == {"prefixes": [path]}
+        if fail_resource == "storage" and req.url.path == "/storage/v1/object/papers":
+            return httpx.Response(503)
+        if fail_resource == "analysis_jobs" and req.url.path.endswith("/analysis_jobs"):
+            return httpx.Response(503)
+        return httpx.Response(204)
+
+    with httpx.Client(
+        base_url=LIVE_SUPABASE_ORIGIN, transport=httpx.MockTransport(transport)
+    ) as client:
+        kwargs = {
+            "user_a": owner, "user_b": second,
+            "paper_id": paper, "object_path": path,
+            "job_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+            "job_terminal": True,
+        }
+        if fail_resource:
+            with pytest.raises(RuntimeError, match="manual recovery"):
+                _cleanup_disposable_e2e(client, {"apikey": "fixture"}, **kwargs)
+        else:
+            _cleanup_disposable_e2e(client, {"apikey": "fixture"}, **kwargs)
+
+    paths = [r.url.path for r in calls]
+    assert paths[:4] == [
+        "/rest/v1/analyses", "/rest/v1/analysis_jobs",
+        "/rest/v1/papers", "/storage/v1/object/papers",
+    ]
+    expected_users = [
+        "/auth/v1/admin/users/" + second,
+        "/auth/v1/admin/users/" + owner,
+    ]
+    if fail_resource:
+        assert paths == paths[:4], "Any table or Storage error must retain QA users"
+    else:
+        assert paths[4:] == expected_users
+    assert len(calls) == (4 if fail_resource else 6)
+
+
+def test_cleanup_nonterminal_job_preserves_all_temporary_resources():
+    def transport(request: httpx.Request) -> httpx.Response:
+        raise AssertionError("Nonterminal cleanup must not make a network request.")
+
+    with httpx.Client(
+        base_url=LIVE_SUPABASE_ORIGIN, transport=httpx.MockTransport(transport)
+    ) as client:
+        with pytest.raises(RuntimeError, match="nonterminal"):
+            _cleanup_disposable_e2e(
+                client, {"apikey": "fixture"},
+                user_a="11111111-1111-4111-8111-111111111111", user_b=None,
+                object_path=None, paper_id=None,
+                job_id="cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+                job_terminal=False,
+            )
+
+
+@pytest.mark.parametrize("bad_path", [
+    "other-owner/papersignal-e2e-" + "a" * 32 + ".pdf",
+    "11111111-1111-4111-8111-111111111111/customer.pdf",
+    "11111111-1111-4111-8111-111111111111/papersignal-e2e-" + "g" * 32 + ".pdf",
+    "11111111-1111-4111-8111-111111111111/papersignal-e2e-" + "a" * 32 + ".pdf/extra",
+])
+def test_cleanup_refuses_unrelated_or_invalid_storage_path(bad_path):
+    def transport(request: httpx.Request) -> httpx.Response:
+        raise AssertionError("Unrelated Storage paths must never be mutated.")
+
+    with httpx.Client(
+        base_url=LIVE_SUPABASE_ORIGIN, transport=httpx.MockTransport(transport)
+    ) as client:
+        with pytest.raises(RuntimeError, match="Refusing cleanup"):
+            _cleanup_disposable_e2e(
+                client, {"apikey": "fixture"},
+                user_a="11111111-1111-4111-8111-111111111111", user_b=None,
+                object_path=bad_path, paper_id=None,
+                job_id=None, job_terminal=False,
+            )
+
+
+def test_cleanup_partial_auth_creation_deletes_only_created_user():
+    owner = "11111111-1111-4111-8111-111111111111"
+    requests = []
+
+    def transport(request: httpx.Request) -> httpx.Response:
+        requests.append(request.url.path)
+        return httpx.Response(204)
+
+    with httpx.Client(
+        base_url=LIVE_SUPABASE_ORIGIN, transport=httpx.MockTransport(transport)
+    ) as client:
+        _cleanup_disposable_e2e(
+            client, {"apikey": "fixture"},
+            user_a=owner, user_b=None, object_path=None, paper_id=None,
+            job_id=None, job_terminal=False,
+        )
+    assert requests == ["/auth/v1/admin/users/" + owner]
+
+
+def test_cleanup_auth_delete_failure_still_attempts_other_qa_user():
+    owner = "11111111-1111-4111-8111-111111111111"
+    second = "22222222-2222-4222-8222-222222222222"
+    visited = []
+
+    def transport(request: httpx.Request) -> httpx.Response:
+        visited.append(request.url.path)
+        return httpx.Response(503 if request.url.path.endswith(second) else 204)
+
+    with httpx.Client(
+        base_url=LIVE_SUPABASE_ORIGIN, transport=httpx.MockTransport(transport)
+    ) as client:
+        with pytest.raises(RuntimeError, match="user B"):
+            _cleanup_disposable_e2e(
+                client, {"apikey": "fixture"},
+                user_a=owner, user_b=second, object_path=None, paper_id=None,
+                job_id=None, job_terminal=False,
+            )
+    assert visited == [
+        "/auth/v1/admin/users/" + second,
+        "/auth/v1/admin/users/" + owner,
+    ]
+
+
 @pytest.mark.skipif(
     not ENABLED,
     reason="Set PAPERSIGNAL_E2E_ENABLED=1 to run the disposable-user live E2E test.",
