@@ -16,7 +16,8 @@ def test_summarize_gemini_usage_and_latency_without_content():
     assert primary["http_errors"] == 1
     assert primary["http_error_rate"] == 0.5
     assert primary["total_tokens"] == 150
-    assert primary["latency_ms"]["median"] == 800
+    assert primary["latency_ms"]["median"] == 460
+    assert primary["latency_ms"]["samples"] == 2
     assert primary["job_duration_ms"]["median"] == 2400
     fallback = report["models"]["gemini-fallback"]
     assert fallback["successful_usage_events"] == 1
