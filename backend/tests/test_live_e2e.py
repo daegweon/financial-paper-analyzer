@@ -11,7 +11,7 @@ import os
 import secrets
 import time
 from urllib.parse import parse_qs, quote, urlsplit
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import fitz
 import httpx
@@ -154,6 +154,92 @@ def _remove_storage_object(
     )
     if response.status_code not in {200, 204, 404}:
         response.raise_for_status()
+
+
+def _cleanup_disposable_e2e(
+    client: httpx.Client,
+    admin_headers: dict[str, str],
+    *,
+    user_a: str | None,
+    user_b: str | None,
+    object_path: str | None,
+    paper_id: str | None,
+    job_id: str | None,
+    job_terminal: bool,
+) -> None:
+    """Clean up ONLY generated fixtures, never a customer's record.
+
+    Attempt all applicable table and Storage cleanup even if one fails. If any
+    deletion fails, retain the QA Auth users for an auditable manual recovery.
+    """
+    if job_id and not job_terminal:
+        raise RuntimeError(
+            "E2E job is nonterminal; disposable fixture and users retained "
+            "to avoid racing a live worker."
+        )
+
+    def check_uuid(value: str, label: str) -> None:
+        try:
+            if str(UUID(value)) != value.lower():
+                raise ValueError("Noncanonical UUID")
+        except (ValueError, TypeError, AttributeError):
+            raise RuntimeError("Refusing cleanup: invalid " + label) from None
+
+    if user_a:
+        check_uuid(user_a, "QA owner ID")
+    if user_b:
+        check_uuid(user_b, "QA second user ID")
+    if user_a and user_b and user_a == user_b:
+        raise RuntimeError("Refusing cleanup: QA users must be distinct.")
+    if paper_id:
+        check_uuid(paper_id, "QA paper ID")
+        if not user_a:
+            raise RuntimeError("Refusing cleanup: paper has no QA owner.")
+    if object_path:
+        if not user_a or not object_path.startswith(user_a + "/papersignal-e2e-"):
+            raise RuntimeError("Refusing cleanup: PDF does not belong to the QA owner.")
+        filename = object_path[len(user_a) + 1:]
+        if (not filename.endswith(".pdf")
+                or len(filename) != len("papersignal-e2e-") + 32 + 4
+                or any(ch not in "0123456789abcdef" for ch in filename[16:-4])):
+            raise RuntimeError("Refusing cleanup: PDF has an unexpected QA-only filename.")
+
+    failed: list[str] = []
+    if paper_id:
+        for table in ("analyses", "analysis_jobs", "papers"):
+            params = {"user_id": "eq." + user_a}
+            params["paper_id" if table != "papers" else "id"] = "eq." + paper_id
+            try:
+                response = client.delete(
+                    "/rest/v1/" + table, params=params, headers=admin_headers
+                )
+                response.raise_for_status()
+            except (httpx.HTTPError, ValueError):
+                failed.append(table + " rows")
+    if object_path:
+        try:
+            _remove_storage_object(client, object_path, admin_headers)
+        except (httpx.HTTPError, ValueError):
+            failed.append("Storage PDF")
+
+    if failed:
+        raise RuntimeError(
+            "QA cleanup requires manual recovery: " + ", ".join(failed)
+            + "; temporary Auth users were retained."
+        )
+
+    users_failed: list[str] = []
+    for label, user_id in (("B", user_b), ("A", user_a)):
+        if not user_id:
+            continue
+        try:
+            _delete_user(client, user_id, admin_headers)
+        except (httpx.HTTPError, ValueError):
+            users_failed.append("user " + label)
+    if users_failed:
+        raise RuntimeError(
+            "QA cleanup requires manual recovery: " + ", ".join(users_failed)
+        )
 
 
 def _check_private_pdf_http(
@@ -615,34 +701,8 @@ def test_live_auth_upload_analysis_and_cross_user_isolation():
             )
             assert private_pdf.status_code in {400, 401, 403, 404}
         finally:
-            # If a queued job has not reached a terminal state, retain its
-            # user and fixture so a live Worker cannot lose its source PDF.
-            if job_id and not job_terminal:
-                pytest.fail(
-                    "E2E job did not reach a terminal state; disposable users "
-                    "and the unique fixture were retained for safe recovery."
-                )
-
-            if paper_id:
-                for table in ("analyses", "analysis_jobs"):
-                    response = supabase.delete(
-                        "/rest/v1/" + table,
-                        params={"paper_id": "eq." + paper_id},
-                        headers=admin,
-                    )
-                    response.raise_for_status()
-
-                response = supabase.delete(
-                    "/rest/v1/papers",
-                    params={"id": "eq." + paper_id},
-                    headers=admin,
-                )
-                response.raise_for_status()
-
-            if object_path:
-                _remove_storage_object(supabase, object_path, admin)
-
-            if user_b:
-                _delete_user(supabase, user_b, admin)
-            if user_a:
-                _delete_user(supabase, user_a, admin)
+            _cleanup_disposable_e2e(
+                supabase, admin, user_a=user_a, user_b=user_b,
+                object_path=object_path, paper_id=paper_id,
+                job_id=job_id, job_terminal=job_terminal,
+            )
