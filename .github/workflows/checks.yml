@@ -72,7 +72,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Assert live API health and deny anonymous job-status access
-        run: python backend/scripts/read_only_release_probe.py
+        run: python backend/scripts/read_only_release_probe.py --require-server-owned
 
   browser-qa:
     name: Browser QA — local synthetic accounts
