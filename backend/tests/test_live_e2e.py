@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import secrets
 import time
-from urllib.parse import quote
+from urllib.parse import parse_qs, quote, urlsplit
 from uuid import uuid4
 
 import fitz
@@ -154,6 +154,59 @@ def _remove_storage_object(
     )
     if response.status_code not in {200, 204, 404}:
         response.raise_for_status()
+
+
+def _check_private_pdf_http(
+    client: httpx.Client,
+    object_path: str,
+    source_pdf: bytes,
+    key: str,
+    owner_token: str,
+    other_token: str,
+) -> None:
+    """Verify actual owner PDF bytes and owner-only signed-link issuance.
+
+    Signed links are bearer capabilities and can be shared by their holder;
+    the isolation check is that non-owners cannot generate one.
+    """
+    path = quote(object_path, safe="/")
+    private = "/storage/v1/object/authenticated/papers/" + path
+    sign = "/storage/v1/object/sign/papers/" + path
+    owner = _user_headers(key, owner_token)
+    other = _user_headers(key, other_token)
+
+    owned = client.get(private, headers=owner)
+    assert owned.status_code == 200 and owned.content == source_pdf, (
+        "The source PDF was not readable by its owner."
+    )
+    denied = client.get(private, headers=other)
+    assert denied.status_code in {400, 401, 403, 404}, (
+        "A non-owner unexpectedly accessed the private source PDF."
+    )
+
+    signed = client.post(sign, headers=owner, json={"expiresIn": 60})
+    assert signed.status_code == 200, "The owner cannot sign their source PDF."
+    try:
+        signed_url = signed.json()["signedURL"]
+    except (ValueError, KeyError, TypeError):
+        raise AssertionError("The signed source response was invalid.") from None
+    if not isinstance(signed_url, str):
+        raise AssertionError("The signed PDF URL must be a relative path.")
+    parts = urlsplit(signed_url)
+    if (parts.scheme or parts.netloc or parts.fragment
+            or parts.path != "/object/sign/papers/" + path
+            or not parse_qs(parts.query).get("token")):
+        raise AssertionError("The signed PDF URL has an unexpected path.")
+    # Keep the request pinned to this Supabase origin; never log a signing token.
+    signed_file = client.get("/storage/v1" + signed_url)
+    assert signed_file.status_code == 200 and signed_file.content == source_pdf, (
+        "The signed PDF URL did not return the original document."
+    )
+
+    denied_sign = client.post(sign, headers=other, json={"expiresIn": 60})
+    assert denied_sign.status_code in {400, 401, 403, 404}, (
+        "A non-owner unexpectedly obtained an owner-private signing URL."
+    )
 
 
 def _response(status_code: int, payload: dict | None = None) -> httpx.Response:
@@ -394,6 +447,11 @@ def test_live_auth_upload_analysis_and_cross_user_isolation():
             )
             inserted.raise_for_status()
             paper_id = inserted.json()[0]["id"]
+
+            # Verify original bytes and RLS Storage access before any AI job.
+            _check_private_pdf_http(
+                supabase, object_path, pdf, publishable_key, token_a, token_b
+            )
 
             queued = api.post(
                 f"/api/analyze/{paper_id}",
