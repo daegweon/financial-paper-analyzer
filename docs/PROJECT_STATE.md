@@ -227,7 +227,14 @@ The account reached Vercel Hobby's daily 100-deployment API limit (HTTP 402 `api
 - Candidate code + visible usage meter commit `e40ec8f62c9dffe12de9adf8ec4ba07e69a9f044` completed full GitHub Actions successfully: https://github.com/daegweon/financial-paper-analyzer/actions/runs/44528847670 . Backend 146 passed/1 live E2E skipped, frontend TypeScript/quota tests/build, PostgreSQL quota and RLS, 33 Playwright tests, strict live API GET preflight all passed. Progress validator 90% / 4 of 10.
 - `docs/PROJECT_PROGRESS.json` now points at this exact commit/run. No Production DB migration, real user E2E, Worker update or analysis-engine changes.
 
-## 2026-11-19 — Additive quota rollout parity (CI pending)
+## 2026-11-20 — Additive quota rollout parity verified
+
+- Candidate commit `30255ce6e6fb2f79794819f37c5a2de12aa3bc84` passed GitHub Actions run [#44533862423](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44533862423): API, frontend lint/typecheck/tests/build, 33 browser scenarios, read-only live API probe and PostgreSQL 17 db-policy all SUCCESS; live E2E intentionally SKIPPED.
+- CI applies the additive quota RPC before client-write revocation, verifies service-only execute, cross-owner rejection, same-paper idempotency and daily/active caps, then applies revocation and repeats the quota contract. This verifies both migration phases in disposable PostgreSQL only.
+- Canonical engineering score remains **90%**; actual beta release gates remain **4/10**. This improves deployment confidence but does not satisfy live account/PDF, production quota rollout, SMTP, native device or rollback gates.
+- No Production Supabase migration, Vercel Production promotion, user fixture or Worker deployment was performed. PR #19 still requires human review/merge, protected Actions secrets and explicit manual dispatch for live E2E.
+
+
 
 - Consolidated Draft PR #18 includes the production-order regression: apply the additive service-only quota RPC **before** removing legacy client grants, check quotas, then revoke grants and check the same contract again. This is an isolated disposable PostgreSQL test; no live Supabase change.
 - A wrong-owner paper queue attempt must raise `PAPERSIGNAL_PAPER_NOT_FOUND` in both phases, even when the call originates from service_role. This guards the API's ownership contract.
