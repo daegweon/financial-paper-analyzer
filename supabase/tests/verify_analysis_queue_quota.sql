@@ -19,9 +19,17 @@ INSERT INTO public.papers(id,user_id,title,original_filename,storage_path,size_b
  ('20222222-2222-4222-8222-222222222222','22222222-2222-4222-8222-222222222222','Active B','b.pdf','22222222-2222-4222-8222-222222222222/b.pdf',10),
  ('20222222-2222-4222-8222-222222222223','22222222-2222-4222-8222-222222222222','Active C','c.pdf','22222222-2222-4222-8222-222222222222/c.pdf',10);
 SET LOCAL ROLE service_role;
-DO $$
-DECLARE first_job uuid; duplicate_job uuid; denied boolean:=false;
+DO $
+DECLARE first_job uuid; duplicate_job uuid; denied boolean:=false; not_found boolean:=false;
 BEGIN
+ -- Even the privileged caller must not enqueue a job for another owner's paper.
+ -- This check is repeated both before and after browser-write revocation in CI.
+ BEGIN
+  PERFORM id FROM public.enqueue_analysis_job('10111111-1111-4111-8111-111111111111','22222222-2222-4222-8222-222222222222');
+ EXCEPTION WHEN SQLSTATE 'P0002' THEN
+  IF SQLERRM='PAPERSIGNAL_PAPER_NOT_FOUND' THEN not_found:=true; ELSE RAISE; END IF;
+ END;
+ IF NOT not_found THEN RAISE EXCEPTION 'Cross-owner queue enqueue was accepted'; END IF;
  SELECT id INTO first_job FROM public.enqueue_analysis_job('10111111-1111-4111-8111-111111111111','11111111-1111-4111-8111-111111111111');
  SELECT id INTO duplicate_job FROM public.enqueue_analysis_job('10111111-1111-4111-8111-111111111111','11111111-1111-4111-8111-111111111111');
  IF first_job IS DISTINCT FROM duplicate_job THEN RAISE EXCEPTION 'Idempotency failed'; END IF;
