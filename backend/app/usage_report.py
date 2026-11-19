@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import statistics
 from collections import defaultdict
 from pathlib import Path
 from typing import Iterable
@@ -20,7 +21,9 @@ def _percentile(values: list[int], percentile: float) -> int | None:
     if not values:
         return None
     ordered = sorted(values)
-    index = max(0, min(len(ordered) - 1, round((len(ordered) - 1) * percentile)))
+    if percentile == 0.50:
+        return round(statistics.median(ordered))
+    index = max(0, min(len(ordered) - 1, __import__("math").ceil(len(ordered) * percentile) - 1))
     return ordered[index]
 
 
@@ -54,9 +57,6 @@ def summarize(lines: Iterable[str]) -> dict:
                 value = fields.get(name, "")
                 if value.isdigit():
                     item[name] += int(value)
-            latency = fields.get("latency_ms", "")
-            if latency.isdigit():
-                item["latency_samples_ms"].append(int(latency))
         else:
             duration = fields.get("duration_ms", "")
             if duration.isdigit():
