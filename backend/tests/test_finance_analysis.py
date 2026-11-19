@@ -192,7 +192,7 @@ def test_llm_result_uses_structured_outputs(monkeypatch):
 
 
 
-def test_gemini_provider_uses_structured_json_and_server_side_key(monkeypatch):
+def test_gemini_provider_uses_structured_json_and_server_side_key(monkeypatch, caplog):
     pages = _sample_pages()
     model_output = _sample_model_output()
     requests = []
@@ -205,7 +205,13 @@ def test_gemini_provider_uses_structured_json_and_server_side_key(monkeypatch):
             return {"candidates": [{
                 "finishReason": "STOP",
                 "content": {"parts": [{"text": json.dumps(model_output, ensure_ascii=False)}]},
-            }]}
+            }],
+            "usageMetadata": {
+                "promptTokenCount": 1234,
+                "candidatesTokenCount": 567,
+                "thoughtsTokenCount": 89,
+                "totalTokenCount": 1890,
+            }}
 
     class FakeClient:
         def __init__(self, *args, **kwargs):
@@ -225,9 +231,18 @@ def test_gemini_provider_uses_structured_json_and_server_side_key(monkeypatch):
     monkeypatch.setattr(module, "OPENAI_API_KEY", "")
     monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
 
+    import logging
+    caplog.set_level(logging.INFO, logger="papersignal")
     result = asyncio.run(module.llm_result(2, pages))
     assert result["mode"] == "llm"
     assert result["provider"] == "gemini"
+    usage_logs = [record.getMessage() for record in caplog.records if "Gemini usage provider=gemini" in record.getMessage()]
+    assert len(usage_logs) == 1
+    assert "prompt_tokens=1234" in usage_logs[0]
+    assert "candidate_tokens=567" in usage_logs[0]
+    assert "thought_tokens=89" in usage_logs[0]
+    assert "total_tokens=1890" in usage_logs[0]
+    assert "latency_ms=" in usage_logs[0]
     assert result["model"] == "gemini-3.5-flash-lite"
     assert requests[0][0].endswith("/v1beta/models/gemini-3.5-flash-lite:generateContent")
     headers = requests[0][1]["headers"]
