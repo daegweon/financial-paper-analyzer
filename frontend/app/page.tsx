@@ -723,8 +723,8 @@ export default function Home() {
       <h2>{signup ? "연구 공간 만들기" : "다시 만나서 반갑습니다."}</h2>
       <p>분석 결과와 논문을 안전하게 보관하세요.</p>
       <form onSubmit={auth}>
-        <label>이메일<input type="email" required value={email} onChange={event => { setEmail(event.target.value); setConfirmationPending(false); }} placeholder="name@example.com"/></label>
-        <label>비밀번호<input type="password" required minLength={signup ? 8 : 1} value={password} onChange={event => setPassword(event.target.value)} placeholder="8자 이상 입력"/></label>
+        <label>이메일<input type="email" autoComplete="email" required value={email} onChange={event => { setEmail(event.target.value); setConfirmationPending(false); }} placeholder="name@example.com"/></label>
+        <label>비밀번호<input type="password" autoComplete={signup ? "new-password" : "current-password"} required minLength={signup ? 8 : 1} value={password} onChange={event => setPassword(event.target.value)} placeholder="8자 이상 입력"/></label>
         <button className="primary" disabled={authLoading}>{authLoading ? "인증 처리 중..." : signup ? "회원가입" : "로그인"} →</button>
       </form>
       <div className="auth-divider"><span>또는</span></div>

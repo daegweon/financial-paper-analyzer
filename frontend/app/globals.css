@@ -363,3 +363,36 @@ button.evidence-source-link:focus-visible {
   .upload-button{width:100%;max-width:100%}
 }
 @media(prefers-reduced-motion:reduce){.skip-link{scroll-behavior:auto}}
+
+
+/* Keyboard-visible focus indicators for mouse, touch and assistive-technology users. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid #075e68;
+  outline-offset: 3px;
+}
+:where(button, a):focus-visible {
+  border-radius: 4px;
+}
+.skip-link {
+  position: absolute;
+  z-index: 1000;
+  left: 12px;
+  top: 12px;
+  transform: translateY(-160%);
+  padding: 12px 16px;
+  background: #102034;
+  color: #fff;
+  border-radius: 6px;
+  font-weight: 700;
+}
+.skip-link:focus {
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
