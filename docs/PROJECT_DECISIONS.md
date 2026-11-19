@@ -70,3 +70,10 @@
 - A new GitHub CI job probes the live public API strictly with GET and no credentials; a missing queue-writer marker is expected until new API deploy and must NOT be interpreted as permission to apply DB grant revocation.
 - Test candidate API via isolated Uvicorn and synthetic credentials; schema transition checks must cover both pre-revocation (new server queue usable) and post-revocation (browser writes denied).
 - Engineering progress +1 to 85% after immutable CI evidence; release gate count still 4/10. No actual user E2E, DB migration or Production deploy.
+
+## 2026-11-19 — Immutable API-only Railway rollout verified
+
+- Railway core API source is pinned to immutable commit `ace3fbd5dab3ea71efa3a49da8363259ea5f9732` (deployment `0b5716db-b720-49db-b15c-babf77b26e5a` SUCCESS), rather than auto-following subsequent PR #18 commits. The Worker stays on its earlier stable source and image.
+- Require the live HTTP `queue_write_mode=service_role` marker in `api-readonly-live` PR CI. This is a real deployed-code readiness signal, not evidence of a successful authenticated analysis or Storage authorization.
+- Retain current client grants until authorized real two-user HTTP E2E passes; only then apply single reviewed SQL migration, never blanket remote db push. Rollback to old API after revocation is incompatible.
+- Record progress **86% engineering / 4 of 10 passed beta launch gates**. Do not mark `api_migration` PASSED until both live HTTP E2E and client grant revocation are complete.

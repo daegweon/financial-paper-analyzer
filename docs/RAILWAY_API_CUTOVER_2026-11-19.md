@@ -43,3 +43,11 @@
 ## Next handoff
 
 Gate `api_migration` is PENDING. The current operational blocker is intentional: live API still uses the old release source. When operator production-change approval exists, perform API-only rollout and real E2E in that order. Report 85% engineering / 4 of 10 beta gates until independently verified results justify changing them.
+
+## Live cutover completed — 2026-11-19
+
+- API-only staged patch `7cddfc33-29d7-4b33-801b-9df49ff5e940` committed, with **only** service `81b678e2-7136-436d-9058-7d20647dc1b7` source branch and immutable commit changing. No Worker, variables, network or DB staged changes.
+- API new deployment `0b5716db-b720-49db-b15c-babf77b26e5a` SUCCESS, SHA `ace3fbd5dab3ea71efa3a49da8363259ea5f9732`. Worker `dc501061-d434-454a-bc7d-4658b991a2f1` stays SUCCESS; previous API deployment `17c9134b-f49c-4358-a879-7ca77b55b936` remains pre-migration rollback reference.
+- Strict public HTTP probe **PASS** with real `queue_writer=service_role`, anonymous 401, model `finance-structured-v6.4.2`: https://github.com/daegweon/financial-paper-analyzer/actions/runs/44462359704 . These checks do NOT prove an authenticated real Supabase queue operation.
+- Database grants have NOT been revoked; running API already uses server role for new job insertion. Keep compatibility overlap until consented full HTTP E2E. The Worker and analysis engine remain frozen.
+- **Next required release gate:** explicitly approved synthetic two-account Supabase Auth/Storage + real API/Worker analysis, followed by single reviewed SQL grant migration with remote migration history reconciliation. Running old API after grant migration would break job creation.

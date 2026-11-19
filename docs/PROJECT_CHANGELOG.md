@@ -1,3 +1,9 @@
+## 2026-11-19 — Pinned Railway API-only rollout confirmed
+- Applied exactly one staged Railway source update to core API (pinned `ace3fbd5`); deployment `0b5716db-b720-49db-b15c-babf77b26e5a` SUCCESS. Core Worker unchanged at `dc501061-d434-454a-bc7d-4658b991a2f1`. No new infra, no changes to Vercel Production, no DB migration.
+- Strengthened `api-readonly-live` PR CI to require real HTTPS queue writer marker `service_role`; observed real HTTP `/health` and anon status 401 in Actions #44462359704. Last-hour Railway API HTTP 5xx count 0 in 10 observed requests.
+- Existing DB client write privileges remain enabled during compatibility overlap. Next is explicitly approved real two-user Auth/PDF E2E, then targeted security SQL with remote migration history reconciliation. Do not execute the migration early.
+- Weighted engineering progress **85% → 86%** (privacy/integrity +1), verified launch gates unchanged **4/10**. Progress ledger is the cross-session source of truth.
+
 ## 2026-11-19 — Read-only live API preflight, candidate ASGI smoke and two-phase DB QA
 - Verified current Railway API is healthy (GET `/health` 200, unauthenticated GET job-status 401), but still lacks the new `queue_write_mode` marker. Confirmed source branches remain `feat/research-workspace-mvp`; no automatic deployment of PR #18.
 - Added strictly pinned live API GET-only CI check with no keys, account, PDF or mutation; separate fake-config Uvicorn process proves new candidate runtime publishes server-owned queue writer and denies anonymous access.

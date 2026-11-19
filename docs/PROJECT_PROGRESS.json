@@ -9,10 +9,20 @@
     "base": "main",
     "review_state": "draft",
     "last_independently_verified_sha": "35767d902dfaa2b2cd7596856e5dd7fce4b05e2b",
-    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952"
+    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952",
+    "production_api": {
+      "service_id": "81b678e2-7136-436d-9058-7d20647dc1b7",
+      "immutable_commit": "ace3fbd5dab3ea71efa3a49da8363259ea5f9732",
+      "deployment_id": "0b5716db-b720-49db-b15c-babf77b26e5a",
+      "status": "SUCCESS",
+      "health_marker": "service_role",
+      "authless_status_http": 401,
+      "rollback_deployment_before_db_migration": "17c9134b-f49c-4358-a879-7ca77b55b936",
+      "worker_id_untouched": "dc501061-d434-454a-bc7d-4658b991a2f1"
+    }
   },
   "methodology": "Weighted engineering milestone completion, NOT launch readiness. Each workstream has maximum points; achieved points sum to overall_percent. Increase only after verified evidence.",
-  "overall_percent": 85,
+  "overall_percent": 86,
   "workstreams": [
     {
       "id": "core_platform",
@@ -48,11 +58,12 @@
       "id": "privacy_integrity",
       "label": "데이터 격리·결과 무결성",
       "weight": 15,
-      "earned": 11,
+      "earned": 12,
       "evidence": [
-        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44369654205"
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44369654205",
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44462359704"
       ],
-      "remaining": "신규 API 운영 확인 후 보안 권한 마이그레이션; 실제 HTTP 2계정 격리"
+      "remaining": "실제 두 사용자의 HTTPS 분석·Storage 격리 E2E 및 그 후 클라이언트 쓰기 권한 제거; 운영 서버 전용 작업 등록은 배포됨"
     },
     {
       "id": "automated_ci",
@@ -138,7 +149,7 @@
       "evidence": null
     }
   ],
-  "next_action": "Review API-only Railway deployment (production is the only environment, currently tracks feat/research-workspace-mvp). With explicit change approval, deploy the candidate API only while old grants remain; require live queue_write_mode=service_role, then consented two-user E2E, only then reconcile/apply single grant revocation. Do not redeploy Worker.",
+  "next_action": "Railway core API is now SUCCESS on immutable ace3fbd5 (queue_writer=service_role confirmed over HTTPS); Worker unchanged, pre-migration DB grants still enabled. Next: explicitly approved disposable two-user auth/PDF HTTP E2E; only then reconcile/apply one SQL client-write revocation and re-run E2E. Do not roll back API to pre-service-role after revocation.",
   "response_protocol": "Every substantial PaperSignal response starts with overall_percent and passed/total release gates from this file. Explain that percentage estimates engineering completion, not live launch permission.",
   "invariants": [
     "Analysis engine frozen",
@@ -163,6 +174,11 @@
       "date": "2026-11-19",
       "percent": 85,
       "evidence": "Read-only production API GET probes confirmed health 200/anon 401 but legacy_missing_marker; real candidate Uvicorn emitted service_role and anon 401; disposable PostgreSQL pre/post migration checks passed; 129 backend + 24 browser tests, GitHub Actions #44458536952. Live launch gates remain 4/10."
+    },
+    {
+      "date": "2026-11-19",
+      "percent": 86,
+      "evidence": "Core Railway API only deployed (deployment 0b5716db-b720-49db-b15c-babf77b26e5a, SHA ace3fbd5, SUCCESS), strict live HTTPS /health queue_write_mode=service_role and anon job-status 401 verified in Actions #44462359704; Worker unchanged; DB user write grants still open. Release gates 4/10."
     }
   ]
 }

@@ -54,3 +54,10 @@ The release candidate now runs **24 synthetic localhost-only Playwright scenario
 - Isolated candidate Uvicorn smoke with synthetic env confirmed server-owned health signal and anonymous denial. Disposable PostgreSQL 17 verified server-role queue insertion **before** client grant revocation and enforced client-write denial **after**. Entire suite https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952 PASS (129 backend, 24/24 browsers, database, frontend, live read-only probe; 1 live E2E skipped).
 - **Railway production is the only configured environment.** Core API and Worker source branches remain `feat/research-workspace-mvp`. Do not mutate Worker or simply merge PR #18 hoping API updates.
 - Manual rollout steps and rollback constraints: `docs/RAILWAY_API_CUTOVER_2026-11-19.md`. Real authenticated two-user HTTPS E2E, new API deployment, DB migration, SMTP and mobile remain PENDING.
+
+## API-only deployment verified (2026-11-19)
+
+- **Engineering 86%; beta launch gates 4/10 PASSED**. Actual Railway API deployment `0b5716db-b720-49db-b15c-babf77b26e5a` (pinned immutable `ace3fbd5`) is SUCCESS. Worker unchanged `dc501061-d434-454a-bc7d-4658b991a2f1`.
+- GitHub `api-readonly-live` now strictly requires `queue_write_mode=service_role`; public `/health` returned this marker and anonymous GET job-status denied with HTTP 401. Verification: https://github.com/daegweon/financial-paper-analyzer/actions/runs/44462359704 .
+- API 5xx sample was 0/10 in one-hour window; do not generalize beyond that sample. Release candidate PR #18 remains Draft; Railway API is pinned to `ace3fbd5` not latest PR docs commit.
+- **Not yet passed:** user A actual upload/analysis, user B denial over Supabase HTTP and signed Storage, and client write permission revocation. The live Supabase authenticated grants remain open; do not apply `20261117215315_beta_server_owned_result_writes.sql` before approved E2E.
