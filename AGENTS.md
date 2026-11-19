@@ -21,6 +21,6 @@
 
 ## 2026-11-19 human-gated real E2E checkpoint
 
-- Engineering progress source currently 88%, beta gates 4/10. Always load the latest JSON; no claim of real beta readiness.
+- The checkpoint at the time of the standalone E2E launcher was 88%; that is historical, NOT current. Always load `docs/PROJECT_PROGRESS.json` for the live engineering score and gate count; never claim beta readiness from this paragraph.
 - Additional narrow Draft PR #19 (`chore/manual-e2e-launcher-20261119`) targets main to register a **manual-only** E2E workflow without merging Draft PR #18. GitHub CI passed. The pinned E2E code is commit `431059a1116a50f39fd56d565c35a1afc081b8fc`.
 - Human steps are in `docs/HUMAN_E2E_HANDOFF_2026-11-19.md`; never manually create Auth users, invoke Gemini or apply DB migration until explicit human permission and secure runner secrets are supplied.
