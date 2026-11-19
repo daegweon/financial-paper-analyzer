@@ -748,7 +748,7 @@ export default function Home() {
     <aside>
       <div className="brand">◈ Paper<span>Signal</span></div>
       <p className="eyebrow">WORKSPACE</p>
-      <div className="nav">▤　논문 라이브러리</div>
+      <nav aria-label="주요 메뉴"><a className="nav" href="#workspace-content" aria-current="page">▤　논문 라이브러리</a></nav>
       <footer><p>{user.email}</p><button onClick={() => void db().auth.signOut()}>로그아웃</button></footer>
     </aside>
     <div className="content">

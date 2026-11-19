@@ -15,7 +15,7 @@
 }
 .eyebrow {
   margin: 0 0 7px;
-  color: #1c918d;
+  color: #176d6a;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1.8px;
@@ -42,7 +42,7 @@
 }
 .subtitle {
   margin: 8px 0 0;
-  color: #8a9aaa;
+  color: #586b7b;
   font-size: 12px;
   line-height: 1.6;
 }
@@ -51,11 +51,11 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 7px;
-  color: #9aa8b5;
+  color: #586a7a;
   font-size: 11px;
   white-space: nowrap;
 }
-.statusReady { color: #27866f; font-weight: 700; }
+.statusReady { color: #17684f; font-weight: 700; }
 .statusBusy { color: #a27628; font-weight: 700; }
 .tabs {
   display: flex;
@@ -68,17 +68,17 @@
   border: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
-  color: #8796a5;
+  color: #526476;
   font-size: 12px;
   font-weight: 700;
 }
 .activeTab {
-  border-bottom-color: #188b89;
+  border-bottom-color: #126c6a;
   color: #176f72;
 }
 .tab span, .activeTab span {
   margin-left: 5px;
-  color: #9aa8b5;
+  color: #586a7a;
   font-size: 10px;
 }
 .controls {
@@ -138,7 +138,7 @@
   font-weight: 700;
 }
 .selectionBar small {
-  color: #8aa5a3;
+  color: #466b68;
   font-size: 10px;
   font-weight: 500;
 }
@@ -157,7 +157,7 @@
   font-weight: 700;
 }
 .compareButton, .exportButton {
-  border-color: #188b89;
+  border-color: #126c6a;
   background: #188b89;
   color: #fff;
 }
@@ -196,7 +196,7 @@
 .checkboxWrap input {
   width: 15px;
   height: 15px;
-  accent-color: #188b89;
+  accent-color: #126c6a;
   cursor: pointer;
 }
 .paperButton {
@@ -221,7 +221,7 @@
   border: 1px solid #f0dede;
   border-radius: 7px;
   background: #fff7f6;
-  color: #bd6e68;
+  color: #8c3e3b;
   font-size: 9px;
   font-weight: 800;
 }
@@ -241,7 +241,7 @@
   white-space: nowrap;
 }
 .paperInfo small {
-  color: #9aa8b5;
+  color: #586a7a;
   font-size: 10px;
 }
 .paperStatus, .jobStatus {
@@ -251,7 +251,7 @@
   border-radius: 20px;
   padding: 5px 9px;
   background: #edf7f3;
-  color: #347e68;
+  color: #236b53;
   font-size: 10px;
   font-weight: 700;
   white-space: nowrap;
@@ -284,7 +284,7 @@
 }
 .listFooter {
   margin: 12px 0 0;
-  color: #a1adb8;
+  color: #596b7a;
   font-size: 10px;
   text-align: right;
 }
@@ -308,7 +308,7 @@
   margin: 7px 0 15px;
 }
 .jobHeading strong { color: #294256; font-size: 13px; }
-.jobHeading p { margin: 5px 0 0; color: #9aa8b5; font-size: 10px; }
+.jobHeading p { margin: 5px 0 0; color: #586a7a; font-size: 10px; }
 .jobRow {
   display: flex;
   align-items: center;
@@ -372,7 +372,7 @@
 }
 .modalHeading p:last-child {
   margin: 7px 0 0;
-  color: #8999a8;
+  color: #566b7a;
   font-size: 11px;
   line-height: 1.6;
 }
@@ -390,7 +390,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 12px 25px;
-  color: #8494a2;
+  color: #586b7b;
   font-size: 10px;
 }
 .tableWrap {
@@ -440,7 +440,7 @@
 .compareTable th:last-child, .compareTable td:last-child { border-right: 0; }
 .modalFootnote {
   margin: 12px 25px 18px;
-  color: #99a6b1;
+  color: #596b7b;
   font-size: 10px;
   line-height: 1.6;
 }
