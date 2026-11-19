@@ -1,3 +1,9 @@
+
+## 2026-11-20 — Accessibility regression fix (verification pending)
+
+- Latest candidate CI run `44615759026` found one reproducible WCAG 2.1 AA contrast failure in the authenticated Research Library empty-state helper text on Android Chromium: `#93a2af` on white, 2.61:1 (required 4.5:1). The same scenario passed on iPhone WebKit; 32/33 browser cases passed on Android profile.
+- Corrected `.empty` helper text to `#596b7a` in `frontend/components/ResearchLibrary.module.css` (commit `46f306f736ef28a5fb34f75a1dd2c24ab1ba9b01`). This is a focused accessibility correction, not a waiver or test relaxation. New CI evidence is not yet available; do not credit a gate or raise engineering progress until verified.
+- Baseline remains 90% engineering / 4 of 10 release gates. Live E2E remains intentionally gated by PR #19 human approval and secrets.
 # PaperSignal — Project State / Session Handoff
 
 Last updated: 2026-11-19 (Asia/Seoul)
