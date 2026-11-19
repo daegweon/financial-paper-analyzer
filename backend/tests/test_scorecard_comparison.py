@@ -20,7 +20,7 @@ def test_comparison_uses_only_paired_measured_values():
     gold = result["aggregate"]["gold_fact_coverage_screen"]
     assert result["paired_paper_count"] == 2
     assert gold["paired_count"] == 1
-    assert gold["mean_delta"] == 0.2
+    assert abs(gold["mean_delta"] - 0.2) < 1e-9
     assert gold["improved_count"] == 1
     assert result["aggregate"]["human_score"]["paired_count"] == 0
     assert result["papers"][1]["metrics"]["gold_fact_coverage_screen"]["delta"] is None
