@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { db } from "../lib/supabase";
 import styles from "./ResearchLibrary.module.css";
 
@@ -229,6 +229,8 @@ export function ResearchLibrary({
   const [jobsLoading, setJobsLoading] = useState(false);
   const [jobsError, setJobsError] = useState("");
   const [comparison, setComparison] = useState<ComparisonEntry[] | null>(null);
+  const comparisonDialogRef = useRef<HTMLElement | null>(null);
+  const comparisonTriggerRef = useRef<HTMLElement | null>(null);
   const [compareLoading, setCompareLoading] = useState(false);
   const [compareError, setCompareError] = useState("");
 
@@ -263,6 +265,56 @@ export function ResearchLibrary({
     const timer = window.setInterval(() => void refreshJobs(), 5000);
     return () => window.clearInterval(timer);
   }, [jobs, refreshJobs]);
+
+  useEffect(() => {
+    if (!comparison) return;
+    const dialog = comparisonDialogRef.current;
+    if (!dialog) return;
+
+    const previousFocus = comparisonTriggerRef.current
+      ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const getFocusable = () => Array.from(dialog.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    )).filter((element) => element.getClientRects().length > 0);
+
+    const focusable = getFocusable();
+    (focusable[0] ?? dialog).focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setComparison(null);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const items = getFocusable();
+      if (!items.length) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus();
+      comparisonTriggerRef.current = null;
+    };
+  }, [comparison]);
 
   const latestJobByPaper = useMemo(() => {
     const latest = new Map<string, Job>();
@@ -304,6 +356,9 @@ export function ResearchLibrary({
   }
 
   async function openComparison() {
+    comparisonTriggerRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
     const selectedPapers = selectedIds
       .map((id) => papers.find((paper) => paper.id === id))
       .filter((paper): paper is Paper => Boolean(paper));
@@ -536,13 +591,15 @@ export function ResearchLibrary({
             className={styles.modal}
             role="dialog"
             aria-modal="true"
-            aria-label="선택한 금융논문 비교"
+            aria-labelledby="paper-comparison-title"
+            tabIndex={-1}
+            ref={comparisonDialogRef}
             onClick={(event) => event.stopPropagation()}
           >
             <div className={styles.modalHeading}>
               <div>
                 <p className={styles.eyebrow}>CROSS-PAPER ANALYSIS</p>
-                <h3>논문 비교 분석</h3>
+                <h3 id="paper-comparison-title">논문 비교 분석</h3>
                 <p>저장된 최신 분석 결과를 기준으로 비교합니다. 결과가 없는 논문은 별도로 표시합니다.</p>
               </div>
               <button type="button" className={styles.closeButton} onClick={() => setComparison(null)} aria-label="비교 창 닫기">×</button>
@@ -551,7 +608,7 @@ export function ResearchLibrary({
               <span>{comparison.length}편 비교 · 최신 분석 기준</span>
               <button type="button" className={styles.exportButton} onClick={downloadComparison}>CSV 내보내기 ↓</button>
             </div>
-            <div className={styles.tableWrap}>
+            <div className={styles.tableWrap} role="region" aria-label="논문 비교 표 가로 스크롤" tabIndex={0}>
               <table className={styles.compareTable}>
                 <thead>
                   <tr>
