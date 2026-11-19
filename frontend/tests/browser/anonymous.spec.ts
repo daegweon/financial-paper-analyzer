@@ -1,4 +1,5 @@
 import { test, expect } from "./helpers";
+import AxeBuilder from "@axe-core/playwright";
 
 test("unauthenticated sign-in works on desktop, Android Chrome and iPhone WebKit", async ({ page }) => {
   await page.goto("/", { waitUntil: "domcontentloaded" });
@@ -20,4 +21,16 @@ test("320px narrow screen has usable form without horizontal overflow", async ({
   await expect(signIn).toBeVisible();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   expect(overflow).toBe(false);
+});
+
+
+test("login and signup surfaces meet WCAG 2.1 AA automated checks", async ({ page }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(results.violations, JSON.stringify(results.violations.map((v) => ({
+    id: v.id, impact: v.impact, description: v.description,
+    nodes: v.nodes.map((n) => ({ target: n.target, summary: n.failureSummary })),
+  })))).toEqual([]);
 });

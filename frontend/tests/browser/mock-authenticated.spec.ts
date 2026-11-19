@@ -1,10 +1,12 @@
 import { test, expect } from "./helpers";
+import AxeBuilder from "@axe-core/playwright";
 import type { Page, Route } from "@playwright/test";
 
 const fakeUrl = "http://127.0.0.1:54321";
 const qaA = "11111111-1111-4111-8111-111111111111";
 const qaB = "22222222-2222-4222-8222-222222222222";
 const paperA = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const paperA2 = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 const paperB = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const stamp = "2026-11-17T00:00:00.000Z";
 const dummyPdf = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n";
@@ -53,15 +55,18 @@ async function mockSupabase(page: Page, options: { failFirstSign?: boolean } = {
       return respond(route, 204, {});
     }
     if (path === "/rest/v1/papers") {
-      const mine = currentUser?.id === qaA ? paperA : paperB;
-      const title = currentUser?.id === qaA ? "Synthetic A paper" : "Synthetic B paper";
-      return respond(route, 200, [{id:mine, title, status:"completed",
-        storage_path:(currentUser?.id??qaA)+"/fixture.pdf",
-        created_at:stamp, page_count:5}]);
+      const owner = currentUser?.id ?? qaA;
+      const rows = owner === qaA
+        ? [
+            {id:paperA,title:"Synthetic A paper",status:"completed",storage_path:owner+"/fixture-a.pdf",created_at:stamp,page_count:5},
+            {id:paperA2,title:"Synthetic A second paper",status:"completed",storage_path:owner+"/fixture-b.pdf",created_at:stamp,page_count:3},
+          ]
+        : [{id:paperB,title:"Synthetic B paper",status:"completed",storage_path:owner+"/fixture.pdf",created_at:stamp,page_count:5}];
+      return respond(route, 200, rows);
     }
     if (path === "/rest/v1/analysis_jobs") return respond(route, 200, []);
     if (path === "/rest/v1/analyses") {
-      return respond(route, 200, [{ model:"mock-frontend-qa", created_at:stamp,
+      return respond(route, 200, [{ paper_id:paperA, model:"mock-frontend-qa", created_at:stamp,
         result: {
           mode:"llm", summary:"Synthetic demonstration — not a real financial finding.",
           research_question:"Does a synthetic example have an estimate?",
@@ -214,6 +219,49 @@ test.describe("isolated synthetic Supabase browser flows", () => {
     await expect(sourceAction).toBeEnabled();
     await sourceAction.click();
     await expect(dialog.locator("iframe.inline-pdf-frame")).toHaveAttribute("src", /#page=2$/);
+  });
+
+
+  test("authenticated library meets WCAG 2.1 AA automated checks", async ({page}) => {
+    await mockSupabase(page);
+    await login(page,"qa-a@example.invalid");
+    const results = await new AxeBuilder({page})
+      .withTags(["wcag2a","wcag2aa","wcag21a","wcag21aa"])
+      .analyze();
+    expect(results.violations, JSON.stringify(results.violations.map((v) => ({
+      id:v.id, impact:v.impact, description:v.description,
+      nodes:v.nodes.map((n) => ({target:n.target,summary:n.failureSummary})),
+    })))).toEqual([]);
+  });
+
+  test("comparison dialog meets WCAG 2.1 AA and contains keyboard focus", async ({page}) => {
+    await mockSupabase(page);
+    await login(page,"qa-a@example.invalid");
+    await page.getByLabel("Synthetic A paper 비교 대상으로 선택").check();
+    await page.getByLabel("Synthetic A second paper 비교 대상으로 선택").check();
+    const trigger = page.getByRole("button",{name:"선택 논문 비교"});
+    await expect(trigger).toBeEnabled();
+    await trigger.click();
+    const dialog = page.getByRole("dialog",{name:"논문 비교 분석"});
+    await expect(dialog).toBeVisible();
+    const close = dialog.getByRole("button",{name:"비교 창 닫기"});
+    await expect(close).toBeFocused();
+
+    const results = await new AxeBuilder({page})
+      .withTags(["wcag2a","wcag2aa","wcag21a","wcag21aa"])
+      .analyze();
+    expect(results.violations, JSON.stringify(results.violations.map((v) => ({
+      id:v.id, impact:v.impact, description:v.description,
+      nodes:v.nodes.map((n) => ({target:n.target,summary:n.failureSummary})),
+    })))).toEqual([]);
+
+    await page.keyboard.press("Shift+Tab");
+    await expect(dialog.getByRole("region",{name:"논문 비교 표 가로 스크롤"})).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(close).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    await expect(trigger).toBeFocused();
   });
 
 });
