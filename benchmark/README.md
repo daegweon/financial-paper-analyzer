@@ -125,3 +125,16 @@ python benchmark/quality_dashboard.py --scorecard benchmark/results/scorecard.js
 ```
 
 The dashboard reports only metrics present in the scorecard. Missing PDF page text and missing human reviews remain **미측정**; they are never treated as zero or inferred from alias coverage. It shows per-paper missing Gold facts and does not approve findings. Open the generated HTML locally; no service or network connection is required.
+
+## Diagnose evidence and numeric-claim gaps
+
+Run the offline triage against exported analyses:
+
+```bash
+python benchmark/diagnose.py \
+  --results benchmark/results/analysis_results.json \
+  --pages-dir benchmark/pages \
+  --out benchmark/results/diagnostics.json
+```
+
+The report flags missing direct evidence, quotations not found on their stated PDF page, and numeric result fields (estimate/coefficient/significance/statistic/p-value) whose values are absent from the direct quotation. It deliberately does not treat structural counts in prose as regression estimates unless they are explicitly stored in numeric result fields. The diagnostic is conservative triage, not a semantic judge; it never approves a finding or changes the analysis.
