@@ -22,7 +22,7 @@ from backend.app.cost_report import build_cost_report
 def _load(path: Path):
     return json.loads(path.read_text(encoding='utf-8'))
 
-def run_pipeline(manifest, results, out_dir: Path, pages_dir: Path | None = None, reviews=None, baseline=None, logs: Path | None = None, usage_events=None):
+def run_pipeline(manifest, results, out_dir: Path, pages_dir: Path | None = None, reviews=None, baseline=None, logs: Path | None = None, usage_events=None, cost_budgets=None):
     rows = results.get('results', results) if isinstance(results, dict) else results
     by_id = {}
     for row in rows if isinstance(rows, list) else []:
@@ -72,7 +72,7 @@ def run_pipeline(manifest, results, out_dir: Path, pages_dir: Path | None = None
         with logs.open(encoding='utf-8') as handle:
             failure_report = summarize_failures(handle)
         (out_dir / 'failure-report.json').write_text(json.dumps(failure_report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    cost_report = build_cost_report(usage_events) if usage_events is not None else None
+    cost_report = build_cost_report(usage_events, budgets=cost_budgets) if usage_events is not None else None
     if cost_report is not None:
         (out_dir / 'ai-cost-report.json').write_text(json.dumps(cost_report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     comparison = None
@@ -90,9 +90,11 @@ def main():
     parser.add_argument('--baseline-scorecard', type=Path)
     parser.add_argument('--logs', type=Path, help='Optional exported Railway API text log for failure analytics')
     parser.add_argument('--usage-events', type=Path, help='Optional JSON export of ai_usage_events for estimated cost report')
+    parser.add_argument('--monthly-user-budget-usd', type=float)
+    parser.add_argument('--monthly-paper-budget-usd', type=float)
     parser.add_argument('--out-dir', type=Path, default=ROOT / 'benchmark/results/quality-run')
     args = parser.parse_args()
-    output = run_pipeline(_load(args.manifest), _load(args.results), args.out_dir, args.pages_dir, _load(args.reviews) if args.reviews else None, _load(args.baseline_scorecard) if args.baseline_scorecard else None, args.logs, _load(args.usage_events) if args.usage_events else None)
+    output = run_pipeline(_load(args.manifest), _load(args.results), args.out_dir, args.pages_dir, _load(args.reviews) if args.reviews else None, _load(args.baseline_scorecard) if args.baseline_scorecard else None, args.logs, _load(args.usage_events) if args.usage_events else None, {'monthly_user_usd': args.monthly_user_budget_usd, 'monthly_paper_usd': args.monthly_paper_budget_usd})
     print(json.dumps({'completed_count': output['scorecard']['completed_count'], 'not_run_count': output['scorecard']['not_run_count'], 'diagnostic_issue_count': output['diagnostics']['issue_count'], 'coverage_papers': output['coverage_matrix']['paper_count'], 'failed_job_count': output['failure_report']['failed_job_count'] if output['failure_report'] else None, 'cost_groups': len(output['cost_report']['groups']) if output['cost_report'] else None, 'output_dir': output['output_dir']}, ensure_ascii=False, indent=2))
 
 if __name__ == '__main__':
