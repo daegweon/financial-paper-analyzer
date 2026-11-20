@@ -175,3 +175,5 @@ python benchmark/run_quality_pipeline.py \
 ```
 
 `--pages-dir`, `--reviews` and `--baseline-scorecard` are optional. Outputs are `scorecard.json`, `diagnostics.json`, `quality-dashboard.html`, `human-review-packet.md`, and optionally `comparison.json`. Missing measurements stay null/unmeasured; the workflow never auto-approves findings. All processing is local and read-only with respect to production services.
+
+The same integrated command can also include a Railway log export for failure analytics by adding `--logs railway-api.log`. This writes `failure-report.json` alongside the scorecard, diagnostics, dashboard and review packet. The log is read locally; the command does not connect to Railway or retry jobs.
