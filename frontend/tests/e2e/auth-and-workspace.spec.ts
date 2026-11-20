@@ -127,6 +127,8 @@ test("mobile sign-out clears the local session and remains signed out after relo
   ).toBeNull();
 
   await page.reload();
+  await page.waitForTimeout(1000);
+  console.log("AFTER_SESSION_RELOAD", await page.locator("body").innerText(), await page.evaluate(() => ({ local: Object.keys(localStorage).map(key => [key, localStorage.getItem(key)]), session: Object.keys(sessionStorage).map(key => [key, sessionStorage.getItem(key)]), cookies: document.cookie })));
   await expect(page.getByRole("heading", { name: "다시 만나서 반갑습니다." })).toBeVisible();
   await expect(page.getByRole("button", { name: "로그아웃" })).toHaveCount(0);
   expect(unexpectedUserLookups).toBe(0);
