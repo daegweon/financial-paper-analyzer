@@ -1,10 +1,16 @@
 .git
 frontend
 railway-function
-supabase
-# backend/tests and .github/workflows are included for the isolated Docker test stage.
-backend/.env
-backend/.env.*
+node_modules
+**/node_modules
+**/.next
+**/.vercel
 **/__pycache__
 **/*.pyc
+**/.pytest_cache
+**/.venv
+.env
+.env.*
+**/.env
+**/.env.*
 README.md
