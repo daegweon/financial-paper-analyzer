@@ -74,7 +74,7 @@ def run_pipeline(manifest, results, out_dir: Path, pages_dir: Path | None = None
         (out_dir / 'failure-report.json').write_text(json.dumps(failure_report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     cost_report = build_cost_report(usage_events) if usage_events is not None else None
     if cost_report is not None:
-        (out_dir / 'ai-cost-report.json').write_text(json.dumps(cost_report, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')
+        (out_dir / 'ai-cost-report.json').write_text(json.dumps(cost_report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     comparison = None
     if baseline is not None:
         comparison = compare_scorecards(baseline, scorecard)
