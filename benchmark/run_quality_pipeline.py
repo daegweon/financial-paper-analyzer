@@ -16,6 +16,7 @@ from benchmark.build_review_packet import build_packet
 from benchmark.quality_dashboard import render_dashboard
 from benchmark.compare_scorecards import compare_scorecards
 from benchmark.failure_report import summarize_failures
+from benchmark.coverage_matrix import build_coverage_matrix
 
 def _load(path: Path):
     return json.loads(path.read_text(encoding='utf-8'))
@@ -57,6 +58,7 @@ def run_pipeline(manifest, results, out_dir: Path, pages_dir: Path | None = None
         'results': score_rows,
     }
     diagnostics = diagnose(results, pages if pages_dir else None)
+    coverage_matrix = build_coverage_matrix(manifest, scorecard)
     packet = build_packet(manifest, results)
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / 'scorecard.json').write_text(json.dumps(scorecard, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
@@ -72,7 +74,7 @@ def run_pipeline(manifest, results, out_dir: Path, pages_dir: Path | None = None
     if baseline is not None:
         comparison = compare_scorecards(baseline, scorecard)
         (out_dir / 'comparison.json').write_text(json.dumps(comparison, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    return {'scorecard': scorecard, 'diagnostics': diagnostics, 'comparison': comparison, 'failure_report': failure_report, 'output_dir': str(out_dir)}
+    return {'scorecard': scorecard, 'diagnostics': diagnostics, 'coverage_matrix': coverage_matrix, 'comparison': comparison, 'failure_report': failure_report, 'output_dir': str(out_dir)}
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -85,7 +87,7 @@ def main():
     parser.add_argument('--out-dir', type=Path, default=ROOT / 'benchmark/results/quality-run')
     args = parser.parse_args()
     output = run_pipeline(_load(args.manifest), _load(args.results), args.out_dir, args.pages_dir, _load(args.reviews) if args.reviews else None, _load(args.baseline_scorecard) if args.baseline_scorecard else None, args.logs)
-    print(json.dumps({'completed_count': output['scorecard']['completed_count'], 'not_run_count': output['scorecard']['not_run_count'], 'diagnostic_issue_count': output['diagnostics']['issue_count'], 'failed_job_count': output['failure_report']['failed_job_count'] if output['failure_report'] else None, 'output_dir': output['output_dir']}, ensure_ascii=False, indent=2))
+    print(json.dumps({'completed_count': output['scorecard']['completed_count'], 'not_run_count': output['scorecard']['not_run_count'], 'diagnostic_issue_count': output['diagnostics']['issue_count'], 'coverage_papers': output['coverage_matrix']['paper_count'], 'failed_job_count': output['failure_report']['failed_job_count'] if output['failure_report'] else None, 'output_dir': output['output_dir']}, ensure_ascii=False, indent=2))
 
 if __name__ == '__main__':
     main()
