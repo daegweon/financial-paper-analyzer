@@ -104,11 +104,13 @@ BEGIN
     RAISE EXCEPTION 'Current worker could not schedule an eligible retry';
   END IF;
   SELECT * INTO still_queued FROM public.analysis_jobs WHERE id=claimed.id;
-  IF still_queued.status <> 'queued'
+  IF NOT FOUND
+    OR still_queued.status <> 'queued'
     OR still_queued.stage <> 'queued'
     OR still_queued.worker_id IS NOT NULL
     OR still_queued.lease_expires_at IS NOT NULL
     OR still_queued.available_at <= now()
+    OR still_queued.available_at > now()+interval '31 seconds'
     OR still_queued.attempts <> 2
   THEN
     RAISE EXCEPTION 'Retry did not clear ownership and apply backoff';
