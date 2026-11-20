@@ -3,7 +3,6 @@ from contextvars import ContextVar
 from difflib import SequenceMatcher
 import json
 import logging
-import math
 import os
 import re
 import unicodedata
