@@ -176,6 +176,8 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [signup, setSignup] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [signOutLoading, setSignOutLoading] = useState(false);
   const [papers, setPapers] = useState<Paper[]>([]);
   const [selected, setSelected] = useState<Paper | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -185,15 +187,30 @@ export default function Home() {
 
   useEffect(() => {
     const supabase = db();
-    void supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-      setBoot(false);
-    }).catch(error => {
-      setMessage(String(error));
-      setBoot(false);
+    let disposed = false;
+    let authEventReceived = false;
+    // Subscribe before the initial user lookup. Otherwise a slow getUser()
+    // response can race with SIGNED_OUT and restore a stale authenticated UI.
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      authEventReceived = true;
+      if (!disposed) {
+        setUser(session?.user ?? null);
+        setBoot(false);
+      }
     });
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
-    return () => data.subscription.unsubscribe();
+    void supabase.auth.getUser().then(({ data: userData }) => {
+      if (!disposed && !authEventReceived) setUser(userData.user);
+      if (!disposed) setBoot(false);
+    }).catch(error => {
+      if (!disposed) {
+        setMessage(String(error));
+        setBoot(false);
+      }
+    });
+    return () => {
+      disposed = true;
+      data.subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -224,14 +241,55 @@ export default function Home() {
 
   async function auth(event: React.FormEvent) {
     event.preventDefault();
+    setAuthLoading(true);
     setMessage("");
     try {
       const result = signup
-        ? await db().auth.signUp({ email, password })
-        : await db().auth.signInWithPassword({ email, password });
-      setMessage(result.error?.message ?? (signup ? "가입 확인 메일을 확인해 주세요." : ""));
+        ? await db().auth.signUp({ email: email.trim(), password })
+        : await db().auth.signInWithPassword({ email: email.trim(), password });
+      if (result.error) throw result.error;
+      setMessage(signup ? "가입 확인 메일을 확인해 주세요." : "");
     } catch (error) {
-      setMessage((error as Error).message);
+      setMessage((error as Error).message || "인증 요청을 처리하지 못했습니다.");
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  async function googleAuth() {
+    setAuthLoading(true);
+    setMessage("");
+    try {
+      const { error } = await db().auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin + "/",
+          queryParams: { prompt: "select_account" },
+        },
+      });
+      if (error) throw error;
+    } catch (error) {
+      setMessage((error as Error).message || "Google 로그인에 실패했습니다.");
+      setAuthLoading(false);
+    }
+  }
+
+  async function signOut() {
+    if (signOutLoading) return;
+    setSignOutLoading(true);
+    setMessage("");
+    try {
+      const { error } = await db().auth.signOut();
+      if (error) throw error;
+      setUser(null);
+      setPapers([]);
+      setSelected(null);
+      setAnalysis(null);
+      setMessage("로그아웃되었습니다.");
+    } catch (error) {
+      setMessage((error as Error).message || "로그아웃에 실패했습니다. 네트워크 상태를 확인하고 다시 시도해 주세요.");
+    } finally {
+      setSignOutLoading(false);
     }
   }
 
@@ -363,12 +421,17 @@ export default function Home() {
       <h2>{signup ? "연구 공간 만들기" : "다시 만나서 반갑습니다."}</h2>
       <p>분석 결과와 논문을 안전하게 보관하세요.</p>
       <form onSubmit={auth}>
-        <label>이메일<input type="email" required value={email} onChange={event => setEmail(event.target.value)} placeholder="name@example.com"/></label>
-        <label>비밀번호<input type="password" required minLength={signup ? 8 : 1} value={password} onChange={event => setPassword(event.target.value)} placeholder="8자 이상 입력"/></label>
-        <button className="primary">{signup ? "회원가입" : "로그인"} →</button>
+        <label>이메일<input type="email" autoComplete="email" required value={email} onChange={event => setEmail(event.target.value)} placeholder="name@example.com"/></label>
+        <label>비밀번호<input type="password" autoComplete={signup ? "new-password" : "current-password"} required minLength={signup ? 8 : 1} value={password} onChange={event => setPassword(event.target.value)} placeholder="8자 이상 입력"/></label>
+        <button className="primary" disabled={authLoading}>{authLoading ? "인증 처리 중..." : signup ? "회원가입" : "로그인"} →</button>
       </form>
-      <p className="note">{message}</p>
-      <p className="toggle"><button onClick={() => setSignup(!signup)}>{signup ? "로그인으로 돌아가기" : "계정이 없나요? 회원가입"}</button></p>
+      <div className="auth-divider"><span>또는</span></div>
+      <button type="button" className="google-button" disabled={authLoading} onClick={() => void googleAuth()}>
+        <span className="google-mark" aria-hidden="true">G</span>
+        {authLoading ? "Google 계정 연결 중..." : "Google로 계속하기"}
+      </button>
+      <p className="note" role="status" aria-live="polite">{message}</p>
+      <p className="toggle"><button type="button" onClick={() => { setSignup(!signup); setMessage(""); }}>{signup ? "로그인으로 돌아가기" : "계정이 없나요? 회원가입"}</button></p>
     </div></section>
   </main>;
 
@@ -377,13 +440,17 @@ export default function Home() {
       <div className="brand">◈ Paper<span>Signal</span></div>
       <p className="eyebrow">WORKSPACE</p>
       <div className="nav">▤　논문 라이브러리</div>
-      <footer><p>{user.email}</p><button onClick={() => void db().auth.signOut()}>로그아웃</button></footer>
+      <footer><p>{user.email}</p><button type="button" onClick={() => void signOut()} disabled={signOutLoading}>{signOutLoading ? "로그아웃 중..." : "로그아웃"}</button></footer>
     </aside>
     <div className="content">
-      <header>Workspace / <b>논문 라이브러리</b>
-        <span className={engineMode === "gemini" || engineMode === "openai" ? "engine-ready" : "engine-pending"}>
+      <header className="workspace-header">
+        <span className="workspace-breadcrumbs">Workspace / <b>논문 라이브러리</b></span>
+        <span className={"workspace-engine " + (engineMode === "gemini" || engineMode === "openai" ? "engine-ready" : "engine-pending")}>
           ● {engineMode === "gemini" ? "Gemini AI 분석 활성화" : engineMode === "openai" ? "OpenAI 분석 활성화" : engineMode === "extractive" ? "텍스트 추출 모드" : "API 상태 확인 중"}
         </span>
+        <button type="button" className="mobile-sign-out" onClick={() => void signOut()} disabled={signOutLoading}>
+          {signOutLoading ? "로그아웃 중..." : "로그아웃"}
+        </button>
       </header>
       <div className="body">
         {engineMode === "gemini" && <div className="provider-notice"><b>Gemini 무료 티어 데이터 안내</b><p>현재 설정에서는 업로드한 논문에서 추출한 텍스트와 AI 응답이 Google 제품 개선에 사용되거나 사람 검토자가 처리할 수 있습니다. 공개·비기밀 논문만 업로드하고, 사내 미공개 자료나 개인정보가 포함된 문서는 올리지 마세요.</p></div>}
