@@ -78,6 +78,7 @@ jobs:
           docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -c 'GRANT SELECT, INSERT, UPDATE, DELETE ON public.analysis_jobs TO service_role;'
           apply_sql supabase/migrations/20261113021557_analysis_jobs_async_queue.sql
           apply_sql supabase/migrations/20261113161739_worker_leases_heartbeat_and_retry_rpc.sql
+          apply_sql supabase/tests/verify_worker_lease_contract.sql
           apply_sql supabase/migrations/20261113222551_analysis_stage_checkpoints_and_idempotent_results.sql
           apply_sql supabase/migrations/20261113222605_make_analysis_job_id_unique_for_upsert.sql
           apply_sql supabase/migrations/20261113222644_index_analysis_job_foreign_keys.sql
