@@ -45,6 +45,9 @@ export default function AdminAIUsagePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [forbidden, setForbidden] = useState(false);
+  const [budgetInput, setBudgetInput] = useState("");
+  const [savingBudget, setSavingBudget] = useState(false);
+  const [budgetMessage, setBudgetMessage] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -65,7 +68,9 @@ export default function AdminAIUsagePage() {
         throw new Error("관리자 권한이 확인되지 않았습니다. 일반 사용자에게는 AI 사용량과 비용 정보가 공개되지 않습니다.");
       }
       if (!response.ok) throw new Error(response.status === 401 ? "로그인 세션이 만료됐습니다." : "관리자 사용량 정보를 불러오지 못했습니다.");
-      setSummary(await response.json() as Summary);
+      const payload = await response.json() as Summary;
+      setSummary(payload);
+      setBudgetInput(payload.monthly_budget_usd ?? "");
     } catch (cause) {
       setSummary(null);
       setError((cause as Error).message || "조회 중 오류가 발생했습니다.");
@@ -75,6 +80,32 @@ export default function AdminAIUsagePage() {
   }, [month]);
 
   useEffect(() => { void load(); }, [load]);
+
+  async function saveBudget(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSavingBudget(true);
+    setBudgetMessage("");
+    try {
+      const { data, error: sessionError } = await db().auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!data.session) throw new Error("관리자 로그인이 필요합니다.");
+      const api = process.env.NEXT_PUBLIC_API_URL;
+      if (!api) throw new Error("API 주소가 설정되지 않았습니다.");
+      const response = await fetch(api.replace(/\\/$/, "") + "/api/admin/ai-usage/budget", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + data.session.access_token, "Content-Type": "application/json" },
+        body: JSON.stringify({ monthly_budget_usd: budgetInput }),
+      });
+      if (response.status === 403) throw new Error("관리자 권한이 확인되지 않았습니다.");
+      if (!response.ok) throw new Error("월간 전체 예산을 저장하지 못했습니다.");
+      setBudgetMessage("월간 전체 AI 예산을 저장했습니다.");
+      await load();
+    } catch (cause) {
+      setBudgetMessage((cause as Error).message || "예산 저장에 실패했습니다.");
+    } finally {
+      setSavingBudget(false);
+    }
+  }
 
   const budgetRatio = summary?.monthly_budget_usd && Number(summary.monthly_budget_usd) > 0
     ? Math.min(100, Number(summary.estimated_cost_usd) / Number(summary.monthly_budget_usd) * 100)
@@ -105,6 +136,17 @@ export default function AdminAIUsagePage() {
           <article className={styles.card}><span>월간 전체 예산</span><strong>{money(summary.monthly_budget_usd)}</strong><small>서버 관리자 설정</small></article>
           <article className={styles.card}><span>모델 호출 이벤트</span><strong>{summary.event_count.toLocaleString("ko-KR")}</strong><small>성공 및 실패 시도 포함</small></article>
           <article className={styles.card}><span>비용 미확정 이벤트</span><strong>{summary.unknown_cost_events.toLocaleString("ko-KR")}</strong><small>결제 등급·가격·토큰 미확인</small></article>
+        </section>
+
+        <section className={styles.panel}>
+          <h2>서비스 전체 월간 AI 예산 설정</h2>
+          <p className={styles.subtle}>관리자만 변경할 수 있는 전체 서비스 예산입니다. 사용자별·논문별 예산은 설정하지 않습니다.</p>
+          <form className={styles.budgetForm} onSubmit={saveBudget}>
+            <label htmlFor="admin-monthly-budget">월간 전체 예산 (USD)</label>
+            <input id="admin-monthly-budget" type="number" min="0" max="1000000000" step="0.01" required value={budgetInput} onChange={event => setBudgetInput(event.target.value)} />
+            <button type="submit" disabled={savingBudget || !budgetInput.trim()}>{savingBudget ? "저장 중…" : "전체 예산 저장"}</button>
+          </form>
+          {budgetMessage && <p className={styles.subtle} role="status">{budgetMessage}</p>}
         </section>
 
         <section className={styles.panel}>
