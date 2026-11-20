@@ -53,3 +53,12 @@ def test_invalid_event_timestamp_is_unknown_not_a_crash():
     row = build_cost_report([event])['groups'][0]
     assert row['unknown_cost_events'] == 1
     assert row['cost_status_counts']['invalid_timestamp'] == 1
+
+def test_cost_groups_preserve_provider_dimension_for_same_model_name():
+    events = [
+        {"user_id":"u1","paper_id":"p1","provider":"gemini","model":"shared-model","created_at":"2026-11-20","billing_mode":"free","prompt_tokens":1,"candidate_tokens":1,"thought_tokens":0},
+        {"user_id":"u1","paper_id":"p1","provider":"openai","model":"shared-model","created_at":"2026-11-20","billing_mode":"free","prompt_tokens":1,"candidate_tokens":1,"thought_tokens":0},
+    ]
+    groups = build_cost_report(events)["groups"]
+    assert len(groups) == 2
+    assert {row["provider"] for row in groups} == {"gemini", "openai"}
