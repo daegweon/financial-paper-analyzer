@@ -2733,7 +2733,7 @@ def _is_admin_user(user_id: str) -> bool:
     return bool(user_id and user_id in ADMIN_USER_IDS)
 
 
-def _build_admin_ai_usage_summary(events: list[dict[str, Any]], month: str, monthly_budget: str | None) -> dict[str, Any]:
+def _build_admin_ai_usage_summary(events: list[dict[str, Any]], month: str, monthly_budget: str | None, truncated: bool = False) -> dict[str, Any]:
     """Aggregate administrator-only usage. Never exposes raw events or user-set budgets."""
     report = build_cost_report(events)
     model_totals: dict[str, dict[str, Any]] = {}
@@ -2763,7 +2763,14 @@ def _build_admin_ai_usage_summary(events: list[dict[str, Any]], month: str, mont
             raise HTTPException(status_code=503, detail="관리자 월간 예산 설정이 올바르지 않습니다.")
     budget_status = "not_configured"
     if budget is not None:
-        budget_status = ("exceeded_with_unknown_costs" if unknown_events else "exceeded") if known_total > budget else ("incomplete_unknown_costs" if unknown_events else "within_budget")
+        if known_total > budget:
+            budget_status = "exceeded_with_incomplete_data" if (unknown_events or truncated) else "exceeded"
+        elif truncated:
+            budget_status = "incomplete_truncated"
+        elif unknown_events:
+            budget_status = "incomplete_unknown_costs"
+        else:
+            budget_status = "within_budget"
     return {
         "month": month,
         "currency": "USD",
@@ -2773,10 +2780,10 @@ def _build_admin_ai_usage_summary(events: list[dict[str, Any]], month: str, mont
         "estimated_cost_usd": format(known_total.quantize(Decimal("0.00000001")), "f"),
         "monthly_budget_usd": format(budget.quantize(Decimal("0.01")), "f") if budget is not None else None,
         "budget_status": budget_status,
-        "cost_coverage_complete": unknown_events == 0,
+        "cost_coverage_complete": unknown_events == 0 and not truncated,
         "models": sorted(model_totals.values(), key=lambda item: item["model"]),
         "users": sorted(users, key=lambda item: Decimal(item["estimated_cost_usd"]), reverse=True),
-        "truncated": len(events) >= 20000,
+        "truncated": truncated,
         "notice": "관리자 전용 운영 지표. 비용은 명시적으로 확인된 유료 등급과 가격표가 있는 이벤트의 추정치이며 청구서가 아닙니다. 미확정 비용은 합계에 포함되지 않습니다.",
     }
 
@@ -3224,7 +3231,7 @@ async def admin_ai_usage_summary(
     headers = {**supabase_headers(SERVICE_ROLE_KEY), "Range-Unit": "items"}
     events: list[dict[str, Any]] = []
     page_size = 1000
-    for offset in range(0, 20000, page_size):
+    for offset in range(0, 21000, page_size):
         headers["Range"] = f"{offset}-{offset + page_size - 1}"
         async with httpx.AsyncClient(timeout=20) as client:
             response = await client.get(
@@ -3242,6 +3249,8 @@ async def admin_ai_usage_summary(
         events.extend(rows)
         if len(rows) < page_size:
             break
+    truncated = len(events) > 20000
+    events = events[:20000]
     async with httpx.AsyncClient(timeout=10) as client:
         setting_response = await client.get(
             SUPABASE_URL + "/rest/v1/ai_admin_settings",
@@ -3250,7 +3259,7 @@ async def admin_ai_usage_summary(
         )
     settings = await check_response(setting_response, "admin AI budget lookup") or []
     monthly_budget = str(settings[0]["value_numeric"]) if settings else (ADMIN_MONTHLY_AI_BUDGET_USD or None)
-    return _build_admin_ai_usage_summary(events, selected_month, monthly_budget)
+    return _build_admin_ai_usage_summary(events, selected_month, monthly_budget, truncated=truncated)
 
 
 @app.post("/api/admin/ai-usage/budget")
