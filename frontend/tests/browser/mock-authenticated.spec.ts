@@ -265,3 +265,51 @@ test.describe("isolated synthetic Supabase browser flows", () => {
   });
 
 });
+
+
+  test("non-admin cannot view AI costs or service budget", async ({page}) => {
+    await mockSupabase(page);
+    await page.route("http://127.0.0.1:54322/api/admin/ai-usage/summary**", route =>
+      route.fulfill({status:403,contentType:"application/json",body:JSON.stringify({detail:"관리자 권한이 필요합니다."})})
+    );
+    await login(page,"qa-a@example.invalid");
+    await page.goto("/admin/ai-usage",{waitUntil:"domcontentloaded"});
+    await expect(page.getByRole("alert")).toContainText("일반 사용자에게는 AI 사용량과 비용 정보가 공개되지 않습니다.");
+    await expect(page.getByText("월간 추정 비용")).toHaveCount(0);
+    await expect(page.getByText("서비스 전체 월간 AI 예산 설정")).toHaveCount(0);
+  });
+
+  test("administrator dashboard displays aggregate costs and saves only the global monthly budget", async ({page}) => {
+    await mockSupabase(page);
+    let budget = "100.00";
+    const summary = () => ({
+      month:"2026-11",currency:"USD",event_count:3,known_cost_events:2,unknown_cost_events:1,
+      estimated_cost_usd:"12.50000000",monthly_budget_usd:budget,budget_status:"incomplete_unknown_costs",
+      cost_coverage_complete:false,
+      models:[{model:"gemini-3.5-flash-lite",event_count:3,known_cost_events:2,unknown_cost_events:1,estimated_cost_usd:"12.50000000"}],
+      users:[{user_id:qaA,event_count:3,known_cost_events:2,unknown_cost_events:1,estimated_cost_usd:"12.50000000"}],
+      truncated:false,notice:"관리자 전용 운영 지표",
+    });
+    await page.route("http://127.0.0.1:54322/api/admin/ai-usage/summary**", route =>
+      route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(summary())})
+    );
+    await page.route("http://127.0.0.1:54322/api/admin/ai-usage/budget", async route => {
+      const body = route.request().postDataJSON() as {monthly_budget_usd:string};
+      budget = Number(body.monthly_budget_usd).toFixed(2);
+      await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({monthly_budget_usd:budget,updated:true})});
+    });
+    await login(page,"qa-a@example.invalid");
+    await page.goto("/admin/ai-usage",{waitUntil:"domcontentloaded"});
+    await expect(page.getByText("월간 추정 비용")).toBeVisible();
+    await expect(page.getByText("$12.50")).toBeVisible();
+    await expect(page.getByText("gemini-3.5-flash-lite")).toBeVisible();
+    await expect(page.getByText("사용자별 내부 운영 집계")).toBeVisible();
+    await page.getByLabel("월간 전체 예산 (USD)").fill("150");
+    await page.getByRole("button",{name:"전체 예산 저장"}).click();
+    await expect(page.getByRole("status")).toContainText("월간 전체 AI 예산을 저장했습니다.");
+    await expect(page.getByLabel("월간 전체 예산 (USD)")).toHaveValue("150.00");
+    const violations = await new AxeBuilder({page})
+      .withTags(["wcag2a","wcag2aa","wcag21a","wcag21aa"])
+      .analyze();
+    expect(violations.violations.map(item => item.id)).toEqual([]);
+  });
