@@ -2409,6 +2409,7 @@ def test_admin_usage_endpoint_returns_summary_only_after_allowlist_check(monkeyp
     assert result["monthly_budget_usd"] == "75.00"
     assert len(requests) == 2
     assert requests[0][0].endswith("/rest/v1/ai_usage_events")
+    assert requests[0][1]["params"]["select"] == "user_id,paper_id,provider,model,outcome,billing_mode,prompt_tokens,candidate_tokens,thought_tokens,total_tokens,latency_ms,created_at"
     assert requests[1][0].endswith("/rest/v1/ai_admin_settings")
     assert requests[0][1]["headers"]["Range"] == "0-999"
 
