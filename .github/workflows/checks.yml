@@ -137,6 +137,9 @@ jobs:
           # legacy client grants still exist; this models the real zero-downtime cutover.
           docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/migrations/20261119100000_server_owned_analysis_quota.sql
           docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/tests/verify_analysis_queue_quota.sql
+          # Additive AI usage ledger: test service-only access and idempotency in disposable DB.
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/migrations/20261120120000_ai_usage_events_ledger.sql
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/tests/verify_ai_usage_events_ledger.sql
           # Phase 3: ONLY after reviewed API deployment and real authenticated E2E,
           # revoke browser writer privileges, then rerun the SAME quota contract.
           docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/migrations/20261117215315_beta_server_owned_result_writes.sql
