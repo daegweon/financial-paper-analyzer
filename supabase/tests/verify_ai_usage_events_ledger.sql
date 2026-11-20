@@ -88,3 +88,12 @@ BEGIN
   THEN RAISE EXCEPTION 'Administrator global budget setting did not persist'; END IF;
 END $$;
 ROLLBACK;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_indexes
+    WHERE schemaname='public' AND tablename='ai_usage_events'
+      AND indexname='ai_usage_events_created_at_idx'
+  ) THEN RAISE EXCEPTION 'Monthly admin usage query index is missing'; END IF;
+END $$;
