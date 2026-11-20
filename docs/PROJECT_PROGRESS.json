@@ -31,7 +31,7 @@
     }
   },
   "methodology": "Weighted engineering milestone completion, NOT launch readiness. Each workstream has maximum points; achieved points sum to overall_percent. Increase only after verified evidence.",
-  "overall_percent": 95,
+  "overall_percent": 96,
   "workstreams": [
     {
       "id": "core_platform",
@@ -71,12 +71,13 @@
       "id": "privacy_integrity",
       "label": "데이터 격리·결과 무결성",
       "weight": 15,
-      "earned": 12,
+      "earned": 13,
       "evidence": [
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44369654205",
-        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44462359704"
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44462359704",
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44658840350"
       ],
-      "remaining": "실제 두 사용자의 HTTPS 분석·Storage 격리 E2E 및 그 후 클라이언트 쓰기 권한 제거; 운영 서버 전용 작업 등록은 배포됨"
+      "remaining": "실제 2계정 HTTPS 분석·Storage 격리 E2E, 운영 API dual-write 검증 및 사람 승인 후 DB 전환"
     },
     {
       "id": "automated_ci",
@@ -262,6 +263,11 @@
       "date": "2026-11-20",
       "percent": 95,
       "evidence": "Final integrated pipeline persistence fix d004d27253ff14766a0c061c8369165cdb7f90f0 passed full CI #44653216545: API 166 passed/1 deliberately skipped, frontend lint/build, disposable PostgreSQL policy, GET-only live API preflight and all synthetic browser QA SUCCESS. This validates scorecard, diagnostics, coverage-matrix, HTML dashboard, review packet, optional failure report and optional baseline comparison output wiring. Production live E2E remains intentionally skipped."
+    },
+    {
+      "date": "2026-11-20",
+      "percent": 96,
+      "evidence": "Awarded one privacy/integrity point after additive AI usage ledger migration and disposable PostgreSQL 17 contract passed db-policy job in CI #44658840350. Verified anon/authenticated cannot access raw usage events, service_role can insert, duplicate idempotency keys are rejected and unknown token counts remain NULL. API tests 166 passed/1 deliberately skipped; frontend lint/build passed; GET-only live API preflight passed. Synthetic browser QA remains in progress; production API dual-write and actual two-user E2E are not complete."
     }
   ]
 }
