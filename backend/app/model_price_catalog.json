@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "currency": "USD",
+  "source_url": "https://ai.google.dev/gemini-api/docs/pricing",
+  "source_checked_at": "2026-11-20",
+  "billing_mode_required": true,
+  "note": "Paid Standard text-token rates only. Free-tier requests are explicitly zero only when the caller knows the request used Free Tier. Unknown billing mode or missing token counts yield null cost. Gemini output pricing includes thinking tokens, so output tokens are candidate_tokens + thought_tokens; do not price thoughts twice.",
+  "prices": [
+    {
+      "provider": "gemini",
+      "model": "gemini-3.5-flash-lite",
+      "tier": "paid_standard",
+      "effective_from": "2026-11-20",
+      "effective_until": null,
+      "input_usd_per_million": 0.3,
+      "output_usd_per_million": 2.5,
+      "source_url": "https://ai.google.dev/gemini-api/docs/pricing"
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-3.6-flash",
+      "tier": "paid_standard",
+      "effective_from": "2026-11-20",
+      "effective_until": "2027-01-01",
+      "input_usd_per_million": 0.75,
+      "output_usd_per_million": 3.75,
+      "source_url": "https://ai.google.dev/gemini-api/docs/pricing"
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-3.6-flash",
+      "tier": "paid_standard",
+      "effective_from": "2027-01-01",
+      "effective_until": null,
+      "input_usd_per_million": 1.5,
+      "output_usd_per_million": 7.5,
+      "source_url": "https://ai.google.dev/gemini-api/docs/pricing"
+    }
+  ]
+}
