@@ -15,7 +15,7 @@ MIGRATIONS = ROOT / "supabase" / "migrations"
 def compact_sql() -> str:
     files = sorted(MIGRATIONS.glob("*.sql"))
     assert files, "Supabase migrations must be present in the repository"
-    return re.sub(r"\\s+", "", "\\n".join(path.read_text() for path in files).lower())
+    return re.sub(r"\s+", "", "\\n".join(path.read_text() for path in files).lower())
 
 
 def test_every_user_data_table_enables_row_level_security():
