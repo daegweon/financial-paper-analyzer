@@ -91,7 +91,7 @@ export default function AdminAIUsagePage() {
       if (!data.session) throw new Error("관리자 로그인이 필요합니다.");
       const api = process.env.NEXT_PUBLIC_API_URL;
       if (!api) throw new Error("API 주소가 설정되지 않았습니다.");
-      const response = await fetch(api.replace(/\\/$/, "") + "/api/admin/ai-usage/budget", {
+      const response = await fetch(api.replace(/\/$/, "") + "/api/admin/ai-usage/budget", {
         method: "POST",
         headers: { Authorization: "Bearer " + data.session.access_token, "Content-Type": "application/json" },
         body: JSON.stringify({ monthly_budget_usd: budgetInput }),
