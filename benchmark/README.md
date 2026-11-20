@@ -150,3 +150,13 @@ python benchmark/compare_scorecards.py --baseline benchmark/results/v1-scorecard
 ```
 
 Only papers with measured values in both scorecards contribute to each metric's paired aggregate. Missing scores are excluded rather than treated as zero. The report includes per-paper deltas and improved/regressed/unchanged counts. It is descriptive and does not establish causal model improvement; alias coverage is only a screening signal, page precision requires exact PDF text, and human scores require explicit reviewer input.
+
+## Analyze failure categories and fallback attempts
+
+Export the Railway API text logs and run:
+
+```bash
+python benchmark/failure_report.py railway-api.log --out benchmark/results/failure-report.json
+```
+
+The report groups failed analysis jobs into authentication, authorization, missing resource, provider quota, timeout, provider unavailable, invalid model response, other HTTP and application errors. It also counts Gemini attempts/errors by model. An alternate-model HTTP 200 is not automatically counted as a recovered job; correlate the same job with a later completion event before deriving recovery rate. Logs without a model identifier cannot be attributed to a model. This is offline, read-only triage and does not retry or mutate jobs.
