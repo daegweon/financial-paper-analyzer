@@ -3,7 +3,8 @@
 frontend
 railway-function
 supabase
-backend/tests
+# backend/tests is intentionally included in the build context:
+# Dockerfile copies it into the isolated test stage before building runtime.
 backend/.env
 backend/.env.*
 **/__pycache__
