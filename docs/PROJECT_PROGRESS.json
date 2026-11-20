@@ -31,7 +31,7 @@
     }
   },
   "methodology": "Weighted engineering milestone completion, NOT launch readiness. Each workstream has maximum points; achieved points sum to overall_percent. Increase only after verified evidence.",
-  "overall_percent": 94,
+  "overall_percent": 95,
   "workstreams": [
     {
       "id": "core_platform",
@@ -49,11 +49,12 @@
       "id": "finance_engine",
       "label": "금융논문 분석 기반 엔진",
       "weight": 15,
-      "earned": 13,
+      "earned": 14,
       "evidence": [
-        "benchmark/results/scorecard-v6.3.9-2026-11-16.md"
+        "benchmark/results/scorecard-v6.3.9-2026-11-16.md",
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44653101787"
       ],
-      "remaining": "18건 독립 근거 검토·Gemini 비용·쿼터 방안; 엔진 개선 동결"
+      "remaining": "18건 독립 근거 검토·Gemini 영구 사용량 원장; 분석 엔진 개선은 성능 저하 방지를 위해 동결"
     },
     {
       "id": "junior_learning",
@@ -251,6 +252,11 @@
       "date": "2026-11-20",
       "percent": 94,
       "evidence": "Awarded final independent junior-learning engineering point after Korean methodology catalog and learning-card generator (OLS, panel FE/RE, DiD, IV/2SLS, event study, factor models, GARCH, PCA) and validation tests passed full CI #44652970492: frontend, API, DB policy, GET-only live API preflight and synthetic browser QA all SUCCESS. Learning content is explicitly general education and is not represented as paper-specific evidence. Native iOS Safari/Android device PDF verification remains human/device dependent."
+    },
+    {
+      "date": "2026-11-20",
+      "percent": 95,
+      "evidence": "Awarded one finance-engine quality-engineering point after CI #44653101787 passed on candidate commit a0059364c691e9cbed670798af345378430e9586. Verified benchmark topic/method-family coverage matrix, matched/missing/unmeasured Gold-fact classification, paired version comparison and failure taxonomy; API, frontend, PostgreSQL, GET-only live API preflight and browser QA all SUCCESS. This improves evaluation/triage tooling, not underlying LLM semantic accuracy. The later full CI #44653492214 is still running to validate final artifact persistence and progress-ledger/docs state."
     }
   ]
 }
