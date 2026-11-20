@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_dockerignore_keeps_backend_tests_and_workflow_contracts_available():
+def test_dockerignore_keeps_complete_test_dependencies_in_build_context():
     ignored = {
         line.strip().rstrip("/")
         for line in (ROOT / ".dockerignore").read_text(encoding="utf-8").splitlines()
@@ -14,8 +14,11 @@ def test_dockerignore_keeps_backend_tests_and_workflow_contracts_available():
 
     assert "backend/tests" not in ignored
     assert ".github" not in ignored
-    assert "COPY backend/ /workspace/backend/" in dockerfile
-    assert "COPY .github/workflows/ /workspace/.github/workflows/" in dockerfile
+    assert "learning" not in ignored
+    assert "benchmark" not in ignored
+    assert "supabase" not in ignored
+    assert "COPY . /workspace/" in dockerfile
     assert "WORKDIR /workspace/backend" in dockerfile
+    assert "PYTHONPATH=/workspace" in dockerfile
     assert "COPY --from=test /tmp/papersignal-backend-tests-passed" in dockerfile
     assert "COPY backend/app/ /app/app/" in dockerfile
