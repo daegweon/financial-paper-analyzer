@@ -51,8 +51,8 @@ def test_private_pdf_storage_is_owner_scoped_and_not_public():
 def test_public_roles_do_not_receive_user_table_access():
     sql = compact_sql()
     assert "revokeallonpublic.papers,public.analysesfromanon,authenticated;" in sql
-    assert "grantselect,insertonpublic.papers toauthenticated;" in sql
-    assert "grantselect,insertonpublic.analyses toauthenticated;" in sql
-    assert "grantselect,insertonpublic.analysis_jobs toauthenticated;" in sql
-    assert "grantselect,insertonpublic.papers toanon;" not in sql
-    assert "grantselect,insertonpublic.analyses toanon;" not in sql
+    assert "grantselect,insertonpublic.paperstoauthenticated;" in sql
+    assert "grantselect,insertonpublic.analysestoauthenticated;" in sql
+    assert "grantselect,insertonpublic.analysis_jobstoauthenticated;" in sql
+    assert "grantselect,insertonpublic.paperstoanon;" not in sql
+    assert "grantselect,insertonpublic.analysestoanon;" not in sql
