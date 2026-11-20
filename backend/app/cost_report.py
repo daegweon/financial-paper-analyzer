@@ -30,6 +30,7 @@ def build_cost_report(events, catalog=None, admin_monthly_budget_usd=None):
             continue
         paper_id = str(event.get('paper_id') or 'unknown-paper')
         user_id = str(event.get('user_id') or 'unknown-user')
+        provider = str(event.get('provider') or 'unknown')
         model = str(event.get('model') or 'unknown-model')
         created_at = str(event.get('created_at') or '')
         try:
@@ -38,7 +39,7 @@ def build_cost_report(events, catalog=None, admin_monthly_budget_usd=None):
             month = 'unknown-period'
         result = estimate_cost(provider=str(event.get('provider') or ''), model=model, occurred_on=created_at[:10], billing_mode=event.get('billing_mode'), prompt_tokens=event.get('prompt_tokens'), candidate_tokens=event.get('candidate_tokens'), thought_tokens=event.get('thought_tokens'), catalog=catalog) if month != 'unknown-period' else {'estimated_cost': None, 'price_status': 'invalid_timestamp'}
         cost = Decimal(result['estimated_cost']) if result['estimated_cost'] is not None else None
-        for mapping, key in ((groups, (paper_id, model, month)), (users, (user_id, month)), (papers, (paper_id, month)), (months, (month,))):
+        for mapping, key in ((groups, (paper_id, provider, model, month)), (users, (user_id, month)), (papers, (paper_id, month)), (months, (month,))):
             row = mapping[key]
             row['event_count'] += 1
             if cost is None:
@@ -69,7 +70,7 @@ def build_cost_report(events, catalog=None, admin_monthly_budget_usd=None):
         monthly_admin.append(item)
     return {
         'currency': 'USD',
-        'groups': serialize(groups, ('paper_id', 'model', 'month')),
+        'groups': serialize(groups, ('paper_id', 'provider', 'model', 'month')),
         'admin_user_usage': serialize(users, ('user_id', 'month')),
         'admin_paper_usage': serialize(papers, ('paper_id', 'month')),
         'admin_monthly_budget': monthly_admin,
