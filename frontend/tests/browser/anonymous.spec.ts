@@ -24,6 +24,40 @@ test("320px narrow screen has usable form without horizontal overflow", async ({
 });
 
 
+
+test("mobile login shows Google sign-in above the email form in the first viewport", async ({ page }) => {
+  for (const viewport of [
+    { width: 320, height: 640 },
+    { width: 375, height: 667 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+
+    const google = page.getByRole("button", { name: "Google로 계속하기" });
+    await expect(google).toBeVisible();
+
+    const placement = await page.evaluate(() => {
+      const googleButton = document.querySelector<HTMLButtonElement>(".google-button");
+      const emailForm = document.querySelector<HTMLFormElement>(".form form");
+      if (!googleButton || !emailForm) return null;
+      const googleRect = googleButton.getBoundingClientRect();
+      const formRect = emailForm.getBoundingClientRect();
+      return {
+        googleBottom: googleRect.bottom,
+        emailFormTop: formRect.top,
+        viewportHeight: window.innerHeight,
+        documentWidth: document.documentElement.scrollWidth,
+      };
+    });
+
+    expect(placement).not.toBeNull();
+    expect(placement!.googleBottom).toBeLessThanOrEqual(viewport.height);
+    expect(placement!.googleBottom).toBeLessThan(placement!.emailFormTop);
+    expect(placement!.documentWidth).toBeLessThanOrEqual(viewport.width + 1);
+  }
+});
+
 test("login and signup surfaces meet WCAG 2.1 AA automated checks", async ({ page }) => {
   await page.goto("/", { waitUntil: "domcontentloaded" });
   const results = await new AxeBuilder({ page })

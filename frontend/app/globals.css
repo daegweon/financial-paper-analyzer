@@ -311,9 +311,15 @@ button.evidence-source-link:focus-visible {
   .pitch > p { font-size: 12px; line-height: 1.65; }
   .pill { margin-top: 14px; padding: 8px 12px; }
   .login { display: block; padding: 23px 20px 40px; }
-  .form { margin-inline: auto; }
+  .form { margin-inline: auto; display: flex; flex-direction: column; }
+  /* Keep the social sign-in action in the first mobile viewport. */
+  .form > .auth-divider { order: 1; margin: 14px 0 10px; }
+  .form > .google-button { order: 2; }
+  .form > form { order: 3; margin-top: 18px; }
+  .form > .note { order: 4; }
+  .form > .toggle { order: 5; }
   .form h2 { font-size: 24px; margin: 12px 0; }
-  .form form { gap: 16px; margin-top: 22px; }
+  .form form { gap: 16px; }
   .form input { min-height: 44px; }
   .overlay { z-index: 50; }
   .details { width: 100%; max-height: 100dvh; padding: 54px 16px calc(24px + env(safe-area-inset-bottom, 0px)); }
