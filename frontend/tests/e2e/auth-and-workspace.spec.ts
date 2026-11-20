@@ -7,6 +7,8 @@ const PAPER_ID = "22222222-2222-4222-8222-222222222222";
 
 async function seedAuthenticatedSession(page: Page) {
   await page.addInitScript(({ userId, projectRef }) => {
+    // addInitScript runs on every navigation; seed only the first document.
+    if (sessionStorage.getItem("papersignal-e2e-session-seeded") === "1") return;
     const encode = (value: object) =>
       btoa(JSON.stringify(value)).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
     const now = Math.floor(Date.now() / 1000);
@@ -35,6 +37,7 @@ async function seedAuthenticatedSession(page: Page) {
         user,
       }),
     );
+    sessionStorage.setItem("papersignal-e2e-session-seeded", "1");
   }, { userId: USER_ID, projectRef: SUPABASE_REF });
 
   await page.route(`${SUPABASE_URL}/rest/v1/papers**`, route => {
@@ -128,7 +131,6 @@ test("mobile sign-out clears the local session and remains signed out after relo
 
   await page.reload();
   await page.waitForTimeout(1000);
-  console.log("AFTER_SESSION_RELOAD", await page.locator("body").innerText(), await page.evaluate(() => ({ local: Object.keys(localStorage).map(key => [key, localStorage.getItem(key)]), session: Object.keys(sessionStorage).map(key => [key, sessionStorage.getItem(key)]), cookies: document.cookie })));
   await expect(page.getByRole("heading", { name: "다시 만나서 반갑습니다." })).toBeVisible();
   await expect(page.getByRole("button", { name: "로그아웃" })).toHaveCount(0);
   expect(unexpectedUserLookups).toBe(0);
