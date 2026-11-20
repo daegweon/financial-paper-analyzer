@@ -2776,7 +2776,7 @@ def _build_admin_ai_usage_summary(events: list[dict[str, Any]], month: str, mont
         "budget_status": budget_status,
         "cost_coverage_complete": unknown_events == 0,
         "models": sorted(model_totals.values(), key=lambda item: item["model"]),
-        "users": sorted(users, key=lambda item: item["estimated_cost_usd"], reverse=True),
+        "users": sorted(users, key=lambda item: Decimal(item["estimated_cost_usd"]), reverse=True),
         "truncated": len(events) >= 20000,
         "notice": "관리자 전용 운영 지표. 비용은 명시적으로 확인된 유료 등급과 가격표가 있는 이벤트의 추정치이며 청구서가 아닙니다. 미확정 비용은 합계에 포함되지 않습니다.",
     }
