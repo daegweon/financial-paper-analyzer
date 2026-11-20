@@ -1,7 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { db } from "../lib/supabase";
+import { clampPdfPage, commitPdfPageInput, originalPdfPageUrl, pdfLinkNeedsRefresh } from "../lib/pdf-viewer";
+import { ResearchLibrary } from "../components/ResearchLibrary";
+import { BetaGettingStarted } from "../components/BetaGettingStarted";
+import { isAcceptedPdf, sourcePdfFailureMessage, uploadFailureMessage } from "../lib/beta-ux";
+import { JuniorPaperGuide } from "../components/JuniorPaperGuide";
+import { JuniorVisualReading } from "../components/JuniorVisualReading";
+import { JuniorWorkplaceGuide } from "../components/JuniorWorkplaceGuide";
+import { authCallbackError, cleanAuthErrorUrl } from "../lib/auth-feedback";
+import { AnalysisWatchStopped, findActiveAnalysisJob, startAnalysisJob, waitForAnalysisJob } from "../lib/analysis-job";
+import type { ActiveAnalysisJob } from "../lib/analysis-job";
 import type { User } from "@supabase/supabase-js";
 
 type Evidence = { page: number; quote: string };
@@ -83,9 +93,23 @@ type Bibliographic = {
 type AnalysisResult = {
   mode: string;
   analysis_version?: string;
-  findings_verification?: { repair_attempted: boolean; repair_status: string; repair_model?: string | null };
   methodology_verification?: { repair_attempted: boolean; repair_status: string; repair_model?: string | null };
   findings_deduplication?: { duplicates_removed: number };
+  findings_coverage?: {
+    status: "supported" | "review_required" | "incomplete" | "not_assessable";
+    supported_findings_count: number;
+    review_findings_count: number;
+    empirical_result_signals_detected: boolean;
+    method: string;
+  };
+  findings_verification?: {
+    repair_attempted: boolean;
+    repair_status: string;
+    repair_model?: string | null;
+    rescue_attempted?: boolean;
+    rescue_status?: string;
+    rescue_model?: string | null;
+  };
   summary_verification?: { status: string; unsupported_numeric_tokens?: string[] };
   summary_consistency?: { status: string; summary_mentions_results: boolean; findings_count: number; unmatched_numeric_tokens: string[]; reasons: string[]; method: string };
   summary: string;
@@ -114,6 +138,25 @@ type Paper = {
   page_count: number | null;
 };
 type Analysis = { result: AnalysisResult; model: string; created_at?: string };
+
+function authErrorMessage(error: unknown) {
+  const authError = error as { code?: string; message?: string };
+  const message = authError.message || "";
+  const normalized = message.toLowerCase();
+  if (authError.code === "email_address_not_authorized") {
+    return "현재 Supabase 기본 이메일 발송은 조직 구성원 주소만 허용합니다. 외부 주소 인증에는 Custom SMTP 설정이 필요합니다.";
+  }
+  if (authError.code === "over_email_send_rate_limit") {
+    return "이메일 발송 한도에 도달했습니다. 잠시 후 다시 시도하거나 Custom SMTP를 설정해 주세요.";
+  }
+  if (normalized.includes("provider is not enabled") || normalized.includes("unsupported provider")) {
+    return "Google 로그인이 아직 Supabase에서 활성화되지 않았습니다. Supabase Auth의 Google 공급자에 OAuth Client ID와 Client Secret을 등록해 주세요.";
+  }
+  if (normalized.includes("redirect") && normalized.includes("url")) {
+    return "로그인 복귀 주소가 Supabase Auth의 Redirect URL 허용 목록에 없습니다. 현재 PaperSignal 주소를 허용 목록에 추가해 주세요.";
+  }
+  return message || "인증 요청을 처리하지 못했습니다.";
+}
 
 function studyDesignLabel(value?: string) {
   const labels: Record<string, string> = {
@@ -152,20 +195,40 @@ function panelStatusLabel(value?: string) {
   return value ? labels[value] ?? value : "확인 불가";
 }
 
-function EvidenceList({ items }: { items?: Evidence[] }) {
+function EvidenceList({
+  items, sourcePdfUrl, onOpenSourcePage,
+}: {
+  items?: Evidence[];
+  sourcePdfUrl?: string;
+  onOpenSourcePage?: (page: number) => void;
+}) {
   if (!items?.length) return null;
   return <div className="evidence-list">{items.map((item, index) =>
     <blockquote className="evidence" key={item.page + "-" + index}>
       <b>PAGE {item.page}</b><p>{item.quote}</p>
+      {sourcePdfUrl && Number.isInteger(item.page) && item.page > 0 &&
+        (onOpenSourcePage
+          ? <button type="button" className="evidence-source-link" onClick={() => onOpenSourcePage(item.page)}>
+              원문 p.{item.page} 함께 보기 ↓
+            </button>
+          : <a className="evidence-source-link" href={sourcePdfUrl + "#page=" + item.page} target="_blank" rel="noreferrer">
+              원문 p.{item.page} 확인 ↗
+            </a>)}
     </blockquote>
   )}</div>;
 }
 
-function ClaimList({ items }: { items?: Claim[] }) {
+function ClaimList({
+  items, sourcePdfUrl, onOpenSourcePage,
+}: {
+  items?: Claim[];
+  sourcePdfUrl?: string;
+  onOpenSourcePage?: (page: number) => void;
+}) {
   if (!items?.length) return <p className="muted">원문 근거가 확인된 항목이 없습니다.</p>;
   return <div className="analysis-cards">{items.map((item, index) =>
     <article className="analysis-card" key={index}>
-      <p>{item.text}</p><EvidenceList items={item.evidence}/>
+      <p>{item.text}</p><EvidenceList sourcePdfUrl={sourcePdfUrl} onOpenSourcePage={onOpenSourcePage} items={item.evidence}/>
     </article>
   )}</div>;
 }
@@ -176,23 +239,54 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [signup, setSignup] = useState(false);
+  const [confirmationPending, setConfirmationPending] = useState(false);
+  const [resendingConfirmation, setResendingConfirmation] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [signOutLoading, setSignOutLoading] = useState(false);
   const [papers, setPapers] = useState<Paper[]>([]);
+  const [papersOwnerId, setPapersOwnerId] = useState<string | null>(null);
+  const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const [libraryError, setLibraryError] = useState("");
+  const [uploadIssue, setUploadIssue] = useState(false);
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
+  const libraryRequestId = useRef(0);
+  const previousUserIdRef = useRef<string | null>(null);
+  const currentUserIdRef = useRef<string | null>(null);
+  currentUserIdRef.current = user?.id ?? null;
+  const visiblePapers = papersOwnerId === user?.id ? papers : [];
   const [selected, setSelected] = useState<Paper | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [activeJob, setActiveJob] = useState<ActiveAnalysisJob | null>(null);
+  const [jobLookupError, setJobLookupError] = useState("");
+  const [sourcePdf, setSourcePdf] = useState<{ paperId: string; url: string; issuedAt: number } | null>(null);
+  const [sourcePdfError, setSourcePdfError] = useState("");
+  const [sourcePdfRefreshing, setSourcePdfRefreshing] = useState(false);
+  const [sourceViewerOpen, setSourceViewerOpen] = useState(false);
+  const [sourcePage, setSourcePage] = useState(1);
+  const [sourcePageInput, setSourcePageInput] = useState("1");
+  const detailsRef = useRef<HTMLElement | null>(null);
+  const sourceViewerRef = useRef<HTMLDivElement | null>(null);
+  const openRequestId = useRef(0);
+  const pdfSignRequestId = useRef(0);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [engineMode, setEngineMode] = useState<"gemini" | "openai" | "extractive" | "unknown">("unknown");
 
   useEffect(() => {
+    // Failed social OAuth callbacks can carry duplicate, URL-encoded errors.
+    // Explain the failure and remove stale error parameters from the address bar.
+    const error = authCallbackError(window.location.search, window.location.hash);
+    if (error) {
+      setMessage(error);
+      const clean = cleanAuthErrorUrl(window.location.href);
+      if (clean) window.history.replaceState(window.history.state, "", clean);
+    }
     const supabase = db();
     let disposed = false;
     let authEventReceived = false;
-    // Subscribe before reading the persisted local session. This is UI
-    // bootstrap only; every API and database request still validates the JWT.
-    // Avoid getUser() here: its network round-trip can finish after SIGNED_OUT
-    // and let a stale in-flight lookup restore an authenticated client session.
+    // Hydrate the private UI from the persisted local session. Avoid a network
+    // getUser() race that could restore stale UI after SIGNED_OUT.
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       authEventReceived = true;
       if (!disposed) {
@@ -226,20 +320,89 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (user) void refresh();
-    else {
-      setPapers([]);
-      setSelected(null);
-      setAnalysis(null);
-    }
-  }, [user]);
+    // Invalidate all private UI data whenever auth identity changes, including
+    // account-to-account switches without an intervening null session.
+    if (previousUserIdRef.current && previousUserIdRef.current !== user?.id) setMessage("");
+    previousUserIdRef.current = user?.id ?? null;
+    libraryRequestId.current += 1;
+    openRequestId.current += 1;
+    pdfSignRequestId.current += 1;
+    setPapers([]);
+    setPapersOwnerId(null);
+    setLibraryError("");
+    setLibraryLoading(false);
+    setUploadIssue(false);
+    setSelected(null);
+    setSelectedOwnerId(null);
+    setAnalysis(null);
+    setActiveJob(null);
+    setJobLookupError("");
+    setSourcePdf(null);
+    setSourcePdfError("");
+    setSourcePdfRefreshing(false);
+    setSourceViewerOpen(false);
+    if (user?.id) void refresh();
+  }, [user?.id]);
+
+  useEffect(() => { setSourcePageInput(String(sourcePage)); }, [sourcePage]);
+
+  // Keep keyboard navigation inside the authenticated paper dialog, including on mobile.
+  useEffect(() => {
+    if (!selected || selectedOwnerId !== user?.id) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    detailsRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); closeDetails(); return; }
+      if (event.key !== "Tab" || !detailsRef.current) return;
+      const focusables = Array.from(detailsRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), iframe, [tabindex]:not([tabindex="-1"])',
+      )).filter((element) => element.getClientRects().length > 0);
+      if (!focusables.length) { event.preventDefault(); detailsRef.current.focus(); return; }
+      const first = focusables[0], last = focusables[focusables.length - 1];
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === detailsRef.current)) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault(); first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus();
+    };
+  }, [selected?.id, selectedOwnerId, user?.id]);
 
   async function refresh() {
-    const { data, error } = await db().from("papers")
-      .select("id,title,status,storage_path,created_at,page_count")
-      .order("created_at", { ascending: false });
-    if (error) setMessage(error.message);
-    else setPapers((data ?? []) as Paper[]);
+    const ownerId = currentUserIdRef.current;
+    if (!ownerId) return;
+    const requestId = ++libraryRequestId.current;
+    setLibraryLoading(true);
+    setLibraryError("");
+    try {
+      const { data, error } = await db().from("papers")
+        .select("id,title,status,storage_path,created_at,page_count")
+        .eq("user_id", ownerId)
+        .order("created_at", { ascending: false });
+      if (requestId !== libraryRequestId.current || ownerId !== currentUserIdRef.current) return;
+      if (error) throw error;
+      setPapers((data ?? []) as Paper[]);
+      setPapersOwnerId(ownerId);
+    } catch {
+      if (requestId === libraryRequestId.current && ownerId === currentUserIdRef.current) {
+        setLibraryError("논문 목록을 불러오지 못했습니다. 네트워크와 로그인 상태를 확인하고 다시 시도해 주세요.");
+      }
+    } finally {
+      if (requestId === libraryRequestId.current && ownerId === currentUserIdRef.current) {
+        setLibraryLoading(false);
+      }
+    }
+  }
+
+  function choosePdfFile() {
+    if (!busy) uploadInputRef.current?.click();
   }
 
   async function auth(event: React.FormEvent) {
@@ -247,13 +410,38 @@ export default function Home() {
     setAuthLoading(true);
     setMessage("");
     try {
-      const result = signup
-        ? await db().auth.signUp({ email: email.trim(), password })
-        : await db().auth.signInWithPassword({ email: email.trim(), password });
-      if (result.error) throw result.error;
-      setMessage(signup ? "가입 확인 메일을 확인해 주세요." : "");
+      if (signup) {
+        const { data, error } = await db().auth.signUp({
+          email: email.trim(),
+          password,
+        });
+        if (error) throw error;
+        if (data.session) {
+          setConfirmationPending(false);
+          setMessage("회원가입과 이메일 인증이 완료됐습니다.");
+        } else {
+          setConfirmationPending(true);
+          setMessage("가입 요청을 받았습니다. 받은 편지함에서 인증 메일을 열어 이메일 인증을 완료해 주세요.");
+        }
+        return;
+      }
+
+      const { error } = await db().auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (error) {
+        if ((error as { code?: string }).code === "email_not_confirmed") {
+          setConfirmationPending(true);
+          setMessage("이메일 인증이 아직 완료되지 않았습니다. 인증 메일을 다시 보내 주세요.");
+          return;
+        }
+        throw error;
+      }
+      setConfirmationPending(false);
+      setMessage("");
     } catch (error) {
-      setMessage((error as Error).message || "인증 요청을 처리하지 못했습니다.");
+      setMessage(authErrorMessage(error));
     } finally {
       setAuthLoading(false);
     }
@@ -272,7 +460,7 @@ export default function Home() {
       });
       if (error) throw error;
     } catch (error) {
-      setMessage((error as Error).message || "Google 로그인에 실패했습니다.");
+      setMessage(authErrorMessage(error));
       setAuthLoading(false);
     }
   }
@@ -286,8 +474,20 @@ export default function Home() {
       if (error) throw error;
       setUser(null);
       setPapers([]);
+      setPapersOwnerId(null);
+      setSelectedOwnerId(null);
       setSelected(null);
       setAnalysis(null);
+      setActiveJob(null);
+      setSourcePdf(null);
+      setSourcePdfError("");
+      setSourceViewerOpen(false);
+      setSourcePage(1);
+      setSourcePageInput("1");
+      setLibraryError("");
+      setLibraryLoading(false);
+      setUploadIssue(false);
+      setJobLookupError("");
       setMessage("로그아웃되었습니다.");
     } catch (error) {
       setMessage((error as Error).message || "로그아웃에 실패했습니다. 네트워크 상태를 확인하고 다시 시도해 주세요.");
@@ -296,113 +496,260 @@ export default function Home() {
     }
   }
 
-  async function upload(file?: File) {
-    if (!file || !user) return;
-    if (
-      file.size > 31457280 || file.size < 1 ||
-      !file.name.toLowerCase().endsWith(".pdf") ||
-      new TextDecoder().decode(await file.slice(0, 5).arrayBuffer()) !== "%PDF-"
-    ) {
-      setMessage("30MB 이하의 유효한 PDF만 올려 주세요.");
+  async function resendConfirmation() {
+    if (!email.trim()) {
+      setMessage("인증 메일을 받을 이메일 주소를 먼저 입력해 주세요.");
       return;
     }
-    setBusy(true);
+    setResendingConfirmation(true);
     setMessage("");
-    const path = user.id + "/" + crypto.randomUUID() + ".pdf";
     try {
+      const { error } = await db().auth.resend({
+        type: "signup",
+        email: email.trim(),
+      });
+      if (error) throw error;
+      setConfirmationPending(true);
+      setMessage("인증 메일 재전송을 요청했습니다. 받은 편지함과 스팸함을 확인해 주세요.");
+    } catch (error) {
+      setMessage(authErrorMessage(error));
+    } finally {
+      setResendingConfirmation(false);
+    }
+  }
+
+  async function upload(file?: File) {
+    if (!file || !user) return;
+    const ownerId = user.id;
+    let stage: "validation" | "storage" | "metadata" = "validation";
+    setBusy(true);
+    setUploadIssue(false);
+    setMessage("");
+    try {
+      const signature = new TextDecoder().decode(await file.slice(0, 5).arrayBuffer());
+      if (!isAcceptedPdf(file.name, file.size, signature)) {
+        setMessage("30MB 이하의 유효한 PDF 파일을 선택해 주세요.");
+        setUploadIssue(true);
+        return;
+      }
+      const path = ownerId + "/" + crypto.randomUUID() + ".pdf";
+      stage = "storage";
       const storage = await db().storage.from("papers").upload(path, file, {
         contentType: "application/pdf", upsert: false,
       });
       if (storage.error) throw storage.error;
+      stage = "metadata";
       const inserted = await db().from("papers").insert({
-        user_id: user.id,
+        user_id: ownerId,
         title: file.name.replace(/\.pdf$/i, "").slice(0, 500),
         original_filename: file.name,
         storage_path: path,
         size_bytes: file.size,
       }).select("id,title,status,storage_path,created_at,page_count").single();
       if (inserted.error) {
-        await db().storage.from("papers").remove([path]);
+        // Insert might have committed before a response was lost. Never delete
+        // the uploaded source automatically and leave a valid paper without its PDF.
+        // Private orphan cleanup requires a separately verified admin procedure.
         throw inserted.error;
       }
+      if (currentUserIdRef.current !== ownerId) return;
       await refresh();
       await open(inserted.data as Paper);
       setMessage("논문 업로드 완료. 분석을 시작할 수 있습니다.");
     } catch (error) {
-      setMessage((error as Error).message);
+      if (currentUserIdRef.current === ownerId) {
+        setMessage(uploadFailureMessage(stage, error));
+        setUploadIssue(true);
+      }
     } finally {
       setBusy(false);
     }
   }
 
+  async function getActiveJob(paperId: string): Promise<ActiveAnalysisJob | null> {
+    // The authenticated server database is authoritative; browser storage isn't.
+    const { data, error } = await db().from("analysis_jobs")
+      .select("id,paper_id,status,stage,created_at")
+      .eq("paper_id", paperId)
+      .in("status", ["queued", "processing"])
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (error) throw new Error("진행 중인 분석 작업을 확인하지 못했습니다: " + error.message);
+    return findActiveAnalysisJob(data);
+  }
+
+  function closeDetails() {
+    openRequestId.current += 1;
+    pdfSignRequestId.current += 1;
+    setSelected(null);
+    setSelectedOwnerId(null);
+    setSourcePdf(null);
+    setSourcePdfError("");
+    setSourcePdfRefreshing(false);
+    setSourceViewerOpen(false);
+  }
+
+  async function renewPdfLink(paper: Paper) {
+    const requestId = openRequestId.current;
+    const signRequestId = ++pdfSignRequestId.current;
+    setSourcePdfRefreshing(true);
+    setSourcePdfError("");
+    try {
+      const { data, error } = await db().storage.from("papers").createSignedUrl(paper.storage_path, 3600);
+      if (openRequestId.current !== requestId || pdfSignRequestId.current !== signRequestId) return;
+      if (error || !data?.signedUrl) {
+        setSourcePdfError(sourcePdfFailureMessage(error));
+      } else {
+        setSourcePdf({ paperId: paper.id, url: data.signedUrl, issuedAt: Date.now() });
+      }
+    } catch {
+      if (openRequestId.current === requestId && pdfSignRequestId.current === signRequestId) {
+        setSourcePdfError("원문 PDF 연결 중 네트워크 오류가 발생했습니다. 다시 연결을 눌러주세요.");
+      }
+    } finally {
+      if (openRequestId.current === requestId && pdfSignRequestId.current === signRequestId) setSourcePdfRefreshing(false);
+    }
+  }
+
   async function open(paper: Paper) {
+    const requestId = ++openRequestId.current;
+    const signRequestId = ++pdfSignRequestId.current;
     setSelected(paper);
+    setSelectedOwnerId(currentUserIdRef.current);
     setAnalysis(null);
-    const result = await db().from("analyses").select("result,model,created_at")
-      .eq("paper_id", paper.id).order("created_at", { ascending: false }).limit(1);
+    setActiveJob(null);
+    setJobLookupError("");
+    setSourcePdf(null);
+    setSourcePdfError("");
+    setSourcePdfRefreshing(false);
+    setSourceViewerOpen(false);
+    setSourcePage(1);
+    setSourcePageInput("1");
+    try {
+      const [result, signedPdf, jobs] = await Promise.all([
+      db().from("analyses").select("result,model,created_at")
+        .eq("paper_id", paper.id).order("created_at", { ascending: false }).limit(1),
+      db().storage.from("papers").createSignedUrl(paper.storage_path, 3600),
+      db().from("analysis_jobs").select("id,paper_id,status,stage,created_at")
+        .eq("paper_id", paper.id)
+        .in("status", ["queued", "processing"])
+        .order("created_at", { ascending: false })
+        .limit(1),
+    ]);
+    if (openRequestId.current !== requestId) return;
     if (result.error) setMessage(result.error.message);
     else if (result.data?.[0]) setAnalysis(result.data[0] as Analysis);
+    if (jobs.error) {
+      setJobLookupError("진행 중인 작업 확인에 실패했습니다. 새 분석을 시작하지 말고 다시 열어 확인해 주세요.");
+    } else {
+      setActiveJob(findActiveAnalysisJob(jobs.data));
+    }
+    if (pdfSignRequestId.current === signRequestId) {
+      if (signedPdf.error || !signedPdf.data?.signedUrl) {
+        setSourcePdfError(sourcePdfFailureMessage(signedPdf.error));
+      } else {
+        setSourcePdf({ paperId: paper.id, url: signedPdf.data.signedUrl, issuedAt: Date.now() });
+      }
+    }
+    } catch {
+      if (openRequestId.current !== requestId) return;
+      setJobLookupError("네트워크 오류로 분석 작업 상태를 확인하지 못했습니다. 문서를 다시 열어주세요.");
+      if (pdfSignRequestId.current === signRequestId) {
+        setSourcePdfError("네트워크 오류로 원문 PDF를 연결하지 못했습니다. 다시 연결을 눌러주세요.");
+      }
+    }
+  }
+
+  function maybeRenewSourcePdf() {
+    if (selected && sourcePdf?.paperId === selected.id && pdfLinkNeedsRefresh(sourcePdf.issuedAt) && !sourcePdfRefreshing) {
+      void renewPdfLink(selected);
+    }
+  }
+
+  function showOriginalPdfPage(page: number) {
+    if (!selected) return;
+    maybeRenewSourcePdf();
+    setSourcePage(clampPdfPage(page, selected.page_count));
+    setSourceViewerOpen(true);
+    window.setTimeout(() => {
+      sourceViewerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 0);
+  }
+
+  function toggleSourceViewer() {
+    if (!selected) return;
+    if (!sourceViewerOpen) maybeRenewSourcePdf();
+    setSourceViewerOpen((value) => !value);
+  }
+
+  async function monitorJob(paper: Paper, jobId: string, token: string, openedRequestId: number) {
+    const api = process.env.NEXT_PUBLIC_API_URL;
+    if (!api) throw new Error("분석 API가 아직 연결되지 않았습니다.");
+    const base = api.replace(/\/$/, "");
+    await waitForAnalysisJob({
+      url: base + "/api/analyze/" + paper.id + "/status?job_id=" + encodeURIComponent(jobId),
+      token,
+      shouldContinue: () => openRequestId.current === openedRequestId,
+      onProgress: (progress) => {
+        if (openRequestId.current === openedRequestId) setMessage(progress);
+      },
+    });
+    await refresh();
+    if (openRequestId.current === openedRequestId) {
+      await open({ ...paper, status: "completed" });
+      setMessage("Gemini AI 구조화 분석이 완료됐습니다. 원문 페이지 근거를 확인해 주세요.");
+    }
+  }
+
+  async function resumeAnalysis(paper: Paper, jobId: string) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      if (selected?.id !== paper.id) {
+        const previousId = openRequestId.current;
+        await open(paper);
+        if (openRequestId.current !== previousId + 1) return;
+      }
+      const openedRequestId = openRequestId.current;
+      const { data } = await db().auth.getSession();
+      if (!data.session) throw new Error("로그인이 필요합니다.");
+      setMessage("기존 분석 작업을 다시 확인하고 있습니다. 새 작업을 등록하지 않습니다...");
+      await monitorJob(paper, jobId, data.session.access_token, openedRequestId);
+    } catch (error) {
+      if (!(error instanceof AnalysisWatchStopped)) setMessage((error as Error).message);
+      await refresh();
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function analyze() {
-    if (!selected) return;
+    if (!selected || busy) return;
+    const paper = selected;
+    const openedRequestId = openRequestId.current;
     setBusy(true);
-    setMessage("분석 작업을 등록하고 있습니다...");
+    setMessage("이미 진행 중인 분석이 있는지 확인하고 있습니다...");
     try {
       const { data } = await db().auth.getSession();
       if (!data.session) throw new Error("로그인이 필요합니다.");
       const api = process.env.NEXT_PUBLIC_API_URL;
       if (!api) throw new Error("분석 API가 아직 연결되지 않았습니다.");
       const base = api.replace(/\/$/, "");
-      const headers = { Authorization: "Bearer " + data.session.access_token };
-      const response = await fetch(base + "/api/analyze/" + selected.id, {
-        method: "POST",
-        headers,
+      const token = data.session.access_token;
+      // If this lookup fails, do not risk registering a duplicate job.
+      const existing = await getActiveJob(paper.id);
+      if (openRequestId.current !== openedRequestId) return;
+      setJobLookupError("");
+      if (existing) setActiveJob(existing);
+      const jobId = existing?.id ?? await startAnalysisJob({
+        url: base + "/api/analyze/" + paper.id,
+        token,
       });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.detail ?? "분석 작업을 등록하지 못했습니다.");
-      if (!payload.job_id) throw new Error("서버에서 분석 작업 ID를 받지 못했습니다.");
-
-      const jobId = payload.job_id as string;
-      const stageLabels: Record<string, string> = {
-        queued: "분석 대기열에 등록했습니다...",
-        pdf_download: "PDF 다운로드 및 텍스트 추출 중...",
-        gemini_analysis: "Gemini AI가 금융논문을 분석하고 있습니다. 문서 길이에 따라 시간이 걸릴 수 있습니다...",
-        completed: "분석 완료. 결과를 불러오고 있습니다...",
-        failed: "분석 실패",
-      };
-
-      for (let attempt = 0; attempt < 120; attempt++) {
-        let statusResponse: Response;
-        try {
-          statusResponse = await fetch(
-            base + "/api/analyze/" + selected.id + "/status?job_id=" + encodeURIComponent(jobId),
-            { method: "GET", headers, cache: "no-store" },
-          );
-        } catch {
-          setMessage("분석 서버의 진행 상태를 다시 확인하고 있습니다...");
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          continue;
-        }
-        const state = await statusResponse.json().catch(() => ({}));
-        if (!statusResponse.ok) {
-          throw new Error(state.detail ?? "분석 상태를 조회하지 못했습니다.");
-        }
-        setMessage(stageLabels[state.stage] ?? "분석 작업을 처리하고 있습니다...");
-        if (state.status === "completed") {
-          await refresh();
-          await open({ ...selected, status: "completed" });
-          setMessage("Gemini AI 구조화 분석이 완료됐습니다. 원문 페이지 근거를 확인해 주세요.");
-          return;
-        }
-        if (state.status === "failed") {
-          throw new Error(state.error ?? "분석에 실패했습니다. 잠시 후 다시 시도해 주세요.");
-        }
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
-      throw new Error("분석이 계속 진행 중입니다. 잠시 후 논문을 다시 열어 결과를 확인해 주세요.");
+      await monitorJob(paper, jobId, token, openedRequestId);
     } catch (error) {
-      setMessage((error as Error).message);
+      if (!(error instanceof AnalysisWatchStopped) && openRequestId.current === openedRequestId) {
+        setMessage((error as Error).message);
+      }
       await refresh();
     } finally {
       setBusy(false);
@@ -424,7 +771,7 @@ export default function Home() {
       <h2>{signup ? "연구 공간 만들기" : "다시 만나서 반갑습니다."}</h2>
       <p>분석 결과와 논문을 안전하게 보관하세요.</p>
       <form onSubmit={auth}>
-        <label>이메일<input type="email" autoComplete="email" required value={email} onChange={event => setEmail(event.target.value)} placeholder="name@example.com"/></label>
+        <label>이메일<input type="email" autoComplete="email" required value={email} onChange={event => { setEmail(event.target.value); setConfirmationPending(false); }} placeholder="name@example.com"/></label>
         <label>비밀번호<input type="password" autoComplete={signup ? "new-password" : "current-password"} required minLength={signup ? 8 : 1} value={password} onChange={event => setPassword(event.target.value)} placeholder="8자 이상 입력"/></label>
         <button className="primary" disabled={authLoading}>{authLoading ? "인증 처리 중..." : signup ? "회원가입" : "로그인"} →</button>
       </form>
@@ -434,15 +781,22 @@ export default function Home() {
         {authLoading ? "Google 계정 연결 중..." : "Google로 계속하기"}
       </button>
       <p className="note" role="status" aria-live="polite">{message}</p>
-      <p className="toggle"><button type="button" onClick={() => { setSignup(!signup); setMessage(""); }}>{signup ? "로그인으로 돌아가기" : "계정이 없나요? 회원가입"}</button></p>
+      <p className="toggle"><button type="button" onClick={() => { setSignup(!signup); setConfirmationPending(false); setMessage(""); }}>{signup ? "로그인으로 돌아가기" : "계정이 없나요? 회원가입"}</button></p>
+      {confirmationPending && <div className="auth-confirmation" role="status">
+        <p>인증 메일 링크를 열면 이메일 확인 후 PaperSignal 연구 공간으로 돌아옵니다.</p>
+        <button type="button" className="resend" disabled={resendingConfirmation} onClick={() => void resendConfirmation()}>
+          {resendingConfirmation ? "재전송 요청 중..." : "인증 메일 다시 보내기"}
+        </button>
+      </div>}
     </div></section>
   </main>;
 
   return <main className="workspace">
+    <a href="#workspace-content" className="skip-link">연구 공간 본문으로 이동</a>
     <aside>
       <div className="brand">◈ Paper<span>Signal</span></div>
       <p className="eyebrow">WORKSPACE</p>
-      <div className="nav">▤　논문 라이브러리</div>
+      <nav aria-label="주요 메뉴"><a className="nav" href="#workspace-content" aria-current="page">▤　논문 라이브러리</a></nav>
       <footer><p>{user.email}</p><button type="button" onClick={() => void signOut()} disabled={signOutLoading}>{signOutLoading ? "로그아웃 중..." : "로그아웃"}</button></footer>
     </aside>
     <div className="content">
@@ -451,48 +805,118 @@ export default function Home() {
         <span className={"workspace-engine " + (engineMode === "gemini" || engineMode === "openai" ? "engine-ready" : "engine-pending")}>
           ● {engineMode === "gemini" ? "Gemini AI 분석 활성화" : engineMode === "openai" ? "OpenAI 분석 활성화" : engineMode === "extractive" ? "텍스트 추출 모드" : "API 상태 확인 중"}
         </span>
-        <button type="button" className="mobile-sign-out" onClick={() => void signOut()} disabled={signOutLoading}>
-          {signOutLoading ? "로그아웃 중..." : "로그아웃"}
-        </button>
+        <button type="button" className="mobile-sign-out" onClick={() => void signOut()} disabled={signOutLoading}>{signOutLoading ? "로그아웃 중..." : "로그아웃"}</button>
       </header>
-      <div className="body">
+      <div className="body" id="workspace-content" tabIndex={-1}>
         {engineMode === "gemini" && <div className="provider-notice"><b>Gemini 무료 티어 데이터 안내</b><p>현재 설정에서는 업로드한 논문에서 추출한 텍스트와 AI 응답이 Google 제품 개선에 사용되거나 사람 검토자가 처리할 수 있습니다. 공개·비기밀 논문만 업로드하고, 사내 미공개 자료나 개인정보가 포함된 문서는 올리지 마세요.</p></div>}
+        <BetaGettingStarted userId={user.id} paperCount={visiblePapers.length}
+          readyCount={visiblePapers.filter(paper => paper.status === "completed").length}
+          busy={busy} onChoosePdf={choosePdfFile}/>
         <div className="heading">
-          <div><p className="eyebrow">RESEARCH LIBRARY</p><h1>나의 연구 라이브러리</h1><p>금융 논문을 수집하고 근거 기반 인사이트를 축적하세요.</p></div>
-          <label className="upload-button">＋ 논문 추가
-            <input type="file" accept=".pdf,application/pdf" hidden disabled={busy} onChange={event => void upload(event.target.files?.[0])}/>
-          </label>
+          <div><p className="eyebrow">RESEARCH LIBRARY</p><h1 id="paper-library-heading">나의 연구 라이브러리</h1><p>금융 논문을 수집하고 근거 기반 인사이트를 축적하세요.</p></div>
+          <button type="button" className="upload-button" disabled={busy} onClick={choosePdfFile}>＋ 논문 추가</button>
+          <input ref={uploadInputRef} type="file" accept=".pdf,application/pdf" hidden
+            aria-label="분석할 PDF 파일 선택" disabled={busy}
+            onChange={event => {
+              const file = event.currentTarget.files?.[0];
+              event.currentTarget.value = ""; // allow re-selecting the same PDF
+              void upload(file);
+            }}/>
         </div>
         <div className="stats">
-          <div><p>전체 논문</p><strong>{papers.length.toString().padStart(2, "0")}</strong><small>보관 중인 논문</small></div>
-          <div><p>완료된 분석</p><strong>{papers.filter(paper => paper.status === "completed").length.toString().padStart(2, "0")}</strong><small>근거 기반 결과</small></div>
+          <div><p>전체 논문</p><strong>{visiblePapers.length.toString().padStart(2, "0")}</strong><small>보관 중인 논문</small></div>
+          <div><p>완료된 분석</p><strong>{visiblePapers.filter(paper => paper.status === "completed").length.toString().padStart(2, "0")}</strong><small>근거 기반 결과</small></div>
           <div className="highlight"><p>RESEARCH INTELLIGENCE</p><h2>From papers<br/>to perspectives.</h2></div>
         </div>
-        <section className="library">
-          <h2>논문 라이브러리 <small>{papers.length}</small></h2>
-          <label className="drop">⇧　 PDF 파일을 선택하거나 여기에 놓으세요
-            <small>30 MB 이하 · 암호화된 PDF 제외</small>
-            <input type="file" accept=".pdf,application/pdf" disabled={busy} onChange={event => void upload(event.target.files?.[0])}/>
-          </label>
-          {papers.length === 0
-            ? <div className="empty">📄<h3>아직 등록된 논문이 없습니다</h3><p>첫 금융 연구 논문을 업로드해 주세요.</p></div>
-            : papers.map(paper =>
-              <button className={"paper " + (selected?.id === paper.id ? "active" : "")} key={paper.id} onClick={() => void open(paper)}>
-                <span>📕</span><div><b>{paper.title}</b><small>{new Date(paper.created_at).toLocaleDateString("ko-KR")} · {paper.page_count ?? "—"} pages</small></div>
-                <em>{paper.status === "completed" ? "분석 완료" : paper.status === "processing" ? "분석 중" : paper.status === "failed" ? "분석 오류" : "분석 대기"}</em><span>→</span>
-              </button>
-            )}
-        </section>
-        {message && <div className="message" role="status">{message}</div>}
+        {libraryLoading && <p role="status" className="library-loading">논문 목록을 불러오는 중입니다...</p>}
+        {libraryError && <div className="library-recovery no-print" role="alert">
+          <p>{libraryError}</p>
+          <button type="button" disabled={libraryLoading} onClick={() => void refresh()}>목록 다시 불러오기</button>
+        </div>}
+        {message && <div className="message" role="status" aria-live="polite">{message}</div>}
+        {uploadIssue && <div className="recovery-actions no-print" aria-label="업로드 오류 복구">
+          <button type="button" disabled={libraryLoading} onClick={() => void refresh()}>저장된 논문 목록 확인</button>
+          <button type="button" disabled={busy} onClick={choosePdfFile}>PDF 다시 선택</button>
+        </div>}
+        <ResearchLibrary key={user.id} papers={visiblePapers} busy={busy} onOpen={open} onResume={resumeAnalysis} />
       </div>
     </div>
 
-    {selected && <div className="overlay" onClick={() => setSelected(null)}>
-      <section className="details" onClick={event => event.stopPropagation()}>
-        <button className="close" onClick={() => setSelected(null)}>×</button>
+    {selected && selectedOwnerId === user.id && <div className="overlay" onClick={closeDetails}>
+      <section className="details" role="dialog" aria-modal="true" aria-labelledby="paper-detail-title" tabIndex={-1} ref={detailsRef}
+        onClick={event => event.stopPropagation()}>
+        <div className="detail-toolbar no-print">
+          {sourcePdf?.paperId === selected.id
+            ? <div className="source-pdf-actions">
+                <button type="button" className="source-pdf-button" aria-controls="paper-original-pdf" aria-expanded={sourceViewerOpen}
+                  onClick={toggleSourceViewer}>
+                  {sourceViewerOpen ? "원문 PDF 접기" : "원문 PDF 함께 보기"}
+                </button>
+                <a className="source-pdf-button source-pdf-external" href={originalPdfPageUrl(sourcePdf.url, sourcePage, selected.page_count)}
+                  target="_blank" rel="noreferrer" onClick={event => {
+                    if (pdfLinkNeedsRefresh(sourcePdf.issuedAt)) {
+                      event.preventDefault();
+                      if (!sourcePdfRefreshing) void renewPdfLink(selected);
+                    }
+                  }}>새 탭 ↗</a>
+                <button type="button" className="source-pdf-button" disabled={sourcePdfRefreshing}
+                  onClick={() => void renewPdfLink(selected)} aria-label="원문 PDF 보안 링크 갱신">
+                  {sourcePdfRefreshing ? "갱신 중..." : "링크 갱신"}
+                </button>
+                {sourcePdfError && <span className="source-pdf-status source-pdf-error" role="alert">{sourcePdfError}</span>}
+              </div>
+            : <div className="source-pdf-actions">
+                <span className="source-pdf-status" role="status">{sourcePdfRefreshing ? "원문 PDF 다시 연결 중..." : sourcePdfError || "원문 PDF 연결 준비 중..."}</span>
+                {sourcePdfError && <button type="button" className="source-pdf-button" disabled={sourcePdfRefreshing}
+                  onClick={() => void renewPdfLink(selected)}>다시 연결</button>}
+              </div>}
+          <button type="button" className="close" aria-label="논문 상세 화면 닫기" onClick={closeDetails}>×</button>
+        </div>
         <p className="eyebrow">PAPER INTELLIGENCE</p>
-        <h2>{selected.title}</h2>
+        <h2 id="paper-detail-title">{selected.title}</h2>
         <p>연구 설계부터 실증 결과까지 원문 페이지 근거와 함께 검토하세요.</p>
+        {activeJob && <div className="active-job-banner no-print" role="status">
+          <strong>이미 진행 중인 분석이 있습니다.</strong>
+          <p>상태: {activeJob.status === "queued" ? "대기 중" : activeJob.stage === "gemini_analysis" ? "Gemini AI 분석 중" : "처리 중"} · 브라우저를 닫아도 서버 작업은 계속됩니다.</p>
+          <button type="button" className="primary" disabled={busy} onClick={() => void resumeAnalysis(selected, activeJob.id)}>
+            {busy ? "작업 상태 확인 중..." : "진행 중인 분석 이어 확인 →"}
+          </button>
+        </div>}
+        {sourceViewerOpen && sourcePdf?.paperId === selected.id && <section className="inline-pdf-viewer no-print" id="paper-original-pdf" ref={sourceViewerRef} aria-label="업로드한 원본 PDF">
+          <div className="inline-pdf-heading">
+            <div><b>원본 PDF</b><span>업로드한 PDF 페이지를 그대로 표시합니다. 요약이나 HTML로 재구성한 화면이 아닙니다.</span></div>
+            <div className="inline-pdf-controls">
+              <button type="button" disabled={sourcePage <= 1} onClick={() => { maybeRenewSourcePdf(); setSourcePage((value) => clampPdfPage(value - 1, selected.page_count)); }}>이전</button>
+              <label>페이지
+                <input type="text" inputMode="numeric" pattern="[0-9]*" maxLength={6}
+                  value={sourcePageInput}
+                  onFocus={event => event.currentTarget.select()}
+                  onChange={event => setSourcePageInput(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                  onKeyDown={event => { if (event.key === "Enter") event.currentTarget.blur(); }}
+                  onBlur={() => {
+                    const page = commitPdfPageInput(sourcePageInput, sourcePage, selected.page_count);
+                    if (page !== sourcePage) maybeRenewSourcePdf();
+                    setSourcePage(page);
+                    setSourcePageInput(String(page));
+                  }}
+                  aria-label="원문 PDF 페이지 번호"/>
+                <span>/ {selected.page_count ?? "?"}</span>
+              </label>
+              <button type="button" disabled={Boolean(selected.page_count && sourcePage >= selected.page_count)}
+                onClick={() => { maybeRenewSourcePdf(); setSourcePage((value) => clampPdfPage(value + 1, selected.page_count)); }}>다음</button>
+            </div>
+          </div>
+          <iframe
+            key={selected.id + "-" + sourcePage}
+            className="inline-pdf-frame"
+            title={selected.title + " 원본 PDF " + sourcePage + "페이지"}
+            src={originalPdfPageUrl(sourcePdf.url, sourcePage, selected.page_count)}
+            loading="lazy"
+            referrerPolicy="no-referrer"
+          />
+          <p className="inline-pdf-fallback">모바일 브라우저에서 PDF가 작게 보이거나 열리지 않으면 위의 <b>새 탭</b>으로 원본을 확인하세요. 링크가 만료되면 <b>링크 갱신</b>을 누르세요.</p>
+        </section>}
+        {jobLookupError && <p className="warning" role="alert">{jobLookupError}</p>}
         {!analysis
           ? <div className="prompt">
               <div>✧</div><h3>논문 분석 준비 완료</h3>
@@ -500,18 +924,41 @@ export default function Home() {
                 ? "AI가 연구 질문, 계량 방법론, 실증 결과, 강건성 검증을 구조화하고 페이지별 인용을 확인합니다."
                 : "현재는 텍스트 추출 모드입니다. Railway에 선택한 AI 제공자의 API 키를 설정하면 구조화된 금융 연구 분석이 활성화됩니다."}</p>
               {busy && <p className="analysis-progress" aria-live="polite">{message}</p>}
-              <button disabled={busy} className="primary" onClick={() => void analyze()}>{busy ? "백그라운드 분석 중..." : "분석 시작 →"}</button>
+              <button disabled={busy || Boolean(activeJob) || Boolean(jobLookupError)} className="primary" onClick={() => void analyze()}>{busy ? "작업 상태 확인 중..." : activeJob ? "기존 분석 진행 중" : jobLookupError ? "작업 확인 필요" : "분석 시작 →"}</button>
             </div>
           : <div className="result">
               <p className="mode">{analysis.result.mode === "llm"
                 ? "AI 구조화 분석 · 인용 근거 검증"
                 : "텍스트 추출 분석 · AI 생성 아님"}</p>
+              <JuniorPaperGuide
+                result={analysis.result}
+                sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined}
+                onOpenSourcePage={showOriginalPdfPage}
+              />
+              <JuniorVisualReading result={analysis.result}
+                sourcePdfReady={sourcePdf?.paperId === selected.id}
+                onOpenSourcePage={showOriginalPdfPage}
+              />
+              <JuniorWorkplaceGuide result={analysis.result} paperTitle={selected.title}
+                userId={user?.id ?? ""} paperId={selected.id}
+                sourcePdfReady={sourcePdf?.paperId === selected.id}
+                onOpenSourcePage={showOriginalPdfPage}
+              />
+              <div className="report-toolbar no-print">
+                <div>
+                  <b>연구 분석 보고서</b>
+                  <span>인쇄 창에서 PDF로 저장을 선택하면 A4 보고서가 생성됩니다.</span>
+                </div>
+                <button type="button" className="report-button" onClick={() => window.print()}>
+                  PDF 보고서 저장 ↓
+                </button>
+              </div>
               {analysis.result.bibliographic && (
                 <section className="analysis-section">
                   <h3>논문 서지정보</h3>
                   <p><b>{analysis.result.bibliographic.title}</b></p>
                   <p>{analysis.result.bibliographic.authors?.join(", ") || "저자 확인 불가"} · {analysis.result.bibliographic.year} · {analysis.result.bibliographic.venue}</p>
-                  <EvidenceList items={analysis.result.bibliographic.evidence}/>
+                  <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.bibliographic.evidence}/>
                 </section>
               )}
               <section className="analysis-section">
@@ -527,10 +974,10 @@ export default function Home() {
               </section>
               <section className="analysis-section">
                 <h3>연구 질문</h3><p>{analysis.result.research_question || "확인 불가"}</p>
-                <EvidenceList items={analysis.result.research_question_evidence}/>
+                <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.research_question_evidence}/>
               </section>
-              <section className="analysis-section"><h3>연구 가설</h3><ClaimList items={analysis.result.hypotheses}/></section>
-              <section className="analysis-section"><h3>학술적 기여</h3><ClaimList items={analysis.result.contributions}/></section>
+              <section className="analysis-section"><h3>연구 가설</h3><ClaimList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.hypotheses}/></section>
+              <section className="analysis-section"><h3>학술적 기여</h3><ClaimList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.contributions}/></section>
               {analysis.result.methodology && (
                 <section className="analysis-section">
                   <h3>연구 방법론 및 데이터</h3>
@@ -566,7 +1013,7 @@ export default function Home() {
                           <b>{conflict.label} · {conflict.metric}</b>
                           <p>원문 보고값: {conflict.reported_values.join(" / ")}</p>
                           <p>출처 위치: {conflict.sections.join(" · ")}</p>
-                          <EvidenceList items={conflict.evidence}/>
+                          <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={conflict.evidence}/>
                         </article>
                       )}
                     </>}
@@ -576,33 +1023,37 @@ export default function Home() {
                         <article className="analysis-card" key={index}>
                           <b>{report.label} · {report.metric}</b>
                           <p>{report.count.toLocaleString()} · {report.section}</p>
-                          <EvidenceList items={report.evidence}/>
+                          <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={report.evidence}/>
                         </article>
                       )}
                     </>}
-                    <EvidenceList items={analysis.result.methodology.panel_dimensions.evidence}/>
-                    <EvidenceList items={analysis.result.methodology.panel_dimensions.study_design_evidence}/>
-                    <EvidenceList items={analysis.result.methodology.panel_dimensions.panel_balance_evidence}/>
+                    <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.methodology.panel_dimensions.evidence}/>
+                    <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.methodology.panel_dimensions.study_design_evidence}/>
+                    <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.methodology.panel_dimensions.panel_balance_evidence}/>
                   </>}
                   {!!analysis.result.methodology.variables?.length && <>
                     <h4>주요 변수</h4>
                     {analysis.result.methodology.variables.map((variable, index) =>
                       <article className="analysis-card" key={index}>
                         <b>{variable.name}</b><span className="tag">{variable.role}</span><p>{variable.definition}</p>
-                        <EvidenceList items={variable.evidence}/>
+                        <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={variable.evidence}/>
                       </article>
                     )}
                   </>}
                   {!!analysis.result.methodology.equations?.length && <>
                     <h4>모형 및 수식</h4>{analysis.result.methodology.equations.map((equation, index) => <pre className="equation" key={index}>{equation}</pre>)}
                   </>}
-                  <EvidenceList items={analysis.result.methodology.evidence}/>
+                  <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.methodology.evidence}/>
                 </section>
               )}
               <section className="analysis-section">
                 <h3>주요 실증 결과 <small>{analysis.result.findings?.length ?? 0}</small></h3>
                 {!!analysis.result.findings_deduplication?.duplicates_removed && <p className="muted">유사·중복 결과 {analysis.result.findings_deduplication.duplicates_removed}개를 통합했습니다.</p>}
-                {analysis.result.findings_verification?.repair_attempted && <p className="muted">2차 실증 결과 검증: {analysis.result.findings_verification.repair_status === "recovered" ? "누락 결과 복구 완료" : analysis.result.findings_verification.repair_status === "reviewed" ? "기존 결과 재검토 완료" : analysis.result.findings_verification.repair_status === "no_supported_findings" ? "추가 근거 확인 불가" : "검증 미완료"}</p>}
+                {analysis.result.findings_verification?.repair_attempted && <p className="muted">2차 실증 결과 검증: {analysis.result.findings_verification.repair_status === "recovered" || analysis.result.findings_verification.repair_status === "recovered_by_rescue" ? "누락 결과 복구 완료" : analysis.result.findings_verification.repair_status === "reviewed" ? "기존 결과 재검토 완료" : analysis.result.findings_verification.repair_status === "no_supported_findings" ? "추가 근거 확인 불가" : "검증 미완료"}</p>}
+                {analysis.result.findings_verification?.rescue_attempted && <p className="muted">결과표 중심 3차 검증: {analysis.result.findings_verification.rescue_status === "recovered" ? "복구 완료" : analysis.result.findings_verification.rescue_status === "no_supported_findings" ? "근거 있는 결과 미확보" : "검증 미완료"}</p>}
+                {analysis.result.findings_coverage && <p className={analysis.result.findings_coverage.status === "incomplete" ? "warning" : analysis.result.findings_coverage.status === "review_required" ? "verification-note" : "muted"}>
+                  실증 결과 추출 품질: {analysis.result.findings_coverage.status === "supported" ? "페이지 근거가 확인된 결과 " + analysis.result.findings_coverage.supported_findings_count + "건" : analysis.result.findings_coverage.status === "review_required" ? "연구자 검토가 필요한 결과 " + analysis.result.findings_coverage.review_findings_count + "건" : analysis.result.findings_coverage.status === "incomplete" ? "실증 결과 신호가 있으나 검증된 결과가 없어 불완전" : "실증 결과 추출 가능 여부 확인 불가"}
+                </p>}
                 {!analysis.result.findings?.length
                   ? <p className="muted">검증된 실증 결과가 없습니다.</p>
                   : analysis.result.findings.map((finding, index) =>
@@ -610,7 +1061,15 @@ export default function Home() {
                       <p>{finding.claim}</p>
                       <div className="finding-meta">
                         <span>방향: {finding.direction}</span><span>추정치: {finding.estimate}</span><span>통계적 유의성: {finding.statistical_significance}</span>
-                        {finding.table_reference && <span>표: {finding.table_reference}</span>}
+                        {finding.table_reference && (() => {
+                          const page = finding.evidence?.find((item) => Number.isInteger(item.page) && item.page > 0)?.page;
+                          return page
+                            ? <button type="button" className="finding-source-tag"
+                                onClick={() => showOriginalPdfPage(page)}>
+                                표·그림: {finding.table_reference} · 원문 p.{page} 보기 ↓
+                              </button>
+                            : <span>표·그림: {finding.table_reference}</span>;
+                        })()}
                         {finding.model_or_column && <span>모형·열: {finding.model_or_column}</span>}
                         {finding.verification && <span className={finding.verification.status === "screen_passed" ? "verification-ok" : "verification-review"}>
                           수치·표 맥락: {finding.verification.status === "screen_passed" ? "1차 대조 통과" : "연구자 확인 필요"}
@@ -619,10 +1078,10 @@ export default function Home() {
                       {finding.verification?.unsupported_numeric_tokens?.length ? <p className="warning">인용 페이지에서 확인되지 않은 숫자: {finding.verification.unsupported_numeric_tokens.join(", ")}</p> : null}
                       {finding.verification?.direction_consistent === false && <p className="warning">추정치의 부호와 결과 방향이 일치하지 않습니다.</p>}
                       {finding.verification?.significance_supported === false && <p className="warning">통계적 유의성 표기가 인용 페이지에서 확인되지 않습니다.</p>}
-                      <EvidenceList items={finding.evidence}/>
+                      <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={finding.evidence}/>
                       {!!finding.significance_legend_evidence?.length && <>
                         <p className="muted">통계적 유의성 표 주석</p>
-                        <EvidenceList items={finding.significance_legend_evidence}/>
+                        <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={finding.significance_legend_evidence}/>
                       </>}
                     </article>
                   )}
@@ -631,19 +1090,19 @@ export default function Home() {
                 <h3>강건성 검증</h3>
                 {!analysis.result.robustness_checks?.length ? <p className="muted">본문에서 검증 가능한 강건성 검증을 찾지 못했습니다.</p>
                   : analysis.result.robustness_checks.map((item, index) =>
-                    <article className="analysis-card" key={index}><b>{item.test}</b><p>{item.result}</p><EvidenceList items={item.evidence}/></article>
+                    <article className="analysis-card" key={index}><b>{item.test}</b><p>{item.result}</p><EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={item.evidence}/></article>
                   )}
               </section>
               <section className="analysis-section">
                 <h3>연구 한계</h3>
                 {!analysis.result.limitations?.length ? <p className="muted">원문 근거가 확인된 한계가 없습니다.</p>
                   : analysis.result.limitations.map((item, index) =>
-                    <article className="analysis-card" key={index}><p>{item.description}</p><EvidenceList items={item.evidence}/></article>
+                    <article className="analysis-card" key={index}><p>{item.description}</p><EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={item.evidence}/></article>
                   )}
               </section>
-              <section className="analysis-section"><h3>금융·경제적 시사점</h3><ClaimList items={analysis.result.implications}/></section>
+              <section className="analysis-section"><h3>금융·경제적 시사점</h3><ClaimList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.implications}/></section>
               <section className="analysis-section"><h3>핵심 키워드</h3><div className="tags">{(analysis.result.keywords ?? []).map(keyword => <span key={keyword}>{keyword}</span>)}</div></section>
-              <section className="analysis-section"><h3>검증된 원문 근거 <small>{analysis.result.evidence?.length ?? 0}</small></h3><EvidenceList items={analysis.result.evidence}/></section>
+              <section className="analysis-section"><h3>검증된 원문 근거 <small>{analysis.result.evidence?.length ?? 0}</small></h3><EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.evidence}/></section>
               {(analysis.result.warnings ?? []).map((warning, index) => <p className="warning" key={index}>{warning}</p>)}
               <p className="muted">분석 모델: {analysis.model} · 버전: {analysis.result.analysis_version ?? "legacy"}</p>
               <button disabled={busy} className="primary" onClick={() => void analyze()}>{busy ? "분석 중..." : "다시 분석하기"}</button>
