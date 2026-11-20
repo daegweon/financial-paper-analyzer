@@ -20,5 +20,6 @@ def test_dockerignore_keeps_complete_test_dependencies_in_build_context():
     assert "COPY . /workspace/" in dockerfile
     assert "WORKDIR /workspace/backend" in dockerfile
     assert "PYTHONPATH=/workspace" in dockerfile
+    assert "python scripts/smoke_candidate_http.py" in dockerfile
     assert "COPY --from=test /tmp/papersignal-backend-tests-passed" in dockerfile
     assert "COPY backend/app/ /app/app/" in dockerfile
