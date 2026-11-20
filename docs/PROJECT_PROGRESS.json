@@ -8,8 +8,8 @@
     "pull_request": 18,
     "base": "main",
     "review_state": "draft",
-    "last_independently_verified_sha": "f540fa85b11ffd9af50c1cc5807aeabc3b3e125b",
-    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44619544125",
+    "last_independently_verified_sha": "e9854d26588125076b88b9b7f52c4af988984ca2",
+    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44648626115",
     "production_api": {
       "service_id": "81b678e2-7136-436d-9058-7d20647dc1b7",
       "immutable_commit": "ace3fbd5dab3ea71efa3a49da8363259ea5f9732",
@@ -31,7 +31,7 @@
     }
   },
   "methodology": "Weighted engineering milestone completion, NOT launch readiness. Each workstream has maximum points; achieved points sum to overall_percent. Increase only after verified evidence.",
-  "overall_percent": 92,
+  "overall_percent": 93,
   "workstreams": [
     {
       "id": "core_platform",
@@ -90,16 +90,17 @@
       "id": "beta_operations",
       "label": "실제 E2E·베타 출시 준비",
       "weight": 10,
-      "earned": 8,
+      "earned": 9,
       "evidence": [
         "https://github.com/daegweon/financial-paper-analyzer/pull/18",
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44458536952",
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44467502056",
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44472720847",
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44473470809",
-        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44619544125"
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44619544125",
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44648626115"
       ],
-      "remaining": "영구 per-job 비용 원장·정확한 가격표 연동, 사람 승인/실운영 E2E·DB 전환·SMTP·실기기·롤백"
+      "remaining": "영구 per-job 비용 원장·공식 가격표 연동, 사람 승인/실운영 E2E·DB 전환·SMTP·실기기·롤백"
     }
   ],
   "release_gates": [
@@ -239,6 +240,11 @@
       "date": "2026-11-20",
       "percent": 92,
       "evidence": "Awarded one beta-operations engineering point after full CI #44619544125 passed on candidate head f540fa85b11ffd9af50c1cc5807aeabc3b3e125b: backend 148 passed/1 deliberately skipped, frontend lint/build, PostgreSQL policy, read-only live API probe and 33 synthetic browser scenarios all green. Added content-free Gemini per-model token/attempt/latency telemetry, full-job duration, offline log report CLI and tests. This is operational observability, not a durable cost ledger or live release gate. Release gates remain 4/10."
+    },
+    {
+      "date": "2026-11-20",
+      "percent": 93,
+      "evidence": "Awarded one beta-operations engineering point after integrated offline quality pipeline and all supporting tools passed full CI #44648626115 on candidate head e9854d26588125076b88b9b7f52c4af988984ca2. API 162 passed/1 deliberately skipped; frontend lint/build, PostgreSQL policy, GET-only live API preflight and all synthetic browser QA passed. Live production E2E intentionally skipped. Pipeline generates scorecard, evidence diagnostics, failure report (optional log export), paired engine comparison (optional baseline), HTML dashboard and human review packet. No production changes."
     }
   ]
 }
