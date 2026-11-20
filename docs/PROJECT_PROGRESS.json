@@ -31,7 +31,7 @@
     }
   },
   "methodology": "Weighted engineering milestone completion, NOT launch readiness. Each workstream has maximum points; achieved points sum to overall_percent. Increase only after verified evidence.",
-  "overall_percent": 93,
+  "overall_percent": 94,
   "workstreams": [
     {
       "id": "core_platform",
@@ -59,11 +59,12 @@
       "id": "junior_learning",
       "label": "주니어 학습·원문 PDF",
       "weight": 20,
-      "earned": 19,
+      "earned": 20,
       "evidence": [
-        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44403257361"
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44403257361",
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44652970492"
       ],
-      "remaining": "실제 iOS Safari·Android Chrome 기기에서 원본 PDF 렌더링·페이지 이동·서명 URL 갱신 확인"
+      "remaining": "실제 iOS Safari·Android Chrome 기기에서 원본 PDF 렌더링·페이지 이동·서명 URL 갱신 확인(사람이 보유한 실기기 필요)"
     },
     {
       "id": "privacy_integrity",
@@ -245,6 +246,11 @@
       "date": "2026-11-20",
       "percent": 93,
       "evidence": "Awarded one beta-operations engineering point after integrated offline quality pipeline and all supporting tools passed full CI #44648626115 on candidate head e9854d26588125076b88b9b7f52c4af988984ca2. API 162 passed/1 deliberately skipped; frontend lint/build, PostgreSQL policy, GET-only live API preflight and all synthetic browser QA passed. Live production E2E intentionally skipped. Pipeline generates scorecard, evidence diagnostics, failure report (optional log export), paired engine comparison (optional baseline), HTML dashboard and human review packet. No production changes."
+    },
+    {
+      "date": "2026-11-20",
+      "percent": 94,
+      "evidence": "Awarded final independent junior-learning engineering point after Korean methodology catalog and learning-card generator (OLS, panel FE/RE, DiD, IV/2SLS, event study, factor models, GARCH, PCA) and validation tests passed full CI #44652970492: frontend, API, DB policy, GET-only live API preflight and synthetic browser QA all SUCCESS. Learning content is explicitly general education and is not represented as paper-specific evidence. Native iOS Safari/Android device PDF verification remains human/device dependent."
     }
   ]
 }
