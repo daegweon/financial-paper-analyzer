@@ -102,7 +102,7 @@ This set is intended for public research papers only. Gemini Free Tier inputs an
 - [x] Historical v6.3.9 screening scorecard published
 - [x] Assistant second-pass audit of the six latest review-flagged records published
 - [ ] Human-review every critical fact and citation; the assistant audit is not expert sign-off
-- [ ] Confirm redistribution/license rights before packaging or hosting publisher PDFs in a public release
+- [x] Verify article-level license statements in all ten supplied PDFs (B01–B06, B08–B10: CC BY 4.0; B07: PLOS CC BY); preserve attribution and check separately credited third-party material
 
 ## Generate a human evidence-review packet
 
@@ -208,3 +208,8 @@ python -m app.cost_report --events /path/to/ai-usage-events.json \
 ```
 
 For the integrated quality pipeline, pass `--admin-monthly-budget-usd 25` with `--usage-events ...`. If any event has unknown billing mode, missing tokens or invalid timestamp, the global budget is marked `incomplete_unknown_costs` unless known cost alone already exceeds the threshold. The report never declares an incomplete total within budget. This is administrator reporting only, not an automatic spending cap; enforceable limits require a separately approved server-side policy and Production rollout.
+
+
+### Redistribution note (license audit, 2026-11-20)
+
+All ten supplied publisher PDFs contain an article-level Creative Commons Attribution license statement: B01–B06 and B08–B10 explicitly state CC BY 4.0; B07 (PLOS ONE) states CC BY. The license audit is recorded in `results/license-audit-2026-11-20.md`. When redistributing, preserve the article title, authors, DOI/source URL, license link and modification notice. This article-level check does not clear third-party figures or separately credited material.

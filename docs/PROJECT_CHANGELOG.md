@@ -304,3 +304,10 @@
 - Read-only Production checks confirmed nine Supabase migration versions through `20261113234956`, no AI ledger/admin-settings tables, and Railway API 0 server errors across 446 requests (p99 9 ms). The production API remains on `ace3fbd5`; the Worker remains unchanged on `8cd5e37`.
 - Corrected the beta runbook and human handoff: exact PR #19 secret names, Worker service/deployment identifiers, current rollback-capable API deployment, and current Vercel blocker. Supabase leaked-password protection remains an administrator decision.
 - No Production migration, Railway deployment, client-write revocation, live E2E, SMTP change, native-device test or Vercel Production promotion was performed.
+
+
+## 2026-11-20 — Benchmark article-license audit
+
+- Checked the article-level license statement in all ten supplied B01–B10 PDFs. B01–B06 and B08–B10 explicitly state CC BY 4.0; B07 (PLOS ONE) states CC BY.
+- Updated `benchmark/manifest.json` and the benchmark checklist. Added `benchmark/results/license-audit-2026-11-20.md`.
+- Public redistribution still requires attribution, DOI/source URL, license link and modification notice; separately credited third-party material is excluded from this blanket finding.

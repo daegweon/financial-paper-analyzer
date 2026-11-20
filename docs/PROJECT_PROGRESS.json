@@ -315,6 +315,11 @@
       "date": "2026-11-20",
       "percent": 98,
       "evidence": "Current candidate HEAD 4228494 passed Checks #44677027806 (API, frontend, disposable PostgreSQL including AI usage ledger migration, GET-only API preflight, synthetic browser QA; live E2E skipped). Current Vercel preview was reconciled: latest READY SHA 13591d73 is 19 commits behind; current SHA has no deployment due build-rate-limit, so release gates corrected from 4/10 to 3/10. Read-only Production checks: Supabase has 9 migrations through 20261113234956 and no AI ledger/admin tables; Railway API had 0 server errors in 446 requests (p99 9 ms). Assistant second-pass review of the six latest review-flagged findings completed; no Production or analysis rows were changed."
+    },
+    {
+      "date": "2026-11-20",
+      "percent": 98,
+      "evidence": "Completed article-level license audit of all ten supplied B01–B10 PDFs: nine MDPI articles explicitly state CC BY 4.0 and the PLOS ONE article states CC BY. Attribution and third-party-material limitations documented in benchmark/results/license-audit-2026-11-20.md. No code or Production state changed."
     }
   ],
   "read_only_operational_check": {
@@ -355,5 +360,13 @@
     },
     "assistant_second_pass_report": "benchmark/results/assistant-second-pass-evidence-audit-2026-11-20.md",
     "human_signoff_complete": false
+  },
+  "benchmark_license_audit": {
+    "checked_on": "2026-11-20",
+    "supplied_pdfs_verified": 10,
+    "mdpi_cc_by_4_0": 9,
+    "plos_cc_by": 1,
+    "report": "benchmark/results/license-audit-2026-11-20.md",
+    "third_party_material_review_required": true
   }
 }
