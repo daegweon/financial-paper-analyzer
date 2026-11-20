@@ -307,6 +307,8 @@ test.describe("isolated synthetic Supabase browser flows", () => {
     await expect(page.getByText("66.7%")).toBeVisible();
     await expect(page.getByText("확인된 토큰")).toBeVisible();
     await expect(page.getByRole("region",{name:"전체 사용량 요약"}).getByText("400 ms")).toBeVisible();
+    await expect(page.getByText("유료 표준 단가 추정 2")).toBeVisible();
+    await expect(page.getByRole("link",{name:"가격표 1"})).toHaveAttribute("href","https://ai.google.dev/gemini-api/docs/pricing");
     await expect(page.getByText("사용자별 내부 운영 집계")).toBeVisible();
     await expect(page.getByText("조회 한도 도달 · 전체 비용 미확인")).toBeVisible();
     await expect(page.getByText(/조회 한도에 도달했습니다/)).toBeVisible();
