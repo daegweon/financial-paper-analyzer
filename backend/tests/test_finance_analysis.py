@@ -2384,7 +2384,7 @@ def test_admin_usage_endpoint_returns_summary_only_after_allowlist_check(monkeyp
     class FakeResponse:
         status_code = 200
         content = b"[]"
-        def json(self): return []
+        def json(self): return [{"value_numeric": "75.00"}] if requests and requests[-1][0].endswith("/ai_admin_settings") else []
     class FakeClient:
         def __init__(self, *args, **kwargs): pass
         async def __aenter__(self): return self
@@ -2406,6 +2406,7 @@ def test_admin_usage_endpoint_returns_summary_only_after_allowlist_check(monkeyp
     assert result["month"] == "2026-11"
     assert result["event_count"] == 0
     assert result["models"] == []
+    assert result["monthly_budget_usd"] == "75.00"
     assert len(requests) == 2
     assert requests[0][0].endswith("/rest/v1/ai_usage_events")
     assert requests[1][0].endswith("/rest/v1/ai_admin_settings")
