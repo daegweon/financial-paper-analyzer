@@ -2324,3 +2324,53 @@ def test_ai_usage_ledger_billing_mode_requires_explicit_configuration(monkeypatc
     finally:
         module._AI_USAGE_CONTEXT.reset(context)
     assert captured["json"]["billing_mode"] == "paid_standard"
+
+
+def test_admin_ai_usage_summary_aggregates_models_and_global_budget_only():
+    import app.main as module
+
+    events = [
+        {"user_id":"u1","paper_id":"p1","provider":"gemini","model":"gemini-3.5-flash-lite","billing_mode":"paid_standard","prompt_tokens":1000000,"candidate_tokens":100000,"thought_tokens":0,"created_at":"2026-11-20T10:00:00Z"},
+        {"user_id":"u2","paper_id":"p2","provider":"gemini","model":"gemini-3.5-flash-lite","billing_mode":None,"prompt_tokens":1000,"candidate_tokens":100,"thought_tokens":0,"created_at":"2026-11-20T11:00:00Z"},
+    ]
+    result = module._build_admin_ai_usage_summary(events, "2026-11", "0.50")
+    assert result["event_count"] == 2
+    assert result["estimated_cost_usd"] == "0.55000000"
+    assert result["unknown_cost_events"] == 1
+    assert result["budget_status"] == "exceeded_with_unknown_costs"
+    assert len(result["models"]) == 1
+    assert len(result["users"]) == 2
+    assert "monthly_user_budget" not in result
+    assert "paper_budget" not in result
+
+
+def test_admin_allowlist_is_server_side_and_exact(monkeypatch):
+    import app.main as module
+
+    monkeypatch.setattr(module, "ADMIN_USER_IDS", {"admin-uuid"})
+    assert module._is_admin_user("admin-uuid") is True
+    assert module._is_admin_user("ordinary-user-uuid") is False
+    assert module._is_admin_user("") is False
+
+
+def test_non_admin_cannot_call_admin_usage_endpoint(monkeypatch):
+    import asyncio
+    import app.main as module
+    from fastapi import HTTPException
+
+    async def fake_verify(client, token):
+        assert token == "ordinary-session"
+        return "ordinary-user-uuid"
+
+    monkeypatch.setattr(module, "SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setattr(module, "SUPABASE_KEY", "publishable")
+    monkeypatch.setattr(module, "SERVICE_ROLE_KEY", "service-role")
+    monkeypatch.setattr(module, "ADMIN_USER_IDS", {"admin-uuid"})
+    monkeypatch.setattr(module, "_verify_user", fake_verify)
+
+    try:
+        asyncio.run(module.admin_ai_usage_summary(authorization="Bearer ordinary-session", month="2026-11"))
+    except HTTPException as exc:
+        assert exc.status_code == 403
+    else:
+        raise AssertionError("non-admin must be forbidden before any usage query")
