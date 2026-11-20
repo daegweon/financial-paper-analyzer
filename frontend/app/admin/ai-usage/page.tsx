@@ -6,8 +6,14 @@ import { db } from "../../../lib/supabase";
 import styles from "./page.module.css";
 
 type ModelUsage = {
+  provider: string;
   model: string;
   event_count: number;
+  success_events: number;
+  failed_events: number;
+  total_tokens: number;
+  token_usage_incomplete_events: number;
+  average_latency_ms: number | null;
   known_cost_events: number;
   unknown_cost_events: number;
   estimated_cost_usd: string;
@@ -15,6 +21,13 @@ type ModelUsage = {
 type UserUsage = {
   user_id: string;
   event_count: number;
+  success_events: number;
+  failed_events: number;
+  success_rate_percent: number | null;
+  total_tokens: number;
+  token_complete_events: number;
+  token_incomplete_events: number;
+  average_latency_ms: number | null;
   known_cost_events: number;
   unknown_cost_events: number;
   estimated_cost_usd: string;
@@ -34,6 +47,8 @@ type Summary = {
   truncated: boolean;
   notice: string;
 };
+
+function count(value: number) { return new Intl.NumberFormat("ko-KR").format(value); }
 
 function money(value: string | null) {
   return value === null ? "미확정" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(Number(value));
@@ -147,8 +162,11 @@ export default function AdminAIUsagePage() {
         <section className={styles.cards} aria-label="전체 사용량 요약">
           <article className={styles.card}><span>월간 추정 비용</span><strong>{money(summary.estimated_cost_usd)}</strong><small>확인된 유료 사용분</small></article>
           <article className={styles.card}><span>월간 전체 예산</span><strong>{money(summary.monthly_budget_usd)}</strong><small>서버 관리자 설정</small></article>
-          <article className={styles.card}><span>모델 호출 이벤트</span><strong>{summary.event_count.toLocaleString("ko-KR")}</strong><small>성공 및 실패 시도 포함</small></article>
-          <article className={styles.card}><span>비용 미확정 이벤트</span><strong>{summary.unknown_cost_events.toLocaleString("ko-KR")}</strong><small>결제 등급·가격·토큰 미확인</small></article>
+          <article className={styles.card}><span>모델 호출 이벤트</span><strong>{count(summary.event_count)}</strong><small>성공 {count(summary.success_events)} · 실패 {count(summary.failed_events)}</small></article>
+          <article className={styles.card}><span>성공률</span><strong>{summary.success_rate_percent === null ? "—" : summary.success_rate_percent.toFixed(1) + "%"}</strong><small>전체 모델 호출 기준</small></article>
+          <article className={styles.card}><span>확인된 토큰</span><strong>{count(summary.total_tokens)}</strong><small>미확정 이벤트 {count(summary.token_incomplete_events)}</small></article>
+          <article className={styles.card}><span>평균 응답 시간</span><strong>{summary.average_latency_ms === null ? "—" : count(summary.average_latency_ms) + " ms"}</strong><small>기록된 모델 시도 기준</small></article>
+          <article className={styles.card}><span>비용 미확정 이벤트</span><strong>{count(summary.unknown_cost_events)}</strong><small>결제 등급·가격·토큰 미확인</small></article>
         </section>
 
         <section className={styles.panel}>
@@ -172,8 +190,8 @@ export default function AdminAIUsagePage() {
 
         <section className={styles.panel}>
           <h2>모델별 사용량 및 비용</h2>
-          <div className={styles.tableWrap} tabIndex={0} aria-label="모델별 사용량 표"><table><thead><tr><th>모델</th><th>호출</th><th>비용 확인</th><th>미확정</th><th>추정 비용</th></tr></thead>
-            <tbody>{summary.models.map(item => <tr key={item.model}><th>{item.model}</th><td>{item.event_count}</td><td>{item.known_cost_events}</td><td>{item.unknown_cost_events}</td><td>{money(item.estimated_cost_usd)}</td></tr>)}</tbody>
+          <div className={styles.tableWrap} tabIndex={0} aria-label="모델별 사용량 표"><table><thead><tr><th>제공사</th><th>모델</th><th>호출</th><th>성공</th><th>실패</th><th>토큰</th><th>평균 응답</th><th>비용 확인</th><th>미확정</th><th>추정 비용</th></tr></thead>
+            <tbody>{summary.models.map(item => <tr key={item.provider + "-" + item.model}><th>{item.provider}</th><td>{item.model}</td><td>{count(item.event_count)}</td><td>{count(item.success_events)}</td><td>{count(item.failed_events)}</td><td>{count(item.total_tokens)}{item.token_usage_incomplete_events ? "†" : ""}</td><td>{item.average_latency_ms === null ? "—" : count(item.average_latency_ms) + " ms"}</td><td>{count(item.known_cost_events)}</td><td>{count(item.unknown_cost_events)}</td><td>{money(item.estimated_cost_usd)}</td></tr>)}</tbody>
           </table></div>
         </section>
 
