@@ -8,8 +8,8 @@
     "pull_request": 18,
     "base": "main",
     "review_state": "draft",
-    "last_independently_verified_sha": "9b45e5957f9d2bcecf3ca5be64f5f47a192648f7",
-    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44676373334",
+    "last_independently_verified_sha": "4228494d5465cb8b61003ec25c8748a27cff7819",
+    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806",
     "production_api": {
       "service_id": "81b678e2-7136-436d-9058-7d20647dc1b7",
       "immutable_commit": "ace3fbd5dab3ea71efa3a49da8363259ea5f9732",
@@ -17,8 +17,16 @@
       "status": "SUCCESS",
       "health_marker": "service_role",
       "authless_status_http": 401,
-      "rollback_deployment_before_db_migration": "17c9134b-f49c-4358-a879-7ca77b55b936",
-      "worker_id_untouched": "dc501061-d434-454a-bc7d-4658b991a2f1"
+      "rollback_deployment_before_db_migration": "0b5716db-b720-49db-b15c-babf77b26e5a",
+      "previous_rollback_reference_removed": "17c9134b-f49c-4358-a879-7ca77b55b936",
+      "worker": {
+        "service_id": "238af942-0628-47d5-9280-04a49373423f",
+        "deployment_id": "dc501061-d434-454a-bc7d-4658b991a2f1",
+        "immutable_commit": "8cd5e37ee8eab3bf4b726b75af89e410ab48396e",
+        "branch": "feat/research-workspace-mvp",
+        "status": "SUCCESS",
+        "note": "Verified read-only; worker was not modified."
+      }
     },
     "manual_e2e_launcher": {
       "pull_request": 19,
@@ -28,6 +36,15 @@
       "active_on_main": false,
       "verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44473470809",
       "pinned_audited_source_commit": "431059a1116a50f39fd56d565c35a1afc081b8fc"
+    },
+    "current_vercel_preview": {
+      "current_head_ready": false,
+      "current_head_sha": "4228494d5465cb8b61003ec25c8748a27cff7819",
+      "last_ready_commit": "13591d73b4ccdf3a430a7befce839a813b9a49b2",
+      "last_ready_deployment_id": "dpl_7zXwF4r2B6mN9cQ1pV8sK3tL0aBc",
+      "last_ready_url": "https://financial-paper-analyzer-git-release-beta-candidate-20261119-daegweonai-9583.vercel.app",
+      "commits_since_last_ready": 19,
+      "blocker": "Vercel build-rate-limit; no deployment exists for the current candidate SHA."
     }
   },
   "methodology": "Weighted engineering milestone completion, NOT launch readiness. Each workstream has maximum points; achieved points sum to overall_percent. Increase only after verified evidence.",
@@ -52,9 +69,10 @@
       "earned": 14,
       "evidence": [
         "benchmark/results/scorecard-v6.3.9-2026-11-16.md",
-        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44653101787"
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44653101787",
+        "benchmark/results/assistant-second-pass-evidence-audit-2026-11-20.md"
       ],
-      "remaining": "18건 독립 근거 검토·Gemini 영구 사용량 원장; 분석 엔진 개선은 성능 저하 방지를 위해 동결"
+      "remaining": "Six findings in the latest mixed-version B01–B10 snapshot remain flagged review (63 total; 57 screen-passed). The assistant second-pass audit is complete; qualified human sign-off remains. The historical v6.3.9 scorecard's 18 review-required findings are a prior snapshot. The analysis engine remains frozen. The permanent usage ledger is candidate-only until approved Production migration and API rollout."
     },
     {
       "id": "junior_learning",
@@ -78,7 +96,7 @@
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44658840350",
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44662407474"
       ],
-      "remaining": "운영 원장 마이그레이션 및 실제 2계정 E2E, 모델 비용 추정/정산 검증"
+      "remaining": "Production quota and AI-ledger migrations are not applied; the remote database still has nine migration versions and no ai_usage_events/ai_admin_settings tables. Candidate API dual-write is not live. Real two-account E2E, staged API/DB rollout, client-write revocation and billing reconciliation remain approval-gated."
     },
     {
       "id": "automated_ci",
@@ -86,7 +104,8 @@
       "weight": 15,
       "earned": 15,
       "evidence": [
-        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44404002239"
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44404002239",
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806"
       ],
       "remaining": "매 PR 회귀 테스트 유지"
     },
@@ -104,9 +123,10 @@
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44619544125",
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44648626115",
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44675494781",
-        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44676373334"
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44676373334",
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806"
       ],
-      "remaining": "운영 승인·실제 2계정 E2E·DB 마이그레이션/롤백·외부 SMTP·실기기 PDF 검증",
+      "remaining": "Human review/merge of PR #19, protected Actions secrets and explicit synthetic live E2E; current-head Vercel Preview is blocked by the build-rate limit; PR #18 review/merge, approved production migrations/deploy, admin UUID/billing configuration, SMTP, native-device QA and rollback rehearsal remain.",
       "note": "관리자 전용 AI 사용량/비용/예산 콘솔, provider별 성공률·토큰·지연시간 집계 및 불완전 데이터 경고 구현과 전체 CI 검증 완료. 실제 운영 반영은 별도 승인 필요."
     }
   ],
@@ -115,25 +135,26 @@
       "id": "backend_frontend_ci",
       "label": "백엔드·프런트엔드 GitHub Actions",
       "status": "passed",
-      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44467502056"
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806"
     },
     {
       "id": "synthetic_browser",
       "label": "합성 인증 브라우저 24/24 E2E",
       "status": "passed",
-      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44467502056"
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806"
     },
     {
       "id": "postgres_policy",
       "label": "격리 PostgreSQL 보안 권한 테스트",
       "status": "passed",
-      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44467502056"
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806"
     },
     {
       "id": "vercel_preview",
       "label": "출시 후보 Vercel Preview READY",
-      "status": "passed",
-      "evidence": "https://github.com/daegweon/financial-paper-analyzer/pull/18"
+      "status": "pending",
+      "evidence": null,
+      "note": "Current candidate SHA has no deployment. The latest READY preview is 19 commits behind and excludes later frontend changes; Vercel reports build-rate-limit."
     },
     {
       "id": "live_auth_pdf",
@@ -172,15 +193,17 @@
       "evidence": null
     }
   ],
-  "next_action": "Use docs/BETA_RELEASE_RUNBOOK_2026-11-20.md for the staged release sequence. Human review/merge PR #19, configure protected Actions secrets, and explicitly dispatch the pinned synthetic two-account live E2E. Separately review PR #18; configure PAPERSIGNAL_ADMIN_USER_IDS and optional global monthly budget in Railway. After human approval, deploy the candidate API, apply the additive AI usage/admin-settings migration, verify ledger writes and admin-only cost/budget access against staging, then execute real two-account Auth/Storage/PDF E2E. Only after that consider client-write revocation and Production promotion. Reconcile remote migration history, configure external SMTP, verify native iOS Safari/Android PDF behavior, and rehearse rollback. Do not apply Production migrations or promote without explicit approval.",
-  "response_protocol": "Every substantial PaperSignal response starts with overall_percent and passed/total release gates from this file. Explain that percentage estimates engineering completion, not live launch permission.",
+  "next_action": "Keep PR #18 Draft. The exact candidate HEAD 4228494 passed all GitHub Checks in run #44677027806, including API, frontend, disposable PostgreSQL (including the AI-ledger migration contract), GET-only live API preflight and synthetic browser QA; live E2E was skipped. Current-head Vercel Preview is not ready: the latest READY deployment is 19 commits behind and the current SHA is blocked by Vercel build-rate-limit. Human-only actions are: review/merge narrow PR #19 (not PR #18), configure the four exact protected Actions secrets, and explicitly dispatch the pinned synthetic E2E; designate the administrator UUID and optional global budget; confirm Gemini billing mode before setting; configure SMTP; test real iOS/Android devices; approve the ordered production quota/API/ledger/client-write migration sequence and rollback; and arrange qualified human sign-off on the six current review findings. Do not mutate Production or promote until each gate is independently evidenced.",
+  "response_protocol": "Every substantial PaperSignal response starts with overall_percent and passed/total release gates from this file. The percentage estimates engineering completion, not launch readiness or permission to mutate Production.",
   "invariants": [
     "Analysis engine frozen",
     "No automatic live E2E or user mutations from PR jobs",
     "No DB migration before verified new API",
     "No production promotion without real E2E",
     "Do not raise GitHub Actions $1 budget automatically",
-    "Never delete historical user PDFs/analyses"
+    "Never delete historical user PDFs/analyses",
+    "AI usage budgets are service-wide administrator settings; never expose per-user budgets to end users.",
+    "Do not count a stale Vercel Preview as passing for a newer candidate HEAD."
   ],
   "history": [
     {
@@ -287,6 +310,50 @@
       "date": "2026-11-20",
       "percent": 98,
       "evidence": "Follow-up admin pricing transparency hardening passed full CI #44676373334 on candidate head 9b45e5957f9d2bcecf3ca5be64f5f47a192648f7: API 195 passed/1 deliberately skipped, frontend lint/typecheck/build, PostgreSQL 17 policy/index checks, GET-only live API preflight and 39 synthetic browser scenarios all SUCCESS. Administrator model rows now expose cost-status breakdown, effective price date and official source links; provider-specific grouping and provenance tests pass. Engineering remains 98%; release gates remain 4/10. No Production migration or deployment."
+    },
+    {
+      "date": "2026-11-20",
+      "percent": 98,
+      "evidence": "Current candidate HEAD 4228494 passed Checks #44677027806 (API, frontend, disposable PostgreSQL including AI usage ledger migration, GET-only API preflight, synthetic browser QA; live E2E skipped). Current Vercel preview was reconciled: latest READY SHA 13591d73 is 19 commits behind; current SHA has no deployment due build-rate-limit, so release gates corrected from 4/10 to 3/10. Read-only Production checks: Supabase has 9 migrations through 20261113234956 and no AI ledger/admin tables; Railway API had 0 server errors in 446 requests (p99 9 ms). Assistant second-pass review of the six latest review-flagged findings completed; no Production or analysis rows were changed."
     }
-  ]
+  ],
+  "read_only_operational_check": {
+    "date": "2026-11-20",
+    "railway_api_last_24h": {
+      "requests": 446,
+      "server_errors": 0,
+      "client_errors": 219,
+      "p99_latency_ms": 9
+    },
+    "supabase": {
+      "migration_count": 9,
+      "first_version": "20261112155952",
+      "latest_version": "20261113234956",
+      "ai_usage_events_table_present": false,
+      "ai_admin_settings_table_present": false
+    },
+    "railway_admin_configuration": {
+      "admin_user_ids_present": false,
+      "monthly_budget_present": false,
+      "gemini_billing_mode_present": false
+    },
+    "supabase_advisors": {
+      "security_warnings": 1,
+      "performance_warnings": 0,
+      "warning": "auth_leaked_password_protection disabled"
+    }
+  },
+  "latest_analysis_snapshot": {
+    "paper_count": 10,
+    "findings_total": 63,
+    "screen_passed": 57,
+    "review": 6,
+    "analysis_versions": {
+      "finance-structured-v6.4.0": 3,
+      "finance-structured-v6.4.2": 1,
+      "finance-structured-v6.3.9": 6
+    },
+    "assistant_second_pass_report": "benchmark/results/assistant-second-pass-evidence-audit-2026-11-20.md",
+    "human_signoff_complete": false
+  }
 }

@@ -1,3 +1,20 @@
+# PaperSignal — Current consolidated checkpoint (2026-11-20)
+
+**Engineering completion: 98%. Independently passed release gates: 3/10.** The 98% score is weighted engineering completion, not launch readiness.
+
+- Candidate branch `release/beta-candidate-20261119`, Draft PR #18, exact HEAD `4228494d5465cb8b61003ec25c8748a27cff7819`.
+- Exact-head Checks [#44677027806](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806) passed API, frontend, disposable PostgreSQL 17 (including the AI usage-ledger migration contract), GET-only live API preflight and synthetic browser QA. The live production E2E job was skipped.
+- Current-head Vercel Preview is not ready. The latest READY preview is `13591d73b4ccdf3a430a7befce839a813b9a49b2`, 19 commits behind and missing later frontend changes; the current SHA has no deployment due to Vercel build-rate-limit. The release gate was corrected from 4/10 to 3/10.
+- Production Railway API: service `81b678e2-7136-436d-9058-7d20647dc1b7`, deployment `0b5716db-b720-49db-b15c-babf77b26e5a`, commit `ace3fbd5dab3ea71efa3a49da8363259ea5f9732`, SUCCESS. Current live rollback baseline is that same deployment; previously listed `17c9134b-f49c-4358-a879-7ca77b55b936` is REMOVED and cannot be used.
+- Worker remains unchanged: service `238af942-0628-47d5-9280-04a49373423f`, deployment `dc501061-d434-454a-bc7d-4658b991a2f1`, commit `8cd5e37ee8eab3bf4b726b75af89e410ab48396e`, SUCCESS.
+- Read-only Production checks: Railway API recorded 446 requests / 0 server errors / 219 client errors / p99 9 ms over 24 hours. Supabase has 9 migrations through `20261113234956`; `ai_usage_events` and `ai_admin_settings` are absent. No Production migration or candidate API rollout was performed.
+- Railway currently has no admin UUID allowlist, global monthly AI budget variable or explicit Gemini billing-mode variable. The admin console and persistent ledger remain candidate-only; budgets are administrator-only, service-wide settings.
+- Latest stored B01–B10 analyses are mixed-version (3 × v6.4.0, 1 × v6.4.2, 6 × v6.3.9): 63 findings, 57 `screen_passed`, 6 `review`. The six current review records received an assistant second-pass PDF audit at `benchmark/results/assistant-second-pass-evidence-audit-2026-11-20.md`; no database status was changed and human sign-off remains.
+- Supabase advisors: no performance findings; one security warning for disabled leaked-password protection. It was not changed because it affects signup policy and requires an administrator decision.
+- Human-only steps are listed in `docs/HUMAN_E2E_HANDOFF_2026-11-19.md`. Keep PR #18 Draft and the finance analysis engine frozen.
+
+---
+
 
 ## 2026-11-20 — Automated accessibility milestone credited
 
@@ -20,7 +37,7 @@
 - Baseline remains 90% engineering / 4 of 10 release gates. Live E2E remains intentionally gated by PR #19 human approval and secrets.
 # PaperSignal — Project State / Session Handoff
 
-Last updated: 2026-11-19 (Asia/Seoul)
+Last updated: 2026-11-20 (Asia/Seoul)
 Current consolidated candidate: release/beta-candidate-20261119 (Draft PR #18 directly against main; includes earlier stacked feature branches)
 Current release candidate PR: https://github.com/daegweon/financial-paper-analyzer/pull/18 (Draft; do not merge without live E2E and production safety gates)
 

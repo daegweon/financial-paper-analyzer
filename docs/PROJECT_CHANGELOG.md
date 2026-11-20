@@ -293,3 +293,14 @@
 
 - Added `docs/BETA_RELEASE_RUNBOOK_2026-11-20.md` with explicit human approval checkpoints, current production API/rollback references, protected E2E secrets, ordered quota RPC/API/AI ledger/client-write-revocation steps, two-account isolation tests, admin allowlist/budget configuration, SMTP/mobile validation and rollback precautions.
 - No Production action was executed. The runbook is an operational preparation artifact; launch gates remain 4/10 and engineering completion remains 98%.
+
+
+## 2026-11-20 — Evidence audit and release-state reconciliation
+
+- Audited the latest stored B01–B10 analyses read-only: 63 findings, 57 screen-passed and 6 review-flagged across mixed v6.3.9/v6.4.0/v6.4.2 versions. The prior v6.3.9 scorecard's 18 review-required findings are a historical snapshot.
+- Completed an assistant second-pass PDF audit of all six current review records. Found a duplicate B01 claim, missing direct numeric excerpts for B02/B05, a B03 narrative-vs-table discrepancy and an overclaimed B05 difference-in-differences treatment effect. Report: `benchmark/results/assistant-second-pass-evidence-audit-2026-11-20.md`. No Supabase analysis or verification status was modified; human sign-off remains required.
+- Exact candidate HEAD `4228494d5465cb8b61003ec25c8748a27cff7819` passed GitHub Checks [#44677027806](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806) across API, frontend, disposable PostgreSQL (including the AI ledger migration contract), GET-only live API preflight and synthetic browser QA. Live E2E remained skipped.
+- Reconciled Vercel state: the latest READY Preview commit `13591d73` is 19 commits behind the current candidate and excludes later frontend changes. Current HEAD has no deployment due to build-rate-limit. Corrected the independently passed release-gate count from 4/10 to 3/10.
+- Read-only Production checks confirmed nine Supabase migration versions through `20261113234956`, no AI ledger/admin-settings tables, and Railway API 0 server errors across 446 requests (p99 9 ms). The production API remains on `ace3fbd5`; the Worker remains unchanged on `8cd5e37`.
+- Corrected the beta runbook and human handoff: exact PR #19 secret names, Worker service/deployment identifiers, current rollback-capable API deployment, and current Vercel blocker. Supabase leaked-password protection remains an administrator decision.
+- No Production migration, Railway deployment, client-write revocation, live E2E, SMTP change, native-device test or Vercel Production promotion was performed.

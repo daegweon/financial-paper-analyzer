@@ -2,7 +2,7 @@
 
 ## Status and safety boundary
 
-Design only. This document does not create a migration, table, secret, deployment or production write. The production Supabase project remains unchanged. A human must review the migration and staged rollout before it is applied.
+Candidate implementation exists: the additive migration `20261120120000_ai_usage_events_ledger.sql`, its disposable-PostgreSQL contract test, API per-attempt dual-write and administrator-only usage endpoints are committed to the beta candidate. Exact-head CI #44677027806 passed, including the ledger migration contract. Production Supabase remains unchanged (nine remote migrations through `20261113234956`; no `ai_usage_events` or `ai_admin_settings` tables), and Production Railway API remains on the older `ace3fbd5` deployment. A human must approve the staged migration/deployment before any Production write.
 
 ## Goals
 
@@ -77,14 +77,14 @@ Prices are effective-dated, provider/model-specific and backed by an official so
 - telemetry persistence failure does not fail analysis.
 - fallback attempts are distinct and recovery requires terminal completion.
 
-## Current implementation boundary
+## Current implementation boundary (2026-11-20)
 
-Current log telemetry and offline reports are available. This design is not implemented in production. Keep manual DB approval and two-user live E2E at the end of the release checklist.
+The migration, verification SQL, API dual-write and administrator-only cost/budget endpoints are implemented on the beta candidate and covered by passing candidate CI. They are not live in Production: the remote ledger/admin-settings tables are absent and the Railway API remains on the older immutable deployment. No user-facing per-user budget exists; the budget is a single service-wide administrator setting. Keep manual DB approval, current-head Preview, real two-account E2E and rollback at the end of the release checklist.
 ## 2026-11-20 isolated migration implementation
 
 The additive migration `supabase/migrations/20261120120000_ai_usage_events_ledger.sql` now implements the immutable per-attempt event table, nullable provider token fields, bounded metadata, unique idempotency key, lookup indexes, RLS and service-role-only raw event access. `supabase/tests/verify_ai_usage_events_ledger.sql` verifies role grants, service-role insertion, duplicate idempotency rejection and preservation of unknown token usage as NULL. CI applies and tests this migration only in its disposable PostgreSQL 17 service.
 
-The migration is **not applied to Production**. The API does not yet dual-write to this table; that integration is deliberately separate because it requires verified ownership context (user/paper/job IDs) at each provider attempt. Do not report a persistent production ledger until the API writer, failure isolation, and live reconciliation are implemented and reviewed.
+The migration is **not applied to Production**. The API dual-write is implemented on the candidate using verified task-local ownership context (user/paper/job IDs), but it is not deployed to the live Railway API. Do not report a persistent production ledger until the approved migration, API deployment, live writes and reconciliation are complete.
 
 ## 2026-11-20 API dual-write implementation (candidate only)
 
@@ -92,7 +92,7 @@ The API now sets an async task-local ownership context from `_process_analysis_j
 
 Writes use `Prefer: resolution=ignore-duplicates` and a short timeout. A missing service key/context skips recording; a ledger HTTP/network failure emits a redacted warning and never fails the analysis. No prompt, extracted PDF text, model response, API key or bearer token is stored. Unit tests cover ownership payload, null token preservation, idempotency header, missing context and non-fatal write failure.
 
-This code is committed to the beta candidate only; no Railway deployment or Production database migration was performed. Full CI must pass before this writer is credited as verified.
+This code is committed to the beta candidate only; no Railway deployment or Production database migration was performed. Exact-head CI #44677027806 passed all checks, including the disposable PostgreSQL ledger contract. Candidate code is tested, but the Production ledger remains unavailable until the human-approved rollout.
 
 ## 2026-11-20 effective-dated pricing and cost reporting
 

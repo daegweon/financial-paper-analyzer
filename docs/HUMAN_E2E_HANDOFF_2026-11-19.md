@@ -1,30 +1,86 @@
-# PaperSignal — actions that require a human (2026-11-19)
+# PaperSignal — human-owned remaining actions (2026-11-20)
 
-**Current score:** 88% engineering; independently passed beta release gates 4/10. Real two-account live E2E NOT yet performed. This is a manual-approval procedure; do not paste secrets or passwords into chat.
+**Current engineering completion: 98%. Current independently passed release gates: 3/10.** The engineering percentage measures implemented work; it is not launch permission.
 
-## Required to unblock real E2E
+## Completed autonomously in this checkpoint
 
-1. [Review narrow Draft PR #19](https://github.com/daegweon/financial-paper-analyzer/pull/19). Check that `.github/workflows/papersignal-live-e2e.yml` is manual-only, pinned to audited source `431059a1116a50f39fd56d565c35a1afc081b8fc`, and does not include database migrations. If acceptable, mark Ready for review and merge **PR #19 only** into main. Do not merge product Draft PR #18.
-2. In [GitHub Actions repository secrets](https://github.com/daegweon/financial-paper-analyzer/settings/secrets/actions), verify/create exactly four secret names: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` and `PAPERSIGNAL_API_URL`. Use existing PaperSignal project and deployed API. GitHub connection used here cannot inspect or edit repository secrets; their presence has **not** been verified.
-3. In GitHub → Actions → **PaperSignal Live E2E - Manual Approval** → Run workflow, select main. Set `target=papersignal-production`, `approve_mutations=true`, `approved_commit=431059a1116a50f39fd56d565c35a1afc081b8fc`, `acknowledgment=RUN_SYNTHETIC_LIVE_E2E`. Every input defaults to disabled/no authorization. The workflow can only appear after merging PR #19 into main.
-4. Read the risk notice: the approved run creates 2 short-lived confirmed synthetic Supabase Auth accounts, 1 private two-page PDF, metadata and a real Railway Worker/Gemini analysis; it verifies A/B access restrictions. It may consume Gemini quota and can retain a fixture if the Worker is unfinished or cleanup needs manual recovery.
-5. Share the resulting GitHub Actions run URL here (no credentials) or ask for a read-only post-run audit. The assistant can inspect CI logs, Railway health, and read-only Supabase fixture counts and advise whether it is safe to proceed to the separate client-write SQL migration.
+- Exact candidate HEAD `4228494d5465cb8b61003ec25c8748a27cff7819` passed GitHub Checks [#44677027806](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806): API, frontend, disposable PostgreSQL 17 (including the AI usage-ledger migration contract), GET-only live API preflight and synthetic browser QA. Live production E2E was skipped.
+- The six `review` findings in the latest B01–B10 analyses received an assistant second-pass PDF audit. The report is `benchmark/results/assistant-second-pass-evidence-audit-2026-11-20.md`. The six database statuses remain `review`; this is not a human expert sign-off.
+- Production state was inspected read-only: Supabase has nine migration versions through `20261113234956` and no `ai_usage_events` / `ai_admin_settings` tables. Railway API remains on immutable commit `ace3fbd5`; Worker remains unchanged on commit `8cd5e37`.
+- Corrected the runbook's protected-secret names, Railway Worker service/deployment IDs and rollback reference. No production data, schema, deployment or account was changed.
 
-## Optional human work for later beta gates
+## Actions requiring an authorized human
 
-- Configure custom SMTP in Supabase and verify an external mailbox signup/confirmation before public invitations; built-in Free-tier email is not a complete public signup channel.
-- Validate real iOS Safari/Android Chrome PDF experience, keyboard/voice-over, page jump, retry and link renewal on your devices.
-- Assign a competent human reviewer to independently inspect paper citation accuracy in the outstanding 18 review-needed findings. Do not treat automatic screening as expert verification.
+### 1. Review the narrow manual E2E launcher PR
 
-## What remains automatic and what is blocked
+Review [Draft PR #19](https://github.com/daegweon/financial-paper-analyzer/pull/19). It adds only a manual-only workflow and its runbook. If acceptable, mark it Ready for review and merge **PR #19 only** into `main`. Do **not** merge product Draft PR #18.
 
-- Existing PaperSignal Railway API/Worker online; server-owned `/health` marker confirmed. Frontend Preview ready and CI regression tests green.
-- Original user papers, result history and Worker's deployed code remain intact. No production DB permission migration has been executed.
-- Next step after **real** live E2E PASS: reconcile Supabase remote migration history, review/apply only `supabase/migrations/20261117215315_beta_server_owned_result_writes.sql`, check postmigration grants and rerun the authorized E2E. Never blanket `db push` or roll the API back to the old browser-writer release after revocation.
+The workflow is pinned to the audited immutable test source `431059a1116a50f39fd56d565c35a1afc081b8fc`. It is not active on `main` until PR #19 is merged.
 
-## 2026-11-20 current checkpoint
+### 2. Configure the exact protected GitHub Actions secrets
 
-- Current weighted engineering completion: **91%**; independently passed live beta gates: **4/10**. Canonical source: `docs/PROJECT_PROGRESS.json`.
-- Latest completed full CI [#44616620751](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44616620751) passed all 33 synthetic browser scenarios, including Android WCAG contrast, plus API, frontend, PostgreSQL policy and read-only live API checks. This is not real-user E2E.
-- PR #19 is still Draft and its manual workflow is not active on `main`. No actual temporary Auth users/PDF or Gemini job has been created by this workflow.
-- Continue only after a human reviews/merges PR #19, configures the four protected Actions secrets, and explicitly dispatches the pinned test. Do not apply either Production migration before its separate approval and correct sequence.
+In [GitHub Actions repository secrets](https://github.com/daegweon/financial-paper-analyzer/settings/secrets/actions), configure these exact four names. The workflow does not read `E2E_*` aliases:
+
+- `SUPABASE_URL`
+- `SUPABASE_PUBLISHABLE_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `PAPERSIGNAL_API_URL`
+
+Never paste values into chat, PR comments, workflow inputs or logs.
+
+### 3. Explicitly approve and dispatch the synthetic live E2E
+
+After PR #19 is merged and the four secrets are configured, go to GitHub Actions → **PaperSignal Live E2E - Manual Approval** → Run workflow on `main`, then set:
+
+- `target = papersignal-production`
+- `approve_mutations = true`
+- `approved_commit = 431059a1116a50f39fd56d565c35a1afc081b8fc`
+- `acknowledgment = RUN_SYNTHETIC_LIVE_E2E`
+
+This explicitly authorizes creation of two temporary synthetic Auth users, one private two-page synthetic PDF, one real Railway Worker/Gemini analysis job and scoped cleanup. It can consume Gemini quota. Do not dispatch unless that exact test mutation is approved. Share only the resulting run URL, never credentials.
+
+### 4. Approve the staged Production API/database rollout
+
+The current Production API is live on deployment `0b5716db-b720-49db-b15c-babf77b26e5a` / commit `ace3fbd5`. The candidate quota RPC, AI usage-ledger writer and admin endpoints are not live. The remote Supabase database has nine migration versions through `20261113234956`; neither `ai_usage_events` nor `ai_admin_settings` exists yet.
+
+After migration-history reconciliation and separate change approval, follow the exact sequence in `docs/BETA_RELEASE_RUNBOOK_2026-11-20.md`:
+
+1. Apply the additive server-owned analysis quota RPC migration.
+2. Deploy the candidate API that calls the RPC and writes best-effort AI usage events.
+3. Apply and verify the additive AI usage-ledger/admin-settings migration.
+4. Run the real synthetic two-account Auth/Storage/PDF/analysis isolation test against the upgraded API.
+5. Only after that passes, consider the client-write revocation migration.
+6. Do not promote Vercel Production until the current candidate Preview, real E2E and rollback gates pass.
+
+The old deployment `17c9134b-f49c-4358-a879-7ca77b55b936` is REMOVED and cannot be used as rollback. The current live baseline `0b5716db-b720-49db-b15c-babf77b26e5a` is the current rollback reference; verify it is still available immediately before any change. The Worker service is `238af942-0628-47d5-9280-04a49373423f` and must remain untouched.
+
+### 5. Set administrator-only AI controls when an administrator is designated
+
+The administrator console is not an end-user budget feature. It exposes one service-wide monthly AI budget and administrator-only usage/cost reports; ordinary users do not get personal budgets or access to raw AI costs.
+
+- Set Railway `PAPERSIGNAL_ADMIN_USER_IDS` only after verifying the intended Supabase Auth UUID.
+- Optionally set `PAPERSIGNAL_ADMIN_MONTHLY_AI_BUDGET_USD` after the administrator chooses a service-wide budget.
+- Set `GEMINI_BILLING_MODE` to `free` or `paid_standard` only after checking the actual Google AI Studio billing configuration. It is currently absent, so cost remains unknown rather than fabricated as zero.
+
+### 6. Resolve the remaining platform/security checks
+
+- **Vercel Preview:** current candidate HEAD has no deployment because Vercel reports a build-rate-limit failure. The latest READY Preview is commit `13591d73`, 19 commits behind the current candidate and missing later frontend changes. A current-head Preview requires the limit to clear or an account-plan decision; do not treat the stale Preview as passed.
+- **SMTP:** configure an external SMTP provider and verify signup, confirmation and password reset with an external mailbox.
+- **Native devices:** verify original PDF rendering, page navigation, signed-link renewal, rotation and session expiry on actual iOS Safari and Android Chrome devices.
+- **Auth security:** Supabase's security advisor reports leaked-password protection disabled. An administrator should decide whether to enable it; it has not been changed because it affects signup policy.
+- **Rollback:** rehearse the current API rollback procedure before Production migrations and document the compatible frontend/API recovery path after client-write revocation.
+- **Research audit:** arrange a qualified human reviewer for the six current review-flagged findings. Prioritize B03's table/prose discrepancy and B05's difference-in-differences interpretation. The assistant second-pass report is preparation, not expert sign-off.
+
+## Current operational snapshot (read-only)
+
+- Railway API, last 24 hours: 446 requests, 0 server errors, 219 client errors, p99 latency 9 ms. This is a small observed sample, not a load test.
+- Supabase performance advisor: no findings. Security advisor: one warning (leaked-password protection disabled).
+- No Production migration, candidate API deployment, client-write revocation, live synthetic E2E, SMTP change, mobile-device test or Vercel Production promotion was performed in this checkpoint.
+
+## Guardrails
+
+- Keep PR #18 Draft until every required gate is independently evidenced.
+- Do not apply migrations with a blind `supabase db push`; reconcile the remote history first.
+- Never delete or overwrite historical user PDFs or analyses.
+- Keep the finance analysis engine frozen; no v6.x heuristic changes were made.
+- AI budget configuration remains administrator-owned and service-wide, never a per-user end-user setting.
