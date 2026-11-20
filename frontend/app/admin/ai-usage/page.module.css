@@ -42,3 +42,6 @@
 .tableWrap:focus-visible{outline:3px solid #075e68;outline-offset:3px;border-radius:4px}
 
 .panel>p.notice{color:#674a16}
+
+.tableWrap a{color:#075e68;font-weight:700;text-decoration:underline;text-underline-offset:2px}
+.tableWrap a+a{margin-left:8px}
