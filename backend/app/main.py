@@ -2734,24 +2734,80 @@ def _is_admin_user(user_id: str) -> bool:
 
 
 def _build_admin_ai_usage_summary(events: list[dict[str, Any]], month: str, monthly_budget: str | None, truncated: bool = False) -> dict[str, Any]:
-    """Aggregate administrator-only usage. Never exposes raw events or user-set budgets."""
+    """Aggregate administrator-only cost and operational usage. Never returns raw events."""
     report = build_cost_report(events)
-    model_totals: dict[str, dict[str, Any]] = {}
+    model_totals: dict[tuple[str, str], dict[str, Any]] = {}
     known_total = Decimal("0")
     unknown_events = 0
     known_events = 0
+    success_events = 0
+    failed_events = 0
+    token_total = 0
+    token_complete_events = 0
+    token_incomplete_events = 0
+    latency_total = 0
+    latency_events = 0
+    for event in events:
+        provider = str(event.get("provider") or "unknown")
+        model = str(event.get("model") or "unknown-model")
+        key = (provider, model)
+        item = model_totals.setdefault(key, {"provider": provider, "model": model, "event_count": 0, "success_events": 0, "failed_events": 0, "known_cost_events": 0, "unknown_cost_events": 0, "estimated_cost_usd": Decimal("0"), "total_tokens": 0, "token_usage_incomplete_events": 0, "latency_total_ms": 0, "latency_events": 0})
+        item["event_count"] += 1
+        outcome = event.get("outcome")
+        if outcome == "success":
+            success_events += 1
+            item["success_events"] += 1
+        else:
+            failed_events += 1
+            item["failed_events"] += 1
+        latency = event.get("latency_ms")
+        if isinstance(latency, int) and not isinstance(latency, bool) and latency >= 0:
+            latency_total += latency
+            latency_events += 1
+            item["latency_total_ms"] += latency
+            item["latency_events"] += 1
+        total_tokens = event.get("total_tokens")
+        components = (event.get("prompt_tokens"), event.get("candidate_tokens"), event.get("thought_tokens"))
+        if isinstance(total_tokens, int) and not isinstance(total_tokens, bool) and total_tokens >= 0:
+            observed_tokens = total_tokens
+            token_complete = True
+        elif all(isinstance(value, int) and not isinstance(value, bool) and value >= 0 for value in components):
+            observed_tokens = sum(components)
+            token_complete = True
+        else:
+            observed_tokens = 0
+            token_complete = False
+        if token_complete:
+            token_total += observed_tokens
+            token_complete_events += 1
+            item["total_tokens"] += observed_tokens
+        else:
+            token_incomplete_events += 1
+            item["token_usage_incomplete_events"] += 1
     for group in report["groups"]:
-        model = group["model"]
-        item = model_totals.setdefault(model, {"model": model, "event_count": 0, "known_cost_events": 0, "unknown_cost_events": 0, "estimated_cost_usd": Decimal("0")})
-        item["event_count"] += group["event_count"]
+        key = (str(group.get("provider") or "unknown"), group["model"])
+        item = model_totals.setdefault(key, {"provider": key[0], "model": key[1], "event_count": 0, "success_events": 0, "failed_events": 0, "known_cost_events": 0, "unknown_cost_events": 0, "estimated_cost_usd": Decimal("0"), "total_tokens": 0, "token_usage_incomplete_events": 0, "latency_total_ms": 0, "latency_events": 0})
         item["known_cost_events"] += group["known_cost_events"]
         item["unknown_cost_events"] += group["unknown_cost_events"]
         item["estimated_cost_usd"] += Decimal(group["estimated_cost_usd"])
         known_total += Decimal(group["estimated_cost_usd"])
         known_events += group["known_cost_events"]
         unknown_events += group["unknown_cost_events"]
+    models = []
     for item in model_totals.values():
-        item["estimated_cost_usd"] = format(item["estimated_cost_usd"].quantize(Decimal("0.00000001")), "f")
+        models.append({
+            "provider": item["provider"],
+            "model": item["model"],
+            "event_count": item["event_count"],
+            "success_events": item["success_events"],
+            "failed_events": item["failed_events"],
+            "known_cost_events": item["known_cost_events"],
+            "unknown_cost_events": item["unknown_cost_events"],
+            "estimated_cost_usd": format(item["estimated_cost_usd"].quantize(Decimal("0.00000001")), "f"),
+            "total_tokens": item["total_tokens"],
+            "token_usage_incomplete_events": item["token_usage_incomplete_events"],
+            "average_latency_ms": round(item["latency_total_ms"] / item["latency_events"]) if item["latency_events"] else None,
+        })
     users = [row for row in report["admin_user_usage"] if row["month"] == month]
     budget = None
     if monthly_budget is not None:
@@ -2775,13 +2831,20 @@ def _build_admin_ai_usage_summary(events: list[dict[str, Any]], month: str, mont
         "month": month,
         "currency": "USD",
         "event_count": len(events),
+        "success_events": success_events,
+        "failed_events": failed_events,
+        "success_rate_percent": round(success_events / len(events) * 100, 2) if events else None,
         "known_cost_events": known_events,
         "unknown_cost_events": unknown_events,
         "estimated_cost_usd": format(known_total.quantize(Decimal("0.00000001")), "f"),
         "monthly_budget_usd": format(budget.quantize(Decimal("0.01")), "f") if budget is not None else None,
         "budget_status": budget_status,
         "cost_coverage_complete": unknown_events == 0 and not truncated,
-        "models": sorted(model_totals.values(), key=lambda item: item["model"]),
+        "total_tokens": token_total,
+        "token_complete_events": token_complete_events,
+        "token_incomplete_events": token_incomplete_events,
+        "average_latency_ms": round(latency_total / latency_events) if latency_events else None,
+        "models": sorted(models, key=lambda item: (item["provider"], item["model"])),
         "users": sorted(users, key=lambda item: Decimal(item["estimated_cost_usd"]), reverse=True),
         "truncated": truncated,
         "notice": "관리자 전용 운영 지표. 비용은 명시적으로 확인된 유료 등급과 가격표가 있는 이벤트의 추정치이며 청구서가 아닙니다. 미확정 비용은 합계에 포함되지 않습니다.",
@@ -3238,7 +3301,7 @@ async def admin_ai_usage_summary(
                 SUPABASE_URL + "/rest/v1/ai_usage_events",
                 headers=headers,
                 params={
-                    "select": "user_id,paper_id,provider,model,billing_mode,prompt_tokens,candidate_tokens,thought_tokens,created_at",
+                    "select": "user_id,paper_id,provider,model,outcome,billing_mode,prompt_tokens,candidate_tokens,thought_tokens,total_tokens,latency_ms,created_at",
                     "and": f"(created_at.gte.{start.isoformat()},created_at.lt.{end.isoformat()})",
                     "order": "created_at.asc",
                     "limit": str(page_size),
