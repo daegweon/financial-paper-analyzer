@@ -2374,3 +2374,62 @@ def test_non_admin_cannot_call_admin_usage_endpoint(monkeypatch):
         assert exc.status_code == 403
     else:
         raise AssertionError("non-admin must be forbidden before any usage query")
+
+
+def test_admin_usage_endpoint_returns_summary_only_after_allowlist_check(monkeypatch):
+    import asyncio
+    import app.main as module
+
+    requests = []
+    class FakeResponse:
+        status_code = 200
+        content = b"[]"
+        def json(self): return []
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return False
+        async def get(self, url, **kwargs):
+            requests.append((url, kwargs))
+            return FakeResponse()
+
+    async def fake_verify(client, token):
+        return "admin-uuid"
+
+    monkeypatch.setattr(module, "SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setattr(module, "SUPABASE_KEY", "publishable")
+    monkeypatch.setattr(module, "SERVICE_ROLE_KEY", "service-role")
+    monkeypatch.setattr(module, "ADMIN_USER_IDS", {"admin-uuid"})
+    monkeypatch.setattr(module, "_verify_user", fake_verify)
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    result = asyncio.run(module.admin_ai_usage_summary(authorization="Bearer admin-session", month="2026-11"))
+    assert result["month"] == "2026-11"
+    assert result["event_count"] == 0
+    assert result["models"] == []
+    assert len(requests) == 1
+    url, kwargs = requests[0]
+    assert url.endswith("/rest/v1/ai_usage_events")
+    assert kwargs["params"]["select"] == "user_id,paper_id,provider,model,billing_mode,prompt_tokens,candidate_tokens,thought_tokens,created_at"
+    assert kwargs["headers"]["Range"] == "0-999"
+
+
+def test_admin_usage_endpoint_rejects_invalid_month_before_database_query(monkeypatch):
+    import asyncio
+    import app.main as module
+    from fastapi import HTTPException
+
+    async def fake_verify(client, token):
+        return "admin-uuid"
+
+    monkeypatch.setattr(module, "SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setattr(module, "SUPABASE_KEY", "publishable")
+    monkeypatch.setattr(module, "SERVICE_ROLE_KEY", "service-role")
+    monkeypatch.setattr(module, "ADMIN_USER_IDS", {"admin-uuid"})
+    monkeypatch.setattr(module, "_verify_user", fake_verify)
+
+    try:
+        asyncio.run(module.admin_ai_usage_summary(authorization="Bearer admin-session", month="2026-13"))
+    except HTTPException as exc:
+        assert exc.status_code == 422
+    else:
+        raise AssertionError("invalid month must be rejected")
