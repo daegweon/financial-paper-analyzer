@@ -2545,7 +2545,7 @@ def test_admin_summary_reports_known_overage_even_when_data_is_incomplete():
         "created_at": "2026-11-20T10:00:00Z",
     }]
     result = module._build_admin_ai_usage_summary(events, "2026-11", "0.50", truncated=True)
-    assert result["budget_status"] == "exceeded_with_incomplete_data"
+    assert result["budget_status"] == "exceeded_with_truncated_data"
     assert result["cost_coverage_complete"] is False
 
 
