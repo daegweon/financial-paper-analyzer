@@ -20,6 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
 SUPABASE_KEY = os.getenv("SUPABASE_PUBLISHABLE_KEY", "")
 SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+GEMINI_BILLING_MODE = os.getenv("GEMINI_BILLING_MODE", "unknown").strip().lower()
 FRONTEND_ORIGINS = [
     item.strip().rstrip("/")
     for item in os.getenv("FRONTEND_ORIGIN", "http://localhost:3000").split(",")
@@ -2657,7 +2658,7 @@ async def _persist_ai_usage_event(
         "model": model,
         "attempt_index": attempt_index,
         "outcome": outcome,
-        "billing_mode": None,
+        "billing_mode": GEMINI_BILLING_MODE if GEMINI_BILLING_MODE in {"free", "paid_standard"} else None,
         "http_status": http_status,
         "error_class": error_class[:128] if error_class else None,
         "prompt_tokens": usage.get("promptTokenCount"),
