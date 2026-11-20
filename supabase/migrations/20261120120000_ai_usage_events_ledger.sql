@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS public.ai_usage_events (
   model text NOT NULL CHECK (length(model) BETWEEN 1 AND 128),
   attempt_index integer NOT NULL CHECK (attempt_index > 0),
   outcome text NOT NULL CHECK (outcome IN ('success','http_error','transport_error','invalid_response')),
+  billing_mode text CHECK (billing_mode IS NULL OR billing_mode IN ('free','paid_standard')),
   http_status integer CHECK (http_status BETWEEN 100 AND 599),
   error_class text CHECK (error_class IS NULL OR length(error_class) <= 128),
   prompt_tokens bigint CHECK (prompt_tokens IS NULL OR prompt_tokens >= 0),
