@@ -1,0 +1,67 @@
+-- Disposable PostgreSQL contract for the privileged queue RPC.
+DO $$
+BEGIN
+ IF has_function_privilege('authenticated','public.enqueue_analysis_job(uuid,uuid)','EXECUTE')
+    OR has_function_privilege('anon','public.enqueue_analysis_job(uuid,uuid)','EXECUTE')
+ THEN RAISE EXCEPTION 'Browser roles can execute privileged queue RPC'; END IF;
+ IF NOT has_function_privilege('service_role','public.enqueue_analysis_job(uuid,uuid)','EXECUTE')
+ THEN RAISE EXCEPTION 'service_role cannot execute queue RPC'; END IF;
+END $$;
+BEGIN;
+INSERT INTO public.papers(id,user_id,title,original_filename,storage_path,size_bytes) VALUES
+ ('10111111-1111-4111-8111-111111111111','11111111-1111-4111-8111-111111111111','Dedupe A','a.pdf','11111111-1111-4111-8111-111111111111/a.pdf',10),
+ ('10111111-1111-4111-8111-111111111112','11111111-1111-4111-8111-111111111111','Daily B','b.pdf','11111111-1111-4111-8111-111111111111/b.pdf',10),
+ ('10111111-1111-4111-8111-111111111113','11111111-1111-4111-8111-111111111111','Daily C','c.pdf','11111111-1111-4111-8111-111111111111/c.pdf',10),
+ ('10111111-1111-4111-8111-111111111114','11111111-1111-4111-8111-111111111111','Daily D','d.pdf','11111111-1111-4111-8111-111111111111/d.pdf',10),
+ ('10111111-1111-4111-8111-111111111115','11111111-1111-4111-8111-111111111111','Daily E','e.pdf','11111111-1111-4111-8111-111111111111/e.pdf',10),
+ ('10111111-1111-4111-8111-111111111116','11111111-1111-4111-8111-111111111111','Daily F','f.pdf','11111111-1111-4111-8111-111111111111/f.pdf',10),
+ ('20222222-2222-4222-8222-222222222221','22222222-2222-4222-8222-222222222222','Active A','a.pdf','22222222-2222-4222-8222-222222222222/a.pdf',10),
+ ('20222222-2222-4222-8222-222222222222','22222222-2222-4222-8222-222222222222','Active B','b.pdf','22222222-2222-4222-8222-222222222222/b.pdf',10),
+ ('20222222-2222-4222-8222-222222222223','22222222-2222-4222-8222-222222222222','Active C','c.pdf','22222222-2222-4222-8222-222222222222/c.pdf',10);
+SET LOCAL ROLE service_role;
+DO $$
+DECLARE first_job uuid; duplicate_job uuid; denied boolean:=false; not_found boolean:=false;
+BEGIN
+ -- Even the privileged caller must not enqueue a job for another owner's paper.
+ -- This check is repeated both before and after browser-write revocation in CI.
+ BEGIN
+  PERFORM id FROM public.enqueue_analysis_job('10111111-1111-4111-8111-111111111111','22222222-2222-4222-8222-222222222222');
+ EXCEPTION WHEN SQLSTATE 'P0002' THEN
+  IF SQLERRM='PAPERSIGNAL_PAPER_NOT_FOUND' THEN not_found:=true; ELSE RAISE; END IF;
+ END;
+ IF NOT not_found THEN RAISE EXCEPTION 'Cross-owner queue enqueue was accepted'; END IF;
+ SELECT id INTO first_job FROM public.enqueue_analysis_job('10111111-1111-4111-8111-111111111111','11111111-1111-4111-8111-111111111111');
+ SELECT id INTO duplicate_job FROM public.enqueue_analysis_job('10111111-1111-4111-8111-111111111111','11111111-1111-4111-8111-111111111111');
+ IF first_job IS DISTINCT FROM duplicate_job THEN RAISE EXCEPTION 'Idempotency failed'; END IF;
+ INSERT INTO public.analysis_jobs(paper_id,user_id,status,stage)
+ SELECT id,'11111111-1111-4111-8111-111111111111','completed','completed'
+ FROM public.papers WHERE id IN ('10111111-1111-4111-8111-111111111112','10111111-1111-4111-8111-111111111113','10111111-1111-4111-8111-111111111114','10111111-1111-4111-8111-111111111115');
+ BEGIN
+  PERFORM id FROM public.enqueue_analysis_job('10111111-1111-4111-8111-111111111116','11111111-1111-4111-8111-111111111111');
+ EXCEPTION WHEN SQLSTATE 'P0001' THEN
+  IF SQLERRM='PAPERSIGNAL_DAILY_LIMIT' THEN denied:=true; ELSE RAISE; END IF;
+ END;
+ IF NOT denied THEN RAISE EXCEPTION 'Daily quota did not stop sixth analysis'; END IF;
+END $$;
+ROLLBACK;
+BEGIN;
+INSERT INTO public.papers(id,user_id,title,original_filename,storage_path,size_bytes) VALUES
+ ('21222222-2222-4222-8222-222222222221','22222222-2222-4222-8222-222222222222','Active A','a.pdf','22222222-2222-4222-8222-222222222222/a.pdf',10),
+ ('21222222-2222-4222-8222-222222222222','22222222-2222-4222-8222-222222222222','Active B','b.pdf','22222222-2222-4222-8222-222222222222/b.pdf',10),
+ ('21222222-2222-4222-8222-222222222223','22222222-2222-4222-8222-222222222222','Active C','c.pdf','22222222-2222-4222-8222-222222222222/c.pdf',10);
+INSERT INTO public.analysis_jobs(paper_id,user_id,status,stage) VALUES
+ ('21222222-2222-4222-8222-222222222221','22222222-2222-4222-8222-222222222222','queued','queued'),
+ ('21222222-2222-4222-8222-222222222222','22222222-2222-4222-8222-222222222222','processing','gemini_analysis');
+SET LOCAL ROLE service_role;
+DO $$
+DECLARE denied boolean:=false;
+BEGIN
+ BEGIN
+  PERFORM id FROM public.enqueue_analysis_job('21222222-2222-4222-8222-222222222223','22222222-2222-4222-8222-222222222222');
+ EXCEPTION WHEN SQLSTATE 'P0001' THEN
+  IF SQLERRM='PAPERSIGNAL_ACTIVE_LIMIT' THEN denied:=true; ELSE RAISE; END IF;
+ END;
+ IF NOT denied THEN RAISE EXCEPTION 'Active limit did not stop third job'; END IF;
+END $$;
+ROLLBACK;
+SELECT 'PASS: service-only RPC, dedupe, daily and active limits' AS outcome;
