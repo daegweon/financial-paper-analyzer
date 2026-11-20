@@ -11,7 +11,7 @@ def test_pipeline_creates_all_review_artifacts_and_preserves_unmeasured(tmp_path
     assert out['scorecard']['not_run_count'] == 1
     assert out['scorecard']['mean_human_score'] is None
     assert out['diagnostics']['paper_count'] == 1
-    for name in ('scorecard.json', 'diagnostics.json', 'quality-dashboard.html', 'human-review-packet.md'):
+    for name in ('scorecard.json', 'diagnostics.json', 'coverage-matrix.json', 'quality-dashboard.html', 'human-review-packet.md'):
         assert (tmp_path / name).is_file()
     packet = (tmp_path / 'human-review-packet.md').read_text(encoding='utf-8')
     assert '승인된 finding 수: 0' in packet
