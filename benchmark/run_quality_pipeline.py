@@ -63,6 +63,7 @@ def run_pipeline(manifest, results, out_dir: Path, pages_dir: Path | None = None
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / 'scorecard.json').write_text(json.dumps(scorecard, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     (out_dir / 'diagnostics.json').write_text(json.dumps(diagnostics, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    (out_dir / 'coverage-matrix.json').write_text(json.dumps(coverage_matrix, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     (out_dir / 'quality-dashboard.html').write_text(render_dashboard(scorecard), encoding='utf-8')
     (out_dir / 'human-review-packet.md').write_text(packet, encoding='utf-8')
     failure_report = None
