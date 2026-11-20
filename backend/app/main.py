@@ -2751,7 +2751,7 @@ def _build_admin_ai_usage_summary(events: list[dict[str, Any]], month: str, mont
         provider = str(event.get("provider") or "unknown")
         model = str(event.get("model") or "unknown-model")
         key = (provider, model)
-        item = model_totals.setdefault(key, {"provider": provider, "model": model, "event_count": 0, "success_events": 0, "failed_events": 0, "known_cost_events": 0, "unknown_cost_events": 0, "estimated_cost_usd": Decimal("0"), "total_tokens": 0, "token_usage_incomplete_events": 0, "latency_total_ms": 0, "latency_events": 0})
+        item = model_totals.setdefault(key, {"provider": provider, "model": model, "event_count": 0, "success_events": 0, "failed_events": 0, "known_cost_events": 0, "unknown_cost_events": 0, "estimated_cost_usd": Decimal("0"), "total_tokens": 0, "token_usage_incomplete_events": 0, "latency_total_ms": 0, "latency_events": 0, "cost_status_counts": {}, "price_sources": [], "price_effective_dates": []})
         item["event_count"] += 1
         outcome = event.get("outcome")
         if outcome == "success":
@@ -2790,6 +2790,14 @@ def _build_admin_ai_usage_summary(events: list[dict[str, Any]], month: str, mont
         item["known_cost_events"] += group["known_cost_events"]
         item["unknown_cost_events"] += group["unknown_cost_events"]
         item["estimated_cost_usd"] += Decimal(group["estimated_cost_usd"])
+        for status, count in group.get("cost_status_counts", {}).items():
+            item["cost_status_counts"][status] = item["cost_status_counts"].get(status, 0) + count
+        for source in group.get("price_sources", []):
+            if source not in item["price_sources"]:
+                item["price_sources"].append(source)
+        for effective_date in group.get("price_effective_dates", []):
+            if effective_date not in item["price_effective_dates"]:
+                item["price_effective_dates"].append(effective_date)
         known_total += Decimal(group["estimated_cost_usd"])
         known_events += group["known_cost_events"]
         unknown_events += group["unknown_cost_events"]
@@ -2804,6 +2812,9 @@ def _build_admin_ai_usage_summary(events: list[dict[str, Any]], month: str, mont
             "known_cost_events": item["known_cost_events"],
             "unknown_cost_events": item["unknown_cost_events"],
             "estimated_cost_usd": format(item["estimated_cost_usd"].quantize(Decimal("0.00000001")), "f"),
+            "cost_status_counts": item["cost_status_counts"],
+            "price_sources": item["price_sources"],
+            "price_effective_dates": sorted(item["price_effective_dates"]),
             "total_tokens": item["total_tokens"],
             "token_usage_incomplete_events": item["token_usage_incomplete_events"],
             "average_latency_ms": round(item["latency_total_ms"] / item["latency_events"]) if item["latency_events"] else None,
