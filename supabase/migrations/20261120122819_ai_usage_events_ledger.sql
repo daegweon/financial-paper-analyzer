@@ -1,5 +1,5 @@
 -- Immutable, privacy-minimized provider-attempt usage ledger.
--- Apply only after human review; CI applies this to disposable PostgreSQL 17.
+-- Production migration recorded as version 20261120122819; writes are service-role only.
 CREATE TABLE IF NOT EXISTS public.ai_usage_events (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,

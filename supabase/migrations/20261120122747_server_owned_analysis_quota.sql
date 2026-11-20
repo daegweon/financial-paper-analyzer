@@ -1,5 +1,4 @@
--- Atomic per-user Gemini/analysis queue limits.
--- Additive: the current API may keep direct service_role inserts until upgraded.
+-- Atomic per-user analysis queue limits. Only the server API may invoke this RPC.
 CREATE OR REPLACE FUNCTION public.enqueue_analysis_job(p_paper_id uuid,p_user_id uuid)
 RETURNS TABLE(id uuid,status text,stage text)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''

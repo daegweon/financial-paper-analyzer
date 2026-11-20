@@ -40,6 +40,58 @@ jobs:
       - run: pip install --prefer-binary -r backend/requirements-dev.txt
       - run: cd backend && pytest
 
+  db-policy:
+    name: Supabase migration and ownership contracts — disposable PostgreSQL
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: isolated-test-only
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Bootstrap minimal Supabase Auth and Storage contracts
+        env:
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < supabase/tests/bootstrap_beta_grant_fixture.sql
+      - name: Apply the exact recorded migration sequence to disposable PostgreSQL
+        env:
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          apply_sql() { docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres < "$1"; }
+          apply_sql supabase/migrations/20261112155952_initial_paper_analysis_schema.sql
+          apply_sql supabase/migrations/20261112160036_authenticated_analysis_writes.sql
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -c 'GRANT SELECT, INSERT, UPDATE, DELETE ON public.analysis_jobs TO service_role;'
+          apply_sql supabase/migrations/20261113021557_analysis_jobs_async_queue.sql
+          apply_sql supabase/migrations/20261113161739_worker_leases_heartbeat_and_retry_rpc.sql
+          apply_sql supabase/migrations/20261113222551_analysis_stage_checkpoints_and_idempotent_results.sql
+          apply_sql supabase/migrations/20261113222605_make_analysis_job_id_unique_for_upsert.sql
+          apply_sql supabase/migrations/20261113222644_index_analysis_job_foreign_keys.sql
+          apply_sql supabase/migrations/20261113222754_explicit_service_role_checkpoint_policy.sql
+          apply_sql supabase/migrations/20261113234956_cleanup_terminal_analysis_job_checkpoints.sql
+          # Verify trusted server enqueue while legacy client grants are still present.
+          apply_sql supabase/tests/verify_pre_revoke_server_enqueue.sql
+          # Match Production ordering: close client write paths, then install quota and ledger.
+          apply_sql supabase/migrations/20261120102957_beta_server_owned_result_writes.sql
+          apply_sql supabase/migrations/20261120122747_server_owned_analysis_quota.sql
+          apply_sql supabase/tests/verify_analysis_queue_quota.sql
+          apply_sql supabase/migrations/20261120122819_ai_usage_events_ledger.sql
+          apply_sql supabase/migrations/20261120122859_index_ai_usage_ledger_foreign_keys.sql
+          apply_sql supabase/tests/verify_ai_usage_events_ledger.sql
+          apply_sql supabase/tests/verify_beta_write_isolation.sql
+
   frontend:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-24.04

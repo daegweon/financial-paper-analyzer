@@ -1,6 +1,5 @@
--- Beta integrity boundary (staged only; NOT yet applied to the live project).
--- Deploy and verify server-owned POST /api/analyze first, while the old
--- authenticated client write privileges still exist. Only then apply.
+-- Production write-boundary migration, recorded remotely as version 20261120102957.
+-- The server-owned API/Worker must be deployed before applying this migration.
 --
 -- Signed-in browser users may upload paper metadata and read their own
 -- analyses/jobs, but only the trusted API + Worker (service_role) can create
