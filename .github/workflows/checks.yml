@@ -68,6 +68,7 @@ jobs:
             ${{ runner.os }}-node24-npm-
       - run: npm install --prefer-offline --no-audit --no-fund
       - run: npm run lint
+      - run: npm run test:unit
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e

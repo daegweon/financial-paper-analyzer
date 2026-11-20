@@ -8,9 +8,9 @@
     "fallback_model": "gemini-3.6-flash"
   },
   "important_scope": [
-    "This is a candidate benchmark set; PDFs have not yet been uploaded or analyzed in the user's production workspace.",
-    "Ground-truth facts are curated from publisher abstracts and accessible full-text sections; page-level gold citations must be finalized against the exact PDF version.",
-    "Open access does not by itself authorize every downstream use. Confirm the article-specific license on the publisher page before any redistribution.",
+    "All ten B01–B10 publisher PDFs have been uploaded and analyzed in the PaperSignal workspace. The latest stored analysis versions are mixed; see benchmark/README.md and the 2026-11-20 assistant second-pass evidence audit.",
+    "Ground-truth facts are curated from publisher abstracts and full-text sections. Six findings in the latest stored analysis snapshot remain flagged for human review; page-level evidence must be read against the exact PDF version.",
+    "Article-specific license statements were checked in all ten supplied PDFs on 2026-11-20: B01–B06 and B08–B10 explicitly state Creative Commons Attribution 4.0 (CC BY 4.0); B07 (PLOS ONE) states the Creative Commons Attribution License (CC BY). Preserve author/source attribution and the license link; check separately marked third-party material before reuse.",
     "Gemini Free Tier prompts and responses may be used to improve Google products and may be human-reviewed. Use public/non-confidential papers only."
   ],
   "papers": [
@@ -26,7 +26,7 @@
       "publisher": "International Journal of Financial Studies (MDPI)",
       "doi": "10.3390/ijfs11040144",
       "article_url": "https://www.mdpi.com/2227-7072/11/4/144",
-      "access": "Open Access; verify article-specific reuse license on publisher page",
+      "access": "Open Access; supplied publisher PDF explicitly states Creative Commons Attribution 4.0 (CC BY 4.0).",
       "topic": [
         "asset pricing",
         "factor models",
@@ -172,7 +172,7 @@
       "publisher": "International Journal of Financial Studies (MDPI)",
       "doi": "10.3390/ijfs11020062",
       "article_url": "https://www.mdpi.com/2227-7072/11/2/62",
-      "access": "Open Access; verify article-specific reuse license on publisher page",
+      "access": "Open Access; supplied publisher PDF explicitly states Creative Commons Attribution 4.0 (CC BY 4.0).",
       "topic": [
         "Korean equities",
         "consumption-based asset pricing",
@@ -262,7 +262,7 @@
       "publisher": "International Journal of Financial Studies (MDPI)",
       "doi": "10.3390/ijfs11010020",
       "article_url": "https://www.mdpi.com/2227-7072/11/1/20",
-      "access": "Open Access; article page identifies Creative Commons Attribution (CC BY) license",
+      "access": "Open Access; supplied publisher PDF explicitly states Creative Commons Attribution 4.0 (CC BY 4.0).",
       "topic": [
         "asset pricing",
         "factor regression",
@@ -351,7 +351,7 @@
       "publisher": "International Journal of Financial Studies (MDPI)",
       "doi": "10.3390/ijfs6020054",
       "article_url": "https://www.mdpi.com/2227-7072/6/2/54",
-      "access": "Open Access; verify article-specific reuse license on publisher page",
+      "access": "Open Access; supplied publisher PDF explicitly states Creative Commons Attribution 4.0 (CC BY 4.0).",
       "topic": [
         "asset pricing",
         "regime switching",
@@ -441,7 +441,7 @@
       "publisher": "International Journal of Financial Studies (MDPI)",
       "doi": "10.3390/ijfs8010013",
       "article_url": "https://www.mdpi.com/2227-7072/8/1/13",
-      "access": "Open Access; verify article-specific reuse license on publisher page",
+      "access": "Open Access; supplied publisher PDF explicitly states Creative Commons Attribution 4.0 (CC BY 4.0).",
       "topic": [
         "liquidity premium",
         "market microstructure",
@@ -524,7 +524,7 @@
       "publisher": "International Journal of Financial Studies (MDPI)",
       "doi": "10.3390/ijfs11010007",
       "article_url": "https://www.mdpi.com/2227-7072/11/1/7",
-      "access": "Open Access; article page identifies Creative Commons Attribution (CC BY) license",
+      "access": "Open Access; supplied publisher PDF explicitly states Creative Commons Attribution 4.0 (CC BY 4.0).",
       "topic": [
         "exchange rates",
         "stock indices",
@@ -611,7 +611,7 @@
       "doi": "10.1371/journal.pone.0300393",
       "article_url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0300393",
       "pdf_url": "https://journals.plos.org/plosone/article/file?id=10.1371%2Fjournal.pone.0300393&type=printable",
-      "access": "Open Access; Creative Commons Attribution License (CC BY)",
+      "access": "Open Access; supplied PLOS PDF states Creative Commons Attribution License (CC BY); version not stated in the PDF license sentence.",
       "topic": [
         "Korean stock market",
         "macroeconomic variables",
@@ -702,7 +702,7 @@
       "publisher": "Journal of Risk and Financial Management (MDPI)",
       "doi": "10.3390/jrfm18070367",
       "article_url": "https://www.mdpi.com/1911-8074/18/7/367",
-      "access": "Open Access; Creative Commons Attribution (CC BY) license",
+      "access": "Open Access; supplied publisher PDF explicitly states Creative Commons Attribution 4.0 (CC BY 4.0).",
       "topic": [
         "ESG",
         "stock returns",
@@ -800,7 +800,7 @@
       "publisher": "Journal of Risk and Financial Management (MDPI)",
       "doi": "10.3390/jrfm18020096",
       "article_url": "https://www.mdpi.com/1911-8074/18/2/96",
-      "access": "Open Access; verify article-specific reuse license on publisher page",
+      "access": "Open Access; supplied publisher PDF explicitly states Creative Commons Attribution 4.0 (CC BY 4.0).",
       "topic": [
         "corporate finance",
         "volatility of volatility",
@@ -890,7 +890,7 @@
       "publisher": "Journal of Risk and Financial Management (MDPI)",
       "doi": "10.3390/jrfm18050269",
       "article_url": "https://www.mdpi.com/1911-8074/18/5/269",
-      "access": "Open Access; verify article-specific reuse license on publisher page",
+      "access": "Open Access; supplied publisher PDF explicitly states Creative Commons Attribution 4.0 (CC BY 4.0).",
       "topic": [
         "portfolio optimization",
         "realized volatility",
@@ -962,5 +962,29 @@
         "Do not turn the paper's findings into personalized investment advice."
       ]
     }
-  ]
+  ],
+  "license_audit": {
+    "checked_on": "2026-11-20",
+    "method": "Read the license statement in the supplied publisher PDF front matter or footer; cross-checked the PLOS article page for B07.",
+    "verified_count": 10,
+    "mdpi_cc_by_4_0": [
+      "B01",
+      "B02",
+      "B03",
+      "B04",
+      "B05",
+      "B06",
+      "B08",
+      "B09",
+      "B10"
+    ],
+    "plos_cc_by": [
+      "B07"
+    ],
+    "limitations": [
+      "B07's supplied PDF says Creative Commons Attribution (CC BY) but does not state the version in the extracted license sentence.",
+      "The audit covers article-level license statements only; any third-party figures, datasets or separately credited material may have different rights.",
+      "For redistribution, retain title, authors, DOI/source URL, license URL and an indication of modifications."
+    ]
+  }
 }

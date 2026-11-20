@@ -41,20 +41,22 @@ When an OpenAI API key and billing are available, switch providers in Railway:
 
 No application data migration is required. Both providers return the same normalized analysis schema and use the same page-level evidence verification.
 
-## Analysis engine v6.2
+## Analysis engine v6.3
 
-New analyses use `finance-structured-v6.2`. The research-design-aware validation pipeline adds:
+New analyses use `finance-structured-v6.3`. In addition to the v6.2 research-design-aware validation pipeline, v6.3 adds:
 - explicit classification of balanced/unbalanced panels, repeated cross-sections, time series, cross-sections and portfolio-optimization studies;
 - typed integer sample dimensions and source-level sample-count reports, preserving conflicting values across abstracts, methodology sections and tables;
 - N×T checks only for evidence-backed balanced panels; unbalanced and non-panel designs are not multiplied;
 - table/model/column context and separate regression-significance legend citations;
-- context-aware p-value, significance-star and summary-to-findings consistency screens.
+- context-aware p-value, significance-star and summary-to-findings consistency screens;
+- a conditional table-first third-pass recovery for empirical papers whose first two passes return no supported findings;
+- explicit findings_coverage states (supported, review_required, incomplete, not_assessable) so job completion is not confused with extraction completeness.
 
-See [v6.2 architecture and limitations](docs/analysis-v6.2.md). These checks are triage aids, not semantic proofs; table alignment, coefficient interpretation, sample definitions and claim-to-citation entailment still require researcher review.
+See [v6.2 architecture and limitations](docs/analysis-v6.2.md) and [v6.3 findings recovery](docs/analysis-v6.3.md). These checks are triage aids, not semantic proofs; table alignment, coefficient interpretation, sample definitions and claim-to-citation entailment still require researcher review.
 
 ## Analysis output
 
-Gemini output budgets are 16,384 tokens for the primary Flash-Lite model and 24,576 tokens for the fallback Flash model. If the primary response ends with `MAX_TOKENS`, the worker automatically retries with the fallback model. Results are kept concise and evidence lists are bounded to reduce truncation. Analysis schema v6.2 normalizes PDF typography, classifies study designs and performs field-level evidence, sample-count and table-significance checks (Unicode ligatures, dash variants, and whitespace) when validating citations, then stores the matched excerpt from the original extracted page text. It also preserves individually evidenced variables when a section-level methodology citation is unavailable, and strengthens Korean output / empirical-findings instructions.
+Gemini output budgets are 16,384 tokens for the primary Flash-Lite model and 24,576 tokens for the fallback Flash model. If the primary response ends with `MAX_TOKENS`, the worker automatically retries with the fallback model. Results are kept concise and evidence lists are bounded to reduce truncation. Analysis schema v6.3 normalizes PDF typography, classifies study designs and performs field-level evidence, sample-count and table-significance checks (Unicode ligatures, dash variants, and whitespace) when validating citations, then stores the matched excerpt from the original extracted page text. It also preserves individually evidenced variables when a section-level methodology citation is unavailable, and strengthens Korean output / empirical-findings instructions.
 
 The structured financial-research report includes:
 
@@ -69,7 +71,7 @@ Every generated citation is checked against the extracted text of its stated PDF
 
 ## Security and privacy
 
-- Supabase email/password authentication
+- Supabase email/password and Google OAuth authentication
 - Per-user Row Level Security for papers and analyses
 - Private Storage bucket; PDF objects are not public
 - Backend validates the user's JWT and uses that JWT for all Supabase reads/writes
@@ -104,8 +106,8 @@ Set secrets only in Railway's service Variables UI. Never commit them to GitHub 
 - PDF page count: 1–300
 - Text analysis scans the first 50 pages
 - Image-only/scanned PDFs require OCR, which is not included yet
-- Analysis requests return immediately with a job ID; the frontend polls the job status while FastAPI runs the model call in a background task.
-- Job status is stored in the RLS-protected `analysis_jobs` table. The current worker uses FastAPI in-process background tasks; a separate durable queue/worker is a future hardening step.
+- Analysis requests return immediately with a job ID; the frontend polls the RLS-protected analysis_jobs table.
+- A separate Railway Worker consumes the durable Supabase queue with leases, heartbeat, retries, checkpoints and idempotent result persistence.
 
 ## Local development
 
@@ -130,6 +132,7 @@ pytest
 Database migrations:
 - `supabase/migrations/20261113000000_initial_schema.sql`
 - `supabase/migrations/20261113010000_analysis_jobs.sql`
+- `supabase/migrations/20261114000000_durable_analysis_worker.sql` through `20261114060000_cleanup_terminal_analysis_job_checkpoints.sql`
 
 ## Finance paper quality benchmark
 
