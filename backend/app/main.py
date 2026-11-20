@@ -1,4 +1,5 @@
 import asyncio
+from contextvars import ContextVar
 from difflib import SequenceMatcher
 import json
 import logging
@@ -2065,6 +2066,11 @@ async def _generate_gemini(
     timeout = httpx.Timeout(connect=10.0, read=75.0, write=25.0, pool=10.0)
 
     for index, model_name in enumerate(models):
+        usage_context = _AI_USAGE_CONTEXT.get()
+        attempt_index = 0
+        if usage_context is not None:
+            usage_context['attempt_index'] = usage_context.get('attempt_index', 0) + 1
+            attempt_index = usage_context['attempt_index']
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
         thinking_level = "minimal" if "flash-lite" in model_name else "low"
         request_body = {
@@ -2098,10 +2104,13 @@ async def _generate_gemini(
             )
             failures.append((model_name, "timeout", error_type))
             log.info("Gemini attempt telemetry provider=gemini model=%s outcome=transport_error error_type=%s latency_ms=%d", model_name, error_type, round((time.monotonic() - attempt_started) * 1000))
+            await _persist_ai_usage_event(provider="gemini", model=model_name, outcome="transport_error", attempt_index=attempt_index, latency_ms=round((time.monotonic() - attempt_started) * 1000), error_class=error_type)
             continue
 
         latency_ms = round((time.monotonic() - attempt_started) * 1000)
         log.info("Gemini attempt telemetry provider=gemini model=%s http_status=%d latency_ms=%d", model_name, response.status_code, latency_ms)
+        if response.status_code >= 300:
+            await _persist_ai_usage_event(provider="gemini", model=model_name, outcome="http_error", attempt_index=attempt_index, latency_ms=latency_ms, http_status=response.status_code)
         if response.status_code in (429, 500, 502, 503, 504, 404):
             body = response.text[:700]
             log.warning(
@@ -2139,6 +2148,7 @@ async def _generate_gemini(
         candidate = candidates[0]
         finish_reason = candidate.get("finishReason")
         usage = payload.get("usageMetadata", {})
+        await _persist_ai_usage_event(provider="gemini", model=model_name, outcome="success" if finish_reason in (None, "STOP") else "invalid_response", attempt_index=attempt_index, latency_ms=latency_ms, http_status=response.status_code, usage=usage)
         log.info(
             "Gemini usage provider=gemini model=%s finish=%s prompt_tokens=%s candidate_tokens=%s thought_tokens=%s total_tokens=%s latency_ms=%d",
             model_name,
@@ -2623,6 +2633,56 @@ async def llm_result(
     result["evidence"] = _all_evidence(result)
     return result
 
+
+
+_AI_USAGE_CONTEXT: ContextVar[dict[str, Any] | None] = ContextVar("papersignal_ai_usage_context", default=None)
+
+
+async def _persist_ai_usage_event(
+    *, provider: str, model: str, outcome: str, attempt_index: int,
+    latency_ms: int, http_status: int | None = None, error_class: str | None = None,
+    usage: dict[str, Any] | None = None,
+) -> None:
+    """Best-effort service-role write; telemetry failure must never fail analysis."""
+    context = _AI_USAGE_CONTEXT.get()
+    if not context or not SERVICE_ROLE_KEY or not SUPABASE_URL:
+        return
+    usage = usage or {}
+    job_id = context.get("analysis_job_id")
+    payload = {
+        "user_id": context["user_id"],
+        "paper_id": context["paper_id"],
+        "analysis_job_id": job_id,
+        "provider": provider,
+        "model": model,
+        "attempt_index": attempt_index,
+        "outcome": outcome,
+        "http_status": http_status,
+        "error_class": error_class[:128] if error_class else None,
+        "prompt_tokens": usage.get("promptTokenCount"),
+        "candidate_tokens": usage.get("candidatesTokenCount"),
+        "thought_tokens": usage.get("thoughtsTokenCount"),
+        "total_tokens": usage.get("totalTokenCount"),
+        "latency_ms": max(0, int(latency_ms)),
+        "idempotency_key": f"{job_id}:{provider}:{model}:{attempt_index}",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(5.0, connect=2.0)) as client:
+            response = await client.post(
+                SUPABASE_URL + "/rest/v1/ai_usage_events",
+                headers={
+                    **supabase_headers(SERVICE_ROLE_KEY),
+                    "Content-Type": "application/json",
+                    "Prefer": "resolution=ignore-duplicates,return=minimal",
+                },
+                json=payload,
+            )
+        if response.status_code >= 300:
+            log.warning("AI usage ledger write failed status=%d job_id=%s; analysis continues", response.status_code, job_id)
+    except Exception as exc:
+        log.warning("AI usage ledger write unavailable error_type=%s job_id=%s; analysis continues", type(exc).__name__, job_id)
+
+
 def supabase_headers(token: str) -> dict[str, str]:
     # Supabase's new sb_secret_* keys are opaque API keys, not JWTs.
     # They must be sent as apikey only; legacy service_role keys remain JWTs.
@@ -2738,6 +2798,7 @@ async def _process_analysis_job(
 ) -> None:
     """Resume from durable checkpoints and make result persistence idempotent."""
     headers = supabase_headers(token)
+    usage_context_token = _AI_USAGE_CONTEXT.set({"user_id": user_id, "paper_id": paper_id, "analysis_job_id": job_id, "attempt_index": 0})
     job_started_at = time.monotonic()
     try:
         async with httpx.AsyncClient(timeout=60) as client:
@@ -2936,6 +2997,8 @@ async def _process_analysis_job(
             await _patch_owned_row("papers", paper_id, user_id, token, {"status": "failed"})
         except Exception:
             log.exception("Could not persist crashed analysis job job_id=%s", job_id)
+    finally:
+        _AI_USAGE_CONTEXT.reset(usage_context_token)
 
 
 @app.post("/api/analyze/{paper_id}", status_code=202)
