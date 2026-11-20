@@ -1,8 +1,10 @@
 import asyncio
+import calendar
 from contextvars import ContextVar
 from difflib import SequenceMatcher
 import json
 import logging
+import math
 import os
 import re
 import unicodedata
@@ -11,6 +13,8 @@ from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import quote
 from uuid import UUID
+
+from app.cost_report import build_cost_report
 
 import fitz
 import httpx
@@ -21,6 +25,8 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
 SUPABASE_KEY = os.getenv("SUPABASE_PUBLISHABLE_KEY", "")
 SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 GEMINI_BILLING_MODE = os.getenv("GEMINI_BILLING_MODE", "unknown").strip().lower()
+ADMIN_USER_IDS = {value.strip() for value in os.getenv("PAPERSIGNAL_ADMIN_USER_IDS", "").split(",") if value.strip()}
+ADMIN_MONTHLY_AI_BUDGET_USD = os.getenv("PAPERSIGNAL_ADMIN_MONTHLY_AI_BUDGET_USD", "").strip()
 FRONTEND_ORIGINS = [
     item.strip().rstrip("/")
     for item in os.getenv("FRONTEND_ORIGIN", "http://localhost:3000").split(",")
@@ -2723,6 +2729,71 @@ def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _is_admin_user(user_id: str) -> bool:
+    """Server-side allowlist; frontend visibility is never an authorization boundary."""
+    return bool(user_id and user_id in ADMIN_USER_IDS)
+
+
+def _build_admin_ai_usage_summary(events: list[dict[str, Any]], month: str, monthly_budget: str | None) -> dict[str, Any]:
+    """Aggregate administrator-only usage. Never exposes raw events or user-set budgets."""
+    report = build_cost_report(events)
+    model_totals: dict[str, dict[str, Any]] = {}
+    user_totals: dict[str, dict[str, Any]] = {}
+    known_total = 0.0
+    unknown_events = 0
+    known_events = 0
+    for group in report["groups"]:
+        model = group["model"]
+        item = model_totals.setdefault(model, {"model": model, "event_count": 0, "known_cost_events": 0, "unknown_cost_events": 0, "estimated_cost_usd": 0.0})
+        item["event_count"] += group["event_count"]
+        item["known_cost_events"] += group["known_cost_events"]
+        item["unknown_cost_events"] += group["unknown_cost_events"]
+        item["estimated_cost_usd"] += float(group["estimated_cost_usd"])
+        known_total += float(group["estimated_cost_usd"])
+        known_events += group["known_cost_events"]
+        unknown_events += group["unknown_cost_events"]
+    for row in report["monthly_user_budgets"]:
+        if row["month"] != month:
+            continue
+        user_id = row["user_id"]
+        user_totals[user_id] = {
+            "user_id": user_id,
+            "event_count": row["event_count"],
+            "known_cost_events": row["known_cost_events"],
+            "unknown_cost_events": row["unknown_cost_events"],
+            "estimated_cost_usd": row["estimated_cost_usd"],
+        }
+    for item in model_totals.values():
+        item["estimated_cost_usd"] = f"{item['estimated_cost_usd']:.8f}"
+    budget = None
+    if monthly_budget is not None:
+        try:
+            value = float(monthly_budget)
+            if value < 0 or not math.isfinite(value):
+                raise ValueError
+            budget = value
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=503, detail="관리자 월간 예산 설정이 올바르지 않습니다.")
+    budget_status = "not_configured"
+    if budget is not None:
+        budget_status = "exceeded" if known_total > budget else ("incomplete_unknown_costs" if unknown_events else "within_budget")
+    return {
+        "month": month,
+        "currency": "USD",
+        "event_count": len(events),
+        "known_cost_events": known_events,
+        "unknown_cost_events": unknown_events,
+        "estimated_cost_usd": f"{known_total:.8f}",
+        "monthly_budget_usd": f"{budget:.2f}" if budget is not None else None,
+        "budget_status": budget_status,
+        "cost_coverage_complete": unknown_events == 0,
+        "models": sorted(model_totals.values(), key=lambda item: item["model"]),
+        "users": sorted(user_totals.values(), key=lambda item: item["estimated_cost_usd"], reverse=True),
+        "truncated": len(events) >= 20000,
+        "notice": "관리자 전용 운영 지표. 비용은 명시적으로 확인된 유료 등급과 가격표가 있는 이벤트의 추정치이며 청구서가 아닙니다. 미확정 비용은 합계에 포함되지 않습니다.",
+    }
+
+
 async def _verify_user(client: httpx.AsyncClient, token: str) -> str:
     response = await client.get(SUPABASE_URL + "/auth/v1/user", headers=supabase_headers(token))
     if response.status_code != 200:
@@ -3134,3 +3205,57 @@ async def analysis_job_status(
             "updated_at": job.get("updated_at"),
             "completed_at": job.get("completed_at"),
         }
+
+
+@app.get("/api/admin/ai-usage/summary")
+async def admin_ai_usage_summary(
+    authorization: str | None = Header(default=None),
+    month: str | None = None,
+) -> dict[str, Any]:
+    if not SUPABASE_URL or not SUPABASE_KEY or not SERVICE_ROLE_KEY:
+        raise HTTPException(status_code=503, detail="관리자 사용량 조회 환경이 설정되지 않았습니다.")
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="로그인이 필요합니다.")
+    token = authorization.split(" ", 1)[1].strip()
+    if not token:
+        raise HTTPException(status_code=401, detail="인증 토큰이 필요합니다.")
+    async with httpx.AsyncClient(timeout=15) as client:
+        user_id = await _verify_user(client, token)
+    if not _is_admin_user(user_id):
+        raise HTTPException(status_code=403, detail="관리자 권한이 필요합니다.")
+    selected_month = month or datetime.now(timezone.utc).strftime("%Y-%m")
+    if not re.fullmatch(r"\\d{4}-\\d{2}", selected_month):
+        raise HTTPException(status_code=422, detail="월 형식은 YYYY-MM이어야 합니다.")
+    try:
+        year, month_number = (int(value) for value in selected_month.split("-"))
+        start = datetime(year, month_number, 1, tzinfo=timezone.utc)
+        if month_number == 12:
+            end = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
+        else:
+            end = datetime(year, month_number + 1, 1, tzinfo=timezone.utc)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="유효하지 않은 월입니다.")
+    headers = {**supabase_headers(SERVICE_ROLE_KEY), "Range-Unit": "items"}
+    events: list[dict[str, Any]] = []
+    page_size = 1000
+    for offset in range(0, 20000, page_size):
+        headers["Range"] = f"{offset}-{offset + page_size - 1}"
+        async with httpx.AsyncClient(timeout=20) as client:
+            response = await client.get(
+                SUPABASE_URL + "/rest/v1/ai_usage_events",
+                headers=headers,
+                params={
+                    "select": "user_id,paper_id,provider,model,billing_mode,prompt_tokens,candidate_tokens,thought_tokens,created_at",
+                    "created_at": f"gte.{start.isoformat()}",
+                    "and": f"(created_at.lt.{end.isoformat()})",
+                    "order": "created_at.asc",
+                    "limit": str(page_size),
+                },
+            )
+        rows = await check_response(response, "admin AI usage lookup")
+        rows = rows or []
+        events.extend(rows)
+        if len(rows) < page_size:
+            break
+    monthly_budget = ADMIN_MONTHLY_AI_BUDGET_USD or None
+    return _build_admin_ai_usage_summary(events, selected_month, monthly_budget)
