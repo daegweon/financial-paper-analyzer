@@ -274,7 +274,7 @@ test.describe("isolated synthetic Supabase browser flows", () => {
     );
     await login(page,"qa-a@example.invalid");
     await page.goto("/admin/ai-usage",{waitUntil:"domcontentloaded"});
-    await expect(page.locator("[role=alert].notice")).toContainText("일반 사용자에게는 AI 사용량과 비용 정보가 공개되지 않습니다.");
+    await expect(page.getByText("관리자 권한이 확인되지 않았습니다. 일반 사용자에게는 AI 사용량과 비용 정보가 공개되지 않습니다.", {exact:true})).toBeVisible();
     await expect(page.getByText("월간 추정 비용")).toHaveCount(0);
     await expect(page.getByText("서비스 전체 월간 AI 예산 설정")).toHaveCount(0);
   });
