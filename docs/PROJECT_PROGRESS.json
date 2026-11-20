@@ -8,8 +8,8 @@
     "pull_request": 18,
     "base": "main",
     "review_state": "draft",
-    "last_independently_verified_sha": "e9854d26588125076b88b9b7f52c4af988984ca2",
-    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44648626115",
+    "last_independently_verified_sha": "d004d27253ff14766a0c061c8369165cdb7f90f0",
+    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44653216545",
     "production_api": {
       "service_id": "81b678e2-7136-436d-9058-7d20647dc1b7",
       "immutable_commit": "ace3fbd5dab3ea71efa3a49da8363259ea5f9732",
@@ -257,6 +257,11 @@
       "date": "2026-11-20",
       "percent": 95,
       "evidence": "Awarded one finance-engine quality-engineering point after CI #44653101787 passed on candidate commit a0059364c691e9cbed670798af345378430e9586. Verified benchmark topic/method-family coverage matrix, matched/missing/unmeasured Gold-fact classification, paired version comparison and failure taxonomy; API, frontend, PostgreSQL, GET-only live API preflight and browser QA all SUCCESS. This improves evaluation/triage tooling, not underlying LLM semantic accuracy. The later full CI #44653492214 is still running to validate final artifact persistence and progress-ledger/docs state."
+    },
+    {
+      "date": "2026-11-20",
+      "percent": 95,
+      "evidence": "Final integrated pipeline persistence fix d004d27253ff14766a0c061c8369165cdb7f90f0 passed full CI #44653216545: API 166 passed/1 deliberately skipped, frontend lint/build, disposable PostgreSQL policy, GET-only live API preflight and all synthetic browser QA SUCCESS. This validates scorecard, diagnostics, coverage-matrix, HTML dashboard, review packet, optional failure report and optional baseline comparison output wiring. Production live E2E remains intentionally skipped."
     }
   ]
 }
