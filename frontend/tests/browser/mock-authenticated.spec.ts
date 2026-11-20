@@ -311,5 +311,10 @@ test.describe("isolated synthetic Supabase browser flows", () => {
     const violations = await new AxeBuilder({page})
       .withTags(["wcag2a","wcag2aa","wcag21a","wcag21aa"])
       .analyze();
-    expect(violations.violations, JSON.stringify(violations.violations.map(item => ({id:item.id,impact:item.impact,nodes:item.nodes.map(node => ({target:node.target,summary:node.failureSummary}))}))).toEqual([]);
+    const violationDetails = violations.violations.map(item => ({
+      id: item.id,
+      impact: item.impact,
+      nodes: item.nodes.map(node => ({ target: node.target, summary: node.failureSummary })),
+    }));
+    expect(violations.violations.map(item => item.id), JSON.stringify(violationDetails)).toEqual([]);
   });
