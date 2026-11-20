@@ -2586,6 +2586,10 @@ def test_admin_usage_summary_aggregates_outcomes_tokens_latency_and_provider_mod
     assert gemini["total_tokens"] == 125
     assert gemini["token_usage_incomplete_events"] == 1
     assert gemini["average_latency_ms"] == 500
+    assert gemini["cost_status_counts"]["estimated_paid_standard"] == 1
+    assert gemini["cost_status_counts"]["billing_mode_unknown"] == 1
+    assert gemini["price_sources"] == ["https://ai.google.dev/gemini-api/docs/pricing"]
+    assert gemini["price_effective_dates"] == ["2026-11-20"]
 
 
 def test_admin_usage_pagination_detects_over_limit_without_counting_sentinel_rows(monkeypatch):
