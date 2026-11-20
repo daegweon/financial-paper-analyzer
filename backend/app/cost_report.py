@@ -3,7 +3,10 @@ import argparse
 import json
 from collections import defaultdict
 from pathlib import Path
-from app.cost_estimator import estimate_cost
+try:
+    from app.cost_estimator import estimate_cost
+except ModuleNotFoundError:
+    from backend.app.cost_estimator import estimate_cost
 
 def build_cost_report(events, catalog=None):
     groups = defaultdict(lambda: {'event_count': 0, 'known_cost_events': 0, 'unknown_cost_events': 0, 'estimated_cost_usd': 0.0, 'cost_status_counts': {}})
