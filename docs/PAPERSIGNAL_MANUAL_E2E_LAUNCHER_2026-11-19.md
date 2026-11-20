@@ -31,4 +31,4 @@ The full product candidate is still Draft PR #18 and must **not** be merged befo
 
 ## Status
 
-PR #19 merge: complete. Repository secrets: reported configured by the account owner; values are intentionally not readable here. Live E2E: pending the server-owned API rollout and explicit mutation approval. Release milestone remains pending until a genuine run succeeds.
+PR #19 merge: complete. Repository secrets: reported configured by the account owner; values are intentionally not readable here. Live E2E: pending one explicit manual GitHub Actions workflow dispatch; API rollout and database permission migration are complete. Release milestone remains pending until a genuine run succeeds.
