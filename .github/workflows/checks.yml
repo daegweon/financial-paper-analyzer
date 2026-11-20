@@ -39,6 +39,8 @@ jobs:
           cache-dependency-path: backend/requirements-dev.txt
       - run: pip install --prefer-binary -r backend/requirements-dev.txt
       - run: cd backend && pytest
+      - name: Start candidate API locally with synthetic credentials and verify HTTP/auth boundary
+        run: cd backend && python scripts/smoke_candidate_http.py
 
   db-policy:
     name: Supabase migration and ownership contracts — disposable PostgreSQL
