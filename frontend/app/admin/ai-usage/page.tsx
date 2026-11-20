@@ -1,0 +1,137 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { db } from "../../../lib/supabase";
+import styles from "./page.module.css";
+
+type ModelUsage = {
+  model: string;
+  event_count: number;
+  known_cost_events: number;
+  unknown_cost_events: number;
+  estimated_cost_usd: string;
+};
+type UserUsage = {
+  user_id: string;
+  event_count: number;
+  known_cost_events: number;
+  unknown_cost_events: number;
+  estimated_cost_usd: string;
+};
+type Summary = {
+  month: string;
+  currency: string;
+  event_count: number;
+  known_cost_events: number;
+  unknown_cost_events: number;
+  estimated_cost_usd: string;
+  monthly_budget_usd: string | null;
+  budget_status: string;
+  cost_coverage_complete: boolean;
+  models: ModelUsage[];
+  users: UserUsage[];
+  truncated: boolean;
+  notice: string;
+};
+
+function money(value: string | null) {
+  return value === null ? "미확정" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(Number(value));
+}
+
+export default function AdminAIUsagePage() {
+  const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [forbidden, setForbidden] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    setForbidden(false);
+    try {
+      const { data, error: sessionError } = await db().auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!data.session) throw new Error("관리자 계정으로 로그인해 주세요.");
+      const api = process.env.NEXT_PUBLIC_API_URL;
+      if (!api) throw new Error("API 주소가 설정되지 않았습니다.");
+      const response = await fetch(api.replace(/\/$/, "") + "/api/admin/ai-usage/summary?month=" + encodeURIComponent(month), {
+        headers: { Authorization: "Bearer " + data.session.access_token },
+        cache: "no-store",
+      });
+      if (response.status === 403) {
+        setForbidden(true);
+        throw new Error("관리자 권한이 확인되지 않았습니다. 일반 사용자에게는 AI 사용량과 비용 정보가 공개되지 않습니다.");
+      }
+      if (!response.ok) throw new Error(response.status === 401 ? "로그인 세션이 만료됐습니다." : "관리자 사용량 정보를 불러오지 못했습니다.");
+      setSummary(await response.json() as Summary);
+    } catch (cause) {
+      setSummary(null);
+      setError((cause as Error).message || "조회 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }, [month]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const budgetRatio = summary?.monthly_budget_usd && Number(summary.monthly_budget_usd) > 0
+    ? Math.min(100, Number(summary.estimated_cost_usd) / Number(summary.monthly_budget_usd) * 100)
+    : null;
+
+  return (
+    <main className={styles.shell}>
+      <header className={styles.header}>
+        <div>
+          <p className={styles.eyebrow}>PAPERSIGNAL · ADMINISTRATION</p>
+          <h1>AI 사용량 및 비용 관리</h1>
+          <p>전체 서비스의 모델 호출량, 추정 비용과 월간 예산을 관리합니다.</p>
+        </div>
+        <Link className={styles.back} href="/">서비스로 돌아가기</Link>
+      </header>
+
+      <section className={styles.toolbar} aria-label="조회 조건">
+        <label htmlFor="month">조회 월</label>
+        <input id="month" type="month" value={month} onChange={event => setMonth(event.target.value)} />
+        <button type="button" onClick={() => void load()} disabled={loading}>{loading ? "조회 중…" : "새로고침"}</button>
+      </section>
+
+      {error && <div className={forbidden ? styles.notice : styles.error} role="alert">{error}</div>}
+
+      {summary && <>
+        <section className={styles.cards} aria-label="전체 사용량 요약">
+          <article className={styles.card}><span>월간 추정 비용</span><strong>{money(summary.estimated_cost_usd)}</strong><small>확인된 유료 사용분</small></article>
+          <article className={styles.card}><span>월간 전체 예산</span><strong>{money(summary.monthly_budget_usd)}</strong><small>서버 관리자 설정</small></article>
+          <article className={styles.card}><span>모델 호출 이벤트</span><strong>{summary.event_count.toLocaleString("ko-KR")}</strong><small>성공 및 실패 시도 포함</small></article>
+          <article className={styles.card}><span>비용 미확정 이벤트</span><strong>{summary.unknown_cost_events.toLocaleString("ko-KR")}</strong><small>결제 등급·가격·토큰 미확인</small></article>
+        </section>
+
+        <section className={styles.panel}>
+          <div className={styles.panelTitle}><h2>월간 예산 상태</h2><strong>{summary.budget_status}</strong></div>
+          {budgetRatio !== null && <div className={styles.track} role="progressbar" aria-label="확인된 월간 예산 사용률" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(budgetRatio)}><span style={{ width: budgetRatio + "%" }} /></div>}
+          <p>{summary.monthly_budget_usd === null ? "월간 예산이 서버에 설정되지 않았습니다." : "확인된 비용 기준 " + (budgetRatio ?? 0).toFixed(1) + "% 사용"}</p>
+          {!summary.cost_coverage_complete && <p className={styles.notice}>일부 이벤트의 비용이 미확정입니다. 표시된 비용은 전체 청구액이 아니며 예산 사용률도 하한값입니다.</p>}
+          {summary.truncated && <p className={styles.notice}>조회 한도에 도달했습니다. 전체 월간 집계를 위해 서버 페이지네이션 한도를 확인해야 합니다.</p>}
+        </section>
+
+        <section className={styles.panel}>
+          <h2>모델별 사용량 및 비용</h2>
+          <div className={styles.tableWrap}><table><thead><tr><th>모델</th><th>호출</th><th>비용 확인</th><th>미확정</th><th>추정 비용</th></tr></thead>
+            <tbody>{summary.models.map(item => <tr key={item.model}><th>{item.model}</th><td>{item.event_count}</td><td>{item.known_cost_events}</td><td>{item.unknown_cost_events}</td><td>{money(item.estimated_cost_usd)}</td></tr>)}</tbody>
+          </table></div>
+        </section>
+
+        <section className={styles.panel}>
+          <h2>사용자별 내부 운영 집계</h2>
+          <p className={styles.subtle}>관리자 전용 식별자와 사용량입니다. 일반 사용자 화면과 API에는 제공하지 않습니다.</p>
+          <div className={styles.tableWrap}><table><thead><tr><th>사용자 ID</th><th>호출</th><th>비용 확인</th><th>미확정</th><th>추정 비용</th></tr></thead>
+            <tbody>{summary.users.map(item => <tr key={item.user_id}><th><code>{item.user_id}</code></th><td>{item.event_count}</td><td>{item.known_cost_events}</td><td>{item.unknown_cost_events}</td><td>{money(item.estimated_cost_usd)}</td></tr>)}</tbody>
+          </table></div>
+        </section>
+        <p className={styles.disclaimer}>{summary.notice}</p>
+      </>}
+      {!summary && !loading && !error && <p className={styles.subtle}>관리자 정보를 불러오고 있습니다.</p>}
+    </main>
+  );
+}
