@@ -3367,7 +3367,7 @@ async def update_admin_ai_budget(
             SUPABASE_URL + "/rest/v1/ai_admin_settings",
             headers=headers,
             params={"on_conflict": "setting_key"},
-            json={"setting_key": "monthly_budget_usd", "value_numeric": format(budget, "f"), "updated_by": user_id},
+            json={"setting_key": "monthly_budget_usd", "value_numeric": format(budget, "f"), "updated_by": user_id, "updated_at": _utc_now()},
         )
     if response.status_code >= 300:
         log.warning("Admin AI budget update failed status=%d", response.status_code)
