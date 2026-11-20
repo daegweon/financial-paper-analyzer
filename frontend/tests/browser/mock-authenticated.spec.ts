@@ -286,7 +286,7 @@ test.describe("isolated synthetic Supabase browser flows", () => {
       month:"2026-11",currency:"USD",event_count:3,success_events:2,failed_events:1,success_rate_percent:66.67,total_tokens:185,token_complete_events:2,token_incomplete_events:1,average_latency_ms:400,known_cost_events:2,unknown_cost_events:1,
       estimated_cost_usd:"12.50000000",monthly_budget_usd:budget,budget_status:"incomplete_truncated",
       cost_coverage_complete:false,
-      models:[{provider:"gemini",model:"gemini-3.5-flash-lite",event_count:3,success_events:2,failed_events:1,total_tokens:185,token_usage_incomplete_events:1,average_latency_ms:400,known_cost_events:2,unknown_cost_events:1,estimated_cost_usd:"12.50000000"}],
+      models:[{provider:"gemini",model:"gemini-3.5-flash-lite",event_count:3,success_events:2,failed_events:1,total_tokens:185,token_usage_incomplete_events:1,average_latency_ms:400,cost_status_counts:{estimated_paid_standard:2},price_sources:["https://ai.google.dev/gemini-api/docs/pricing"],price_effective_dates:["2026-11-20"],known_cost_events:2,unknown_cost_events:1,estimated_cost_usd:"12.50000000"}],
       users:[{user_id:qaA,event_count:3,known_cost_events:2,unknown_cost_events:1,estimated_cost_usd:"12.50000000"}],
       truncated:true,notice:"관리자 전용 운영 지표",
     });
