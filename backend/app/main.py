@@ -2776,7 +2776,7 @@ def _build_admin_ai_usage_summary(events: list[dict[str, Any]], month: str, mont
             raise HTTPException(status_code=503, detail="관리자 월간 예산 설정이 올바르지 않습니다.")
     budget_status = "not_configured"
     if budget is not None:
-        budget_status = "exceeded" if known_total > budget else ("incomplete_unknown_costs" if unknown_events else "within_budget")
+        budget_status = ("exceeded_with_unknown_costs" if unknown_events else "exceeded") if known_total > budget else ("incomplete_unknown_costs" if unknown_events else "within_budget")
     return {
         "month": month,
         "currency": "USD",
@@ -3246,8 +3246,7 @@ async def admin_ai_usage_summary(
                 headers=headers,
                 params={
                     "select": "user_id,paper_id,provider,model,billing_mode,prompt_tokens,candidate_tokens,thought_tokens,created_at",
-                    "created_at": f"gte.{start.isoformat()}",
-                    "and": f"(created_at.lt.{end.isoformat()})",
+                    "and": f"(created_at.gte.{start.isoformat()},created_at.lt.{end.isoformat()})",
                     "order": "created_at.asc",
                     "limit": str(page_size),
                 },
