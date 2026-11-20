@@ -2726,4 +2726,5 @@ def test_gemini_usage_ledger_marks_malformed_json_as_invalid_response(monkeypatc
     assert [event["outcome"] for event in events] == ["invalid_response", "success"]
     assert [event["attempt_index"] for event in events] == [1, 2]
     assert events[0]["error_class"] == "invalid_json"
-    assert events[0]["total_tokens"] if "total_tokens" in events[0] else True
+    assert events[0]["usage"]["totalTokenCount"] == 110
+    assert events[1]["usage"]["totalTokenCount"] == 132
