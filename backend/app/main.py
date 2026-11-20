@@ -2229,9 +2229,11 @@ async def _generate_gemini(
             continue
         response_content = candidate.get("content")
         parts = response_content.get("parts", []) if isinstance(response_content, dict) else []
+        if not isinstance(parts, list):
+            parts = []
         content = "".join(
             part.get("text", "")
-            for part in parts if isinstance(parts, list)
+            for part in parts
             if isinstance(part, dict) and isinstance(part.get("text"), str)
         )
         if not content:
