@@ -2586,3 +2586,48 @@ def test_admin_usage_summary_aggregates_outcomes_tokens_latency_and_provider_mod
     assert gemini["total_tokens"] == 125
     assert gemini["token_usage_incomplete_events"] == 1
     assert gemini["average_latency_ms"] == 500
+
+
+def test_admin_usage_pagination_detects_over_limit_without_counting_sentinel_rows(monkeypatch):
+    import asyncio
+    import app.main as module
+
+    fixture = [{"user_id":"admin-uuid","paper_id":"p","provider":"gemini","model":"m","created_at":"2026-11-20T00:00:00Z"} for _ in range(20001)]
+    requests = []
+    class FakeResponse:
+        status_code = 200
+        content = b"[]"
+        def __init__(self, rows): self.rows = rows
+        def json(self): return self.rows
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return False
+        async def get(self, url, **kwargs):
+            requests.append((url, kwargs))
+            if url.endswith("/rest/v1/ai_usage_events"):
+                start = int(kwargs["headers"]["Range"].split("-")[0])
+                return FakeResponse(fixture[start:start + 1000])
+            return FakeResponse([{"value_numeric":"100.00"}])
+
+    async def fake_verify(client, token):
+        return "admin-uuid"
+
+    captured = {}
+    def fake_summary(events, month, budget, truncated=False):
+        captured.update({"event_count":len(events),"month":month,"budget":budget,"truncated":truncated})
+        return captured.copy()
+
+    monkeypatch.setattr(module, "SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setattr(module, "SUPABASE_KEY", "publishable")
+    monkeypatch.setattr(module, "SERVICE_ROLE_KEY", "service-role")
+    monkeypatch.setattr(module, "ADMIN_USER_IDS", {"admin-uuid"})
+    monkeypatch.setattr(module, "_verify_user", fake_verify)
+    monkeypatch.setattr(module, "_build_admin_ai_usage_summary", fake_summary)
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+
+    result = asyncio.run(module.admin_ai_usage_summary(authorization="Bearer admin-session", month="2026-11"))
+    assert result == {"event_count":20000,"month":"2026-11","budget":"100.00","truncated":True}
+    event_requests = [item for item in requests if item[0].endswith("/rest/v1/ai_usage_events")]
+    assert len(event_requests) == 21
+    assert event_requests[-1][1]["headers"]["Range"] == "20000-20999"
