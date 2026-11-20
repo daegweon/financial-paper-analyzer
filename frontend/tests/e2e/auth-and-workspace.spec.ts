@@ -5,8 +5,7 @@ const SUPABASE_URL = `https://${SUPABASE_REF}.supabase.co`;
 const USER_ID = "11111111-1111-4111-8111-111111111111";
 const PAPER_ID = "22222222-2222-4222-8222-222222222222";
 
-async function seedAuthenticatedSession(page: Page, options: { delayUserLookup?: boolean } = {}): Promise<() => void> {
-  let serverSessionRevoked = false;
+async function seedAuthenticatedSession(page: Page) {
   await page.addInitScript(({ userId, projectRef }) => {
     const encode = (value: object) =>
       btoa(JSON.stringify(value)).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
@@ -38,30 +37,6 @@ async function seedAuthenticatedSession(page: Page, options: { delayUserLookup?:
     );
   }, { userId: USER_ID, projectRef: SUPABASE_REF });
 
-  await page.route(`${SUPABASE_URL}/auth/v1/user**`, async route => {
-    if (options.delayUserLookup) await new Promise(resolve => setTimeout(resolve, 900));
-    if (serverSessionRevoked) {
-      await route.fulfill({
-        status: 401,
-        contentType: "application/json",
-        body: JSON.stringify({ message: "Session revoked", code: "session_not_found" }),
-      });
-      return;
-    }
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        id: USER_ID,
-        aud: "authenticated",
-        role: "authenticated",
-        email: "papersignal-e2e@example.test",
-        app_metadata: { provider: "google", providers: ["google"] },
-        user_metadata: { full_name: "PaperSignal E2E" },
-        created_at: new Date().toISOString(),
-      }),
-    });
-  });
   await page.route(`${SUPABASE_URL}/rest/v1/papers**`, route => {
     if (route.request().method() === "GET") {
       return route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
@@ -81,7 +56,6 @@ async function seedAuthenticatedSession(page: Page, options: { delayUserLookup?:
       body: JSON.stringify({ status: "ok", analysis_mode: "ai", ai_provider: "gemini" }),
     }),
   );
-  return () => { serverSessionRevoked = true; };
 }
 
 test("Google sign-in is visible in the first mobile viewport", async ({ page }) => {
@@ -124,16 +98,25 @@ test("Google OAuth requests the Google provider and same-origin callback", async
   expect(requestedUrl!.searchParams.get("prompt")).toBe("select_account");
 });
 
-test("mobile sign-out clears the session and remains signed out after reload", async ({ page }) => {
+test("mobile sign-out clears the local session and remains signed out after reload", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  const revokeServerSession = await seedAuthenticatedSession(page, { delayUserLookup: true });
+  await seedAuthenticatedSession(page);
+  let unexpectedUserLookups = 0;
+  await page.route(`${SUPABASE_URL}/auth/v1/user**`, async route => {
+    unexpectedUserLookups += 1;
+    await route.fulfill({
+      status: 401,
+      contentType: "application/json",
+      body: JSON.stringify({ message: "No active session" }),
+    });
+  });
   await page.route(`${SUPABASE_URL}/auth/v1/logout**`, async route => {
-    revokeServerSession();
     await route.fulfill({ status: 204, body: "" });
   });
 
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "나의 연구 라이브러리" })).toBeVisible();
+  expect(unexpectedUserLookups).toBe(0);
   const logout = page.getByRole("button", { name: "로그아웃" });
   await expect(logout).toBeVisible();
   await logout.click();
@@ -143,15 +126,10 @@ test("mobile sign-out clears the session and remains signed out after reload", a
     page.evaluate(() => localStorage.getItem("sb-hwmtayrecsfxernhssro-auth-token")),
   ).toBeNull();
 
-  // Wait beyond the delayed initial lookup window to guard against a stale getUser()
-  // response restoring the authenticated shell after SIGNED_OUT.
-  await page.waitForTimeout(950);
-  await expect.poll(() => page.evaluate(() => localStorage.getItem("sb-hwmtayrecsfxernhssro-auth-token"))).toBeNull();
   await page.reload();
-  await page.waitForTimeout(1000);
-  console.log("POST_LOGOUT_RELOAD", await page.locator("body").innerText(), await page.evaluate(() => ({ url: location.href, authStorage: localStorage.getItem("sb-hwmtayrecsfxernhssro-auth-token") })));
   await expect(page.getByRole("heading", { name: "다시 만나서 반갑습니다." })).toBeVisible();
   await expect(page.getByRole("button", { name: "로그아웃" })).toHaveCount(0);
+  expect(unexpectedUserLookups).toBe(0);
 });
 
 test("PDF upload failure is visible and the upload control can be retried", async ({ page }) => {

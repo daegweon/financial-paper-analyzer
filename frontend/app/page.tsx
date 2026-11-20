@@ -189,8 +189,10 @@ export default function Home() {
     const supabase = db();
     let disposed = false;
     let authEventReceived = false;
-    // Subscribe before the initial user lookup. Otherwise a slow getUser()
-    // response can race with SIGNED_OUT and restore a stale authenticated UI.
+    // Subscribe before reading the persisted local session. This is UI
+    // bootstrap only; every API and database request still validates the JWT.
+    // Avoid getUser() here: its network round-trip can finish after SIGNED_OUT
+    // and let a stale in-flight lookup restore an authenticated client session.
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       authEventReceived = true;
       if (!disposed) {
@@ -198,8 +200,9 @@ export default function Home() {
         setBoot(false);
       }
     });
-    void supabase.auth.getUser().then(({ data: userData }) => {
-      if (!disposed && !authEventReceived) setUser(userData.user);
+    void supabase.auth.getSession().then(({ data: sessionData, error }) => {
+      if (error) throw error;
+      if (!disposed && !authEventReceived) setUser(sessionData.session?.user ?? null);
       if (!disposed) setBoot(false);
     }).catch(error => {
       if (!disposed) {
