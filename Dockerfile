@@ -1,5 +1,5 @@
 # Railway deploys from the monorepo root, using this Dockerfile.
-# Run the complete backend contract suite against a repository-shaped test stage.
+# Run the complete backend contract suite and a local HTTP/auth smoke in test stage.
 # The runtime image below stays lean and never includes tests or research assets.
 FROM python:3.12-slim AS test
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONPATH=/workspace
@@ -7,7 +7,7 @@ WORKDIR /workspace
 COPY . /workspace/
 RUN pip install --no-cache-dir -r /workspace/backend/requirements-dev.txt
 WORKDIR /workspace/backend
-RUN pytest -q && touch /tmp/papersignal-backend-tests-passed
+RUN pytest -q && python scripts/smoke_candidate_http.py && touch /tmp/papersignal-backend-tests-passed
 
 FROM python:3.12-slim AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
