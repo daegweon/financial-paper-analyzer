@@ -274,7 +274,7 @@ test.describe("isolated synthetic Supabase browser flows", () => {
     );
     await login(page,"qa-a@example.invalid");
     await page.goto("/admin/ai-usage",{waitUntil:"domcontentloaded"});
-    await expect(page.getByRole("alert")).toContainText("일반 사용자에게는 AI 사용량과 비용 정보가 공개되지 않습니다.");
+    await expect(page.locator("[role=alert].notice")).toContainText("일반 사용자에게는 AI 사용량과 비용 정보가 공개되지 않습니다.");
     await expect(page.getByText("월간 추정 비용")).toHaveCount(0);
     await expect(page.getByText("서비스 전체 월간 AI 예산 설정")).toHaveCount(0);
   });
@@ -301,7 +301,7 @@ test.describe("isolated synthetic Supabase browser flows", () => {
     await login(page,"qa-a@example.invalid");
     await page.goto("/admin/ai-usage",{waitUntil:"domcontentloaded"});
     await expect(page.getByText("월간 추정 비용")).toBeVisible();
-    await expect(page.getByText("$12.50")).toBeVisible();
+    await expect(page.getByRole("region",{name:"전체 사용량 요약"}).getByText("$12.50")).toBeVisible();
     await expect(page.getByText("gemini-3.5-flash-lite")).toBeVisible();
     await expect(page.getByText("사용자별 내부 운영 집계")).toBeVisible();
     await page.getByLabel("월간 전체 예산 (USD)").fill("150");
