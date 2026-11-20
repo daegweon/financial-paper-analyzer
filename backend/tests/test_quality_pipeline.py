@@ -31,3 +31,14 @@ def test_pipeline_optionally_includes_failure_report(tmp_path):
     out = run_pipeline(manifest, results, tmp_path / 'out', logs=logs)
     assert out['failure_report']['failed_job_count'] == 1
     assert (tmp_path / 'out' / 'failure-report.json').is_file()
+def test_pipeline_optionally_generates_cost_report_with_unknown_billing_preserved(tmp_path):
+    manifest = {'benchmark_version': 'v1', 'papers': [{'id': 'B01', 'title': 'Paper', 'gold_facts': []}]}
+    results = {'results': [{'paper_id': 'B01', 'analysis': {'findings': []}}]}
+    usage_events = [{
+        'paper_id': 'B01', 'provider': 'gemini', 'model': 'gemini-3.5-flash-lite',
+        'created_at': '2026-11-20T10:00:00Z', 'billing_mode': None,
+        'prompt_tokens': 1000, 'candidate_tokens': 200, 'thought_tokens': 0,
+    }]
+    out = run_pipeline(manifest, results, tmp_path / 'out', usage_events=usage_events)
+    assert out['cost_report']['groups'][0]['unknown_cost_events'] == 1
+    assert (tmp_path / 'out' / 'ai-cost-report.json').is_file()
