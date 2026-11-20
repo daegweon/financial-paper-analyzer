@@ -42,3 +42,19 @@ def test_pipeline_optionally_generates_cost_report_with_unknown_billing_preserve
     out = run_pipeline(manifest, results, tmp_path / 'out', usage_events=usage_events)
     assert out['cost_report']['groups'][0]['unknown_cost_events'] == 1
     assert (tmp_path / 'out' / 'ai-cost-report.json').is_file()
+
+def test_pipeline_passes_monthly_budget_thresholds_to_cost_report(tmp_path):
+    manifest = {'benchmark_version': 'v1', 'papers': [{'id': 'B01', 'title': 'Paper', 'gold_facts': []}]}
+    results = {'results': [{'paper_id': 'B01', 'analysis': {'findings': []}}]}
+    usage_events = [{
+        'user_id': 'u1', 'paper_id': 'B01', 'provider': 'gemini',
+        'model': 'gemini-3.5-flash-lite', 'created_at': '2026-11-20T10:00:00Z',
+        'billing_mode': 'paid_standard', 'prompt_tokens': 1000000,
+        'candidate_tokens': 100000, 'thought_tokens': 0,
+    }]
+    out = run_pipeline(
+        manifest, results, tmp_path / 'out', usage_events=usage_events,
+        cost_budgets={'monthly_user_usd': '0.50', 'monthly_paper_usd': '0.50'},
+    )
+    assert out['cost_report']['monthly_user_budgets'][0]['budget_status'] == 'exceeded'
+    assert out['cost_report']['monthly_paper_budgets'][0]['budget_status'] == 'exceeded'
