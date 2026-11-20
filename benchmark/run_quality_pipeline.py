@@ -3,6 +3,7 @@
 from __future__ import annotations
 import argparse
 import json
+from decimal import Decimal
 import sys
 from pathlib import Path
 
@@ -90,8 +91,8 @@ def main():
     parser.add_argument('--baseline-scorecard', type=Path)
     parser.add_argument('--logs', type=Path, help='Optional exported Railway API text log for failure analytics')
     parser.add_argument('--usage-events', type=Path, help='Optional JSON export of ai_usage_events for estimated cost report')
-    parser.add_argument('--monthly-user-budget-usd', type=float)
-    parser.add_argument('--monthly-paper-budget-usd', type=float)
+    parser.add_argument('--monthly-user-budget-usd', type=Decimal)
+    parser.add_argument('--monthly-paper-budget-usd', type=Decimal)
     parser.add_argument('--out-dir', type=Path, default=ROOT / 'benchmark/results/quality-run')
     args = parser.parse_args()
     output = run_pipeline(_load(args.manifest), _load(args.results), args.out_dir, args.pages_dir, _load(args.reviews) if args.reviews else None, _load(args.baseline_scorecard) if args.baseline_scorecard else None, args.logs, _load(args.usage_events) if args.usage_events else None, {'monthly_user_usd': args.monthly_user_budget_usd, 'monthly_paper_usd': args.monthly_paper_budget_usd})
