@@ -1,12 +1,16 @@
 .git
-.github
 frontend
 railway-function
-supabase
-# backend/tests is intentionally included in the build context:
-# Dockerfile copies it into the isolated test stage before building runtime.
-backend/.env
-backend/.env.*
+node_modules
+**/node_modules
+**/.next
+**/.vercel
 **/__pycache__
 **/*.pyc
+**/.pytest_cache
+**/.venv
+.env
+.env.*
+**/.env
+**/.env.*
 README.md
