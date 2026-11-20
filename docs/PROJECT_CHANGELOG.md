@@ -288,3 +288,8 @@
 - Candidate head `9b45e5957f9d2bcecf3ca5be64f5f47a192648f7` passed full CI #44676373334: API 195 passed/1 deliberately skipped, frontend lint/typecheck/build, PostgreSQL 17 migration/RLS/index checks, GET-only live API preflight and 39 synthetic browser scenarios across desktop Chromium, Android Chromium and iPhone WebKit all SUCCESS. Live E2E deliberately skipped.
 - Administrator model rows now show per-provider/model cost status counts (confirmed free tier, estimated paid standard, unknown billing, missing tokens, missing price), official price source links and effective dates. Added report/helper/UI contracts and tests. The Google pricing catalog URL is shown as provenance; estimates remain estimates, not invoices.
 - Progress ledger updated: 98% engineering completion; release gates remain 4/10. No Production migration, Railway deployment or Vercel Production promotion. Next action is human review and approved staged migration/deployment plus real two-account E2E, not more speculative engine tuning.
+
+## 2026-11-20 — Staged beta release runbook
+
+- Added `docs/BETA_RELEASE_RUNBOOK_2026-11-20.md` with explicit human approval checkpoints, current production API/rollback references, protected E2E secrets, ordered quota RPC/API/AI ledger/client-write-revocation steps, two-account isolation tests, admin allowlist/budget configuration, SMTP/mobile validation and rollback precautions.
+- No Production action was executed. The runbook is an operational preparation artifact; launch gates remain 4/10 and engineering completion remains 98%.
