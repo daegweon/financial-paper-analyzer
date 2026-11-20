@@ -2555,12 +2555,12 @@ def test_admin_usage_summary_aggregates_outcomes_tokens_latency_and_provider_mod
     events = [
         {
             "user_id":"u1","paper_id":"p1","provider":"gemini","model":"gemini-3.5-flash-lite",
-            "outcome":"success","billing_mode":"free","prompt_tokens":100,"candidate_tokens":20,
+            "outcome":"success","billing_mode":"paid_standard","prompt_tokens":100,"candidate_tokens":20,
             "thought_tokens":5,"total_tokens":125,"latency_ms":400,"created_at":"2026-11-20T10:00:00Z",
         },
         {
             "user_id":"u1","paper_id":"p1","provider":"gemini","model":"gemini-3.5-flash-lite",
-            "outcome":"transport_error","billing_mode":"free","prompt_tokens":None,"candidate_tokens":None,
+            "outcome":"transport_error","billing_mode":None,"prompt_tokens":None,"candidate_tokens":None,
             "thought_tokens":None,"total_tokens":None,"latency_ms":600,"created_at":"2026-11-20T10:01:00Z",
         },
         {
