@@ -322,3 +322,11 @@ The account reached Vercel Hobby's daily 100-deployment API limit (HTTP 402 `api
 - Added implementation-ready privacy/security design for an immutable per-attempt usage ledger and effective-dated official pricing, including RLS, service-role-only writes, idempotency, nullable usage and no invented free-tier USD cost. Design only; no migration/table/production write.
 - The prior complete CI [#44641154839](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44641154839) passed 157 backend tests, frontend, DB policy, read-only API and browser QA. The new diagnostics/comparison tests need a complete fresh CI run; earlier run [#44644913043](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44644913043) was superseded by newer commits and cancelled. No progress point credited yet.
 - Human approvals, production DB changes, deployment and real-user E2E remain deferred. No analysis-engine behavior or user data changed.
+
+## 2026-11-20 — Junior methodology curriculum verified (engineering 94%)
+
+- Added a Korean junior methodology catalog covering OLS, panel FE/RE, DiD, IV/2SLS, event study, asset-pricing factor models, GARCH and PCA. Each card contains concept, representative formula, result-table reading steps, interpretation caveats and a knowledge-check question/answer.
+- Added catalog validation and Markdown card generator. The content is explicitly general education and must never be presented as a paper-specific finding or citation.
+- Full CI [#44652970492](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44652970492) passed frontend, API, DB policy, GET-only live API preflight and synthetic browser QA. Junior-learning workstream credited 19/20 → 20/20. Native iOS Safari/Android device PDF rendering, page navigation and signed URL renewal remain human-device checks.
+- Weighted engineering progress is now **94%**. Benchmark coverage-matrix and integrated-pipeline artifact persistence are undergoing the next full CI; do not credit the finance-engine point until that run passes.
+- No production database, user data, model behavior or deployment changed.
