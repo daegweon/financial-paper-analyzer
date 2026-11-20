@@ -311,3 +311,10 @@
 - Checked the article-level license statement in all ten supplied B01–B10 PDFs. B01–B06 and B08–B10 explicitly state CC BY 4.0; B07 (PLOS ONE) states CC BY.
 - Updated `benchmark/manifest.json` and the benchmark checklist. Added `benchmark/results/license-audit-2026-11-20.md`.
 - Public redistribution still requires attribution, DOI/source URL, license link and modification notice; separately credited third-party material is excluded from this blanket finding.
+
+
+## 2026-11-20 — Current candidate Preview and CI verified
+
+- Vercel deployment `dpl_HTsQiR2ykz72x7q6xE7c5Ww3yTht` reached READY for frontend code SHA `0cdf4fed96df40521a99c5969e3d3703bebde8a8`: https://financial-paper-analyzer-nwik7wcju-daegweonai-9583.vercel.app.
+- GitHub Checks [#44683909825](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44683909825) passed API, frontend lint/typecheck/build, disposable PostgreSQL, GET-only live API preflight and synthetic Chromium/WebKit browser QA; live production E2E was skipped.
+- Restored the current independently passed release-gate count to 4/10. The earlier 3/10 entry records the short interval before this READY deployment; this entry supersedes it.

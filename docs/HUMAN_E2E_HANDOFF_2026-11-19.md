@@ -1,13 +1,15 @@
 # PaperSignal — human-owned remaining actions (2026-11-20)
 
-**Current engineering completion: 98%. Current independently passed release gates: 3/10.** The engineering percentage measures implemented work; it is not launch permission.
+**Current engineering completion: 98%. Current independently passed release gates: 4/10.** The engineering percentage measures implemented work; it is not launch permission.
 
 ## Completed autonomously in this checkpoint
 
-- Exact candidate HEAD `4228494d5465cb8b61003ec25c8748a27cff7819` passed GitHub Checks [#44677027806](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806): API, frontend, disposable PostgreSQL 17 (including the AI usage-ledger migration contract), GET-only live API preflight and synthetic browser QA. Live production E2E was skipped.
-- The six `review` findings in the latest B01–B10 analyses received an assistant second-pass PDF audit. The report is `benchmark/results/assistant-second-pass-evidence-audit-2026-11-20.md`. The six database statuses remain `review`; this is not a human expert sign-off.
+- Candidate frontend code SHA `0cdf4fed96df40521a99c5969e3d3703bebde8a8` passed GitHub Checks [#44683909825](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44683909825): API, frontend, disposable PostgreSQL 17 (including the AI usage-ledger migration contract), GET-only live API preflight and synthetic Chromium/WebKit browser QA. Live production E2E was skipped.
+- Vercel Preview is READY: [open current Preview](https://financial-paper-analyzer-nwik7wcju-daegweonai-9583.vercel.app) (deployment `dpl_HTsQiR2ykz72x7q6xE7c5Ww3yTht`).
+- All ten benchmark PDFs have article-level license statements checked; the license report is `benchmark/results/license-audit-2026-11-20.md`.
+- The six `review` findings in the latest B01–B10 analyses received an assistant second-pass PDF audit. The report is `benchmark/results/assistant-second-pass-evidence-audit-2026-11-20.md`. The six database statuses remain `review`; this is not human expert sign-off.
 - Production state was inspected read-only: Supabase has nine migration versions through `20261113234956` and no `ai_usage_events` / `ai_admin_settings` tables. Railway API remains on immutable commit `ace3fbd5`; Worker remains unchanged on commit `8cd5e37`.
-- Corrected the runbook's protected-secret names, Railway Worker service/deployment IDs and rollback reference. No production data, schema, deployment or account was changed.
+- Corrected the runbook's protected-secret names, Railway Worker service/deployment IDs and rollback reference. No Production data, schema, deployment or account was changed.
 
 ## Actions requiring an authorized human
 
@@ -50,7 +52,7 @@ After migration-history reconciliation and separate change approval, follow the 
 3. Apply and verify the additive AI usage-ledger/admin-settings migration.
 4. Run the real synthetic two-account Auth/Storage/PDF/analysis isolation test against the upgraded API.
 5. Only after that passes, consider the client-write revocation migration.
-6. Do not promote Vercel Production until the current candidate Preview, real E2E and rollback gates pass.
+6. Do not promote Vercel Production until the current Preview, real E2E and rollback gates pass.
 
 The old deployment `17c9134b-f49c-4358-a879-7ca77b55b936` is REMOVED and cannot be used as rollback. The current live baseline `0b5716db-b720-49db-b15c-babf77b26e5a` is the current rollback reference; verify it is still available immediately before any change. The Worker service is `238af942-0628-47d5-9280-04a49373423f` and must remain untouched.
 
@@ -62,9 +64,8 @@ The administrator console is not an end-user budget feature. It exposes one serv
 - Optionally set `PAPERSIGNAL_ADMIN_MONTHLY_AI_BUDGET_USD` after the administrator chooses a service-wide budget.
 - Set `GEMINI_BILLING_MODE` to `free` or `paid_standard` only after checking the actual Google AI Studio billing configuration. It is currently absent, so cost remains unknown rather than fabricated as zero.
 
-### 6. Resolve the remaining platform/security checks
+### 6. Resolve the remaining platform/security and review checks
 
-- **Vercel Preview:** current candidate HEAD has no deployment because Vercel reports a build-rate-limit failure. The latest READY Preview is commit `13591d73`, 19 commits behind the current candidate and missing later frontend changes. A current-head Preview requires the limit to clear or an account-plan decision; do not treat the stale Preview as passed.
 - **SMTP:** configure an external SMTP provider and verify signup, confirmation and password reset with an external mailbox.
 - **Native devices:** verify original PDF rendering, page navigation, signed-link renewal, rotation and session expiry on actual iOS Safari and Android Chrome devices.
 - **Auth security:** Supabase's security advisor reports leaked-password protection disabled. An administrator should decide whether to enable it; it has not been changed because it affects signup policy.

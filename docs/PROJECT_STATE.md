@@ -1,10 +1,10 @@
 # PaperSignal — Current consolidated checkpoint (2026-11-20)
 
-**Engineering completion: 98%. Independently passed release gates: 3/10.** The 98% score is weighted engineering completion, not launch readiness.
+**Engineering completion: 98%. Independently passed release gates: 4/10.** The 98% score is weighted engineering completion, not launch readiness.
 
 - Candidate branch `release/beta-candidate-20261119`, Draft PR #18, exact HEAD `4228494d5465cb8b61003ec25c8748a27cff7819`.
 - Exact-head Checks [#44677027806](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806) passed API, frontend, disposable PostgreSQL 17 (including the AI usage-ledger migration contract), GET-only live API preflight and synthetic browser QA. The live production E2E job was skipped.
-- Current-head Vercel Preview is not ready. The latest READY preview is `13591d73b4ccdf3a430a7befce839a813b9a49b2`, 19 commits behind and missing later frontend changes; the current SHA has no deployment due to Vercel build-rate-limit. The release gate was corrected from 4/10 to 3/10.
+- Vercel Preview is READY for current candidate frontend code SHA `0cdf4fed96df40521a99c5969e3d3703bebde8a8`: deployment `dpl_HTsQiR2ykz72x7q6xE7c5Ww3yTht`, [open Preview](https://financial-paper-analyzer-nwik7wcju-daegweonai-9583.vercel.app). Exact-head GitHub Checks [#44683909825](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44683909825) passed API, frontend, disposable PostgreSQL, GET-only live API preflight and synthetic browser QA; live production E2E remains skipped. Release gates are now 4/10.
 - Production Railway API: service `81b678e2-7136-436d-9058-7d20647dc1b7`, deployment `0b5716db-b720-49db-b15c-babf77b26e5a`, commit `ace3fbd5dab3ea71efa3a49da8363259ea5f9732`, SUCCESS. Current live rollback baseline is that same deployment; previously listed `17c9134b-f49c-4358-a879-7ca77b55b936` is REMOVED and cannot be used.
 - Worker remains unchanged: service `238af942-0628-47d5-9280-04a49373423f`, deployment `dc501061-d434-454a-bc7d-4658b991a2f1`, commit `8cd5e37ee8eab3bf4b726b75af89e410ab48396e`, SUCCESS.
 - Read-only Production checks: Railway API recorded 446 requests / 0 server errors / 219 client errors / p99 9 ms over 24 hours. Supabase has 9 migrations through `20261113234956`; `ai_usage_events` and `ai_admin_settings` are absent. No Production migration or candidate API rollout was performed.

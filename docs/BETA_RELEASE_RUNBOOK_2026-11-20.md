@@ -2,17 +2,16 @@
 
 ## Current verified baseline
 
-- Candidate: `release/beta-candidate-20261119`, Draft PR #18, exact HEAD `4228494d5465cb8b61003ec25c8748a27cff7819`.
-- Engineering completion: 98%; current independently passed release gates: **3/10**. This is not release authorization.
-- Exact-head GitHub Checks [#44677027806](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806) passed API, frontend lint/typecheck/build, disposable PostgreSQL 17 policy/index checks (including the AI usage-ledger migration contract), GET-only live API preflight and synthetic browser QA. The live E2E job was deliberately skipped.
-- Current-head Vercel Preview is **not ready**. Vercel reports a build-rate-limit failure and there is no deployment for the current SHA. The latest READY preview (`13591d73b4ccdf3a430a7befce839a813b9a49b2`) is 19 commits behind and does not include later frontend changes; it must not be counted as a current-candidate pass.
+- Candidate: `release/beta-candidate-20261119`, Draft PR #18; current candidate frontend code SHA `0cdf4fed96df40521a99c5969e3d3703bebde8a8`.
+- Engineering completion: 98%; current independently passed release gates: **4/10**. This is not release authorization.
+- Exact-head GitHub Checks [#44683909825](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44683909825) passed API, frontend lint/typecheck/build, disposable PostgreSQL 17 policy/index checks (including the AI usage-ledger migration contract), GET-only live API preflight and synthetic Chromium/WebKit browser QA. The live production E2E job was deliberately skipped.
+- Vercel Preview is **READY** for the current candidate frontend code: deployment `dpl_HTsQiR2ykz72x7q6xE7c5Ww3yTht`, [open Preview](https://financial-paper-analyzer-nwik7wcju-daegweonai-9583.vercel.app). Alias: https://financial-paper-analyzer-git-release-bet-9ad043-daegweonai-9583.vercel.app. Subsequent repository changes are documentation-only and do not alter this frontend code.
 - Production API: Railway service `81b678e2-7136-436d-9058-7d20647dc1b7`, live deployment `0b5716db-b720-49db-b15c-babf77b26e5a`, immutable commit `ace3fbd5dab3ea71efa3a49da8363259ea5f9732`, status SUCCESS. It does not yet run the current quota/ledger candidate code.
 - Current rollback baseline: live deployment `0b5716db-b720-49db-b15c-babf77b26e5a` (SUCCESS; rollback-capable). The previously listed `17c9134b-f49c-4358-a879-7ca77b55b936` is REMOVED and cannot be used as a rollback target.
 - Existing Railway worker service `238af942-0628-47d5-9280-04a49373423f` remains untouched on deployment `dc501061-d434-454a-bc7d-4658b991a2f1`, commit `8cd5e37ee8eab3bf4b726b75af89e410ab48396e`, status SUCCESS.
 - Read-only Production check (2026-11-20): Railway API had 446 requests, 0 server errors, 219 client errors and p99 latency 9 ms over the last 24 hours (not a load test). Supabase has 9 migration versions through `20261113234956`; `ai_usage_events` and `ai_admin_settings` are absent. No Production migration was applied.
 - Railway API currently has no `PAPERSIGNAL_ADMIN_USER_IDS`, `PAPERSIGNAL_ADMIN_MONTHLY_AI_BUDGET_USD` or `GEMINI_BILLING_MODE` variable. The admin console remains locked until an administrator UUID is explicitly configured; billing mode remains unknown.
 - Supabase security advisor reports leaked-password protection disabled; no performance advisor findings. This Auth setting has not been changed because it affects signup policy and requires an administrator decision.
-
 
 ## Approval and secrets
 
@@ -39,7 +38,7 @@ Railway API variables to prepare for the administrator console:
 ## Staged deployment sequence
 
 ### 0. Preflight and backup
-1. Confirm PR #18 source SHA and exact-head CI success. Require a Vercel Preview READY for the same candidate before treating this gate as passed; the current candidate is blocked by Vercel build-rate-limit.
+1. Confirm PR #18 source SHA and exact-head CI success. The current frontend code SHA has a READY Preview at the URL in the baseline above; re-check the deployment if any frontend code changes.
 2. Record current Railway API and Worker service/deployment IDs, environment variable names (not values), Supabase migration history and table row counts.
 3. Verify the live API baseline deployment `0b5716db-b720-49db-b15c-babf77b26e5a` is still rollback-capable. Do not use the removed deployment `17c9134b-f49c-4358-a879-7ca77b55b936`.
 4. Confirm the approved administrator UUID and monthly budget owner.

@@ -8,8 +8,8 @@
     "pull_request": 18,
     "base": "main",
     "review_state": "draft",
-    "last_independently_verified_sha": "4228494d5465cb8b61003ec25c8748a27cff7819",
-    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806",
+    "last_independently_verified_sha": "0cdf4fed96df40521a99c5969e3d3703bebde8a8",
+    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44683909825",
     "production_api": {
       "service_id": "81b678e2-7136-436d-9058-7d20647dc1b7",
       "immutable_commit": "ace3fbd5dab3ea71efa3a49da8363259ea5f9732",
@@ -38,13 +38,13 @@
       "pinned_audited_source_commit": "431059a1116a50f39fd56d565c35a1afc081b8fc"
     },
     "current_vercel_preview": {
-      "current_head_ready": false,
-      "current_head_sha": "4228494d5465cb8b61003ec25c8748a27cff7819",
-      "last_ready_commit": "13591d73b4ccdf3a430a7befce839a813b9a49b2",
-      "last_ready_deployment_id": "dpl_7zXwF4r2B6mN9cQ1pV8sK3tL0aBc",
-      "last_ready_url": "https://financial-paper-analyzer-git-release-beta-candidate-20261119-daegweonai-9583.vercel.app",
-      "commits_since_last_ready": 19,
-      "blocker": "Vercel build-rate-limit; no deployment exists for the current candidate SHA."
+      "frontend_code_sha": "0cdf4fed96df40521a99c5969e3d3703bebde8a8",
+      "status": "READY",
+      "deployment_id": "dpl_HTsQiR2ykz72x7q6xE7c5Ww3yTht",
+      "url": "https://financial-paper-analyzer-nwik7wcju-daegweonai-9583.vercel.app",
+      "alias": "https://financial-paper-analyzer-git-release-bet-9ad043-daegweonai-9583.vercel.app",
+      "created_at": "2026-11-20T06:45:46Z",
+      "note": "READY for the current candidate frontend code. The following branch commit, if any, is documentation-only and does not change frontend code."
     }
   },
   "methodology": "Weighted engineering milestone completion, NOT launch readiness. Each workstream has maximum points; achieved points sum to overall_percent. Increase only after verified evidence.",
@@ -105,7 +105,8 @@
       "earned": 15,
       "evidence": [
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44404002239",
-        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806"
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806",
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44683909825"
       ],
       "remaining": "매 PR 회귀 테스트 유지"
     },
@@ -126,7 +127,7 @@
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44676373334",
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806"
       ],
-      "remaining": "Human review/merge of PR #19, protected Actions secrets and explicit synthetic live E2E; current-head Vercel Preview is blocked by the build-rate limit; PR #18 review/merge, approved production migrations/deploy, admin UUID/billing configuration, SMTP, native-device QA and rollback rehearsal remain.",
+      "remaining": "Human review/merge of PR #19, protected Actions secrets and explicit synthetic live E2E; PR #18 review/merge after all remaining gates; approved production migrations/deploy, administrator UUID/billing configuration, SMTP, native-device QA and rollback rehearsal remain.",
       "note": "관리자 전용 AI 사용량/비용/예산 콘솔, provider별 성공률·토큰·지연시간 집계 및 불완전 데이터 경고 구현과 전체 CI 검증 완료. 실제 운영 반영은 별도 승인 필요."
     }
   ],
@@ -135,26 +136,26 @@
       "id": "backend_frontend_ci",
       "label": "백엔드·프런트엔드 GitHub Actions",
       "status": "passed",
-      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806"
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44683909825"
     },
     {
       "id": "synthetic_browser",
       "label": "합성 인증 브라우저 24/24 E2E",
       "status": "passed",
-      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806"
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44683909825"
     },
     {
       "id": "postgres_policy",
       "label": "격리 PostgreSQL 보안 권한 테스트",
       "status": "passed",
-      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44677027806"
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44683909825"
     },
     {
       "id": "vercel_preview",
       "label": "출시 후보 Vercel Preview READY",
-      "status": "pending",
-      "evidence": null,
-      "note": "Current candidate SHA has no deployment. The latest READY preview is 19 commits behind and excludes later frontend changes; Vercel reports build-rate-limit."
+      "status": "passed",
+      "evidence": "https://github.com/daegweon/financial-paper-analyzer/commit/0cdf4fed96df40521a99c5969e3d3703bebde8a8",
+      "note": "Vercel deployment dpl_HTsQiR2ykz72x7q6xE7c5Ww3yTht is READY for frontend code SHA 0cdf4fed96df40521a99c5969e3d3703bebde8a8; preview https://financial-paper-analyzer-nwik7wcju-daegweonai-9583.vercel.app."
     },
     {
       "id": "live_auth_pdf",
@@ -193,7 +194,7 @@
       "evidence": null
     }
   ],
-  "next_action": "Keep PR #18 Draft. The exact candidate HEAD 4228494 passed all GitHub Checks in run #44677027806, including API, frontend, disposable PostgreSQL (including the AI-ledger migration contract), GET-only live API preflight and synthetic browser QA; live E2E was skipped. Current-head Vercel Preview is not ready: the latest READY deployment is 19 commits behind and the current SHA is blocked by Vercel build-rate-limit. Human-only actions are: review/merge narrow PR #19 (not PR #18), configure the four exact protected Actions secrets, and explicitly dispatch the pinned synthetic E2E; designate the administrator UUID and optional global budget; confirm Gemini billing mode before setting; configure SMTP; test real iOS/Android devices; approve the ordered production quota/API/ledger/client-write migration sequence and rollback; and arrange qualified human sign-off on the six current review findings. Do not mutate Production or promote until each gate is independently evidenced.",
+  "next_action": "Keep PR #18 Draft. The current candidate frontend code SHA 0cdf4fed is verified by GitHub Checks #44683909825 (API, frontend lint/typecheck/build, disposable PostgreSQL including AI-ledger migration contract, GET-only live API preflight and synthetic Chromium/WebKit QA; live production E2E skipped) and its Vercel Preview is READY. Four of ten release gates now pass. Remaining work requires authorized human action: review/merge the narrow PR #19, configure the four exact protected Actions secrets and explicitly dispatch the pinned synthetic E2E; designate the administrator UUID and optional service-wide budget; confirm Gemini billing mode before setting it; approve the ordered Production quota/API/ledger/client-write migration sequence and rollback; configure SMTP; test actual iOS/Android devices; decide on leaked-password protection; and arrange qualified human sign-off on the six current review findings. Do not mutate Production or promote until every gate is independently evidenced.",
   "response_protocol": "Every substantial PaperSignal response starts with overall_percent and passed/total release gates from this file. The percentage estimates engineering completion, not launch readiness or permission to mutate Production.",
   "invariants": [
     "Analysis engine frozen",
@@ -320,6 +321,11 @@
       "date": "2026-11-20",
       "percent": 98,
       "evidence": "Completed article-level license audit of all ten supplied B01–B10 PDFs: nine MDPI articles explicitly state CC BY 4.0 and the PLOS ONE article states CC BY. Attribution and third-party-material limitations documented in benchmark/results/license-audit-2026-11-20.md. No code or Production state changed."
+    },
+    {
+      "date": "2026-11-20",
+      "percent": 98,
+      "evidence": "The current candidate frontend code SHA 0cdf4fed received a READY Vercel Preview (deployment dpl_HTsQiR2ykz72x7q6xE7c5Ww3yTht) and passed exact-head GitHub Checks #44683909825 across API, frontend, disposable PostgreSQL, GET-only live API preflight and synthetic Chromium/WebKit browser QA. Live production E2E remains skipped. Release gates increased from 3/10 to 4/10."
     }
   ],
   "read_only_operational_check": {
