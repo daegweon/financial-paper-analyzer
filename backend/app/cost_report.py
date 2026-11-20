@@ -21,7 +21,7 @@ def _budget_status(known_cost: Decimal, unknown_count: int, limit: Decimal | Non
     return 'incomplete_unknown_costs' if unknown_count else 'within_budget'
 
 def build_cost_report(events, catalog=None, admin_monthly_budget_usd=None):
-    groups = defaultdict(lambda: {'event_count': 0, 'known_cost_events': 0, 'unknown_cost_events': 0, 'estimated_cost_usd': Decimal('0'), 'cost_status_counts': {}})
+    groups = defaultdict(lambda: {'event_count': 0, 'known_cost_events': 0, 'unknown_cost_events': 0, 'estimated_cost_usd': Decimal('0'), 'cost_status_counts': {}, 'price_sources': [], 'price_effective_dates': []})
     users = defaultdict(lambda: {'event_count': 0, 'known_cost_events': 0, 'unknown_cost_events': 0, 'estimated_cost_usd': Decimal('0')})
     papers = defaultdict(lambda: {'event_count': 0, 'known_cost_events': 0, 'unknown_cost_events': 0, 'estimated_cost_usd': Decimal('0')})
     months = defaultdict(lambda: {'event_count': 0, 'known_cost_events': 0, 'unknown_cost_events': 0, 'estimated_cost_usd': Decimal('0')})
@@ -50,6 +50,12 @@ def build_cost_report(events, catalog=None, admin_monthly_budget_usd=None):
             if mapping is groups:
                 status = result['price_status']
                 row['cost_status_counts'][status] = row['cost_status_counts'].get(status, 0) + 1
+                source = result.get('price_source')
+                if source and source not in row['price_sources']:
+                    row['price_sources'].append(source)
+                effective_from = result.get('price_effective_from')
+                if effective_from and effective_from not in row['price_effective_dates']:
+                    row['price_effective_dates'].append(effective_from)
     def serialize(mapping, key_names):
         output = []
         for key, row in sorted(mapping.items()):
