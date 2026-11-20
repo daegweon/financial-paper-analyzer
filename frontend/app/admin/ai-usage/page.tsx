@@ -194,6 +194,7 @@ export default function AdminAIUsagePage() {
           <div className={styles.tableWrap} tabIndex={0} aria-label="모델별 사용량 표"><table><thead><tr><th>제공사</th><th>모델</th><th>호출</th><th>성공</th><th>실패</th><th>토큰</th><th>평균 응답</th><th>비용 확인</th><th>미확정</th><th>추정 비용</th></tr></thead>
             <tbody>{summary.models.map(item => <tr key={item.provider + "-" + item.model}><th>{item.provider}</th><td>{item.model}</td><td>{count(item.event_count)}</td><td>{count(item.success_events)}</td><td>{count(item.failed_events)}</td><td>{count(item.total_tokens)}{item.token_usage_incomplete_events ? "†" : ""}</td><td>{item.average_latency_ms === null ? "—" : count(item.average_latency_ms) + " ms"}</td><td>{count(item.known_cost_events)}</td><td>{count(item.unknown_cost_events)}</td><td>{money(item.estimated_cost_usd)}</td></tr>)}</tbody>
           </table></div>
+          <p className={styles.subtle}>토큰 수 옆 † 표시는 해당 모델에 토큰 사용량이 누락된 시도가 있음을 의미합니다. 평균 응답 시간은 기록된 호출 시도 기준입니다.</p>
         </section>
 
         <section className={styles.panel}>
