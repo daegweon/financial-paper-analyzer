@@ -14,6 +14,9 @@ type ModelUsage = {
   total_tokens: number;
   token_usage_incomplete_events: number;
   average_latency_ms: number | null;
+  cost_status_counts: Record<string, number>;
+  price_sources: string[];
+  price_effective_dates: string[];
   known_cost_events: number;
   unknown_cost_events: number;
   estimated_cost_usd: string;
@@ -52,6 +55,18 @@ function count(value: number) { return new Intl.NumberFormat("ko-KR").format(val
 
 function money(value: string | null) {
   return value === null ? "미확정" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(Number(value));
+}
+
+function priceStatusLabel(value: string) {
+  const labels: Record<string, string> = {
+    free_tier_confirmed: "무료 등급 확인",
+    estimated_paid_standard: "유료 표준 단가 추정",
+    billing_mode_unknown: "결제 등급 미확인",
+    token_usage_incomplete: "토큰 정보 누락",
+    price_not_found: "가격표 미등록",
+    invalid_timestamp: "호출 시각 오류",
+  };
+  return labels[value] ?? "기타";
 }
 
 function budgetStatusLabel(value: string) {
@@ -191,8 +206,8 @@ export default function AdminAIUsagePage() {
 
         <section className={styles.panel}>
           <h2>모델별 사용량 및 비용</h2>
-          <div className={styles.tableWrap} tabIndex={0} aria-label="모델별 사용량 표"><table><thead><tr><th>제공사</th><th>모델</th><th>호출</th><th>성공</th><th>실패</th><th>토큰</th><th>평균 응답</th><th>비용 확인</th><th>미확정</th><th>추정 비용</th></tr></thead>
-            <tbody>{summary.models.map(item => <tr key={item.provider + "-" + item.model}><th>{item.provider}</th><td>{item.model}</td><td>{count(item.event_count)}</td><td>{count(item.success_events)}</td><td>{count(item.failed_events)}</td><td>{count(item.total_tokens)}{item.token_usage_incomplete_events ? "†" : ""}</td><td>{item.average_latency_ms === null ? "—" : count(item.average_latency_ms) + " ms"}</td><td>{count(item.known_cost_events)}</td><td>{count(item.unknown_cost_events)}</td><td>{money(item.estimated_cost_usd)}</td></tr>)}</tbody>
+          <div className={styles.tableWrap} tabIndex={0} aria-label="모델별 사용량 표"><table><thead><tr><th>제공사</th><th>모델</th><th>호출</th><th>성공</th><th>실패</th><th>토큰</th><th>평균 응답</th><th>단가 상태</th><th>단가 기준일</th><th>공식 가격표</th><th>비용 확인</th><th>미확정</th><th>추정 비용</th></tr></thead>
+            <tbody>{summary.models.map(item => <tr key={item.provider + "-" + item.model}><th>{item.provider}</th><td>{item.model}</td><td>{count(item.event_count)}</td><td>{count(item.success_events)}</td><td>{count(item.failed_events)}</td><td>{count(item.total_tokens)}{item.token_usage_incomplete_events ? "†" : ""}</td><td>{item.average_latency_ms === null ? "—" : count(item.average_latency_ms) + " ms"}</td><td>{Object.entries(item.cost_status_counts).map(([status, total]) => priceStatusLabel(status) + " " + count(total)).join(" / ") || "미확정"}</td><td>{item.price_effective_dates.join(", ") || "—"}</td><td>{item.price_sources.length ? item.price_sources.map((source,index) => <a key={source} href={source} target="_blank" rel="noreferrer">가격표 {index + 1}</a>) : "—"}</td><td>{count(item.known_cost_events)}</td><td>{count(item.unknown_cost_events)}</td><td>{money(item.estimated_cost_usd)}</td></tr>)}</tbody>
           </table></div>
           <p className={styles.subtle}>토큰 수 옆 † 표시는 해당 모델에 토큰 사용량이 누락된 시도가 있음을 의미합니다. 평균 응답 시간은 기록된 호출 시도 기준입니다.</p>
         </section>
