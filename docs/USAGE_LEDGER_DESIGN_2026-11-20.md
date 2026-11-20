@@ -80,3 +80,8 @@ Prices are effective-dated, provider/model-specific and backed by an official so
 ## Current implementation boundary
 
 Current log telemetry and offline reports are available. This design is not implemented in production. Keep manual DB approval and two-user live E2E at the end of the release checklist.
+## 2026-11-20 isolated migration implementation
+
+The additive migration `supabase/migrations/20261120120000_ai_usage_events_ledger.sql` now implements the immutable per-attempt event table, nullable provider token fields, bounded metadata, unique idempotency key, lookup indexes, RLS and service-role-only raw event access. `supabase/tests/verify_ai_usage_events_ledger.sql` verifies role grants, service-role insertion, duplicate idempotency rejection and preservation of unknown token usage as NULL. CI applies and tests this migration only in its disposable PostgreSQL 17 service.
+
+The migration is **not applied to Production**. The API does not yet dual-write to this table; that integration is deliberately separate because it requires verified ownership context (user/paper/job IDs) at each provider attempt. Do not report a persistent production ledger until the API writer, failure isolation, and live reconciliation are implemented and reviewed.
