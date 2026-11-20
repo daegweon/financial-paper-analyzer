@@ -27,6 +27,17 @@ BEGIN
   SELECT count(*) INTO event_count FROM public.ai_usage_events
    WHERE idempotency_key='job-123-gemini-gemini-test-1';
   IF event_count <> 1 THEN RAISE EXCEPTION 'Usage event insert failed'; END IF;
+  BEGIN
+    INSERT INTO public.ai_usage_events(
+      user_id, provider, model, attempt_index, outcome, idempotency_key
+    ) VALUES (
+      '11111111-1111-4111-8111-111111111111',
+      'gemini','gemini-test',1,'success','job-123-gemini-gemini-test-1'
+    );
+    RAISE EXCEPTION 'Duplicate idempotency key was accepted';
+  EXCEPTION WHEN unique_violation THEN
+    NULL;
+  END;
 END $$;
 ROLLBACK;
 
