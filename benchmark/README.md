@@ -194,3 +194,16 @@ Or pass `--usage-events benchmark/results/ai-usage-events.json` to `benchmark/ru
 The price catalog is `backend/app/model_price_catalog.json` and records the official Google Gemini API pricing source, model, tier and effective dates. The current candidate models are priced only for `paid_standard`: Gemini 3.5 Flash-Lite at $0.30 input / $2.50 output per million tokens, and Gemini 3.6 Flash at $0.75 / $3.75 through 2026-12-31, then $1.50 / $7.50 from 2027-01-01. Output pricing includes thinking tokens, so the estimator adds candidate and thought tokens once. Unknown billing mode, incomplete token metadata and unknown models produce NULL cost. Free tier is zero only when explicitly confirmed.
 
 The API reads `GEMINI_BILLING_MODE` only when set to `free` or `paid_standard`; otherwise it records NULL. Do not set this variable until the Google AI Studio project's billing tier is verified. This is an estimate, not an invoice. Recheck official pricing before each catalog update.
+
+### Monthly budget diagnostics
+
+The cost report uses exact Decimal arithmetic and groups usage by paper/model/month, user/month and paper/month. Optional thresholds are diagnostic only (they do not block requests or enforce a hard quota):
+
+```bash
+cd backend
+python -m app.cost_report --events /path/to/ai-usage-events.json \
+  --monthly-user-budget-usd 25 --monthly-paper-budget-usd 5 \
+  --out ../benchmark/results/ai-cost-report.json
+```
+
+For the integrated quality pipeline, pass `--monthly-user-budget-usd 25 --monthly-paper-budget-usd 5` together with `--usage-events ...`. If any event has unknown billing mode, missing tokens or invalid timestamp, the relevant budget is marked `incomplete_unknown_costs` unless already-known cost has exceeded the threshold. The report never declares an incomplete total within budget. These are alerts/reporting only, not a spending control; enforceable quotas require a separately approved server-side policy and Production rollout.
