@@ -251,3 +251,12 @@
 - Added monthly user and paper budget diagnostics. Exact Decimal sums, incomplete coverage is never reported as within budget; these are reporting alerts only, not hard enforcement. Wired optional events and thresholds into integrated quality pipeline.
 - API tests in CI [#44666816651](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44666816651): **181 passed / 1 deliberately skipped**; disposable DB policy and GET-only live API preflight passed. Frontend lint/build and synthetic browser QA still running at checkpoint. Keep engineering progress at 97% until full CI is green.
 - No Production migration/deployment. Do not set `GEMINI_BILLING_MODE` until billing tier is verified in Google AI Studio. No hard quota is enforced by this report.
+
+## 2026-11-20 — Administrator-only AI budget and usage console (CI pending)
+
+- Corrected the product boundary: AI cost and budget are administrator operations. Removed individual user/paper budget thresholds from `backend/app/cost_report.py` and the integrated quality pipeline. User/paper cost rows remain administrator-only usage breakdowns; only one service-wide monthly budget exists.
+- Added `ai_admin_settings` to the additive AI usage ledger migration, RLS/FORCE RLS and service_role-only access; SQL CI verifies browser roles cannot read/write settings and service_role can persist the global budget.
+- Added server-authorized endpoints `GET /api/admin/ai-usage/summary` and `POST /api/admin/ai-usage/budget`. Both verify Supabase session then exact `PAPERSIGNAL_ADMIN_USER_IDS` allowlist membership before service-role access. Summary returns month/model/service-wide budget and administrator-only user aggregates, never raw events. Budget update validates finite nonnegative Decimal values and records the verified admin user ID.
+- Added `/admin/ai-usage` administrator dashboard with global monthly budget editor, monthly total, model breakdown and internal user usage. Ordinary users receive HTTP 403 from API regardless of frontend route visibility.
+- Added backend tests for allowlist, non-admin denial, global budget write, invalid values, settings persistence and admin summary aggregation. Full CI pending; no progress point until all jobs pass.
+- No Production Supabase migration, Railway deployment, Vercel Production promotion or customer data mutation. Admin allowlist and budget environment configuration are documented for the final human rollout.
