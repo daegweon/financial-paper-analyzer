@@ -189,3 +189,9 @@
 - Added `benchmark/diagnose.py` for conservative finding triage: missing direct evidence, quote absent from claimed page, and numeric result fields missing from direct quotations. Structural portfolio counts are not treated as regression estimates unless explicitly stored in numeric result fields. Added regression tests and README instructions.
 - Prior complete candidate CI [#44634214924](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44634214924) passed all jobs including 152 backend tests, frontend, PostgreSQL, read-only API and browser QA. New diagnostic tests are being verified in [#44634807161](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44634807161); progress remains 92% until that run completes successfully.
 - No production data, schema, user accounts, deployments or analysis engine behavior changed. Human approvals and live E2E remain deferred.
+
+## 2026-11-20 — Failure analytics and paired engine comparison
+- Added offline failure taxonomy/report for auth, permission, resource, quota, timeout, provider availability, malformed response and generic application failures; aggregates per-model Gemini attempt errors without claiming fallback recovery absent job completion.
+- Added paired scorecard comparison for per-paper metrics and aggregate deltas; missing values excluded. Added tests for paired/unpaired papers and missing measurements.
+- Added privacy-first per-job usage ledger and effective-dated price design (RLS, service-role-only, idempotency, null for unknown/free-tier prices); design only, no DB changes.
+- Latest complete prior CI #44641154839 green. Fresh complete CI pending for these additions; no score credit until verified.
