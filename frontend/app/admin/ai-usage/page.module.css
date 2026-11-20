@@ -12,7 +12,7 @@
 .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:20px 0}
 .card,.panel{border:1px solid #dbe4e7;border-radius:12px;padding:18px;background:white}
 .card{display:flex;flex-direction:column;gap:7px}
-.card span,.card small,.subtle{color:#657781}
+.card span,.card small,.subtle{color:#4f626d}
 .card strong{font-size:25px;overflow-wrap:anywhere}
 .panel{margin:16px 0}
 .panel h2{font-size:18px;margin:0 0 16px}
@@ -30,7 +30,7 @@
 .notice,.error{padding:14px;border-radius:9px;margin:16px 0;line-height:1.55}
 .notice{background:#fff7e8;border:1px solid #ead6aa;color:#674a16}
 .error{background:#fff0ef;border:1px solid #edc5c0;color:#8c2921}
-.disclaimer{color:#687982;font-size:12px;line-height:1.6;margin-top:22px}
+.disclaimer{color:#4f626d;font-size:12px;line-height:1.6;margin-top:22px}
 .budgetForm{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .budgetForm label{font-weight:700;font-size:13px}
 .budgetForm input{min-height:40px;width:190px;border:1px solid #c8d5da;border-radius:7px;padding:8px 10px;color:#17313d;background:#fff;font-variant-numeric:tabular-nums}
