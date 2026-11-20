@@ -103,3 +103,19 @@ No production migrations, account creation, user-data mutation or service-plan c
 - Read-only Railway API metrics (24h): 451 requests, 241 2xx, 210 4xx, 0 5xx; p99 latency 4–9 ms across observed buckets. This is an operational sample, not a load test.
 - Production alias remains on prior deployment `dpl_5y2EUXPkUDBeYomp2nxuok728Maa`, which is still the rollback baseline. The current main commit has not been deployed because Vercel returned `api-deployments-free-per-day` / build-rate-limit. No plan upgrade or payment was made.
 - The free deployment retry remains scheduled for 2026-11-21 15:40 Asia/Seoul. On retry, deploy exact current main SHA to target production, verify the alias points to the new READY deployment, then run the manual smoke checklist above.
+
+
+---
+
+## Final closeout — 2026-11-20 (supersedes the earlier pre-deploy checklist)
+
+- Production Vercel alias `financial-paper-analyzer.vercel.app` is attached to READY deployment `dpl_HBMsBWFBE4xY7yCNi9KQUE79KCJV`, deployed from main SHA `d6cc166a1ad0f0a396aa12d70ca81068198f3d03`.
+- Current main is `cec2d1a7ebdce8186a76e94b86181147eac1986c`. Comparing deployed SHA to current main shows only workflow/test/documentation changes after the deployed SHA; no application-runtime files changed. The deployed runtime therefore matches current main's app code.
+- Deployed frontend source contains the Google sign-in button, mobile logout action and race-safe Supabase `getSession()` bootstrap.
+- Live two-account E2E passed: [#44722388440](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44722388440). Preflight passed; the actual Worker/Gemini analysis completed; user B was denied access to A's paper, job, analysis and private PDF.
+- A separate read-only Production query confirmed zero remaining synthetic Auth users, paper rows, PDF Storage objects, jobs and analyses.
+- Production migration `20261120102957` (`beta_server_owned_result_writes`) was applied; authenticated client writes to analyses/jobs and trusted status fields are blocked while permitted paper uploads and owner-scoped reads remain. Service-role writes remain available.
+- Railway API and Worker are online. Last-hour API sample: 13 requests, 11 2xx, 2 4xx, 0 5xx (small sample, not a load test). Supabase Performance Advisor has no findings; Security Advisor still reports leaked-password protection disabled.
+- The full inline original-PDF viewer and junior-learning modules remain in Draft PR #18 and its READY Preview (https://financial-paper-analyzer-j6y0g8r1k-daegweonai-9583.vercel.app); they are not in the canonical production runtime. PR #18 is non-mergeable/diverged and must be reconciled before any promotion.
+- PR #23 CI-cost optimization is merged. The scheduled 2026-11-21 15:40 deployment check was updated to skip redundant deployment when production runtime code is already current.
+- Remaining human-only items: real Google OAuth smoke on production, actual iOS/Android device checks, SMTP provider configuration, leaked-password-protection decision, administrator UUID/service-wide budget/Gemini billing-mode designation, qualified review of six benchmark findings, and confirmation of GitHub Actions $0 stop-usage budget.

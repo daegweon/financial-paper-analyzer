@@ -72,3 +72,35 @@ Sample synthetic PDF can be generated from `backend/tests/test_integration_contr
 - Storage bucket `papers` is private.
 - Never expose Supabase service-role/secret keys, and never commit external AI API keys.
 - For regression tests, use an isolated environment with controlled test accounts instead of changing production email-confirmation settings.
+
+
+---
+
+## 2026-11-20 — Real production two-account E2E closeout
+
+**GitHub Actions:** [#44722388440](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44722388440)  
+**Pinned test source:** `431059a1116a50f39fd56d565c35a1afc081b8fc`  
+**Result:** PASS — `1 passed, 27 deselected`.
+
+The manual workflow verified the protected secrets, fixed Production Supabase/API origins and server-owned API health marker before mutating data. The live test then:
+
+1. Created two distinct temporary synthetic Supabase Auth users.
+2. Uploaded a private synthetic two-page PDF as user A and verified the original PDF bytes and owner-only signed URL.
+3. Enqueued analysis through Railway API, observed a terminal `completed` job and read the saved result with page-level evidence.
+4. Confirmed user B received 404/empty owner-scoped results for A's paper/job/analysis and could not download or sign A's private PDF.
+5. Ran scoped cleanup in `finally`.
+
+A separate read-only Production SQL query after the run returned zero for synthetic Auth users, paper rows, PDF Storage objects, analysis jobs and analyses.
+
+Production migration `20261120102957` (`beta_server_owned_result_writes`) had been applied before this run. Railway API/Worker remained online; the API's observed last-hour sample was 13 requests with zero 5xx responses.
+
+### Current production frontend
+
+The canonical alias `financial-paper-analyzer.vercel.app` points to READY deployment `dpl_HBMsBWFBE4xY7yCNi9KQUE79KCJV`, deployed from main SHA `d6cc166a1ad0f0a396aa12d70ca81068198f3d03`. Current main is `cec2d1a7ebdce8186a76e94b86181147eac1986c`; later changes modify only workflow/test/documentation files, not application-runtime files. The deployed frontend contains Google sign-in, mobile logout and the race-safe `getSession()` bootstrap.
+
+### Scope not proven by this live API E2E
+
+- This test used synthetic email/password accounts, not a live Google OAuth consent flow.
+- It proves the API/Worker/DB/Storage two-account path, not native iOS Safari/Android Chrome behavior.
+- The full inline original-PDF viewer and junior-learning components remain on Draft PR #18 and its READY Preview (https://financial-paper-analyzer-j6y0g8r1k-daegweonai-9583.vercel.app); they are not in the current canonical production runtime.
+- Supabase Security Advisor still warns that leaked-password protection is disabled. SMTP, administrator designation and qualified review of six benchmark findings remain outstanding.

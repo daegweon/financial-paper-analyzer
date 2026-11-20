@@ -12,7 +12,7 @@ The full product candidate is still Draft PR #18 and must **not** be merged befo
 - The job checks out **this SHA**, not the HEAD of a mutable PR branch, and verifies git rev-parse HEAD before installing dependencies.
 - The run input **must equal this SHA**. Changes to E2E code require a separately reviewed update to the pin. Do not let the job run arbitrary user-supplied commits with privileged secrets.
 
-## Human steps (NOT performed automatically)
+## Human steps (historical; execution completed 2026-11-20)
 
 1. Review and merge this narrow workflow-only PR into main. If kept Draft, choose **Ready for review** before merge. Do NOT merge Draft PR #18.
 2. In the GitHub repo, configure protected **Actions repository secrets** `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `PAPERSIGNAL_API_URL`. Use the exact existing project/service, never paste any secret into chat, PR comments, workflow inputs or logs.
@@ -29,6 +29,12 @@ The full product candidate is still Draft PR #18 and must **not** be merged befo
 - Production Supabase schema/migration is **not** changed by this workflow. Do not apply `20261117215315_beta_server_owned_result_writes.sql` until the full real E2E passes, and remote migration history has been reconciled.
 - This workflow does not make Vercel Production live, alter Railway service source, deploy the Worker, or raise GitHub Actions budget.
 
-## Status
+## Status — completed 2026-11-20
 
-PR #19 merge: complete. Repository secrets: reported configured by the account owner; values are intentionally not readable here. Live E2E: pending one explicit manual GitHub Actions workflow dispatch; API rollout and database permission migration are complete. Release milestone remains pending until a genuine run succeeds.
+- PR #19: merged into `main`.
+- Protected secrets: account owner reported all four values configured; GitHub does not reveal the values to this assistant.
+- Production server-owned result-write migration: applied as version `20261120102957`.
+- Live E2E: **passed** in [run #44722388440](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44722388440). The preflight passed, one pytest test passed, the real Worker/Gemini analysis completed, and user B was denied access to A's records and private PDF.
+- Cleanup: separate read-only Supabase query confirmed zero synthetic users, papers, Storage objects, jobs and analyses remain.
+- No further live E2E dispatch is required unless the API/Worker or RLS/Storage implementation changes.
+
