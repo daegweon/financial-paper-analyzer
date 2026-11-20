@@ -39,6 +39,18 @@ function money(value: string | null) {
   return value === null ? "미확정" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(Number(value));
 }
 
+function budgetStatusLabel(value: string) {
+  const labels: Record<string, string> = {
+    not_configured: "예산 미설정",
+    within_budget: "예산 범위 내",
+    exceeded: "예산 초과",
+    exceeded_with_incomplete_data: "예산 초과 · 집계 일부 누락",
+    incomplete_unknown_costs: "비용 미확정 이벤트 존재",
+    incomplete_truncated: "조회 한도 도달 · 전체 비용 미확인",
+  };
+  return labels[value] ?? "상태 확인 필요";
+}
+
 export default function AdminAIUsagePage() {
   const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -108,8 +120,9 @@ export default function AdminAIUsagePage() {
   }
 
   const budgetRatio = summary?.monthly_budget_usd && Number(summary.monthly_budget_usd) > 0
-    ? Math.min(100, Number(summary.estimated_cost_usd) / Number(summary.monthly_budget_usd) * 100)
+    ? Number(summary.estimated_cost_usd) / Number(summary.monthly_budget_usd) * 100
     : null;
+  const budgetProgress = budgetRatio === null ? null : Math.min(100, budgetRatio);
 
   return (
     <main className={styles.shell}>
@@ -150,8 +163,8 @@ export default function AdminAIUsagePage() {
         </section>
 
         <section className={styles.panel}>
-          <div className={styles.panelTitle}><h2>월간 예산 상태</h2><strong>{summary.budget_status}</strong></div>
-          {budgetRatio !== null && <div className={styles.track} role="progressbar" aria-label="확인된 월간 예산 사용률" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(budgetRatio)}><span style={{ width: budgetRatio + "%" }} /></div>}
+          <div className={styles.panelTitle}><h2>월간 예산 상태</h2><strong>{budgetStatusLabel(summary.budget_status)}</strong></div>
+          {budgetRatio !== null && <div className={styles.track} role="progressbar" aria-label="확인된 월간 예산 사용률" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(budgetProgress ?? 0)}><span style={{ width: budgetProgress + "%" }} /></div>}
           <p>{summary.monthly_budget_usd === null ? "월간 예산이 서버에 설정되지 않았습니다." : "확인된 비용 기준 " + (budgetRatio ?? 0).toFixed(1) + "% 사용"}</p>
           {!summary.cost_coverage_complete && <p className={styles.notice}>일부 이벤트의 비용이 미확정입니다. 표시된 비용은 전체 청구액이 아니며 예산 사용률도 하한값입니다.</p>}
           {summary.truncated && <p className={styles.notice}>조회 한도에 도달했습니다. 전체 월간 집계를 위해 서버 페이지네이션 한도를 확인해야 합니다.</p>}
