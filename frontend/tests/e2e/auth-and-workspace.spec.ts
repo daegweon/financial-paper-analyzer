@@ -52,6 +52,19 @@ async function seedAuthenticatedSession(page: Page) {
     }
     return route.continue();
   });
+  await page.route(`${SUPABASE_URL}/rest/v1/analysis_jobs**`, route => {
+    if (route.request().method() === "GET") {
+      return route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+    }
+    return route.continue();
+  });
+  await page.route(`${SUPABASE_URL}/storage/v1/object/sign/papers/**`, route =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ signedUrl: "https://storage.mock.papersignal.test/signed/fixture.pdf" }),
+    }),
+  );
   await page.route("https://api.mock.papersignal.test/health", route =>
     route.fulfill({
       status: 200,
