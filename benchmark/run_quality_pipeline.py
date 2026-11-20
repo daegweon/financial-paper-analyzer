@@ -15,11 +15,12 @@ from benchmark.diagnose import diagnose
 from benchmark.build_review_packet import build_packet
 from benchmark.quality_dashboard import render_dashboard
 from benchmark.compare_scorecards import compare_scorecards
+from benchmark.failure_report import summarize_failures
 
 def _load(path: Path):
     return json.loads(path.read_text(encoding='utf-8'))
 
-def run_pipeline(manifest, results, out_dir: Path, pages_dir: Path | None = None, reviews=None, baseline=None):
+def run_pipeline(manifest, results, out_dir: Path, pages_dir: Path | None = None, reviews=None, baseline=None, logs: Path | None = None):
     rows = results.get('results', results) if isinstance(results, dict) else results
     by_id = {}
     for row in rows if isinstance(rows, list) else []:
@@ -62,11 +63,16 @@ def run_pipeline(manifest, results, out_dir: Path, pages_dir: Path | None = None
     (out_dir / 'diagnostics.json').write_text(json.dumps(diagnostics, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     (out_dir / 'quality-dashboard.html').write_text(render_dashboard(scorecard), encoding='utf-8')
     (out_dir / 'human-review-packet.md').write_text(packet, encoding='utf-8')
+    failure_report = None
+    if logs is not None:
+        with logs.open(encoding='utf-8') as handle:
+            failure_report = summarize_failures(handle)
+        (out_dir / 'failure-report.json').write_text(json.dumps(failure_report, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')
     comparison = None
     if baseline is not None:
         comparison = compare_scorecards(baseline, scorecard)
         (out_dir / 'comparison.json').write_text(json.dumps(comparison, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    return {'scorecard': scorecard, 'diagnostics': diagnostics, 'comparison': comparison, 'output_dir': str(out_dir)}
+    return {'scorecard': scorecard, 'diagnostics': diagnostics, 'comparison': comparison, 'failure_report': failure_report, 'output_dir': str(out_dir)}
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -75,10 +81,11 @@ def main():
     parser.add_argument('--pages-dir', type=Path)
     parser.add_argument('--reviews', type=Path)
     parser.add_argument('--baseline-scorecard', type=Path)
+    parser.add_argument('--logs', type=Path, help='Optional exported Railway API text log for failure analytics')
     parser.add_argument('--out-dir', type=Path, default=ROOT / 'benchmark/results/quality-run')
     args = parser.parse_args()
-    output = run_pipeline(_load(args.manifest), _load(args.results), args.out_dir, args.pages_dir, _load(args.reviews) if args.reviews else None, _load(args.baseline_scorecard) if args.baseline_scorecard else None)
-    print(json.dumps({'completed_count': output['scorecard']['completed_count'], 'not_run_count': output['scorecard']['not_run_count'], 'diagnostic_issue_count': output['diagnostics']['issue_count'], 'output_dir': output['output_dir']}, ensure_ascii=False, indent=2))
+    output = run_pipeline(_load(args.manifest), _load(args.results), args.out_dir, args.pages_dir, _load(args.reviews) if args.reviews else None, _load(args.baseline_scorecard) if args.baseline_scorecard else None, args.logs)
+    print(json.dumps({'completed_count': output['scorecard']['completed_count'], 'not_run_count': output['scorecard']['not_run_count'], 'diagnostic_issue_count': output['diagnostics']['issue_count'], 'failed_job_count': output['failure_report']['failed_job_count'] if output['failure_report'] else None, 'output_dir': output['output_dir']}, ensure_ascii=False, indent=2))
 
 if __name__ == '__main__':
     main()
