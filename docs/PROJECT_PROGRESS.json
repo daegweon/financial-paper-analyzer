@@ -8,8 +8,8 @@
     "pull_request": 18,
     "base": "main",
     "review_state": "draft",
-    "last_independently_verified_sha": "b0a4261d8f36025b3d8dfec2105b58ebb9f23121",
-    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44675494781",
+    "last_independently_verified_sha": "9b45e5957f9d2bcecf3ca5be64f5f47a192648f7",
+    "latest_verified_ci_run": "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44676373334",
     "production_api": {
       "service_id": "81b678e2-7136-436d-9058-7d20647dc1b7",
       "immutable_commit": "ace3fbd5dab3ea71efa3a49da8363259ea5f9732",
@@ -104,7 +104,7 @@
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44619544125",
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44648626115",
         "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44675494781",
-        "https://github.com/daegweon/financial-paper-analyzer/pull/18"
+        "https://github.com/daegweon/financial-paper-analyzer/actions/runs/44676373334"
       ],
       "remaining": "운영 승인·실제 2계정 E2E·DB 마이그레이션/롤백·외부 SMTP·실기기 PDF 검증",
       "note": "관리자 전용 AI 사용량/비용/예산 콘솔, provider별 성공률·토큰·지연시간 집계 및 불완전 데이터 경고 구현과 전체 CI 검증 완료. 실제 운영 반영은 별도 승인 필요."
@@ -282,6 +282,11 @@
       "date": "2026-11-20",
       "percent": 98,
       "evidence": "Awarded final beta-operations engineering point after administrator-only AI operations console passed full CI #44675494781 on candidate head b0a4261d8f36025b3d8dfec2105b58ebb9f23121. API 194 passed/1 deliberately skipped, frontend lint/typecheck/build, disposable PostgreSQL 17 RLS/index checks, GET-only live API preflight and 39 synthetic browser scenarios across desktop Chromium, Android Chromium and iPhone WebKit all SUCCESS. Console includes server-side admin allowlist, global monthly budget setting, provider/model success/failure, token and latency aggregates, pricing-based estimates, pagination truncation safeguards and WCAG-tested UI. Live E2E deliberately skipped; no Production migration or deployment. Engineering 98%, release gates remain 4/10."
+    },
+    {
+      "date": "2026-11-20",
+      "percent": 98,
+      "evidence": "Follow-up admin pricing transparency hardening passed full CI #44676373334 on candidate head 9b45e5957f9d2bcecf3ca5be64f5f47a192648f7: API 195 passed/1 deliberately skipped, frontend lint/typecheck/build, PostgreSQL 17 policy/index checks, GET-only live API preflight and 39 synthetic browser scenarios all SUCCESS. Administrator model rows now expose cost-status breakdown, effective price date and official source links; provider-specific grouping and provenance tests pass. Engineering remains 98%; release gates remain 4/10. No Production migration or deployment."
     }
   ]
 }
