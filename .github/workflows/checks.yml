@@ -8,6 +8,7 @@ on:
       - "frontend/**"
       - "supabase/**"
       - ".github/workflows/**"
+      - ".dockerignore"
       - "requirements*.txt"
       - "pyproject.toml"
       - "pytest.ini"
