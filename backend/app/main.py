@@ -2820,7 +2820,14 @@ def _build_admin_ai_usage_summary(events: list[dict[str, Any]], month: str, mont
     budget_status = "not_configured"
     if budget is not None:
         if known_total > budget:
-            budget_status = "exceeded_with_incomplete_data" if (unknown_events or truncated) else "exceeded"
+            if unknown_events and truncated:
+                budget_status = "exceeded_with_incomplete_data"
+            elif truncated:
+                budget_status = "exceeded_with_truncated_data"
+            elif unknown_events:
+                budget_status = "exceeded_with_unknown_costs"
+            else:
+                budget_status = "exceeded"
         elif truncated:
             budget_status = "incomplete_truncated"
         elif unknown_events:
