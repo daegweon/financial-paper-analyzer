@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "next": "16.4.6",
@@ -19,6 +20,7 @@
     "@types/node": "22.15.30",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "@playwright/test": "1.56.1"
   }
 }
