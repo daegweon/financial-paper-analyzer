@@ -2465,11 +2465,11 @@ def test_admin_budget_update_persists_only_global_setting(monkeypatch):
     ))
     assert result == {"monthly_budget_usd": "125.50", "updated": True}
     assert captured["url"].endswith("/rest/v1/ai_admin_settings")
-    assert captured["json"] == {
-        "setting_key": "monthly_budget_usd",
-        "value_numeric": "125.50",
-        "updated_by": "admin-uuid",
-    }
+    assert captured["json"]["setting_key"] == "monthly_budget_usd"
+    assert captured["json"]["value_numeric"] == "125.50"
+    assert captured["json"]["updated_by"] == "admin-uuid"
+    from datetime import datetime
+    assert datetime.fromisoformat(captured["json"]["updated_at"])
     assert captured["params"]["on_conflict"] == "setting_key"
 
 
