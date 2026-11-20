@@ -93,3 +93,11 @@ The API now sets an async task-local ownership context from `_process_analysis_j
 Writes use `Prefer: resolution=ignore-duplicates` and a short timeout. A missing service key/context skips recording; a ledger HTTP/network failure emits a redacted warning and never fails the analysis. No prompt, extracted PDF text, model response, API key or bearer token is stored. Unit tests cover ownership payload, null token preservation, idempotency header, missing context and non-fatal write failure.
 
 This code is committed to the beta candidate only; no Railway deployment or Production database migration was performed. Full CI must pass before this writer is credited as verified.
+
+## 2026-11-20 effective-dated pricing and cost reporting
+
+- Added `backend/app/model_price_catalog.json` with official Google Gemini API Standard paid rates checked 2026-11-20: Gemini 3.5 Flash-Lite ($0.30 input / $2.50 output per 1M tokens) and Gemini 3.6 Flash ($0.75 / $3.75 through 2026-12-31; $1.50 / $7.50 from 2027-01-01). Source: https://ai.google.dev/gemini-api/docs/pricing.
+- Added Decimal-based cost estimator and per-paper/model report. Output pricing includes thinking tokens, so candidate + thought tokens are priced once. Unknown model, unknown billing mode or incomplete token metadata yields null cost. Free tier is zero only when explicitly confirmed.
+- Added nullable `billing_mode` to the candidate ledger schema and `GEMINI_BILLING_MODE` configuration. API records only explicit `free` or `paid_standard`; default is unknown/null. Do not set this variable until the Google AI Studio project billing status is checked. No assumption is made from the presence of an API key.
+- Integrated optional usage-event JSON into the quality pipeline as `ai-cost-report.json`; all outputs remain offline and read-only.
+- Official rates are estimates, not invoices; refresh the versioned catalog when Google changes pricing. No Production migration or deployment has occurred.
