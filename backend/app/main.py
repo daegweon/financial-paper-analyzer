@@ -3243,5 +3243,55 @@ async def admin_ai_usage_summary(
         events.extend(rows)
         if len(rows) < page_size:
             break
-    monthly_budget = ADMIN_MONTHLY_AI_BUDGET_USD or None
+    async with httpx.AsyncClient(timeout=10) as client:
+        setting_response = await client.get(
+            SUPABASE_URL + "/rest/v1/ai_admin_settings",
+            headers=supabase_headers(SERVICE_ROLE_KEY),
+            params={"setting_key": "eq.monthly_budget_usd", "select": "value_numeric", "limit": "1"},
+        )
+    settings = await check_response(setting_response, "admin AI budget lookup") or []
+    monthly_budget = str(settings[0]["value_numeric"]) if settings else (ADMIN_MONTHLY_AI_BUDGET_USD or None)
     return _build_admin_ai_usage_summary(events, selected_month, monthly_budget)
+
+
+@app.post("/api/admin/ai-usage/budget")
+async def update_admin_ai_budget(
+    payload: dict[str, Any],
+    authorization: str | None = Header(default=None),
+) -> dict[str, Any]:
+    if not SUPABASE_URL or not SUPABASE_KEY or not SERVICE_ROLE_KEY:
+        raise HTTPException(status_code=503, detail="관리자 예산 설정 환경이 구성되지 않았습니다.")
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="로그인이 필요합니다.")
+    token = authorization.split(" ", 1)[1].strip()
+    if not token:
+        raise HTTPException(status_code=401, detail="인증 토큰이 필요합니다.")
+    async with httpx.AsyncClient(timeout=15) as client:
+        user_id = await _verify_user(client, token)
+    if not _is_admin_user(user_id):
+        raise HTTPException(status_code=403, detail="관리자 권한이 필요합니다.")
+    raw_budget = payload.get("monthly_budget_usd")
+    if isinstance(raw_budget, bool) or raw_budget is None:
+        raise HTTPException(status_code=422, detail="월간 전체 예산을 0 이상의 숫자로 입력해 주세요.")
+    try:
+        budget = Decimal(str(raw_budget))
+        if not budget.is_finite() or budget < 0 or budget > Decimal("1000000000"):
+            raise ValueError
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=422, detail="월간 전체 예산은 0~1,000,000,000 USD 범위의 숫자여야 합니다.")
+    headers = {
+        **supabase_headers(SERVICE_ROLE_KEY),
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates,return=minimal",
+    }
+    async with httpx.AsyncClient(timeout=10) as client:
+        response = await client.post(
+            SUPABASE_URL + "/rest/v1/ai_admin_settings",
+            headers=headers,
+            params={"on_conflict": "setting_key"},
+            json={"setting_key": "monthly_budget_usd", "value_numeric": format(budget, "f"), "updated_by": user_id},
+        )
+    if response.status_code >= 300:
+        log.warning("Admin AI budget update failed status=%d", response.status_code)
+        raise HTTPException(status_code=502, detail="관리자 예산 설정을 저장하지 못했습니다.")
+    return {"monthly_budget_usd": format(budget.quantize(Decimal("0.01")), "f"), "updated": True}
