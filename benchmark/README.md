@@ -160,3 +160,18 @@ python benchmark/failure_report.py railway-api.log --out benchmark/results/failu
 ```
 
 The report groups failed analysis jobs into authentication, authorization, missing resource, provider quota, timeout, provider unavailable, invalid model response, other HTTP and application errors. It also counts Gemini attempts/errors by model. An alternate-model HTTP 200 is not automatically counted as a recovered job; correlate the same job with a later completion event before deriving recovery rate. Logs without a model identifier cannot be attributed to a model. This is offline, read-only triage and does not retry or mutate jobs.
+
+## Run the complete quality workflow with one command
+
+For a repeatable offline review cycle, use the orchestrator. It generates the scorecard, diagnostic report, HTML dashboard and human-review packet together; an optional baseline scorecard adds a paired version comparison.
+
+```bash
+python benchmark/run_quality_pipeline.py \
+  --results benchmark/results/analysis_results.json \
+  --pages-dir benchmark/pages \
+  --reviews benchmark/review_template.json \
+  --baseline-scorecard benchmark/results/v1-scorecard.json \
+  --out-dir benchmark/results/quality-run
+```
+
+`--pages-dir`, `--reviews` and `--baseline-scorecard` are optional. Outputs are `scorecard.json`, `diagnostics.json`, `quality-dashboard.html`, `human-review-packet.md`, and optionally `comparison.json`. Missing measurements stay null/unmeasured; the workflow never auto-approves findings. All processing is local and read-only with respect to production services.
