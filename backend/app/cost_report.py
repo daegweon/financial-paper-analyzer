@@ -85,7 +85,7 @@ def main():
     events = json.loads(args.events.read_text(encoding='utf-8'))
     report = build_cost_report(events, admin_monthly_budget_usd=args.admin_monthly_budget_usd)
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')
+    args.out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     print(json.dumps({'model_paper_groups': len(report['groups']), 'admin_months': len(report['admin_monthly_budget'])}, ensure_ascii=False, indent=2))
 
 if __name__ == '__main__':
