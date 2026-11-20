@@ -187,15 +187,30 @@ export default function Home() {
 
   useEffect(() => {
     const supabase = db();
-    void supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-      setBoot(false);
-    }).catch(error => {
-      setMessage(String(error));
-      setBoot(false);
+    let disposed = false;
+    let authEventReceived = false;
+    // Subscribe before the initial user lookup. Otherwise a slow getUser()
+    // response can race with SIGNED_OUT and restore a stale authenticated UI.
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      authEventReceived = true;
+      if (!disposed) {
+        setUser(session?.user ?? null);
+        setBoot(false);
+      }
     });
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
-    return () => data.subscription.unsubscribe();
+    void supabase.auth.getUser().then(({ data: userData }) => {
+      if (!disposed && !authEventReceived) setUser(userData.user);
+      if (!disposed) setBoot(false);
+    }).catch(error => {
+      if (!disposed) {
+        setMessage(String(error));
+        setBoot(false);
+      }
+    });
+    return () => {
+      disposed = true;
+      data.subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
