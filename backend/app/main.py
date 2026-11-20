@@ -2144,17 +2144,53 @@ async def _generate_gemini(
                 detail="Gemini 요청 형식 또는 분석 스키마가 거부됐습니다. 서버 로그를 확인해 주세요.",
             )
         response.raise_for_status()
-        payload = response.json()
+        try:
+            payload = response.json()
+        except ValueError:
+            await _persist_ai_usage_event(
+                provider="gemini", model=model_name, outcome="invalid_response",
+                attempt_index=attempt_index, latency_ms=latency_ms,
+                http_status=response.status_code, error_class="invalid_json_payload",
+            )
+            log.warning("Gemini response payload was not valid JSON model=%s; trying next configured model", model_name)
+            failures.append((model_name, "invalid_json", "invalid_json_payload"))
+            continue
+        if not isinstance(payload, dict):
+            await _persist_ai_usage_event(
+                provider="gemini", model=model_name, outcome="invalid_response",
+                attempt_index=attempt_index, latency_ms=latency_ms,
+                http_status=response.status_code, error_class="payload_not_object",
+            )
+            failures.append((model_name, "invalid_json", "payload_not_object"))
+            continue
         prompt_feedback = payload.get("promptFeedback", {})
-        if prompt_feedback.get("blockReason"):
+        usage = payload.get("usageMetadata", {})
+        if not isinstance(usage, dict):
+            usage = {}
+        if isinstance(prompt_feedback, dict) and prompt_feedback.get("blockReason"):
+            await _persist_ai_usage_event(
+                provider="gemini", model=model_name, outcome="invalid_response",
+                attempt_index=attempt_index, latency_ms=latency_ms,
+                http_status=response.status_code, usage=usage, error_class="prompt_blocked",
+            )
             raise ValueError("Gemini 안전 정책에 의해 분석 요청이 차단됐습니다.")
         candidates = payload.get("candidates", [])
-        if not candidates:
+        if not isinstance(candidates, list) or not candidates:
+            await _persist_ai_usage_event(
+                provider="gemini", model=model_name, outcome="invalid_response",
+                attempt_index=attempt_index, latency_ms=latency_ms,
+                http_status=response.status_code, usage=usage, error_class="missing_candidates",
+            )
             raise ValueError("Gemini 응답 후보가 비어 있습니다.")
         candidate = candidates[0]
+        if not isinstance(candidate, dict):
+            await _persist_ai_usage_event(
+                provider="gemini", model=model_name, outcome="invalid_response",
+                attempt_index=attempt_index, latency_ms=latency_ms,
+                http_status=response.status_code, usage=usage, error_class="candidate_not_object",
+            )
+            raise ValueError("Gemini 응답 후보 구조가 올바르지 않습니다.")
         finish_reason = candidate.get("finishReason")
-        usage = payload.get("usageMetadata", {})
-        await _persist_ai_usage_event(provider="gemini", model=model_name, outcome="success" if finish_reason in (None, "STOP") else "invalid_response", attempt_index=attempt_index, latency_ms=latency_ms, http_status=response.status_code, usage=usage)
         log.info(
             "Gemini usage provider=gemini model=%s finish=%s prompt_tokens=%s candidate_tokens=%s thought_tokens=%s total_tokens=%s latency_ms=%d",
             model_name,
@@ -2171,6 +2207,11 @@ async def _generate_gemini(
                 f"thoughts={usage.get('thoughtsTokenCount')},"
                 f"total={usage.get('totalTokenCount')}"
             )
+            await _persist_ai_usage_event(
+                provider="gemini", model=model_name, outcome="invalid_response",
+                attempt_index=attempt_index, latency_ms=latency_ms,
+                http_status=response.status_code, usage=usage, error_class="max_tokens",
+            )
             log.warning(
                 "Gemini output cap reached model=%s cap=%d usage=%s; trying next model",
                 model_name, request_body["generationConfig"]["maxOutputTokens"], detail,
@@ -2178,27 +2219,53 @@ async def _generate_gemini(
             failures.append((model_name, "max_tokens", detail))
             continue
         if finish_reason not in (None, "STOP"):
+            await _persist_ai_usage_event(
+                provider="gemini", model=model_name, outcome="invalid_response",
+                attempt_index=attempt_index, latency_ms=latency_ms,
+                http_status=response.status_code, usage=usage, error_class="incomplete_response",
+            )
             log.warning("Gemini incomplete response model=%s finish=%s", model_name, finish_reason)
             failures.append((model_name, "incomplete", str(finish_reason)))
             continue
-        parts = candidate.get("content", {}).get("parts", [])
+        response_content = candidate.get("content")
+        parts = response_content.get("parts", []) if isinstance(response_content, dict) else []
         content = "".join(
             part.get("text", "")
-            for part in parts
+            for part in parts if isinstance(parts, list)
             if isinstance(part, dict) and isinstance(part.get("text"), str)
         )
         if not content:
+            await _persist_ai_usage_event(
+                provider="gemini", model=model_name, outcome="invalid_response",
+                attempt_index=attempt_index, latency_ms=latency_ms,
+                http_status=response.status_code, usage=usage, error_class="empty_content",
+            )
             raise ValueError("Gemini 응답 본문이 비어 있습니다.")
         try:
             parsed = json.loads(content)
         except json.JSONDecodeError as exc:
+            await _persist_ai_usage_event(
+                provider="gemini", model=model_name, outcome="invalid_response",
+                attempt_index=attempt_index, latency_ms=latency_ms,
+                http_status=response.status_code, usage=usage, error_class="invalid_json",
+            )
             log.warning("Gemini invalid JSON model=%s; trying next configured model", model_name)
             failures.append((model_name, "invalid_json", str(exc)[:180]))
             continue
         if not isinstance(parsed, dict):
+            await _persist_ai_usage_event(
+                provider="gemini", model=model_name, outcome="invalid_response",
+                attempt_index=attempt_index, latency_ms=latency_ms,
+                http_status=response.status_code, usage=usage, error_class="response_not_object",
+            )
             log.warning("Gemini response was not a JSON object model=%s", model_name)
             failures.append((model_name, "invalid_json", "response_not_object"))
             continue
+        await _persist_ai_usage_event(
+            provider="gemini", model=model_name, outcome="success",
+            attempt_index=attempt_index, latency_ms=latency_ms,
+            http_status=response.status_code, usage=usage,
+        )
         return parsed, model_name
 
     summary = "; ".join(f"{model}={status}" for model, status, _ in failures)
