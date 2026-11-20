@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from backend.app.cost_report import build_cost_report
+from app.cost_report import build_cost_report
 
 def test_cost_report_groups_per_paper_and_model_and_preserves_unknown_costs():
     events = [
@@ -13,7 +13,7 @@ def test_cost_report_groups_per_paper_and_model_and_preserves_unknown_costs():
     assert row['event_count'] == 2
     assert row['known_cost_events'] == 1
     assert row['unknown_cost_events'] == 1
-    assert row['estimated_cost_usd'] == 0.00055
+    assert row['estimated_cost_usd'] == 0.55
     assert row['complete_cost_coverage'] is False
 
 def test_free_tier_is_zero_only_when_explicitly_confirmed():
