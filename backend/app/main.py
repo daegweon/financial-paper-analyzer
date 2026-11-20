@@ -2657,6 +2657,7 @@ async def _persist_ai_usage_event(
         "model": model,
         "attempt_index": attempt_index,
         "outcome": outcome,
+        "billing_mode": None,
         "http_status": http_status,
         "error_class": error_class[:128] if error_class else None,
         "prompt_tokens": usage.get("promptTokenCount"),
