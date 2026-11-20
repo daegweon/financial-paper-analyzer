@@ -31,6 +31,8 @@ CREATE INDEX IF NOT EXISTS ai_usage_events_job_idx
   ON public.ai_usage_events(analysis_job_id);
 CREATE INDEX IF NOT EXISTS ai_usage_events_provider_model_created_idx
   ON public.ai_usage_events(provider, model, created_at DESC);
+CREATE INDEX IF NOT EXISTS ai_usage_events_created_at_idx
+  ON public.ai_usage_events(created_at DESC);
 
 ALTER TABLE public.ai_usage_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ai_usage_events FORCE ROW LEVEL SECURITY;
