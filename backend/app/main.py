@@ -1,5 +1,4 @@
 import asyncio
-import calendar
 from contextvars import ContextVar
 from difflib import SequenceMatcher
 import json
@@ -10,6 +9,7 @@ import re
 import unicodedata
 import time
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Any
 from urllib.parse import quote
 from uuid import UUID
@@ -2738,40 +2738,28 @@ def _build_admin_ai_usage_summary(events: list[dict[str, Any]], month: str, mont
     """Aggregate administrator-only usage. Never exposes raw events or user-set budgets."""
     report = build_cost_report(events)
     model_totals: dict[str, dict[str, Any]] = {}
-    user_totals: dict[str, dict[str, Any]] = {}
-    known_total = 0.0
+    known_total = Decimal("0")
     unknown_events = 0
     known_events = 0
     for group in report["groups"]:
         model = group["model"]
-        item = model_totals.setdefault(model, {"model": model, "event_count": 0, "known_cost_events": 0, "unknown_cost_events": 0, "estimated_cost_usd": 0.0})
+        item = model_totals.setdefault(model, {"model": model, "event_count": 0, "known_cost_events": 0, "unknown_cost_events": 0, "estimated_cost_usd": Decimal("0")})
         item["event_count"] += group["event_count"]
         item["known_cost_events"] += group["known_cost_events"]
         item["unknown_cost_events"] += group["unknown_cost_events"]
-        item["estimated_cost_usd"] += float(group["estimated_cost_usd"])
-        known_total += float(group["estimated_cost_usd"])
+        item["estimated_cost_usd"] += Decimal(group["estimated_cost_usd"])
+        known_total += Decimal(group["estimated_cost_usd"])
         known_events += group["known_cost_events"]
         unknown_events += group["unknown_cost_events"]
-    for row in report["monthly_user_budgets"]:
-        if row["month"] != month:
-            continue
-        user_id = row["user_id"]
-        user_totals[user_id] = {
-            "user_id": user_id,
-            "event_count": row["event_count"],
-            "known_cost_events": row["known_cost_events"],
-            "unknown_cost_events": row["unknown_cost_events"],
-            "estimated_cost_usd": row["estimated_cost_usd"],
-        }
     for item in model_totals.values():
-        item["estimated_cost_usd"] = f"{item['estimated_cost_usd']:.8f}"
+        item["estimated_cost_usd"] = format(item["estimated_cost_usd"].quantize(Decimal("0.00000001")), "f")
+    users = [row for row in report["admin_user_usage"] if row["month"] == month]
     budget = None
     if monthly_budget is not None:
         try:
-            value = float(monthly_budget)
-            if value < 0 or not math.isfinite(value):
+            budget = Decimal(monthly_budget)
+            if budget < 0 or not budget.is_finite():
                 raise ValueError
-            budget = value
         except (TypeError, ValueError):
             raise HTTPException(status_code=503, detail="관리자 월간 예산 설정이 올바르지 않습니다.")
     budget_status = "not_configured"
@@ -2783,16 +2771,15 @@ def _build_admin_ai_usage_summary(events: list[dict[str, Any]], month: str, mont
         "event_count": len(events),
         "known_cost_events": known_events,
         "unknown_cost_events": unknown_events,
-        "estimated_cost_usd": f"{known_total:.8f}",
-        "monthly_budget_usd": f"{budget:.2f}" if budget is not None else None,
+        "estimated_cost_usd": format(known_total.quantize(Decimal("0.00000001")), "f"),
+        "monthly_budget_usd": format(budget.quantize(Decimal("0.01")), "f") if budget is not None else None,
         "budget_status": budget_status,
         "cost_coverage_complete": unknown_events == 0,
         "models": sorted(model_totals.values(), key=lambda item: item["model"]),
-        "users": sorted(user_totals.values(), key=lambda item: item["estimated_cost_usd"], reverse=True),
+        "users": sorted(users, key=lambda item: item["estimated_cost_usd"], reverse=True),
         "truncated": len(events) >= 20000,
         "notice": "관리자 전용 운영 지표. 비용은 명시적으로 확인된 유료 등급과 가격표가 있는 이벤트의 추정치이며 청구서가 아닙니다. 미확정 비용은 합계에 포함되지 않습니다.",
     }
-
 
 async def _verify_user(client: httpx.AsyncClient, token: str) -> str:
     response = await client.get(SUPABASE_URL + "/auth/v1/user", headers=supabase_headers(token))
@@ -3224,7 +3211,7 @@ async def admin_ai_usage_summary(
     if not _is_admin_user(user_id):
         raise HTTPException(status_code=403, detail="관리자 권한이 필요합니다.")
     selected_month = month or datetime.now(timezone.utc).strftime("%Y-%m")
-    if not re.fullmatch(r"\\d{4}-\\d{2}", selected_month):
+    if not re.fullmatch(r"\d{4}-\d{2}", selected_month):
         raise HTTPException(status_code=422, detail="월 형식은 YYYY-MM이어야 합니다.")
     try:
         year, month_number = (int(value) for value in selected_month.split("-"))
