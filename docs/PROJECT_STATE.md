@@ -339,3 +339,10 @@ The account reached Vercel Hobby's daily 100-deployment API limit (HTTP 402 `api
 - The integrated pipeline's coverage-matrix file persistence had a regression caught by CI and was fixed in commit `d004d27253ff14766a0c061c8369165cdb7f90f0`. Backend on the follow-up run [#44653492214](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44653492214) reports 166 passed / 1 deliberately skipped; full browser verification is still running at this checkpoint. Do not treat the final pipeline patch as fully verified until that run completes.
 - Actual beta release gates remain **4/10**. The 95% is engineering completion, not public launch readiness. Remaining 5% includes independent audit of 18 findings, persistent usage ledger/official pricing, production two-user E2E, approved DB cutover, SMTP, native-device PDF checks and rollback.
 - All human approvals and production changes remain deferred. No production database, user data, worker deployment, Vercel production promotion or analysis-engine model/prompt behavior was changed.
+
+## 2026-11-20 — AI usage ledger schema and isolated PostgreSQL contract (CI pending)
+
+- Added additive migration `20261120120000_ai_usage_events_ledger.sql`: immutable per-attempt records, provider/model/outcome/status, nullable token metadata, latency, opaque unique idempotency key, indexes and RLS with raw event access restricted to service_role.
+- Added SQL contract `verify_ai_usage_events_ledger.sql`: anon/authenticated cannot read/write, service_role can insert, duplicate idempotency keys fail, missing provider token counts remain NULL. Wired migration + contract into disposable PostgreSQL 17 CI after the quota RPC checks.
+- Production Supabase is unchanged. The API writer is not yet integrated because each event must be tied to authenticated user/paper/job ownership; this must be implemented and tested before claiming a persistent production ledger.
+- Latest candidate CI will verify the migration only in isolated PostgreSQL. No human approval, Production migration, deployment or user-data mutation was performed.
