@@ -67,7 +67,7 @@ def run_pipeline(manifest, results, out_dir: Path, pages_dir: Path | None = None
     if logs is not None:
         with logs.open(encoding='utf-8') as handle:
             failure_report = summarize_failures(handle)
-        (out_dir / 'failure-report.json').write_text(json.dumps(failure_report, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')
+        (out_dir / 'failure-report.json').write_text(json.dumps(failure_report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     comparison = None
     if baseline is not None:
         comparison = compare_scorecards(baseline, scorecard)
