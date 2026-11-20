@@ -1,10 +1,10 @@
 # PaperSignal — pre-deployment QA and rollback checklist
 
 **Prepared:** 2026-11-20 (Asia/Seoul)  
-**Current main SHA:** `119546fdcb3b116335b80ed9c734beff0a241e81`  
+**Current main SHA:** `b04583370b09fd6972140b8f82c8dc13b685d9ba`  
 **Current production alias:** `financial-paper-analyzer.vercel.app`  
 **Current production deployment / rollback baseline:** `dpl_5y2EUXPkUDBeYomp2nxuok728Maa`  
-**Latest auth-fix Preview:** `dpl_8tcLEBHHS46yqaimn5MEtQjbge34` (READY, but Preview only)
+**Latest auth-fix Preview before the final session-bootstrap fix:** `dpl_8tcLEBHHS46yqaimn5MEtQjbge34` (READY, Preview only; not the final merged main build)
 
 ## 1. Mobile authentication regression
 
@@ -91,3 +91,15 @@ If auth, page loading, PDF upload or API compatibility regresses:
 5. Preserve logs and the failed deployment ID; fix on a new branch and repeat CI before retrying.
 
 No production migrations, account creation, user-data mutation or service-plan changes are authorized by this checklist.
+
+
+## Latest pre-deploy verification — 2026-11-20 17:50 KST
+
+- Merged pre-deploy QA and auth-session fix to main: `b04583370b09fd6972140b8f82c8dc13b685d9ba`.
+- Exact-main GitHub Checks [#44705352686](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44705352686) passed: backend pytest, frontend TypeScript lint, Next.js production build and Playwright Chromium **5/5**.
+- Playwright coverage: Google button visible at 320×640, 375×667 and 390×844; Google OAuth provider/redirect/prompt; mobile logout and signed-out reload; invalid PDF rejection and Storage 503 recovery; analysis API 503 retry readiness.
+- Auth bootstrap now uses Supabase `getSession()` for local UI hydration, subscribed before reading the persisted session. Server-side API/JWT validation and database RLS remain the authorization boundary. This avoids an in-flight `getUser()` request racing with logout.
+- Read-only Production database check: RLS enabled on papers, analyses, analysis_jobs and analysis_job_checkpoints; private PDF bucket limited to 30 MiB and application/pdf; owner-scoped Storage path policies confirmed. Supabase performance advisor: no findings. Security advisor: leaked-password protection disabled (administrator decision remains).
+- Read-only Railway API metrics (24h): 451 requests, 241 2xx, 210 4xx, 0 5xx; p99 latency 4–9 ms across observed buckets. This is an operational sample, not a load test.
+- Production alias remains on prior deployment `dpl_5y2EUXPkUDBeYomp2nxuok728Maa`, which is still the rollback baseline. The current main commit has not been deployed because Vercel returned `api-deployments-free-per-day` / build-rate-limit. No plan upgrade or payment was made.
+- The free deployment retry remains scheduled for 2026-11-21 15:40 Asia/Seoul. On retry, deploy exact current main SHA to target production, verify the alias points to the new READY deployment, then run the manual smoke checklist above.
