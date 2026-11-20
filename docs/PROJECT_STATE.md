@@ -346,3 +346,11 @@ The account reached Vercel Hobby's daily 100-deployment API limit (HTTP 402 `api
 - Added SQL contract `verify_ai_usage_events_ledger.sql`: anon/authenticated cannot read/write, service_role can insert, duplicate idempotency keys fail, missing provider token counts remain NULL. Wired migration + contract into disposable PostgreSQL 17 CI after the quota RPC checks.
 - Production Supabase is unchanged. The API writer is not yet integrated because each event must be tied to authenticated user/paper/job ownership; this must be implemented and tested before claiming a persistent production ledger.
 - Latest candidate CI will verify the migration only in isolated PostgreSQL. No human approval, Production migration, deployment or user-data mutation was performed.
+
+## 2026-11-20 — Engineering progress 95% → 96%: usage ledger security contract
+
+- Added `supabase/migrations/20261120120000_ai_usage_events_ledger.sql` with immutable per-attempt Gemini/provider usage events, nullable token metadata, unique idempotency key, indexes, RLS and service-role-only raw event access.
+- Added `supabase/tests/verify_ai_usage_events_ledger.sql`; CI applies the migration only to disposable PostgreSQL 17 and verifies anon/authenticated cannot read/write, service_role can insert, duplicate idempotency is rejected and missing token counts remain NULL.
+- CI [#44658840350](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44658840350): db-policy SUCCESS, API 166 passed/1 deliberately skipped, frontend lint/build SUCCESS, read-only live API preflight SUCCESS; synthetic browser QA still running at checkpoint. The ledger schema contract itself passed.
+- Weighted engineering completion is **96%** after crediting one privacy/integrity milestone. This is schema and isolated policy validation only: production migration is not applied, API dual-write is not implemented, and official effective-dated price catalog is not connected. Beta release gates remain 4/10.
+- Human approvals and real-user E2E remain deferred. No production Supabase change, deployed service, user data or analysis engine behavior was modified.
