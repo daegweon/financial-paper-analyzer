@@ -2635,3 +2635,95 @@ def test_admin_usage_pagination_detects_over_limit_without_counting_sentinel_row
     event_requests = [item for item in requests if item[0].endswith("/rest/v1/ai_usage_events")]
     assert len(event_requests) == 21
     assert event_requests[-1][1]["headers"]["Range"] == "20000-20999"
+
+
+
+def test_gemini_usage_ledger_marks_malformed_json_as_invalid_response(monkeypatch):
+    responses = [
+        {
+            "candidates": [{
+                "finishReason": "STOP",
+                "content": {"parts": [{"text": "{not valid json"}]},
+            }],
+            "usageMetadata": {
+                "promptTokenCount": 100,
+                "candidatesTokenCount": 10,
+                "thoughtsTokenCount": 0,
+                "totalTokenCount": 110,
+            },
+        },
+        {
+            "candidates": [{
+                "finishReason": "STOP",
+                "content": {"parts": [{"text": json.dumps({"ok": True})}]},
+            }],
+            "usageMetadata": {
+                "promptTokenCount": 120,
+                "candidatesTokenCount": 12,
+                "thoughtsTokenCount": 0,
+                "totalTokenCount": 132,
+            },
+        },
+    ]
+    events = []
+
+    class FakeResponse:
+        status_code = 200
+        headers = {}
+        text = ""
+
+        def __init__(self, payload):
+            self.payload = payload
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return self.payload
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return None
+
+        async def post(self, url, **kwargs):
+            assert "generateContent" in url
+            return FakeResponse(responses.pop(0))
+
+    async def fake_persist(**kwargs):
+        events.append(kwargs)
+
+    async def fake_sleep(_seconds):
+        return None
+
+    monkeypatch.setattr(module, "GEMINI_API_KEY", "synthetic-test-key")
+    monkeypatch.setattr(module, "GEMINI_MODEL", "gemini-primary-test")
+    monkeypatch.setattr(module, "GEMINI_FALLBACK_MODEL", "gemini-fallback-test")
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    monkeypatch.setattr(module, "_persist_ai_usage_event", fake_persist)
+    monkeypatch.setattr(module.asyncio, "sleep", fake_sleep)
+
+    context = module._AI_USAGE_CONTEXT.set({
+        "user_id": "11111111-1111-4111-8111-111111111111",
+        "paper_id": "10111111-1111-4111-8111-111111111111",
+        "analysis_job_id": "usage-invalid-json-test",
+        "attempt_index": 0,
+    })
+    try:
+        parsed, model = asyncio.run(
+            module._generate_gemini("synthetic prompt", output_token_limits=(1024, 1024))
+        )
+    finally:
+        module._AI_USAGE_CONTEXT.reset(context)
+
+    assert parsed == {"ok": True}
+    assert model == "gemini-fallback-test"
+    assert [event["outcome"] for event in events] == ["invalid_response", "success"]
+    assert [event["attempt_index"] for event in events] == [1, 2]
+    assert events[0]["error_class"] == "invalid_json"
+    assert events[0]["total_tokens"] if "total_tokens" in events[0] else True
