@@ -8,7 +8,7 @@ const PAPER_ID = "22222222-2222-4222-8222-222222222222";
 async function seedAuthenticatedSession(page: Page, options: { delayUserLookup?: boolean } = {}) {
   await page.addInitScript(({ userId, projectRef }) => {
     const encode = (value: object) =>
-      btoa(JSON.stringify(value)).replace(/=/g, "").replace(/\\+/g, "-").replace(/\\//g, "_");
+      btoa(JSON.stringify(value)).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
     const now = Math.floor(Date.now() / 1000);
     const accessToken = [
       encode({ alg: "HS256", typ: "JWT" }),
@@ -173,7 +173,7 @@ test("PDF upload failure is visible and the upload control can be retried", asyn
   await fileInput.setInputFiles({
     name: "sample.pdf",
     mimeType: "application/pdf",
-    buffer: Buffer.from("%PDF-1.4\\n% PaperSignal E2E fixture\\n"),
+    buffer: Buffer.from("%PDF-1.4\n% PaperSignal E2E fixture\n"),
   });
   await expect(page.getByRole("status").filter({ hasText: "storage temporarily unavailable" })).toBeVisible();
   await expect(fileInput).toBeEnabled();
