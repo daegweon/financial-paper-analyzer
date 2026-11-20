@@ -173,7 +173,7 @@ test("PDF upload failure is visible and the upload control can be retried", asyn
     mimeType: "application/pdf",
     buffer: Buffer.from("%PDF-1.4\n% PaperSignal E2E fixture\n"),
   });
-  await expect(page.getByRole("status").filter({ hasText: "storage temporarily unavailable" })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "PDF 업로드가 완료되지 않았습니다" })).toBeVisible();
   await expect(fileInput).toBeEnabled();
   expect(storageAttempts).toBe(1);
 });
@@ -212,6 +212,6 @@ test("analysis API failure is surfaced and the user can retry", async ({ page })
   const analyze = page.getByRole("button", { name: "분석 시작 →" });
   await expect(analyze).toBeVisible();
   await analyze.click();
-  await expect(page.getByRole("status").filter({ hasText: "Gemini temporarily unavailable" })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "분석 작업 등록 응답이 일시적으로 실패했습니다" })).toBeVisible();
   await expect(analyze).toBeEnabled();
 });
