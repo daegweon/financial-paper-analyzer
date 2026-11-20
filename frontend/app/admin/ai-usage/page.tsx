@@ -159,7 +159,7 @@ export default function AdminAIUsagePage() {
 
         <section className={styles.panel}>
           <h2>모델별 사용량 및 비용</h2>
-          <div className={styles.tableWrap}><table><thead><tr><th>모델</th><th>호출</th><th>비용 확인</th><th>미확정</th><th>추정 비용</th></tr></thead>
+          <div className={styles.tableWrap} tabIndex={0} aria-label="모델별 사용량 표"><table><thead><tr><th>모델</th><th>호출</th><th>비용 확인</th><th>미확정</th><th>추정 비용</th></tr></thead>
             <tbody>{summary.models.map(item => <tr key={item.model}><th>{item.model}</th><td>{item.event_count}</td><td>{item.known_cost_events}</td><td>{item.unknown_cost_events}</td><td>{money(item.estimated_cost_usd)}</td></tr>)}</tbody>
           </table></div>
         </section>
@@ -167,7 +167,7 @@ export default function AdminAIUsagePage() {
         <section className={styles.panel}>
           <h2>사용자별 내부 운영 집계</h2>
           <p className={styles.subtle}>관리자 전용 식별자와 사용량입니다. 일반 사용자 화면과 API에는 제공하지 않습니다.</p>
-          <div className={styles.tableWrap}><table><thead><tr><th>사용자 ID</th><th>호출</th><th>비용 확인</th><th>미확정</th><th>추정 비용</th></tr></thead>
+          <div className={styles.tableWrap} tabIndex={0} aria-label="사용자별 내부 운영 집계 표"><table><thead><tr><th>사용자 ID</th><th>호출</th><th>비용 확인</th><th>미확정</th><th>추정 비용</th></tr></thead>
             <tbody>{summary.users.map(item => <tr key={item.user_id}><th><code>{item.user_id}</code></th><td>{item.event_count}</td><td>{item.known_cost_events}</td><td>{item.unknown_cost_events}</td><td>{money(item.estimated_cost_usd)}</td></tr>)}</tbody>
           </table></div>
         </section>
