@@ -85,3 +85,11 @@ Current log telemetry and offline reports are available. This design is not impl
 The additive migration `supabase/migrations/20261120120000_ai_usage_events_ledger.sql` now implements the immutable per-attempt event table, nullable provider token fields, bounded metadata, unique idempotency key, lookup indexes, RLS and service-role-only raw event access. `supabase/tests/verify_ai_usage_events_ledger.sql` verifies role grants, service-role insertion, duplicate idempotency rejection and preservation of unknown token usage as NULL. CI applies and tests this migration only in its disposable PostgreSQL 17 service.
 
 The migration is **not applied to Production**. The API does not yet dual-write to this table; that integration is deliberately separate because it requires verified ownership context (user/paper/job IDs) at each provider attempt. Do not report a persistent production ledger until the API writer, failure isolation, and live reconciliation are implemented and reviewed.
+
+## 2026-11-20 API dual-write implementation (candidate only)
+
+The API now sets an async task-local ownership context from `_process_analysis_job` (verified `user_id`, `paper_id`, `analysis_job_id`) and records each Gemini attempt to `ai_usage_events` using the backend-only service-role key. HTTP failures and transport errors are separate events; successful provider responses include provider-reported token counts and latency. Attempt indices are monotonically incremented within the analysis job, and the unique idempotency key is job/provider/model/attempt.
+
+Writes use `Prefer: resolution=ignore-duplicates` and a short timeout. A missing service key/context skips recording; a ledger HTTP/network failure emits a redacted warning and never fails the analysis. No prompt, extracted PDF text, model response, API key or bearer token is stored. Unit tests cover ownership payload, null token preservation, idempotency header, missing context and non-fatal write failure.
+
+This code is committed to the beta candidate only; no Railway deployment or Production database migration was performed. Full CI must pass before this writer is credited as verified.
