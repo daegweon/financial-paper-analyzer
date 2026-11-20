@@ -260,3 +260,11 @@
 - Added `/admin/ai-usage` administrator dashboard with global monthly budget editor, monthly total, model breakdown and internal user usage. Ordinary users receive HTTP 403 from API regardless of frontend route visibility.
 - Added backend tests for allowlist, non-admin denial, global budget write, invalid values, settings persistence and admin summary aggregation. Full CI pending; no progress point until all jobs pass.
 - No Production Supabase migration, Railway deployment, Vercel Production promotion or customer data mutation. Admin allowlist and budget environment configuration are documented for the final human rollout.
+
+## 2026-11-20 — Admin dashboard QA findings and remediation (CI pending)
+
+- Browser QA caught two test/UI issues: Next.js CSS Modules require all selectors to be locally scoped (fixed table selectors); the admin page's trailing-slash regex typo was fixed after TypeScript caught it.
+- Added explicit browser coverage for a non-admin receiving 403 with no cost/ budget content, and for an administrator viewing aggregate costs and editing the single service-wide monthly budget. The first run exposed test locator strictness and numeric input normalization; selectors were made exact and cross-browser tolerant.
+- WCAG testing found a real contrast issue: `.panel>p` specificity overrode `.notice` text color, resulting in #627680 on #fff7e8 at 4.45:1. Fixed with `.panel>p.notice { color: #674a16 }`. It also flagged horizontally scrollable tables as not keyboard focusable; both tables now have `tabIndex=0`, accessible labels and visible keyboard focus.
+- New full CI is running on commit `ce5eb76b3c689bfc8f2477f259bb65e05715cdd0`; do not credit the admin-console milestone until API, frontend, DB policy and all browser projects pass.
+- No Production migration, deployment or user-data mutation.
