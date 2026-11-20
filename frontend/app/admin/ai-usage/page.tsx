@@ -21,13 +21,6 @@ type ModelUsage = {
 type UserUsage = {
   user_id: string;
   event_count: number;
-  success_events: number;
-  failed_events: number;
-  success_rate_percent: number | null;
-  total_tokens: number;
-  token_complete_events: number;
-  token_incomplete_events: number;
-  average_latency_ms: number | null;
   known_cost_events: number;
   unknown_cost_events: number;
   estimated_cost_usd: string;
@@ -36,6 +29,13 @@ type Summary = {
   month: string;
   currency: string;
   event_count: number;
+  success_events: number;
+  failed_events: number;
+  success_rate_percent: number | null;
+  total_tokens: number;
+  token_complete_events: number;
+  token_incomplete_events: number;
+  average_latency_ms: number | null;
   known_cost_events: number;
   unknown_cost_events: number;
   estimated_cost_usd: string;
