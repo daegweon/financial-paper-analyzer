@@ -95,9 +95,9 @@ test("Google sign-in is visible in the first mobile viewport", async ({ page }) 
 
 test("Google OAuth requests the Google provider and same-origin callback", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 });
-  let authorizationUrl: URL | null = null;
+  const authorizationUrls: URL[] = [];
   await page.route(`${SUPABASE_URL}/auth/v1/authorize**`, async route => {
-    authorizationUrl = new URL(route.request().url());
+    authorizationUrls.push(new URL(route.request().url()));
     await route.fulfill({
       status: 200,
       contentType: "text/html",
@@ -107,9 +107,11 @@ test("Google OAuth requests the Google provider and same-origin callback", async
 
   await page.goto("/");
   await page.getByRole("button", { name: "Google로 계속하기" }).click();
-  await expect.poll(() => authorizationUrl?.searchParams.get("provider") ?? null).toBe("google");
-  expect(authorizationUrl?.searchParams.get("redirect_to")).toBe("http://127.0.0.1:3000/");
-  expect(authorizationUrl?.searchParams.get("prompt")).toBe("select_account");
+  await expect.poll(() => authorizationUrls[0]?.searchParams.get("provider") ?? null).toBe("google");
+  const requestedUrl = authorizationUrls[0];
+  expect(requestedUrl).toBeDefined();
+  expect(requestedUrl!.searchParams.get("redirect_to")).toBe("http://127.0.0.1:3000/");
+  expect(requestedUrl!.searchParams.get("prompt")).toBe("select_account");
 });
 
 test("mobile sign-out clears the session and remains signed out after reload", async ({ page }) => {
