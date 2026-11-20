@@ -2195,3 +2195,96 @@ def test_significance_legend_uses_validated_excerpt_not_unrelated_page_stars():
     audit = module.audit_finding(finding, pages)
     assert audit["significance_supported"] is True
     assert audit["status"] == "screen_passed"
+
+
+def test_ai_usage_ledger_writer_persists_minimal_owned_attempt(monkeypatch):
+    import asyncio
+    import json
+    import app.main as module
+
+    captured = {}
+    class FakeResponse:
+        status_code = 201
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return False
+        async def post(self, url, **kwargs):
+            captured["url"] = url
+            captured.update(kwargs)
+            return FakeResponse()
+
+    monkeypatch.setattr(module, "SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setattr(module, "SERVICE_ROLE_KEY", "test-service-role")
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    context = module._AI_USAGE_CONTEXT.set({
+        "user_id": "11111111-1111-4111-8111-111111111111",
+        "paper_id": "10111111-1111-4111-8111-111111111111",
+        "analysis_job_id": "job-123",
+        "attempt_index": 1,
+    })
+    try:
+        asyncio.run(module._persist_ai_usage_event(
+            provider="gemini", model="gemini-test", outcome="success",
+            attempt_index=1, latency_ms=450, http_status=200,
+            usage={"promptTokenCount": 100, "candidatesTokenCount": 20, "totalTokenCount": 120},
+        ))
+    finally:
+        module._AI_USAGE_CONTEXT.reset(context)
+
+    payload = captured["json"]
+    assert captured["url"].endswith("/rest/v1/ai_usage_events")
+    assert payload["user_id"] == "11111111-1111-4111-8111-111111111111"
+    assert payload["paper_id"] == "10111111-1111-4111-8111-111111111111"
+    assert payload["analysis_job_id"] == "job-123"
+    assert payload["idempotency_key"] == "job-123:gemini:gemini-test:1"
+    assert payload["prompt_tokens"] == 100
+    assert payload["candidate_tokens"] == 20
+    assert payload["thought_tokens"] is None
+    assert payload["total_tokens"] == 120
+    assert payload["latency_ms"] == 450
+    assert "prompt" not in payload and "response" not in payload
+    assert captured["headers"]["Prefer"] == "resolution=ignore-duplicates,return=minimal"
+
+
+def test_ai_usage_ledger_write_failure_is_non_fatal(monkeypatch, caplog):
+    import asyncio
+    import app.main as module
+
+    class BrokenClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return False
+        async def post(self, *args, **kwargs):
+            raise TimeoutError("synthetic ledger timeout")
+
+    monkeypatch.setattr(module, "SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setattr(module, "SERVICE_ROLE_KEY", "test-service-role")
+    monkeypatch.setattr(module.httpx, "AsyncClient", BrokenClient)
+    context = module._AI_USAGE_CONTEXT.set({
+        "user_id": "11111111-1111-4111-8111-111111111111",
+        "paper_id": "10111111-1111-4111-8111-111111111111",
+        "analysis_job_id": "job-123",
+        "attempt_index": 1,
+    })
+    try:
+        asyncio.run(module._persist_ai_usage_event(
+            provider="gemini", model="gemini-test", outcome="transport_error",
+            attempt_index=1, latency_ms=50, error_class="ReadTimeout",
+        ))
+    finally:
+        module._AI_USAGE_CONTEXT.reset(context)
+    assert "analysis continues" in caplog.text
+
+
+def test_ai_usage_ledger_writer_skips_without_owned_job_context(monkeypatch):
+    import asyncio
+    import app.main as module
+
+    monkeypatch.setattr(module, "SERVICE_ROLE_KEY", "test-service-role")
+    monkeypatch.setattr(module, "SUPABASE_URL", "https://example.supabase.co")
+    module._AI_USAGE_CONTEXT.set(None)
+    asyncio.run(module._persist_ai_usage_event(
+        provider="gemini", model="gemini-test", outcome="success",
+        attempt_index=1, latency_ms=10, http_status=200,
+    ))
