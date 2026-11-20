@@ -268,3 +268,10 @@
 - WCAG testing found a real contrast issue: `.panel>p` specificity overrode `.notice` text color, resulting in #627680 on #fff7e8 at 4.45:1. Fixed with `.panel>p.notice { color: #674a16 }`. It also flagged horizontally scrollable tables as not keyboard focusable; both tables now have `tabIndex=0`, accessible labels and visible keyboard focus.
 - New full CI is running on commit `ce5eb76b3c689bfc8f2477f259bb65e05715cdd0`; do not credit the admin-console milestone until API, frontend, DB policy and all browser projects pass.
 - No Production migration, deployment or user-data mutation.
+
+## 2026-11-20 — Admin AI operations telemetry and cost-coverage hardening (CI pending)
+
+- Extended the administrator-only usage summary with success/failure counts and rate, total token volume, incomplete token metadata count, average model-attempt latency, and provider-separated model rows. The event query now selects the stored `outcome`, `total_tokens`, and `latency_ms` fields; the cost report preserves provider dimension so identical model names from different providers do not merge.
+- Fixed a correctness risk in the 20,000-event monthly query cap. The API now fetches one sentinel page (up to 21,000 rows), detects whether more than 20,000 events exist, then aggregates only the first 20,000. A truncated result can never display `within_budget`; it is explicitly incomplete (or over-budget with incomplete data). Exactly 20,000 rows do not falsely trigger truncation.
+- Added a global `created_at` index for month-range admin queries, PostgreSQL CI assertion for the index, backend tests for provider-separated model usage, outcome/token/latency metrics, 20,001-event sentinel pagination, incomplete-budget status, and `updated_at` refresh on admin budget writes. Dashboard includes clear token-incomplete marker and Korean budget status labels.
+- CI is being rerun on the latest candidate commits. Do not award an engineering point until the exact PR head passes API, frontend build, PostgreSQL policy and browser QA. Production migration and deployments remain untouched.
