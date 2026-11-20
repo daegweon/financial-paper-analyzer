@@ -2289,3 +2289,38 @@ def test_ai_usage_ledger_writer_skips_without_owned_job_context(monkeypatch):
         provider="gemini", model="gemini-test", outcome="success",
         attempt_index=1, latency_ms=10, http_status=200,
     ))
+
+def test_ai_usage_ledger_billing_mode_requires_explicit_configuration(monkeypatch):
+    import asyncio
+    import app.main as module
+
+    captured = {}
+    class FakeResponse:
+        status_code = 201
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return False
+        async def post(self, url, **kwargs):
+            captured.update(kwargs)
+            return FakeResponse()
+
+    monkeypatch.setattr(module, "SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setattr(module, "SERVICE_ROLE_KEY", "test-service-role")
+    monkeypatch.setattr(module, "GEMINI_BILLING_MODE", "paid_standard")
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    context = module._AI_USAGE_CONTEXT.set({
+        "user_id": "11111111-1111-4111-8111-111111111111",
+        "paper_id": "10111111-1111-4111-8111-111111111111",
+        "analysis_job_id": "job-priced",
+        "attempt_index": 1,
+    })
+    try:
+        asyncio.run(module._persist_ai_usage_event(
+            provider="gemini", model="gemini-3.5-flash-lite", outcome="success",
+            attempt_index=1, latency_ms=10, http_status=200,
+            usage={"promptTokenCount": 10, "candidatesTokenCount": 5, "thoughtsTokenCount": 0},
+        ))
+    finally:
+        module._AI_USAGE_CONTEXT.reset(context)
+    assert captured["json"]["billing_mode"] == "paid_standard"
