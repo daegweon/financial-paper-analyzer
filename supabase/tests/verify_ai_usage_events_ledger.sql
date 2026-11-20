@@ -62,3 +62,29 @@ BEGIN
 END $$;
 ROLLBACK;
 SELECT 'PASS: service-role-only usage ledger, idempotency uniqueness, nullable usage' AS outcome;
+
+DO $$
+BEGIN
+  IF has_table_privilege('anon','public.ai_admin_settings','SELECT')
+     OR has_table_privilege('anon','public.ai_admin_settings','INSERT')
+     OR has_table_privilege('authenticated','public.ai_admin_settings','SELECT')
+     OR has_table_privilege('authenticated','public.ai_admin_settings','INSERT')
+     OR has_table_privilege('authenticated','public.ai_admin_settings','UPDATE')
+  THEN RAISE EXCEPTION 'Browser roles must not access administrator AI settings'; END IF;
+  IF NOT has_table_privilege('service_role','public.ai_admin_settings','SELECT')
+     OR NOT has_table_privilege('service_role','public.ai_admin_settings','INSERT')
+     OR NOT has_table_privilege('service_role','public.ai_admin_settings','UPDATE')
+  THEN RAISE EXCEPTION 'service_role cannot manage administrator AI settings'; END IF;
+END $$;
+
+BEGIN;
+SET LOCAL ROLE service_role;
+INSERT INTO public.ai_admin_settings(setting_key,value_numeric,updated_by)
+VALUES ('monthly_budget_usd',25.00,'11111111-1111-4111-8111-111111111111')
+ON CONFLICT (setting_key) DO UPDATE SET value_numeric=EXCLUDED.value_numeric, updated_by=EXCLUDED.updated_by, updated_at=now();
+DO $$
+BEGIN
+  IF (SELECT value_numeric FROM public.ai_admin_settings WHERE setting_key='monthly_budget_usd') <> 25.00
+  THEN RAISE EXCEPTION 'Administrator global budget setting did not persist'; END IF;
+END $$;
+ROLLBACK;
