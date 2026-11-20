@@ -283,10 +283,10 @@ test.describe("isolated synthetic Supabase browser flows", () => {
     await mockSupabase(page);
     let budget = "100.00";
     const summary = () => ({
-      month:"2026-11",currency:"USD",event_count:3,known_cost_events:2,unknown_cost_events:1,
+      month:"2026-11",currency:"USD",event_count:3,success_events:2,failed_events:1,success_rate_percent:66.67,total_tokens:185,token_complete_events:2,token_incomplete_events:1,average_latency_ms:400,known_cost_events:2,unknown_cost_events:1,
       estimated_cost_usd:"12.50000000",monthly_budget_usd:budget,budget_status:"incomplete_truncated",
       cost_coverage_complete:false,
-      models:[{model:"gemini-3.5-flash-lite",event_count:3,known_cost_events:2,unknown_cost_events:1,estimated_cost_usd:"12.50000000"}],
+      models:[{provider:"gemini",model:"gemini-3.5-flash-lite",event_count:3,success_events:2,failed_events:1,total_tokens:185,token_usage_incomplete_events:1,average_latency_ms:400,known_cost_events:2,unknown_cost_events:1,estimated_cost_usd:"12.50000000"}],
       users:[{user_id:qaA,event_count:3,known_cost_events:2,unknown_cost_events:1,estimated_cost_usd:"12.50000000"}],
       truncated:true,notice:"관리자 전용 운영 지표",
     });
@@ -303,6 +303,10 @@ test.describe("isolated synthetic Supabase browser flows", () => {
     await expect(page.getByText("월간 추정 비용")).toBeVisible();
     await expect(page.getByRole("region",{name:"전체 사용량 요약"}).getByText("$12.50")).toBeVisible();
     await expect(page.getByText("gemini-3.5-flash-lite")).toBeVisible();
+    await expect(page.getByText("성공률")).toBeVisible();
+    await expect(page.getByText("66.7%")).toBeVisible();
+    await expect(page.getByText("확인된 토큰")).toBeVisible();
+    await expect(page.getByText("400 ms")).toBeVisible();
     await expect(page.getByText("사용자별 내부 운영 집계")).toBeVisible();
     await expect(page.getByText("조회 한도 도달 · 전체 비용 미확인")).toBeVisible();
     await expect(page.getByText(/조회 한도에 도달했습니다/)).toBeVisible();
