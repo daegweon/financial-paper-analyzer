@@ -2242,6 +2242,7 @@ def test_ai_usage_ledger_writer_persists_minimal_owned_attempt(monkeypatch):
     assert payload["candidate_tokens"] == 20
     assert payload["thought_tokens"] is None
     assert payload["total_tokens"] == 120
+    assert payload["billing_mode"] is None
     assert payload["latency_ms"] == 450
     assert "prompt" not in payload and "response" not in payload
     assert captured["headers"]["Prefer"] == "resolution=ignore-duplicates,return=minimal"
