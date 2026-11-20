@@ -370,3 +370,11 @@ The account reached Vercel Hobby's daily 100-deployment API limit (HTTP 402 `api
 - One privacy/integrity point credited; weighted engineering completion **97%**. This is candidate code verified in CI, not deployed or writing to Production. Production ledger migration and real two-user E2E remain human-gated.
 - Current pricing work adds an official source-backed, effective-dated model catalog, Decimal cost estimator, per-paper report and explicit billing-mode configuration. Its latest full CI [#44666072502](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44666072502) has API 178 tests, DB policy, frontend and GET-only live preflight green; browser QA is still running. Do not credit pricing work until full run passes.
 - No production Supabase migration, Railway deployment, Vercel promotion or user-data mutation.
+
+## 2026-11-20 — Monthly AI cost and budget diagnostics (CI pending)
+
+- Verified current Gemini Developer API Standard paid rates against Google's official pricing page (checked 2026-11-20): Gemini 3.5 Flash-Lite $0.30 input/$2.50 output per 1M tokens; Gemini 3.6 Flash $0.75/$3.75 through 2026-12-31 and $1.50/$7.50 from 2027-01-01. Thinking tokens are included in output pricing. Source: https://ai.google.dev/gemini-api/docs/pricing.
+- Added effective-dated catalog, Decimal-based estimator and per-paper/model/month cost report. Unknown billing mode, model, timestamp or token usage remains unknown; Free is zero only when explicitly verified. Catalog overlap is rejected.
+- Added monthly user and paper budget diagnostics. Exact Decimal sums, incomplete coverage is never reported as within budget; these are reporting alerts only, not hard enforcement. Wired optional events and thresholds into integrated quality pipeline.
+- API tests in CI [#44666816651](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44666816651): **181 passed / 1 deliberately skipped**; disposable DB policy and GET-only live API preflight passed. Frontend lint/build and synthetic browser QA still running at checkpoint. Keep engineering progress at 97% until full CI is green.
+- No Production migration/deployment. Do not set `GEMINI_BILLING_MODE` until billing tier is verified in Google AI Studio. No hard quota is enforced by this report.
