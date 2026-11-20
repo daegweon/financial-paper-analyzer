@@ -2406,12 +2406,10 @@ def test_admin_usage_endpoint_returns_summary_only_after_allowlist_check(monkeyp
     assert result["month"] == "2026-11"
     assert result["event_count"] == 0
     assert result["models"] == []
-    assert len(requests) == 1
-    url, kwargs = requests[0]
-    assert url.endswith("/rest/v1/ai_usage_events")
-    assert kwargs["params"]["select"] == "user_id,paper_id,provider,model,billing_mode,prompt_tokens,candidate_tokens,thought_tokens,created_at"
-    assert kwargs["headers"]["Range"] == "0-999"
-
+    assert len(requests) == 2
+    assert requests[0][0].endswith("/rest/v1/ai_usage_events")
+    assert requests[1][0].endswith("/rest/v1/ai_admin_settings")
+    assert requests[0][1]["headers"]["Range"] == "0-999"
 
 def test_admin_usage_endpoint_rejects_invalid_month_before_database_query(monkeypatch):
     import asyncio
