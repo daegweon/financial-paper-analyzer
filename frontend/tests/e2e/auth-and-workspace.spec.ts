@@ -148,6 +148,8 @@ test("mobile sign-out clears the session and remains signed out after reload", a
   await page.waitForTimeout(950);
   await expect.poll(() => page.evaluate(() => localStorage.getItem("sb-hwmtayrecsfxernhssro-auth-token"))).toBeNull();
   await page.reload();
+  await page.waitForTimeout(1000);
+  console.log("POST_LOGOUT_RELOAD", await page.locator("body").innerText(), await page.evaluate(() => ({ url: location.href, authStorage: localStorage.getItem("sb-hwmtayrecsfxernhssro-auth-token") })));
   await expect(page.getByRole("heading", { name: "다시 만나서 반갑습니다." })).toBeVisible();
   await expect(page.getByRole("button", { name: "로그아웃" })).toHaveCount(0);
 });
