@@ -1,6 +1,6 @@
 # Standalone manually approved PaperSignal Live E2E launcher
 
-**Not active until this standalone PR is reviewed and merged into `main`.** No customer account, PDF or database records are modified by the PR itself.
+**Workflow merged into `main` on 2026-11-20** via PR #19 (merge commit `e2b7d20488da300599f882d897bd2315828b84f2`). The workflow is registered but remains manual-only and does not mutate anything unless every approval input is explicitly supplied.
 
 ## Why this separate workflow exists
 
@@ -31,4 +31,4 @@ The full product candidate is still Draft PR #18 and must **not** be merged befo
 
 ## Status
 
-Pending human-controlled merge, repository secret configuration and explicit manual run. Release milestone remains pending until a genuine run succeeds.
+PR #19 merge: complete. Repository secrets: reported configured by the account owner; values are intentionally not readable here. Live E2E: pending the server-owned API rollout and explicit mutation approval. Release milestone remains pending until a genuine run succeeds.
