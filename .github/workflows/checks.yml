@@ -1,13 +1,33 @@
 name: Checks
 on:
-  push:
-    branches: [main]
   pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "supabase/**"
+      - ".github/workflows/**"
+      - "requirements*.txt"
+      - "pyproject.toml"
+      - "pytest.ini"
+      - "Dockerfile"
+      - "railway.json"
+  workflow_dispatch:
+
 permissions:
   contents: read
+
+# Keep only the newest check for each PR. A newer commit cancels stale work.
+concurrency:
+  group: papersignal-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   api:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -15,10 +35,15 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.12"
-      - run: pip install -r backend/requirements-dev.txt
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+      - run: pip install --prefer-binary -r backend/requirements-dev.txt
       - run: cd backend && pytest
+
   frontend:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: frontend
@@ -33,7 +58,15 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: "24"
-      - run: npm install
+      # There is no package-lock.json in this repository yet; cache npm's
+      # package tarballs/metadata instead of setup-node's lockfile cache.
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node24-npm-${{ hashFiles('frontend/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node24-npm-
+      - run: npm install --prefer-offline --no-audit --no-fund
       - run: npm run lint
       - run: npm run build
       - run: npx playwright install --with-deps chromium
