@@ -23,3 +23,11 @@ def test_pipeline_optional_baseline_comparison(tmp_path):
     out = run_pipeline(manifest, results, tmp_path, baseline=baseline)
     assert out['comparison'] is not None
     assert (tmp_path / 'comparison.json').is_file()
+def test_pipeline_optionally_includes_failure_report(tmp_path):
+    manifest = {'benchmark_version': 'v1', 'papers': [{'id': 'B01', 'title': 'Paper', 'gold_facts': []}]}
+    results = {'results': [{'paper_id': 'B01', 'analysis': {'findings': []}}]}
+    logs = tmp_path / 'railway.log'
+    logs.write_text('WARNING Analysis job failed job_id=x status=429 duration_ms=300 reason=quota\\n', encoding='utf-8')
+    out = run_pipeline(manifest, results, tmp_path / 'out', logs=logs)
+    assert out['failure_report']['failed_job_count'] == 1
+    assert (tmp_path / 'out' / 'failure-report.json').is_file()
