@@ -307,7 +307,7 @@ test.describe("isolated synthetic Supabase browser flows", () => {
     await page.getByLabel("월간 전체 예산 (USD)").fill("150");
     await page.getByRole("button",{name:"전체 예산 저장"}).click();
     await expect(page.getByRole("status")).toContainText("월간 전체 AI 예산을 저장했습니다.");
-    await expect(page.getByLabel("월간 전체 예산 (USD)")).toHaveValue(/150(?:\\.00)?/);
+    await expect(page.getByLabel("월간 전체 예산 (USD)")).toHaveValue(/150(?:\.00)?/);
     const violations = await new AxeBuilder({page})
       .withTags(["wcag2a","wcag2aa","wcag21a","wcag21aa"])
       .analyze();
