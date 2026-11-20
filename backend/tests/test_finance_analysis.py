@@ -2517,3 +2517,32 @@ def test_admin_budget_rejects_negative_nonfinite_and_boolean_values(monkeypatch)
             assert exc.status_code == 422
         else:
             raise AssertionError(f"invalid budget accepted: {value}")
+
+
+def test_admin_summary_never_reports_within_budget_when_usage_query_is_truncated():
+    import app.main as module
+
+    events = [{
+        "user_id": "u1", "paper_id": "p1", "provider": "gemini",
+        "model": "gemini-3.5-flash-lite", "billing_mode": "free",
+        "prompt_tokens": 100, "candidate_tokens": 20, "thought_tokens": 0,
+        "created_at": "2026-11-20T10:00:00Z",
+    }]
+    result = module._build_admin_ai_usage_summary(events, "2026-11", "100.00", truncated=True)
+    assert result["budget_status"] == "incomplete_truncated"
+    assert result["cost_coverage_complete"] is False
+    assert result["truncated"] is True
+
+
+def test_admin_summary_reports_known_overage_even_when_data_is_incomplete():
+    import app.main as module
+
+    events = [{
+        "user_id": "u1", "paper_id": "p1", "provider": "gemini",
+        "model": "gemini-3.5-flash-lite", "billing_mode": "paid_standard",
+        "prompt_tokens": 1000000, "candidate_tokens": 100000, "thought_tokens": 0,
+        "created_at": "2026-11-20T10:00:00Z",
+    }]
+    result = module._build_admin_ai_usage_summary(events, "2026-11", "0.50", truncated=True)
+    assert result["budget_status"] == "exceeded_with_incomplete_data"
+    assert result["cost_coverage_complete"] is False
