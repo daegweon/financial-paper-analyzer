@@ -195,15 +195,15 @@ The price catalog is `backend/app/model_price_catalog.json` and records the offi
 
 The API reads `GEMINI_BILLING_MODE` only when set to `free` or `paid_standard`; otherwise it records NULL. Do not set this variable until the Google AI Studio project's billing tier is verified. This is an estimate, not an invoice. Recheck official pricing before each catalog update.
 
-### Monthly budget diagnostics
+### Administrator-only monthly AI budget diagnostics
 
-The cost report uses exact Decimal arithmetic and groups usage by paper/model/month, user/month and paper/month. Optional thresholds are diagnostic only (they do not block requests or enforce a hard quota):
+AI budget ownership belongs to the service administrator, not end users. The cost report can apply one service-wide monthly threshold; user and paper rows are internal usage breakdowns only and have no individual budget fields.
 
 ```bash
 cd backend
 python -m app.cost_report --events /path/to/ai-usage-events.json \
-  --monthly-user-budget-usd 25 --monthly-paper-budget-usd 5 \
+  --admin-monthly-budget-usd 25 \
   --out ../benchmark/results/ai-cost-report.json
 ```
 
-For the integrated quality pipeline, pass `--monthly-user-budget-usd 25 --monthly-paper-budget-usd 5` together with `--usage-events ...`. If any event has unknown billing mode, missing tokens or invalid timestamp, the relevant budget is marked `incomplete_unknown_costs` unless already-known cost has exceeded the threshold. The report never declares an incomplete total within budget. These are alerts/reporting only, not a spending control; enforceable quotas require a separately approved server-side policy and Production rollout.
+For the integrated quality pipeline, pass `--admin-monthly-budget-usd 25` with `--usage-events ...`. If any event has unknown billing mode, missing tokens or invalid timestamp, the global budget is marked `incomplete_unknown_costs` unless known cost alone already exceeds the threshold. The report never declares an incomplete total within budget. This is administrator reporting only, not an automatic spending cap; enforceable limits require a separately approved server-side policy and Production rollout.
