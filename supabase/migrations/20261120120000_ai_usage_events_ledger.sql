@@ -36,3 +36,15 @@ ALTER TABLE public.ai_usage_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ai_usage_events FORCE ROW LEVEL SECURITY;
 REVOKE ALL ON public.ai_usage_events FROM PUBLIC, anon, authenticated;
 GRANT SELECT, INSERT ON public.ai_usage_events TO service_role;
+
+-- Administrator-only service-wide monthly AI budget setting.
+CREATE TABLE IF NOT EXISTS public.ai_admin_settings (
+  setting_key text PRIMARY KEY CHECK (setting_key = 'monthly_budget_usd'),
+  value_numeric numeric(18,8) NOT NULL CHECK (value_numeric >= 0),
+  updated_by uuid NOT NULL REFERENCES auth.users(id),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.ai_admin_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ai_admin_settings FORCE ROW LEVEL SECURITY;
+REVOKE ALL ON public.ai_admin_settings FROM PUBLIC, anon, authenticated;
+GRANT SELECT, INSERT, UPDATE ON public.ai_admin_settings TO service_role;
