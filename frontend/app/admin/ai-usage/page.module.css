@@ -38,3 +38,5 @@
 .budgetForm button:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:800px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.header{flex-direction:column}.toolbar{flex-wrap:wrap}}
 @media(max-width:480px){.shell{padding:22px 14px 48px}.cards{grid-template-columns:1fr 1fr}.card{padding:13px}.card strong{font-size:20px}.toolbar{align-items:flex-start}.toolbar input{flex:1;min-width:140px}}
+
+.tableWrap:focus-visible{outline:3px solid #075e68;outline-offset:3px;border-radius:4px}
