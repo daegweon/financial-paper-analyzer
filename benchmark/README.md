@@ -18,7 +18,7 @@ The benchmark contains ten public/open-access candidate papers covering:
 
 ## Important status
 
-**The benchmark set is curated; the ten PDF analyses have not yet been run.** The manifest contains source-grounded expected facts, not fabricated model scores. The article-specific PDF version and page numbers must be confirmed after downloading the PDFs.
+**Current status (2026-11-20): all ten B01–B10 PDFs have been uploaded and analyzed.** The v6.3.9 scorecard is a historical snapshot (71 findings, 53 screen-passed, 18 review-required). The latest stored analysis per paper is mixed-version (B01/B02/B09 v6.4.0, B10 v6.4.2, B03–B08 v6.3.9) and contains 63 findings: 57 screen-passed and 6 review. See `results/assistant-second-pass-evidence-audit-2026-11-20.md` for the read-only second-pass audit of the six current review records. This is AI-assisted triage, not human sign-off; no stored verification status was changed.
 
 Do not treat an article being publicly accessible as automatic permission to redistribute it. Check the license on each publisher page. The PLOS Korea paper explicitly uses the Creative Commons Attribution License. Several MDPI pages identify CC BY; verify the article footer for each paper before redistribution.
 
@@ -39,7 +39,7 @@ Do not treat an article being publicly accessible as automatic permission to red
 
 Full metadata, expected facts, source URLs, and critical caveats are in `manifest.json`.
 
-## How to run the first benchmark
+## How to reproduce or refresh the benchmark
 
 1. Download each article PDF from its publisher page. Use the publisher's current PDF version, not a third-party re-upload.
 2. Confirm the article's license and save the PDF locally.
@@ -98,7 +98,118 @@ This set is intended for public research papers only. Gemini Free Tier inputs an
 - [x] Ten candidate papers selected
 - [x] Source-grounded gold facts and critical caveats drafted
 - [x] Screening evaluator and human-review template
-- [ ] Download and license-check all exact PDF versions
-- [ ] Upload ten PDFs and run Gemini
-- [ ] Human-review every critical fact and citation
-- [ ] Publish a measured quality report
+- [x] Ten B01–B10 PDFs uploaded and analyzed; latest stored versions are mixed v6.3.9/v6.4.0/v6.4.2
+- [x] Historical v6.3.9 screening scorecard published
+- [x] Assistant second-pass audit of the six latest review-flagged records published
+- [ ] Human-review every critical fact and citation; the assistant audit is not expert sign-off
+- [x] Verify article-level license statements in all ten supplied PDFs (B01–B06, B08–B10: CC BY 4.0; B07: PLOS CC BY); preserve attribution and check separately credited third-party material
+
+## Generate a human evidence-review packet
+
+After exporting analyses as JSON, create a Markdown packet that preserves each finding's table reference, model/column, estimate, significance and direct PDF quotations:
+
+```bash
+python benchmark/build_review_packet.py \
+  --results benchmark/results/analysis_results.json \
+  --out benchmark/results/human-review-packet.md
+```
+
+The packet includes a per-finding reviewer decision and notes area. It deliberately marks zero findings as approved: generation is administrative assistance only and never changes an analysis verification status. Review every claim against the exact publisher PDF before recording a decision.
+
+## Generate the offline quality dashboard
+
+After producing the evaluator scorecard, render a standalone HTML dashboard:
+
+```bash
+python benchmark/evaluate.py --results benchmark/results/analysis_results.json --out benchmark/results/scorecard.json
+python benchmark/quality_dashboard.py --scorecard benchmark/results/scorecard.json --out benchmark/results/quality-dashboard.html
+```
+
+The dashboard reports only metrics present in the scorecard. Missing PDF page text and missing human reviews remain **미측정**; they are never treated as zero or inferred from alias coverage. It shows per-paper missing Gold facts and does not approve findings. Open the generated HTML locally; no service or network connection is required.
+
+## Diagnose evidence and numeric-claim gaps
+
+Run the offline triage against exported analyses:
+
+```bash
+python benchmark/diagnose.py \
+  --results benchmark/results/analysis_results.json \
+  --pages-dir benchmark/pages \
+  --out benchmark/results/diagnostics.json
+```
+
+The report flags missing direct evidence, quotations not found on their stated PDF page, and numeric result fields (estimate/coefficient/significance/statistic/p-value) whose values are absent from the direct quotation. It deliberately does not treat structural counts in prose as regression estimates unless they are explicitly stored in numeric result fields. The diagnostic is conservative triage, not a semantic judge; it never approves a finding or changes the analysis.
+
+## Compare engine versions on paired papers
+
+Evaluate the baseline and candidate exports separately, then compare their scorecards:
+
+```bash
+python benchmark/evaluate.py --results benchmark/results/v1.json --out benchmark/results/v1-scorecard.json
+python benchmark/evaluate.py --results benchmark/results/v2.json --out benchmark/results/v2-scorecard.json
+python benchmark/compare_scorecards.py --baseline benchmark/results/v1-scorecard.json --candidate benchmark/results/v2-scorecard.json --out benchmark/results/v1-v2-comparison.json
+```
+
+Only papers with measured values in both scorecards contribute to each metric's paired aggregate. Missing scores are excluded rather than treated as zero. The report includes per-paper deltas and improved/regressed/unchanged counts. It is descriptive and does not establish causal model improvement; alias coverage is only a screening signal, page precision requires exact PDF text, and human scores require explicit reviewer input.
+
+## Analyze failure categories and fallback attempts
+
+Export the Railway API text logs and run:
+
+```bash
+python benchmark/failure_report.py railway-api.log --out benchmark/results/failure-report.json
+```
+
+The report groups failed analysis jobs into authentication, authorization, missing resource, provider quota, timeout, provider unavailable, invalid model response, other HTTP and application errors. It also counts Gemini attempts/errors by model. An alternate-model HTTP 200 is not automatically counted as a recovered job; correlate the same job with a later completion event before deriving recovery rate. Logs without a model identifier cannot be attributed to a model. This is offline, read-only triage and does not retry or mutate jobs.
+
+## Run the complete quality workflow with one command
+
+For a repeatable offline review cycle, use the orchestrator. It generates the scorecard, diagnostic report, HTML dashboard and human-review packet together; an optional baseline scorecard adds a paired version comparison.
+
+```bash
+python benchmark/run_quality_pipeline.py \
+  --results benchmark/results/analysis_results.json \
+  --pages-dir benchmark/pages \
+  --reviews benchmark/review_template.json \
+  --baseline-scorecard benchmark/results/v1-scorecard.json \
+  --out-dir benchmark/results/quality-run
+```
+
+`--pages-dir`, `--reviews` and `--baseline-scorecard` are optional. Outputs are `scorecard.json`, `diagnostics.json`, `quality-dashboard.html`, `human-review-packet.md`, and optionally `comparison.json`. Missing measurements stay null/unmeasured; the workflow never auto-approves findings. All processing is local and read-only with respect to production services.
+
+The same integrated command can also include a Railway log export for failure analytics by adding `--logs railway-api.log`. This writes `failure-report.json` alongside the scorecard, diagnostics, dashboard and review packet. The log is read locally; the command does not connect to Railway or retry jobs.
+
+The integrated pipeline also writes `coverage-matrix.json`, grouping measured/not-run papers by topic and method family and separating matched, missing and unmeasured Gold facts. This helps prioritize the 10-paper review set without treating absent analyses as failed extractions.
+
+## Generate per-paper AI cost estimates
+
+Export `ai_usage_events` as JSON and run the standalone report:
+
+```bash
+cd backend
+python -m app.cost_report --events /path/to/ai-usage-events.json --out ../benchmark/results/ai-cost-report.json
+```
+
+Or pass `--usage-events benchmark/results/ai-usage-events.json` to `benchmark/run_quality_pipeline.py`; it adds `ai-cost-report.json` to the quality-run outputs.
+
+The price catalog is `backend/app/model_price_catalog.json` and records the official Google Gemini API pricing source, model, tier and effective dates. The current candidate models are priced only for `paid_standard`: Gemini 3.5 Flash-Lite at $0.30 input / $2.50 output per million tokens, and Gemini 3.6 Flash at $0.75 / $3.75 through 2026-12-31, then $1.50 / $7.50 from 2027-01-01. Output pricing includes thinking tokens, so the estimator adds candidate and thought tokens once. Unknown billing mode, incomplete token metadata and unknown models produce NULL cost. Free tier is zero only when explicitly confirmed.
+
+The API reads `GEMINI_BILLING_MODE` only when set to `free` or `paid_standard`; otherwise it records NULL. Do not set this variable until the Google AI Studio project's billing tier is verified. This is an estimate, not an invoice. Recheck official pricing before each catalog update.
+
+### Administrator-only monthly AI budget diagnostics
+
+AI budget ownership belongs to the service administrator, not end users. The cost report can apply one service-wide monthly threshold; user and paper rows are internal usage breakdowns only and have no individual budget fields.
+
+```bash
+cd backend
+python -m app.cost_report --events /path/to/ai-usage-events.json \
+  --admin-monthly-budget-usd 25 \
+  --out ../benchmark/results/ai-cost-report.json
+```
+
+For the integrated quality pipeline, pass `--admin-monthly-budget-usd 25` with `--usage-events ...`. If any event has unknown billing mode, missing tokens or invalid timestamp, the global budget is marked `incomplete_unknown_costs` unless known cost alone already exceeds the threshold. The report never declares an incomplete total within budget. This is administrator reporting only, not an automatic spending cap; enforceable limits require a separately approved server-side policy and Production rollout.
+
+
+### Redistribution note (license audit, 2026-11-20)
+
+All ten supplied publisher PDFs contain an article-level Creative Commons Attribution license statement: B01–B06 and B08–B10 explicitly state CC BY 4.0; B07 (PLOS ONE) states CC BY. The license audit is recorded in `results/license-audit-2026-11-20.md`. When redistributing, preserve the article title, authors, DOI/source URL, license link and modification notice. This article-level check does not clear third-party figures or separately credited material.
