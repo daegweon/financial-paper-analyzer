@@ -212,19 +212,24 @@ test("analysis API failure is surfaced and the user can retry", async ({ page })
     }
     return route.continue();
   });
-  await page.route("https://api.mock.papersignal.test/api/analyze/**", route =>
-    route.fulfill({
+  let analysisRequests = 0;
+  await page.route("https://api.mock.papersignal.test/api/analyze/**", async route => {
+    analysisRequests += 1;
+    await route.fulfill({
       status: 503,
       contentType: "application/json",
       body: JSON.stringify({ detail: "Gemini temporarily unavailable" }),
-    }),
-  );
+    });
+  });
 
   await page.goto("/");
   await page.getByRole("button", { name: "E2E 금융논문" }).click();
   const analyze = page.getByRole("button", { name: "분석 시작 →" });
   await expect(analyze).toBeVisible();
   await analyze.click();
-  await expect(page.getByRole("status").filter({ hasText: "분석 작업 등록 응답이 일시적으로 실패했습니다" })).toBeVisible();
+  await expect.poll(() => analysisRequests).toBe(1);
+  const errorMessage = page.locator(".message");
+  await expect(errorMessage).toBeVisible();
+  await expect(errorMessage).toContainText("분석 작업 등록 응답이 일시적으로 실패했습니다");
   await expect(analyze).toBeEnabled();
 });
