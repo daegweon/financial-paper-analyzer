@@ -284,11 +284,11 @@ test.describe("isolated synthetic Supabase browser flows", () => {
     let budget = "100.00";
     const summary = () => ({
       month:"2026-11",currency:"USD",event_count:3,known_cost_events:2,unknown_cost_events:1,
-      estimated_cost_usd:"12.50000000",monthly_budget_usd:budget,budget_status:"incomplete_unknown_costs",
+      estimated_cost_usd:"12.50000000",monthly_budget_usd:budget,budget_status:"incomplete_truncated",
       cost_coverage_complete:false,
       models:[{model:"gemini-3.5-flash-lite",event_count:3,known_cost_events:2,unknown_cost_events:1,estimated_cost_usd:"12.50000000"}],
       users:[{user_id:qaA,event_count:3,known_cost_events:2,unknown_cost_events:1,estimated_cost_usd:"12.50000000"}],
-      truncated:false,notice:"관리자 전용 운영 지표",
+      truncated:true,notice:"관리자 전용 운영 지표",
     });
     await page.route("http://127.0.0.1:54322/api/admin/ai-usage/summary**", route =>
       route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(summary())})
@@ -304,6 +304,8 @@ test.describe("isolated synthetic Supabase browser flows", () => {
     await expect(page.getByRole("region",{name:"전체 사용량 요약"}).getByText("$12.50")).toBeVisible();
     await expect(page.getByText("gemini-3.5-flash-lite")).toBeVisible();
     await expect(page.getByText("사용자별 내부 운영 집계")).toBeVisible();
+    await expect(page.getByText("조회 한도 도달 · 전체 비용 미확인")).toBeVisible();
+    await expect(page.getByText(/조회 한도에 도달했습니다/)).toBeVisible();
     await page.getByLabel("월간 전체 예산 (USD)").fill("150");
     await page.getByRole("button",{name:"전체 예산 저장"}).click();
     await expect(page.getByRole("status")).toContainText("월간 전체 AI 예산을 저장했습니다.");
