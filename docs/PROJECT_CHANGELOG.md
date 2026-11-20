@@ -195,3 +195,11 @@
 - Added paired scorecard comparison for per-paper metrics and aggregate deltas; missing values excluded. Added tests for paired/unpaired papers and missing measurements.
 - Added privacy-first per-job usage ledger and effective-dated price design (RLS, service-role-only, idempotency, null for unknown/free-tier prices); design only, no DB changes.
 - Latest complete prior CI #44641154839 green. Fresh complete CI pending for these additions; no score credit until verified.
+
+## 2026-11-20 — Junior methodology curriculum verified (engineering 94%)
+
+- Added a Korean junior methodology catalog covering OLS, panel FE/RE, DiD, IV/2SLS, event study, asset-pricing factor models, GARCH and PCA. Each card contains concept, representative formula, result-table reading steps, interpretation caveats and a knowledge-check question/answer.
+- Added catalog validation and Markdown card generator. The content is explicitly general education and must never be presented as a paper-specific finding or citation.
+- Full CI [#44652970492](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44652970492) passed frontend, API, DB policy, GET-only live API preflight and synthetic browser QA. Junior-learning workstream credited 19/20 → 20/20. Native iOS Safari/Android device PDF rendering, page navigation and signed URL renewal remain human-device checks.
+- Weighted engineering progress is now **94%**. Benchmark coverage-matrix and integrated-pipeline artifact persistence are undergoing the next full CI; do not credit the finance-engine point until that run passes.
+- No production database, user data, model behavior or deployment changed.
