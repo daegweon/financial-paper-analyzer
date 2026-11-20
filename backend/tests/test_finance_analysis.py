@@ -2431,3 +2431,88 @@ def test_admin_usage_endpoint_rejects_invalid_month_before_database_query(monkey
         assert exc.status_code == 422
     else:
         raise AssertionError("invalid month must be rejected")
+
+
+def test_admin_budget_update_persists_only_global_setting(monkeypatch):
+    import asyncio
+    import app.main as module
+
+    captured = {}
+    class FakeResponse:
+        status_code = 204
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return False
+        async def post(self, url, **kwargs):
+            captured["url"] = url
+            captured.update(kwargs)
+            return FakeResponse()
+
+    async def fake_verify(client, token):
+        return "admin-uuid"
+
+    monkeypatch.setattr(module, "SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setattr(module, "SUPABASE_KEY", "publishable")
+    monkeypatch.setattr(module, "SERVICE_ROLE_KEY", "service-role")
+    monkeypatch.setattr(module, "ADMIN_USER_IDS", {"admin-uuid"})
+    monkeypatch.setattr(module, "_verify_user", fake_verify)
+    monkeypatch.setattr(module.httpx, "AsyncClient", FakeClient)
+    result = asyncio.run(module.update_admin_ai_budget(
+        {"monthly_budget_usd": "125.50"}, authorization="Bearer admin-session"
+    ))
+    assert result == {"monthly_budget_usd": "125.50", "updated": True}
+    assert captured["url"].endswith("/rest/v1/ai_admin_settings")
+    assert captured["json"] == {
+        "setting_key": "monthly_budget_usd",
+        "value_numeric": "125.50",
+        "updated_by": "admin-uuid",
+    }
+    assert captured["params"]["on_conflict"] == "setting_key"
+
+
+def test_non_admin_cannot_change_global_ai_budget(monkeypatch):
+    import asyncio
+    import app.main as module
+    from fastapi import HTTPException
+
+    async def fake_verify(client, token):
+        return "ordinary-user"
+
+    monkeypatch.setattr(module, "SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setattr(module, "SUPABASE_KEY", "publishable")
+    monkeypatch.setattr(module, "SERVICE_ROLE_KEY", "service-role")
+    monkeypatch.setattr(module, "ADMIN_USER_IDS", {"admin-uuid"})
+    monkeypatch.setattr(module, "_verify_user", fake_verify)
+    try:
+        asyncio.run(module.update_admin_ai_budget(
+            {"monthly_budget_usd": "1"}, authorization="Bearer user-session"
+        ))
+    except HTTPException as exc:
+        assert exc.status_code == 403
+    else:
+        raise AssertionError("non-admin must not update service budget")
+
+
+def test_admin_budget_rejects_negative_nonfinite_and_boolean_values(monkeypatch):
+    import asyncio
+    import app.main as module
+    from fastapi import HTTPException
+
+    async def fake_verify(client, token):
+        return "admin-uuid"
+
+    monkeypatch.setattr(module, "SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setattr(module, "SUPABASE_KEY", "publishable")
+    monkeypatch.setattr(module, "SERVICE_ROLE_KEY", "service-role")
+    monkeypatch.setattr(module, "ADMIN_USER_IDS", {"admin-uuid"})
+    monkeypatch.setattr(module, "_verify_user", fake_verify)
+    for value in ("-1", "NaN", "Infinity", True, "1000000001"):
+        try:
+            asyncio.run(module.update_admin_ai_budget(
+                {"monthly_budget_usd": value}, authorization="Bearer admin-session"
+            ))
+        except HTTPException as exc:
+            assert exc.status_code == 422
+        else:
+            raise AssertionError(f"invalid budget accepted: {value}")
