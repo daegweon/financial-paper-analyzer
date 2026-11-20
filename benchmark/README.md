@@ -179,3 +179,18 @@ python benchmark/run_quality_pipeline.py \
 The same integrated command can also include a Railway log export for failure analytics by adding `--logs railway-api.log`. This writes `failure-report.json` alongside the scorecard, diagnostics, dashboard and review packet. The log is read locally; the command does not connect to Railway or retry jobs.
 
 The integrated pipeline also writes `coverage-matrix.json`, grouping measured/not-run papers by topic and method family and separating matched, missing and unmeasured Gold facts. This helps prioritize the 10-paper review set without treating absent analyses as failed extractions.
+
+## Generate per-paper AI cost estimates
+
+Export `ai_usage_events` as JSON and run the standalone report:
+
+```bash
+cd backend
+python -m app.cost_report --events /path/to/ai-usage-events.json --out ../benchmark/results/ai-cost-report.json
+```
+
+Or pass `--usage-events benchmark/results/ai-usage-events.json` to `benchmark/run_quality_pipeline.py`; it adds `ai-cost-report.json` to the quality-run outputs.
+
+The price catalog is `backend/app/model_price_catalog.json` and records the official Google Gemini API pricing source, model, tier and effective dates. The current candidate models are priced only for `paid_standard`: Gemini 3.5 Flash-Lite at $0.30 input / $2.50 output per million tokens, and Gemini 3.6 Flash at $0.75 / $3.75 through 2026-12-31, then $1.50 / $7.50 from 2027-01-01. Output pricing includes thinking tokens, so the estimator adds candidate and thought tokens once. Unknown billing mode, incomplete token metadata and unknown models produce NULL cost. Free tier is zero only when explicitly confirmed.
+
+The API reads `GEMINI_BILLING_MODE` only when set to `free` or `paid_standard`; otherwise it records NULL. Do not set this variable until the Google AI Studio project's billing tier is verified. This is an estimate, not an invoice. Recheck official pricing before each catalog update.
