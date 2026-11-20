@@ -354,3 +354,11 @@ The account reached Vercel Hobby's daily 100-deployment API limit (HTTP 402 `api
 - CI [#44658840350](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44658840350): db-policy SUCCESS, API 166 passed/1 deliberately skipped, frontend lint/build SUCCESS, read-only live API preflight SUCCESS; synthetic browser QA still running at checkpoint. The ledger schema contract itself passed.
 - Weighted engineering completion is **96%** after crediting one privacy/integrity milestone. This is schema and isolated policy validation only: production migration is not applied, API dual-write is not implemented, and official effective-dated price catalog is not connected. Beta release gates remain 4/10.
 - Human approvals and real-user E2E remain deferred. No production Supabase change, deployed service, user data or analysis engine behavior was modified.
+
+## 2026-11-20 — Best-effort Gemini usage ledger API writer (CI pending)
+
+- `_process_analysis_job` now establishes task-local ownership context from the verified job (`user_id`, `paper_id`, `analysis_job_id`). Each Gemini model attempt receives a monotonically increasing per-job attempt index.
+- Added `_persist_ai_usage_event`: backend service-role POST to `ai_usage_events`, opaque idempotency key, provider/model/outcome/status/error class/latency and provider-reported token metadata. HTTP and transport failures are separate events; unknown token values remain NULL.
+- Writes use a short timeout and `Prefer: resolution=ignore-duplicates`; missing context/key skips the write. HTTP/network ledger errors are redacted and non-fatal, so analysis result processing continues. No prompts, PDF text, model response, bearer token or API key is stored.
+- Added unit tests for verified ownership fields, token NULL handling, idempotency header, missing context and non-fatal ledger failure. API job in [#44662407474](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44662407474) passed **169 tests / 1 deliberately skipped**; disposable DB ledger policy and GET-only API preflight passed. Frontend build and synthetic browser QA are still running. Keep engineering progress at 96% until full CI is green.
+- This is candidate code only; no Railway deployment or Production Supabase migration. Real usage persistence will not begin until separately approved rollout.
