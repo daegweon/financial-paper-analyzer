@@ -5,7 +5,8 @@ const SUPABASE_URL = `https://${SUPABASE_REF}.supabase.co`;
 const USER_ID = "11111111-1111-4111-8111-111111111111";
 const PAPER_ID = "22222222-2222-4222-8222-222222222222";
 
-async function seedAuthenticatedSession(page: Page, options: { delayUserLookup?: boolean } = {}): Promise<() => void> {\n  let serverSessionRevoked = false;
+async function seedAuthenticatedSession(page: Page, options: { delayUserLookup?: boolean } = {}): Promise<() => void> {
+  let serverSessionRevoked = false;
   await page.addInitScript(({ userId, projectRef }) => {
     const encode = (value: object) =>
       btoa(JSON.stringify(value)).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
