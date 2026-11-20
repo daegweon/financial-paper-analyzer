@@ -60,6 +60,7 @@ function budgetStatusLabel(value: string) {
     within_budget: "예산 범위 내",
     exceeded: "예산 초과",
     exceeded_with_incomplete_data: "예산 초과 · 집계 일부 누락",
+    exceeded_with_truncated_data: "예산 초과 · 조회 한도 도달",
     incomplete_unknown_costs: "비용 미확정 이벤트 존재",
     incomplete_truncated: "조회 한도 도달 · 전체 비용 미확인",
   };
