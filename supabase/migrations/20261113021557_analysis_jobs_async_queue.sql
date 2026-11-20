@@ -1,4 +1,3 @@
--- Durable status records for asynchronous paper analysis.
 create table if not exists public.analysis_jobs (
  id uuid primary key default gen_random_uuid(),
  paper_id uuid not null,
