@@ -34,3 +34,15 @@
 .reset:disabled{opacity:.6}.panel button:focus-visible,.panel input:focus-visible{outline:3px solid #196d7f;outline-offset:2px}
 @media(max-width:680px){.panel{padding:13px}.steps{grid-template-columns:1fr}.header{flex-direction:column;gap:6px}.source{align-items:flex-start}}
 @media(prefers-reduced-motion:reduce){.panel *{scroll-behavior:auto}}
+
+
+/* The paper-understanding check is a key learning moment; give its questions more breathing room. */
+.quiz h4 { font-size: 17px; }
+.quiz header p { font-size: 14px; line-height: 1.8; }
+.question legend { font-size: 16px; line-height: 1.7; }
+.option { font-size: 15px; line-height: 1.8; }
+.correct,.incorrect { font-size: 14px; line-height: 1.85; }
+.actions { font-size: 13px; }
+.submit { font-size: 13px; }
+.result { font-size: 14px; }
+.result p { font-size: 13px; }

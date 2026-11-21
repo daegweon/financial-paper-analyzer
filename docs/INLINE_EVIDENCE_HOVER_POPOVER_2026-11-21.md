@@ -106,3 +106,12 @@ The user's next Preview review showed that the paragraph-level evidence icon sti
 - Equation parsing now splits the common implicit-multiplication pattern aCb into a, C, and b, while preserving case so C and c remain distinct. The exact sample L(C) = aCb + c and -EP [log(pass_rate(C))] = α*C^-k are covered by the browser fixture.
 - Extracted variable definitions and their page-level source evidence are passed into the equation guide, so the guide can link back to the original PDF.
 - The browser test checks all 10 symbols, the extracted definition for C, the separate c constant, the spacer width, the A+ scale change, and localStorage persistence.
+
+
+## 2026-11-22 follow-up: reading default, quiz legibility, and evidence consolidation
+
+- Reading-size default and reset are now 90%. The previous release wrote its default 100% to localStorage on first load; that legacy default is migrated to 90%, while other explicit saved sizes are preserved. The user's new A−/A+ selection remains persisted.
+- Removed the equation parameter/symbol explanation block from the report. The equations themselves remain visible.
+- Increased only the "논문 읽기 이해도 점검" quiz heading, question, answer options and explanations, with the same reader scale applied.
+- The "주요 변수" heading now owns one parent evidence i. Identical page+quote citations shared by multiple variables are de-duplicated into one citation and list all related variable names in the same popover. Individual variable cards no longer repeat their own i.
+- User explicitly requested no GitHub Actions. The changes are prepared as an unreferenced Git commit object and have not been pushed to the PR branch; no Actions were triggered and no deployment was created.

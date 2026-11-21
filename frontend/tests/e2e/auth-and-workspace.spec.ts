@@ -307,6 +307,11 @@ test("paper analysis opens as a full-width report with visible section navigatio
                 role: "설명변수",
                 definition: "기업의 운영 비용을 나타내는 변수입니다.",
                 evidence: [{ page: 2, quote: "C denotes the operating cost." }],
+              }, {
+                name: "C_cost (운영비용 별칭)",
+                role: "동일 변수의 별칭",
+                definition: "운영비용을 다른 이름으로 표기한 항목입니다.",
+                evidence: [{ page: 2, quote: "C denotes the operating cost." }],
               }],
               equations: [
                 "L(C) = aCb + c",
@@ -474,39 +479,45 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await expect(page.locator("#analysis-summary")).toContainText("표본 기간 동안");
   await expect(page.locator("#analysis-findings")).toHaveCount(1);
 
-  const equationGuide = dialog.locator(".equation-explainer");
-  await expect(equationGuide).toBeVisible();
-  await expect(equationGuide).toContainText("기호별 설명");
-  await expect(equationGuide).toContainText("기업의 운영 비용을 나타내는 변수입니다.");
-  await expect(equationGuide).toContainText("계수 또는 크기 조정 파라미터");
-  await expect(equationGuide).toContainText("거듭제곱 지수 파라미터");
-  await expect(equationGuide).toContainText("상수항");
-  await expect(equationGuide).toContainText("확률분포 P 아래의 기댓값 연산자");
-  await expect(equationGuide.locator(".equation-symbol-row")).toHaveCount(10);
+  const methodologySection = dialog.locator("#analysis-methodology");
+  await expect(methodologySection.locator(".equation")).toHaveCount(2);
+  await expect(methodologySection.locator(".equation-symbol-guide")).toHaveCount(0);
+  await expect(methodologySection).not.toContainText("기호별 설명");
+
+  const variableHeading = methodologySection.locator("h4").filter({ hasText: "주요 변수" });
+  const variableTrigger = variableHeading.locator(".evidence-info-button");
+  await expect(variableTrigger).toHaveCount(1);
+  await expect(methodologySection.locator(".analysis-card .evidence-info-button")).toHaveCount(0);
+  await variableTrigger.click();
+  const variablePopover = variableTrigger.locator("xpath=..").locator(".evidence-popover");
+  await expect(variablePopover).toBeVisible();
+  await expect(variablePopover).toContainText("관련 변수: C (비용) · C_cost (운영비용 별칭)");
+  await expect(variablePopover.locator(".evidence-popover-item")).toHaveCount(1);
+  await page.keyboard.press("Escape");
+
   const reportText = dialog.locator(".result #analysis-summary > p");
   await expect(reportText).toBeVisible();
-  expect(Number(await reportText.evaluate(el => getComputedStyle(el).fontSize.replace("px", "")))).toBeGreaterThanOrEqual(15);
+  expect(Number(await reportText.evaluate(el => getComputedStyle(el).fontSize.replace("px", "")))).toBeGreaterThanOrEqual(13.5);
   const evidenceGap = evidenceAnchor.locator(".evidence-inline-gap");
   await expect(evidenceGap).toHaveCount(1);
   const gapWidth = await evidenceGap.evaluate(el => el.getBoundingClientRect().width);
   expect(gapWidth).toBeGreaterThanOrEqual(8);
 
-  const equationSymbols = await equationGuide.locator(".equation-symbol-token").allTextContents();
-  expect(equationSymbols).toEqual(["L", "C", "a", "b", "c", "E_P", "log", "pass_rate", "α", "k"]);
-  expect(equationSymbols).toContain("C");
-  expect(equationSymbols).toContain("c");
-
   const readingControls = dialog.getByRole("group", { name: "보고서 글자 크기" });
   await expect(readingControls).toBeVisible();
-  await expect(readingControls.locator("output")).toHaveText("100%");
+  await expect(readingControls.locator("output")).toHaveText("90%");
+  const understandingQuiz = dialog.locator("#analysis-workplace #study-quiz-heading");
+  await expect(understandingQuiz).toBeVisible();
+  const quizQuestion = dialog.locator("#analysis-workplace fieldset legend").first();
+  expect(Number(await quizQuestion.evaluate(el => getComputedStyle(el).fontSize.replace("px", "")))).toBeGreaterThanOrEqual(14);
   await readingControls.getByRole("button", { name: "글자 크기 키우기" }).click();
-  await expect(readingControls.locator("output")).toHaveText("110%");
-  await expect.poll(() => page.evaluate(() => localStorage.getItem("papersignal-reading-scale"))).toBe("110");
-  const scaledReportFont = await reportText.evaluate(el => getComputedStyle(el).fontSize);
-  expect(Number(scaledReportFont.replace("px", ""))).toBeGreaterThan(15);
-  await readingControls.getByRole("button", { name: "글자 크기 기본값으로" }).click();
   await expect(readingControls.locator("output")).toHaveText("100%");
   await expect.poll(() => page.evaluate(() => localStorage.getItem("papersignal-reading-scale"))).toBe("100");
+  const scaledReportFont = await reportText.evaluate(el => getComputedStyle(el).fontSize);
+  expect(Number(scaledReportFont.replace("px", ""))).toBeGreaterThan(14.5);
+  await readingControls.getByRole("button", { name: "글자 크기 기본값으로" }).click();
+  await expect(readingControls.locator("output")).toHaveText("90%");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("papersignal-reading-scale"))).toBe("90");
   await expect(page.locator(".detail-sign-out")).toBeVisible();
 
   await page.getByRole("link", { name: "실증 결과", exact: true }).click();

@@ -11,13 +11,12 @@ import { JuniorPaperGuide } from "../components/JuniorPaperGuide";
 import { JuniorVisualReading } from "../components/JuniorVisualReading";
 import { JuniorWorkplaceGuide } from "../components/JuniorWorkplaceGuide";
 import { EvidencePopover } from "../components/EvidencePopover";
-import { EquationExplainer } from "../components/EquationExplainer";
 import { authCallbackError, cleanAuthErrorUrl } from "../lib/auth-feedback";
 import { AnalysisWatchStopped, findActiveAnalysisJob, startAnalysisJob, waitForAnalysisJob } from "../lib/analysis-job";
 import type { ActiveAnalysisJob } from "../lib/analysis-job";
 import type { User } from "@supabase/supabase-js";
 
-type Evidence = { page: number; quote: string };
+type Evidence = { page: number; quote: string; contexts?: string[] };
 type Claim = { text: string; evidence: Evidence[] };
 type Finding = {
   claim: string;
@@ -236,6 +235,23 @@ function EvidenceList({
   return <EvidencePopover items={items} sourcePdfUrl={sourcePdfUrl} onOpenSourcePage={onOpenSourcePage}>{children}</EvidencePopover>;
 }
 
+function groupedVariableEvidence(variables: Variable[]): Evidence[] {
+  const grouped = new Map<string, Evidence & { contexts: string[] }>();
+  for (const variable of variables) {
+    for (const item of variable.evidence ?? []) {
+      const normalizedQuote = item.quote.trim().replace(/\\s+/g, " ").toLocaleLowerCase();
+      const key = `${item.page}::${normalizedQuote}`;
+      const existing = grouped.get(key);
+      if (existing) {
+        if (!existing.contexts.includes(variable.name)) existing.contexts.push(variable.name);
+      } else {
+        grouped.set(key, { page: item.page, quote: item.quote, contexts: [variable.name] });
+      }
+    }
+  }
+  return Array.from(grouped.values());
+}
+
 function ClaimList({
   items, sourcePdfUrl, onOpenSourcePage,
 }: {
@@ -275,12 +291,15 @@ export default function Home() {
   const visiblePapers = papersOwnerId === user?.id ? papers : [];
   const [selected, setSelected] = useState<Paper | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
-  const [readingScale, setReadingScale] = useState(100);
+  const [readingScale, setReadingScale] = useState(90);
   const [readingScaleReady, setReadingScaleReady] = useState(false);
   useEffect(() => {
     try {
       const saved = Number(window.localStorage.getItem("papersignal-reading-scale"));
-      if ([80, 90, 100, 110, 120, 130, 140].includes(saved)) setReadingScale(saved);
+      if ([80, 90, 100, 110, 120, 130, 140].includes(saved)) {
+        // The previous release persisted its 100% default on first load; migrate that default to 90%.
+        setReadingScale(saved === 100 ? 90 : saved);
+      }
     } catch {
       // Reading remains usable if browser storage is unavailable.
     }
@@ -1218,8 +1237,8 @@ export default function Home() {
                 title="글자 크기 키우기" disabled={readingScale >= 140}
                 onClick={() => setReadingScale(value => Math.min(140, value + 10))}>A+</button>
               <button type="button" className="reading-size-reset" aria-label="글자 크기 기본값으로"
-                title="글자 크기 기본값으로" disabled={readingScale === 100}
-                onClick={() => setReadingScale(100)}>기본</button>
+                title="글자 크기 기본값으로" disabled={readingScale === 90}
+                onClick={() => setReadingScale(90)}>기본</button>
             </div>
           {sourcePdf?.paperId === selected.id
             ? <div className="source-pdf-actions">
@@ -1425,22 +1444,25 @@ export default function Home() {
                     </>}
                   </>}
                   {!!analysis.result.methodology.variables?.length && <>
-                    <h4>주요 변수</h4>
+                    <h4>주요 변수 <EvidenceList
+                      sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined}
+                      onOpenSourcePage={showOriginalPdfPage}
+                      items={groupedVariableEvidence(analysis.result.methodology.variables)}
+                    /></h4>
                     {analysis.result.methodology.variables.map((variable, index) =>
                       <article className="analysis-card" key={index}>
                         <b>{variable.name}</b><span className="tag">{variable.role}</span>
-                        <p><EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={variable.evidence}>{variable.definition}</EvidenceList></p>
+                        <p>{variable.definition}</p>
                       </article>
                     )}
                   </>}
                   {!!analysis.result.methodology.equations?.length && <>
                     <h4>모형 및 수식</h4>
-                    <EquationExplainer
-                      equations={analysis.result.methodology.equations}
-                      variables={analysis.result.methodology.variables ?? []}
-                      sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined}
-                      onOpenSourcePage={showOriginalPdfPage}
-                    />
+                    <div className="equation-list">
+                      {analysis.result.methodology.equations.map((equation, index) =>
+                        <pre className="equation" key={index}>{equation}</pre>
+                      )}
+                    </div>
                   </>}
                 </section>
               )}

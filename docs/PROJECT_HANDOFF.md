@@ -297,6 +297,9 @@ The PR #38 collapsible UI still left a repeated full-width "원문 근거 보기
 
 **How to continue:** Read [Inline source-evidence hover / info popover UX](INLINE_EVIDENCE_HOVER_POPOVER_2026-11-21.md). Verify the latest PR #41 head and Preview before merge. The Preview build and full CI must pass before Production merge. This is frontend-only; no backend, schema, or analysis-engine change.
 
+## 2026-11-22 requested follow-up (prepared, not pushed)
+The user requested: default reader size 90%; remove equation parameter explanations while keeping formulas; increase the "논문 읽기 이해도 점검" quiz typography; consolidate repeated variable evidence i-icons into one parent "주요 변수" i with deduplicated page+quote citations and variable labels. The user explicitly instructed not to run GitHub Actions. Changes have therefore been prepared in an unreferenced commit object only; do not push the feature branch or trigger Actions until the user changes that instruction. No Vercel deployment has been created for this follow-up.
+
 ## 10. Remaining work and explicit non-blockers
 
 The initial product release is live; PR #41's current evidence/readability follow-up is undergoing latest-head Preview and CI validation and is not yet deployed to Production. The following are follow-up quality/extension items, not reasons to reopen the completed release without a concrete need.

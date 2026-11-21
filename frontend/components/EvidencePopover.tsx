@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, ReactNode } from "react";
 
-export type EvidenceCitation = { page: number; quote: string };
+export type EvidenceCitation = { page: number; quote: string; contexts?: string[] };
 
 type Props = {
   items?: EvidenceCitation[];
@@ -155,6 +155,7 @@ export function EvidencePopover({
         <div className="evidence-popover-items">
           {items.map((item, index) => <section className="evidence-popover-item" key={item.page + "-" + index}>
             <div className="evidence-popover-page">원문 p.{item.page}</div>
+            {item.contexts?.length ? <div className="evidence-popover-context">관련 변수: {item.contexts.join(" · ")}</div> : null}
             <p>{item.quote}</p>
             {sourcePdfUrl && Number.isInteger(item.page) && item.page > 0 &&
               (onOpenSourcePage

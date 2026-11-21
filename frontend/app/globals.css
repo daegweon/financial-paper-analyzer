@@ -933,21 +933,9 @@ button.evidence-source-link:focus-visible {
 .evidence-popover-item p { font-size: 13px; line-height: 1.75; }
 .evidence-popover-link { font-size: 12px; }
 .evidence-popover-footer { font-size: 11px; }
-.equation-explainer { margin: 12px 0 18px; }
-.equation-list { display: grid; gap: 8px; }
+.equation-list { display: grid; gap: 8px; margin: 12px 0 18px; }
 .equation-list .equation { margin: 0; }
-.equation-symbol-guide { margin-top: 16px; padding: 16px; border: 1px solid #e2e9ed; border-radius: 10px; background: #fbfcfd; }
-.equation-symbol-heading h5 { margin: 0 0 5px; color: #29485a; font-size: 15px; }
-.equation-symbol-heading p { margin: 0; color: #627786; font-size: 13px; line-height: 1.7; }
-.equation-symbol-grid { display: grid; gap: 8px; margin-top: 13px; }
-.equation-symbol-row { display: grid; grid-template-columns: 76px minmax(0,1fr); gap: 12px; padding: 11px 12px; border: 1px solid #e7edf0; border-radius: 8px; background: #fff; }
-.equation-symbol-token { display: grid; place-items: center; align-self: start; min-height: 34px; border-radius: 7px; background: #edf5f4; color: #176d68; font-family: Georgia,serif; font-size: 17px; font-weight: 700; overflow-wrap: anywhere; }
-.equation-symbol-copy { min-width: 0; }
-.equation-symbol-copy strong { display: block; color: #29485a; font-size: 14px; line-height: 1.5; }
-.equation-symbol-copy p { margin: 4px 0 0; color: #526b7a; font-size: 14px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
-.equation-symbol-source { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; margin-top: 7px; color: #4b827a; font-size: 12px; }
-.equation-symbol-source .evidence-popover-anchor { margin-left: 0; }
-.equation-symbol-caveat,.equation-source-unavailable { display: inline-block; margin-top: 7px; color: #87949d; font-size: 11px; line-height: 1.5; }
+.evidence-popover-context { margin-top: 5px; color: #547b76; font-size: 11px; line-height: 1.5; }
 @media(max-width:620px) {
   .result { font-size: 15px; }
   .result .analysis-section h3 { font-size: 17px; }
@@ -998,10 +986,6 @@ button.evidence-source-link:focus-visible {
 .result .evidence-popover-item p { font-size: calc(13px * var(--reading-scale)); }
 .result .evidence-popover-link { font-size: calc(12px * var(--reading-scale)); }
 .result .evidence-popover-footer { font-size: calc(11px * var(--reading-scale)); }
-.result .equation-symbol-heading h5 { font-size: calc(15px * var(--reading-scale)); }
-.result .equation-symbol-heading p { font-size: calc(13px * var(--reading-scale)); }
-.result .equation-symbol-copy strong { font-size: calc(14px * var(--reading-scale)); }
-.result .equation-symbol-copy p { font-size: calc(14px * var(--reading-scale)); }
 
 /* CSS-module learning sections need explicit scaling because their base type is locally scoped. */
 .result #analysis-junior-guide p,.result #analysis-visual-reading p,.result #analysis-workplace p,
@@ -1018,6 +1002,17 @@ button.evidence-source-link:focus-visible {
 .result #analysis-junior-guide summary,.result #analysis-visual-reading summary,.result #analysis-workplace summary {
   font-size: calc(14px * var(--reading-scale)) !important;
 }
+/* Make the dedicated paper-understanding quiz easier to read than surrounding helper text. */
+.result #analysis-workplace .quiz header h4 { font-size: calc(17px * var(--reading-scale)) !important; line-height: 1.5; }
+.result #analysis-workplace .quiz header p { font-size: calc(14px * var(--reading-scale)) !important; line-height: 1.8; }
+.result #analysis-workplace .quiz .question legend { font-size: calc(16px * var(--reading-scale)) !important; line-height: 1.7; }
+.result #analysis-workplace .quiz .option { font-size: calc(15px * var(--reading-scale)) !important; line-height: 1.8; }
+.result #analysis-workplace .quiz .correct,.result #analysis-workplace .quiz .incorrect { font-size: calc(14px * var(--reading-scale)) !important; line-height: 1.85; }
+.result #analysis-workplace .quiz .actions { font-size: calc(13px * var(--reading-scale)); }
+.result #analysis-workplace .quiz .submit { font-size: calc(13px * var(--reading-scale)); }
+.result #analysis-workplace .quiz .result { font-size: calc(14px * var(--reading-scale)); }
+.result #analysis-workplace .quiz .result p { font-size: calc(13px * var(--reading-scale)) !important; }
+
 @media(max-width:620px) {
   .reading-size-label { display: none; }
   .reading-size-controls { gap: 3px; padding: 2px 4px; }
