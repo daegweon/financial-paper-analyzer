@@ -26,6 +26,14 @@
 .evidence-info-button:focus-visible{outline:2px solid #268b82;outline-offset:2px}
 .evidence-popover{display:none;position:fixed;z-index:10000;width:min(340px,calc(100vw - 24px));max-height:min(260px,calc(100vh - 24px));overflow:hidden;border:1px solid #cbdedb;border-radius:10px;background:#fff;box-shadow:0 12px 34px rgba(25,54,66,.2);color:#304b58;pointer-events:auto;text-align:left;line-height:1.5}
 .evidence-popover.is-open{display:block}
+.evidence-popover-preview{padding:10px 12px}
+.evidence-preview-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#32847b;font-size:9px;font-weight:800}
+.evidence-preview-meta span:last-child{color:#819894;font-weight:600}
+.evidence-preview-quote{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;margin:6px 0 0;color:#4d6571;font-size:11px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+.evidence-preview-hint{margin:7px 0 0;color:#829894;font-size:9px;line-height:1.45}
+.evidence-popover-detail{display:none}
+.evidence-popover.is-pinned .evidence-popover-preview{display:none}
+.evidence-popover.is-pinned .evidence-popover-detail{display:block}
 .evidence-popover-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid #e7efed;background:#f7fbfa}
 .evidence-popover-heading strong{font-size:11px;color:#235f5b}
 .evidence-popover-heading span{font-size:9px;color:#819894;white-space:nowrap}
@@ -180,6 +188,8 @@
   .analysis-card { background: #fafcfd !important; }
   .evidence-info-button { display: none !important; }
   .evidence-popover { display: block !important; position: static !important; width: auto !important; max-height: none !important; overflow: visible !important; margin: 5px 0 9px !important; box-shadow: none !important; border-color: #dce9e6 !important; break-inside: avoid; }
+  .evidence-popover-preview { display: none !important; }
+  .evidence-popover-detail { display: block !important; }
   .evidence-popover-heading { padding: 5px 8px !important; }
   .evidence-popover-items { max-height: none !important; overflow: visible !important; }
   .evidence-popover-footer { display: none !important; }
