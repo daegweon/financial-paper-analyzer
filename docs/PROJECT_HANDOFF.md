@@ -289,9 +289,9 @@ The login landing page now shows the user's own workspace first (library, analys
 
 ## 9C. Inline source-evidence hover / info popover — PR #41
 
-The PR #38 collapsible UI still left a repeated full-width "원문 근거 보기" row under each claim, which users found visually noisy. PR #39 replaces those rows with one small inline `i` icon per claim/evidence group. Hovering the claim/explanation text itself (not just the icon) opens a cursor-adjacent quote preview that follows the pointer; a small adjacent i icon can be clicked to pin it; outside click or ESC closes it. Touch and keyboard access are supported. Multiple citations for one claim are grouped into the same popover. Print/PDF output still includes all source quotations while hiding the on-screen icon.
+The PR #38 collapsible UI still left a repeated full-width "원문 근거 보기" row under each claim, which users found visually noisy. PR #41 replaces those rows with one small inline `i` icon per claim/evidence group. Hovering the claim/explanation text itself (not just the icon) opens a cursor-adjacent quote preview that follows the pointer; a small adjacent i icon can be clicked to pin it; outside click or ESC closes it. Touch and keyboard access are supported. Multiple citations for one claim are grouped into the same popover. Print/PDF output still includes all source quotations while hiding the on-screen icon.
 
-**How to continue:** Read [Inline source-evidence hover / info popover UX](INLINE_EVIDENCE_HOVER_POPOVER_2026-11-21.md). Verify PR #39 browser tests and Preview before merge. This is frontend-only; no backend, schema, or analysis-engine change.
+**How to continue:** Read [Inline source-evidence hover / info popover UX](INLINE_EVIDENCE_HOVER_POPOVER_2026-11-21.md). Verify the latest PR #41 head and Preview before merge. The current Preview attempt is blocked by Vercel's daily deployment quota; do not use an older Preview as evidence of the latest code. This is frontend-only; no backend, schema, or analysis-engine change.
 
 ## 10. Remaining work and explicit non-blockers
 
