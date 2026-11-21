@@ -279,7 +279,9 @@ A UI/UX follow-up is under development in PR #38. It changes report evidence exc
 
 The login landing page is reordered to show the user's own workspace first (library, analysis jobs, stats, filters and comparison), followed by the collapsible getting-started guide, then public finance-paper discovery/import. The direct PDF upload button remains available in the library heading.
 
-**How to continue:** Read [Analysis evidence disclosure and library-first workspace](ANALYSIS_EVIDENCE_DISCLOSURE_AND_LIBRARY_FIRST_2026-11-21.md). Verify PR #38 CI and Preview before merge; Production remains on the previously released version until the PR is merged and all Vercel/Railway deployments are verified.
+**Current status (2026-11-21):** PR #38 HEAD `c2dff0830f4df4936555f8509d008a8f9f8e6640` passed [CI #44896988571](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44896988571): backend 247 passed/1 skipped, frontend unit 82 passed, Playwright 9/9 passed, disposable PostgreSQL contracts passed. Vercel Preview is READY at https://financial-paper-analyzer-87lnvup0j-daegweonai-9583.vercel.app/. PR #38 remains open; Production is unchanged pending merge and rollout.
+
+**How to continue:** Read [Analysis evidence disclosure and library-first workspace](ANALYSIS_EVIDENCE_DISCLOSURE_AND_LIBRARY_FIRST_2026-11-21.md). After the PR is merged, verify the current Vercel Production and Railway API/Worker SHAs and health before telling the user the feature is live.
 
 ## 10. Remaining work and explicit non-blockers
 
