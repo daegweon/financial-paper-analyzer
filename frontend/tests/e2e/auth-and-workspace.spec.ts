@@ -483,7 +483,8 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await expect(equationGuide).toContainText("상수항");
   await expect(equationGuide).toContainText("확률분포 P 아래의 기댓값 연산자");
   await expect(equationGuide.locator(".equation-symbol-row")).toHaveCount(10);
-  await expect(equationGuide.locator(".equation-symbol-row").filter({ has: dialog.locator(".equation-symbol-token", { hasText: /^c$/ }) })).toHaveCount(1);
+  expect(equationSymbols).toContain("C");
+  expect(equationSymbols).toContain("c");
   const reportText = dialog.locator(".result #analysis-summary > p");
   await expect(reportText).toBeVisible();
   expect(Number(await reportText.evaluate(el => getComputedStyle(el).fontSize.replace("px", "")))).toBeGreaterThanOrEqual(15);
