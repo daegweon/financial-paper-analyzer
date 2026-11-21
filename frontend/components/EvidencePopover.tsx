@@ -99,7 +99,9 @@ export function EvidencePopover({
     onPointerEnter={onPointerEnter}
     onPointerMove={onPointerMove}
     onPointerLeave={onPointerLeave}
-    onFocus={() => setOpen(true)}
+    onFocus={(event) => {
+      if (!rootRef.current?.contains(event.relatedTarget as Node | null)) setOpen(true);
+    }}
     onBlur={(event) => {
       if (!rootRef.current?.contains(event.relatedTarget as Node | null) && !pinned) setOpen(false);
     }}
