@@ -455,7 +455,7 @@ test("paper analysis opens as a full-width report with visible section navigatio
   const juniorEvidenceAnchor = juniorEvidenceTrigger.locator("xpath=..");
   const juniorEvidencePopover = juniorEvidenceAnchor.locator(".evidence-popover");
   await expect(juniorEvidenceTrigger).toBeVisible();
-  await expect(dialog.locator("#analysis-junior-guide .findings > li").first().locator(".evidence-info-button")).toHaveCount(1);
+  await expect(juniorEvidenceTrigger.locator("xpath=ancestor::li[1]").locator(".evidence-info-button")).toHaveCount(1);
   await expect(juniorEvidencePopover.locator(".evidence-popover-preview")).toBeHidden();
   await juniorEvidenceAnchor.locator(".evidence-inline-copy").hover();
   await expect(juniorEvidencePopover.locator(".evidence-popover-preview")).toBeVisible();
