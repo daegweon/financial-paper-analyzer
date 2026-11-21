@@ -345,6 +345,10 @@ test("paper analysis opens as a full-width report with visible section navigatio
     return route.continue();
   });
 
+  await page.route(`${SUPABASE_URL}/auth/v1/logout**`, route =>
+    route.fulfill({ status: 204, body: "" }),
+  );
+
   await page.goto("/");
   await page.getByRole("button", { name: "E2E 금융논문" }).click();
   const dialog = page.getByRole("dialog");
