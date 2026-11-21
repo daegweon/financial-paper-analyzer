@@ -489,11 +489,11 @@ test("shows recommended public finance papers without a search query and sorts b
   await expect(page.getByRole("heading", { name: "어떤 논문을 읽을지 모르겠다면, 여기서 시작하세요" })).toBeVisible();
   await expect(page.getByText("OpenAlex 인용 1,200회")).toBeVisible();
 
-  await page.getByLabel("논문 정렬").selectOption("citations_desc");
+  await page.locator("#public-paper-sort").selectOption("citations_desc");
   let titles = await page.locator(".public-paper-result-info strong").allTextContents();
   expect(titles).toEqual(["Zeta Markets", "Beta ETF", "Alpha Portfolio"]);
 
-  await page.getByLabel("논문 정렬").selectOption("author_asc");
+  await page.locator("#public-paper-sort").selectOption("author_asc");
   titles = await page.locator(".public-paper-result-info strong").allTextContents();
   expect(titles).toEqual(["Alpha Portfolio", "Beta ETF", "Zeta Markets"]);
 });
