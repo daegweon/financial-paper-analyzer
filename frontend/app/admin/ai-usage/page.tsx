@@ -91,6 +91,7 @@ export default function AdminAIUsagePage() {
   const [budgetInput, setBudgetInput] = useState("");
   const [savingBudget, setSavingBudget] = useState(false);
   const [budgetMessage, setBudgetMessage] = useState("");
+  const [signOutLoading, setSignOutLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -150,6 +151,18 @@ export default function AdminAIUsagePage() {
     }
   }
 
+  async function signOut() {
+    if (signOutLoading) return;
+    setSignOutLoading(true);
+    const { error } = await db().auth.signOut();
+    if (error) {
+      setError("로그아웃하지 못했습니다. 다시 시도해 주세요.");
+      setSignOutLoading(false);
+      return;
+    }
+    window.location.assign("/");
+  }
+
   const budgetRatio = summary?.monthly_budget_usd && Number(summary.monthly_budget_usd) > 0
     ? Number(summary.estimated_cost_usd) / Number(summary.monthly_budget_usd) * 100
     : null;
@@ -163,7 +176,12 @@ export default function AdminAIUsagePage() {
           <h1>AI 사용량 및 비용 관리</h1>
           <p>전체 서비스의 모델 호출량, 추정 비용과 월간 예산을 관리합니다.</p>
         </div>
-        <Link className={styles.back} href="/">서비스로 돌아가기</Link>
+        <div className={styles.headerActions}>
+          <Link className={styles.back} href="/">서비스로 돌아가기</Link>
+          <button type="button" className={styles.logout} onClick={() => void signOut()} disabled={signOutLoading}>
+            {signOutLoading ? "로그아웃 중…" : "로그아웃"}
+          </button>
+        </div>
       </header>
 
       <section className={styles.toolbar} aria-label="조회 조건">
