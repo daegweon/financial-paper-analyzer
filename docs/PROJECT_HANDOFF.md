@@ -287,6 +287,23 @@ The login landing page now shows the user's own workspace first (library, analys
 
 **How to continue:** Read [Analysis evidence disclosure and library-first workspace](ANALYSIS_EVIDENCE_DISCLOSURE_AND_LIBRARY_FIRST_2026-11-21.md). The application feature is released; only address reproducible production issues or new user requests.
 
+## 9C. Inline evidence hints — follow-up UX refinement
+
+A follow-up is under development in PR #39 after the first collapsed-row implementation still left one full-width bordered row per citation and did not materially reduce visual density.
+
+**New interaction model:**
+- Replace every report evidence row with one small inline outlined `i` icon per evidence group, positioned beside the associated claim/value. Multiple citations in the same group are consolidated behind that single icon.
+- Desktop hover and keyboard focus show a short, read-only excerpt in a nearby tooltip with its source page. The tooltip contains no links or buttons.
+- Clicking the icon opens a persistent, non-modal popover containing all quotes in the group and the corresponding original-PDF page actions. Click outside or Escape closes it; focus returns to the trigger when the user closes it directly.
+- On touch devices, tap opens the same popover. No hover-only dependency.
+- The same component is used in the junior three-minute reading guide and table/graph visual-reading cards.
+- Report print/PDF export includes all original quotes in a print-only evidence block; interactive icons and popovers are omitted from print.
+
+**Design review basis:** WAI-ARIA tooltip guidance separates non-interactive hover/focus tooltips from interactive popovers; WCAG 2.2 SC 1.4.13 requires hover/focus content to be dismissible, hoverable, and persistent. IBM Carbon recommends a small outlined information icon for supplemental content and a click-triggered toggletip/popover when content includes links or other interactive actions. References are listed in `docs/INLINE_EVIDENCE_HINTS_UX_2026-11-21.md`.
+
+**Validation targets:** hover preview, pointer movement into the preview, Escape dismissal, keyboard focus, click/tap popover, multiple quotations grouped under one icon, outside-click dismissal, junior-guide integration, print preservation, and existing original-PDF navigation. No backend, database, or analysis-engine changes are intended.
+
+
 ## 10. Remaining work and explicit non-blockers
 
 The initial product release and final UI/UX deployment are complete. The following are follow-up quality/extension items, not reasons to reopen the completed release without a concrete need.

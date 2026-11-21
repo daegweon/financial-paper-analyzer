@@ -16,7 +16,7 @@
 .card .footnote,.footnote{color:#7f929b;font-size:10px;line-height:1.65;margin:11px 0 0}
 .findings{margin:8px 0 0;padding-left:20px}.findings li{margin:0 0 14px;padding:0 0 10px;border-bottom:1px solid #eef2f2}
 .findings li:last-child{border:0;margin-bottom:0}.findings li p{margin:0 0 5px}
-.findings a,.findings span{font-size:11px;color:#16897e;font-weight:700}
+.findings a{font-size:11px;color:#16897e;font-weight:700}
 .caution{background:#fff6e9;border-left:3px solid #d1aa5f;padding:9px;color:#86602c!important;border-radius:4px}
 .learning{margin-top:13px;background:#fff;border:1px solid #e0ece9;border-radius:10px;padding:17px 18px}
 .learningHeader h4{margin-top:0;margin-bottom:5px}
@@ -32,17 +32,3 @@
 .practice .limitations b{display:block;margin-bottom:4px}
 @media(max-width:620px){.guide{padding:14px}.heading{flex-direction:column}.terms{grid-template-columns:1fr}.method{grid-template-columns:64px 1fr}}
 
-
-
-.sourcePageButton {
-  border: 0;
-  padding: 3px 0;
-  background: transparent;
-  color: #16897e;
-  font-size: 11px;
-  font-weight: 750;
-  cursor: pointer;
-  text-align: left;
-}
-.sourcePageButton:hover { text-decoration: underline; }
-.sourcePageButton:focus-visible { outline: 2px solid #16897e; outline-offset: 3px; border-radius: 3px; }
