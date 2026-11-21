@@ -59,6 +59,29 @@ def _assert_server_ready_for_live_e2e(api: httpx.Client) -> None:
             "Live API has not confirmed the server-owned analysis queue release. "
             "Do not create live E2E users or apply the database grants migration."
         )
+    if body.get("analysis_mode") != "ai" or body.get("ai_provider") != "gemini":
+        raise RuntimeError(
+            "Live API is not configured for Gemini-backed AI analysis. "
+            "No QA users or PDFs have been created."
+        )
+
+
+def _assert_gemini_analysis_result(result: object) -> None:
+    """Reject extractive fallbacks or other providers as a false Gemini pass."""
+    models_used = result.get("models_used") if isinstance(result, dict) else None
+    if (
+        not isinstance(result, dict)
+        or result.get("mode") != "llm"
+        or result.get("provider") != "gemini"
+        or not isinstance(models_used, list)
+        or not any(
+            isinstance(model, str) and model.startswith("gemini-")
+            for model in models_used
+        )
+    ):
+        raise AssertionError(
+            "Live E2E expected a successful Gemini LLM analysis with model metadata."
+        )
 
 
 def _make_pdf() -> bytes:
@@ -331,7 +354,7 @@ def test_live_e2e_refuses_unauthorized_targets(supabase_url, api_url):
         )
 
 
-def test_live_e2e_health_requires_server_owned_queue():
+def test_live_e2e_health_requires_server_owned_queue_and_gemini():
     class FakeClient:
         def __init__(self, payload, status=200):
             self.payload = payload
@@ -344,13 +367,51 @@ def test_live_e2e_health_requires_server_owned_queue():
                 request=httpx.Request("GET", LIVE_API_ORIGIN + path),
             )
 
-    _assert_server_ready_for_live_e2e(
-        FakeClient({"status": "ok", "queue_write_mode": "service_role"})
-    )
+    ready = {
+        "status": "ok",
+        "queue_write_mode": "service_role",
+        "analysis_mode": "ai",
+        "ai_provider": "gemini",
+    }
+    _assert_server_ready_for_live_e2e(FakeClient(ready))
     with pytest.raises(RuntimeError, match="has not confirmed"):
         _assert_server_ready_for_live_e2e(FakeClient({"status": "ok"}))
+    with pytest.raises(RuntimeError, match="not configured for Gemini"):
+        _assert_server_ready_for_live_e2e(
+            FakeClient({**ready, "analysis_mode": "extractive"})
+        )
+    with pytest.raises(RuntimeError, match="not configured for Gemini"):
+        _assert_server_ready_for_live_e2e(
+            FakeClient({**ready, "ai_provider": "openai"})
+        )
     with pytest.raises(RuntimeError, match="health preflight failed"):
         _assert_server_ready_for_live_e2e(FakeClient({"detail": "Unavailable"}, 503))
+
+
+def test_live_e2e_requires_verified_gemini_result():
+    _assert_gemini_analysis_result({
+        "mode": "llm",
+        "provider": "gemini",
+        "models_used": ["gemini-3.5-flash-lite"],
+    })
+    with pytest.raises(AssertionError, match="successful Gemini LLM"):
+        _assert_gemini_analysis_result({
+            "mode": "extractive",
+            "provider": "extractive",
+            "models_used": [],
+        })
+    with pytest.raises(AssertionError, match="successful Gemini LLM"):
+        _assert_gemini_analysis_result({
+            "mode": "llm",
+            "provider": "openai",
+            "models_used": ["gpt-5.6-terra"],
+        })
+    with pytest.raises(AssertionError, match="successful Gemini LLM"):
+        _assert_gemini_analysis_result({
+            "mode": "llm",
+            "provider": "gemini",
+            "models_used": [],
+        })
 
 
 def test_missing_explicit_live_e2e_configuration_fails_instead_of_skipping(monkeypatch):
@@ -798,7 +859,7 @@ def test_live_auth_upload_analysis_and_cross_user_isolation():
             rows = result_response.json()
             assert len(rows) == 1
             result = rows[0]["result"]
-            assert result.get("mode") in {"llm", "extractive"}
+            _assert_gemini_analysis_result(result)
             assert result.get("analysis_version")
             assert result.get("evidence"), "Expected page-level evidence in the saved result."
 

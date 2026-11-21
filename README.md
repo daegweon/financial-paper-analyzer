@@ -80,6 +80,8 @@ Every generated citation is checked against the extracted text of its stated PDF
 
 When AI mode is enabled, extracted paper text is sent from Railway to the configured model provider. Use only documents you are permitted to process with that provider.
 
+**Current Auth security limitation:** the Supabase organization is on the Free plan. Supabase's built-in leaked-password protection (HaveIBeenPwned check) is available on Pro and above, so it is not enabled in this project. Do not treat it as active or upgrade the project without explicit billing approval.
+
 ## Environment
 
 Frontend (Vercel):
@@ -97,8 +99,11 @@ Backend (Railway):
 - `SUPABASE_URL`
 - `SUPABASE_PUBLISHABLE_KEY`
 - `FRONTEND_ORIGIN`
+- `PAPERSIGNAL_ADMIN_USER_IDS` (comma-separated approved Supabase Auth UUIDs; server-only administrator allowlist)
+- `PAPERSIGNAL_ADMIN_MONTHLY_AI_BUDGET_USD` (optional initial service-wide reporting budget)
+- `GEMINI_BILLING_MODE` (set to `free` or `paid_standard` only after confirming the actual Google AI Studio billing tier)
 
-Set secrets only in Railway's service Variables UI. Never commit them to GitHub or expose them as `NEXT_PUBLIC_*` variables.
+Set secrets only in Railway's service Variables UI. Never commit them to GitHub or expose them as `NEXT_PUBLIC_*` variables. Keep the administrator allowlist empty until the intended Auth UUID is explicitly confirmed. Do not guess Gemini billing mode; unknown costs are excluded from confirmed-cost totals.
 
 ## Current PDF limits
 
@@ -129,10 +134,32 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-Database migrations:
-- `supabase/migrations/20261113000000_initial_schema.sql`
-- `supabase/migrations/20261113010000_analysis_jobs.sql`
-- `supabase/migrations/20261114000000_durable_analysis_worker.sql` through `20261114060000_cleanup_terminal_analysis_job_checkpoints.sql`
+Database migrations (the reconciled production sequence):
+- `20261112155952_initial_paper_analysis_schema.sql`
+- `20261112160036_authenticated_analysis_writes.sql`
+- `20261113021557_analysis_jobs_async_queue.sql`
+- `20261113161739_worker_leases_heartbeat_and_retry_rpc.sql`
+- `20261113222551_analysis_stage_checkpoints_and_idempotent_results.sql`
+- `20261113222605_make_analysis_job_id_unique_for_upsert.sql`
+- `20261113222644_index_analysis_job_foreign_keys.sql`
+- `20261113222754_explicit_service_role_checkpoint_policy.sql`
+- `20261113234956_cleanup_terminal_analysis_job_checkpoints.sql`
+- `20261120102957_beta_server_owned_result_writes.sql`
+- `20261120122747_server_owned_analysis_quota.sql`
+- `20261120122819_ai_usage_events_ledger.sql`
+- `20261120122859_index_ai_usage_ledger_foreign_keys.sql`
+
+## Production synthetic E2E
+
+A deliberately manual workflow verifies the live authentication, private PDF Storage, real Gemini analysis, and cross-account isolation without using customer accounts.
+
+1. Open the repository's **Actions** tab and select **PaperSignal Live E2E - Manual Approval**.
+2. Select branch `main` and click **Run workflow**.
+3. Set `target=papersignal-production`, `approve_mutations=true`, and `acknowledgment=RUN_SYNTHETIC_LIVE_E2E`.
+4. Copy the exact current `main` commit SHA into `approved_commit`. The workflow refuses a stale or different SHA.
+5. Confirm the repository Actions secrets `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `PAPERSIGNAL_API_URL` are configured.
+
+The workflow checks the live API is in Gemini AI mode before creating any fixture. It then creates two short-lived QA Auth users, uploads a synthetic two-page PDF, runs a real Gemini-backed analysis, verifies original PDF bytes and owner-only access, and checks that the second user cannot access the paper, job, analysis, or private PDF. It deletes only the fixture records and QA users it created after the analysis reaches a terminal state. If a job is still running or cleanup fails, it deliberately retains the relevant QA resources for manual recovery rather than racing the Worker or deleting unrelated data.
 
 ## Finance paper quality benchmark
 

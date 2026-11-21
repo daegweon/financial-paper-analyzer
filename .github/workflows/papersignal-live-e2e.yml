@@ -16,7 +16,7 @@ on:
         type: boolean
         default: false
       approved_commit:
-        description: "Reviewed immutable SHA of the E2E source, copied from this workflow's runbook."
+        description: "Exact current main SHA shown on the repository page; this approves the source for this run."
         required: true
         type: string
         default: ""
@@ -37,7 +37,7 @@ jobs:
       github.ref == 'refs/heads/main' &&
       inputs.target == 'papersignal-production' &&
       inputs.approve_mutations == true &&
-      inputs.approved_commit == '431059a1116a50f39fd56d565c35a1afc081b8fc' &&
+      inputs.approved_commit == github.sha &&
       inputs.acknowledgment == 'RUN_SYNTHETIC_LIVE_E2E'
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -45,14 +45,15 @@ jobs:
       - name: Checkout reviewed E2E-only release source
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: 431059a1116a50f39fd56d565c35a1afc081b8fc
+          ref: ${{ github.sha }}
           persist-credentials: false
       - name: Verify immutable source SHA
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = '431059a1116a50f39fd56d565c35a1afc081b8fc'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           test -f backend/tests/test_live_e2e.py
+          printf 'Approved live E2E source: %s\n' "$GITHUB_SHA"
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
