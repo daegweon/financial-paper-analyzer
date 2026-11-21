@@ -5,8 +5,9 @@
 > **Last verified:** 2026-11-21 (Asia/Seoul)  
 > **Repository:** [daegweon/financial-paper-analyzer](https://github.com/daegweon/financial-paper-analyzer)  
 > **Production URL:** https://financial-paper-analyzer.vercel.app  
-> **Application release commit (PR #35):** `e71d468c445849a480fced28e8a77e84b4892d51`  
-> The handoff document and README link were subsequently committed as documentation-only changes. Connected Vercel/Railway services deploy on main updates, so the live deployment SHA can be newer than the last application-code commit. Always fetch the current main SHA and latest deployment IDs before changing or rolling back anything.
+> **Current main / latest deployment commit:** `b218018a559842b5d319586f6fb7db3f8605cf53` (documentation-only handoff refresh after release).  
+> **Latest application feature commit:** `96393bf434b150106389693bffd8e35da0a42fca` (PR #37; includes recommendations API/UI).  
+> Connected Vercel/Railway services deploy on main updates, including documentation-only commits. Always fetch the current main SHA and latest deployment IDs before changing or rolling back anything.
 
 This document supersedes earlier release-status snapshots for the *current state*. Older dated documents remain useful as historical evidence and detailed runbooks; do not interpret their old deployment/PR status as current.
 
@@ -20,7 +21,7 @@ This document supersedes earlier release-status snapshots for the *current state
    - [Manual live E2E launcher](PAPERSIGNAL_MANUAL_E2E_LAUNCHER_2026-11-19.md)
    - [Pre-deploy QA and rollback](PREDEPLOY_QA_AND_ROLLBACK_2026-11-20.md)
 4. Check the live GitHub main SHA, latest Vercel Production deployment, and both Railway services before making assumptions. This document is a verified snapshot, not a substitute for a fresh status check.
-5. **Do not repeat completed deployment or migration work.** There are no open PRs at the time of this snapshot. The final UI PR #35 is merged and all three production components are already on the merge commit.
+5. **Do not repeat completed deployment or migration work.** PRs #35, #36 and #37 are merged; no open PRs remained at the last check. Vercel Production and Railway API/Worker all run the latest main deployment. The public recommendations API is present in the deployed backend.
 6. Keep the analysis engine at v6.4.2 unless a reproducible quality improvement is demonstrated without regressions. The user's preference is to prioritize product completion and operational reliability over repeated minor engine tuning.
 7. Avoid asking the user to repeat facts already in this document. Make safe, reversible progress autonomously; ask only when a genuine user decision, credential, device action, or approval is required.
 
@@ -49,37 +50,35 @@ Non-negotiable quality principles:
 ### GitHub
 
 - Default branch: `main`
-- Application release commit: `e71d468c445849a480fced28e8a77e84b4892d51`.
-- Documentation-only handoff commits subsequently advanced `main`; the latest main SHA must be fetched at session start rather than assumed to equal the application release SHA.
-- Final UI PR: [#35 — finalize PaperSignal workspace and analysis UX](https://github.com/daegweon/financial-paper-analyzer/pull/35)
-- PR #35 was squash-merged successfully on 2026-11-21.
-- No open PRs were returned by the repository query after release.
-- PR #35 exact-head CI: [Checks run #44867894674](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44867894674) — all three required jobs succeeded.
-- The README handoff link and this handoff document were added in subsequent documentation-only commits; these are not application feature releases.
-- **Important deployment behavior:** a main-branch documentation change triggered Vercel Production and Railway API/Worker deployments. Avoid unnecessary direct-to-main documentation commits; when a documentation update is necessary, expect the connected services to rebuild and verify their resulting status.
+- Current main SHA: `b218018a559842b5d319586f6fb7db3f8605cf53` (latest documentation-only handoff refresh).
+- Latest application feature commit: `96393bf434b150106389693bffd8e35da0a42fca` (PR #37).
+- PR #35 (final workspace UX), PR #36 (public PDF discovery/import), and PR #37 (recommendations/citations/sorting/pagination fix) were all squash-merged.
+- PR #37 exact-head CI: [Checks run #44893776957](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44893776957) — backend 247 passed/1 skipped, frontend 82 unit tests, Playwright 9/9, disposable PostgreSQL contracts passed.
+- PR #37 merge resolved the Preview 404: the Preview frontend called `/api/public-papers/recommendations` before the Railway Production API had the route. The merged backend and frontend now ship together.
+- No open PRs remained at the last repository check.
+- Documentation-only commits can trigger Vercel and Railway deployments; avoid unnecessary direct-to-main documentation commits and verify all connected services after any such change.
 
 ### Vercel frontend
 
 - Canonical domain: https://financial-paper-analyzer.vercel.app
-- Latest observed Production deployment after the README handoff link: `dpl_2hbdBCg7gcey4Nat5CPoRhgCQDd2`.
+- Latest observed Production deployment: `dpl_HnMtmnwF5uukd5UtqPTcndfycfFK`.
 - State: `READY`; canonical alias `financial-paper-analyzer.vercel.app` is attached.
-- This deployment was triggered by documentation-only main commit `f03b57c220a69043ec86dd3ada7c6b8337271628`; the application code is unchanged from release commit `e71d468c445849a480fced28e8a77e84b4892d51`.
-- The final handoff correction itself is another documentation-only main commit and may trigger a further identical deploy. Re-fetch the current Production deployment before operational actions.
+- Deployment commit: `b218018a559842b5d319586f6fb7db3f8605cf53` (documentation-only refresh); application features are from `96393bf434b150106389693bffd8e35da0a42fca`.
 
 ### Railway API and Worker
 
-Both services use repository `daegweon/financial-paper-analyzer`, branch `main`, and were most recently observed deployed from documentation-only commit `f03b57c220a69043ec86dd3ada7c6b8337271628`. Their application runtime remains the same as release commit `e71d468c445849a480fced28e8a77e84b4892d51`. The final handoff correction may trigger another docs-only redeploy; query the current deployments before further work.
+Both services use repository `daegweon/financial-paper-analyzer`, branch `main`, and are deployed from latest main `b218018a559842b5d319586f6fb7db3f8605cf53`. Application code (including the public recommendations API) was introduced in `96393bf434b150106389693bffd8e35da0a42fca`.
 
 | Service | Latest deployment | State | Replicas |
 |---|---|---|---:|
-| `papersignal-api` | `4af34915-e738-4b6f-a10c-9dc7e37d71b0` | SUCCESS / Online | 1/1 |
-| `papersignal-worker` | `557e6e1d-bccb-4797-98b2-f9280978cbc8` | SUCCESS / Online | 1/1 |
+| `papersignal-api` | `936e5a48-a8ec-4939-b441-658d263aaa97` | SUCCESS / Online | 1/1 |
+| `papersignal-worker` | `b43ec289-7450-41a5-a31f-5a15914d367e` | SUCCESS / Online | 1/1 |
 
 - API health endpoint: `GET /health` returned HTTP 200 after deployment.
 - Railway environment status showed both services online, zero crashed replicas and no current warning/critical issues.
-- The API and Worker were redeployed automatically after PR #35 merged because both Railway services track `main`.
-- The later handoff/README documentation commits also triggered automatic Vercel and Railway deployments. Those documentation-only deployments succeeded; they did not change application code, API contract, database schema, or analysis engine.
-- PR #35 and the subsequent documentation commits contain no API contract, database schema, or analysis engine changes. No separate manual redeploy is needed unless a fresh status check shows otherwise.
+- The API and Worker were redeployed automatically after PR #37 merged because both Railway services track `main`; both are Online 1/1.
+- The later handoff documentation refresh also triggered automatic Vercel and Railway deployments. Those deployments succeeded.
+- The deployed backend includes `GET /api/public-papers/recommendations` and the extended search/citation sorting API. No schema migration or analysis engine change was needed.
 
 ### Administrator
 
