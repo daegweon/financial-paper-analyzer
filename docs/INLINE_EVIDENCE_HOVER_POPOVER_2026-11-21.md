@@ -2,7 +2,7 @@
 
 > **작성:** 2026-11-21 KST  
 > **개선 PR:** #41 — hover / info popover evidence UX  
-> **상태:** 구현 및 CI 검증 대기
+> **상태:** 구현 완료 / CI 통과 / Preview 배포 한도 초과로 대기
 
 ## 왜 PR #38의 접기 UI를 다시 바꾸는가
 
@@ -65,6 +65,17 @@
 
 ## 검증 체크리스트
 
+### 자동 검증 결과 (2026-11-21)
+
+- PR #41 최신 HEAD: `ec4d95ef1bd08d58330b2e3ed16c30fd4b1d6892`.
+- GitHub Actions [#44905544098](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44905544098): 전체 3개 job 성공.
+- Backend: **247 passed, 1 skipped**.
+- Frontend unit: **82 passed**.
+- Playwright: **9/9 passed** (주장 텍스트 hover, 인용문 표시, 클릭 고정, ESC, 인쇄, 주니어 가이드, 라이브러리 우선 순서).
+- Disposable PostgreSQL migration/ownership contracts: 통과.
+- Vercel Preview 생성 요청은 **HTTP 402 `api-deployments-free-per-day`**로 거절되었다. Vercel이 일일 무료 API 배포 100회를 초과하여 24시간 후 재시도하라고 반환했다. 따라서 최신 PR HEAD의 Preview URL은 아직 발급되지 않았다. Production에는 변경사항을 반영하지 않았다.
+
+
 1. 인용 근거가 있는 문장 옆에 작은 i 아이콘 하나만 표시되는가.
 2. 아이콘을 hover하면 포인터 근처에서 인용문이 열리는가.
 3. 아이콘 위 포인터 이동 시 팝오버가 따라오는가.
@@ -76,4 +87,4 @@
 9. 인쇄/PDF 출력에는 모든 원문 인용문이 포함되는가.
 10. PDF 페이지 이동, 기존 분석·라이브러리 우선 레이아웃은 유지되는가.
 
-PR #41의 CI 및 Preview 검증이 완료된 뒤 병합한다. 외부 백엔드, 데이터베이스, 분석 엔진 변경은 없다.
+PR #41의 CI는 통과했다. 다만 Vercel Preview 생성은 계정의 일일 API 배포 한도(100회)를 초과해 HTTP 402로 차단되었다. 한도 복구 후 Preview를 검증하고 병합한다. 외부 백엔드, 데이터베이스, 분석 엔진 변경은 없다.
