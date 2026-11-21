@@ -41,9 +41,9 @@ When an OpenAI API key and billing are available, switch providers in Railway:
 
 No application data migration is required. Both providers return the same normalized analysis schema and use the same page-level evidence verification.
 
-## Analysis engine v6.3
+## Analysis engine v6.4.2
 
-New analyses use `finance-structured-v6.3`. In addition to the v6.2 research-design-aware validation pipeline, v6.3 adds:
+New analyses use `finance-structured-v6.4.2`. In addition to the v6.2 research-design-aware validation pipeline, v6.3 adds:
 - explicit classification of balanced/unbalanced panels, repeated cross-sections, time series, cross-sections and portfolio-optimization studies;
 - typed integer sample dimensions and source-level sample-count reports, preserving conflicting values across abstracts, methodology sections and tables;
 - N×T checks only for evidence-backed balanced panels; unbalanced and non-panel designs are not multiplied;
@@ -56,7 +56,7 @@ See [v6.2 architecture and limitations](docs/analysis-v6.2.md) and [v6.3 finding
 
 ## Analysis output
 
-Gemini output budgets are 16,384 tokens for the primary Flash-Lite model and 24,576 tokens for the fallback Flash model. If the primary response ends with `MAX_TOKENS`, the worker automatically retries with the fallback model. Results are kept concise and evidence lists are bounded to reduce truncation. Analysis schema v6.3 normalizes PDF typography, classifies study designs and performs field-level evidence, sample-count and table-significance checks (Unicode ligatures, dash variants, and whitespace) when validating citations, then stores the matched excerpt from the original extracted page text. It also preserves individually evidenced variables when a section-level methodology citation is unavailable, and strengthens Korean output / empirical-findings instructions.
+Gemini output budgets are 16,384 tokens for the primary Flash-Lite model and 24,576 tokens for the fallback Flash model. If the primary response ends with `MAX_TOKENS`, the worker automatically retries with the fallback model. Results are kept concise and evidence lists are bounded to reduce truncation. Analysis schema v6.4.2 normalizes PDF typography, classifies study designs and performs field-level evidence, sample-count and table-significance checks (Unicode ligatures, dash variants, and whitespace) when validating citations, then stores the matched excerpt from the original extracted page text. It also preserves individually evidenced variables when a section-level methodology citation is unavailable, and strengthens Korean output / empirical-findings instructions.
 
 The structured financial-research report includes:
 
