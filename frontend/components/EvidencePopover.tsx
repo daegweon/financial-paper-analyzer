@@ -100,7 +100,11 @@ export function EvidencePopover({
     onPointerMove={onPointerMove}
     onPointerLeave={onPointerLeave}
     onFocus={(event) => {
-      if (!rootRef.current?.contains(event.relatedTarget as Node | null)) setOpen(true);
+      if (!rootRef.current?.contains(event.relatedTarget as Node | null)) {
+        const rect = buttonRef.current?.getBoundingClientRect();
+        if (rect) placeAt(rect.left + rect.width / 2, rect.bottom);
+        setOpen(true);
+      }
     }}
     onBlur={(event) => {
       if (!rootRef.current?.contains(event.relatedTarget as Node | null) && !pinned) setOpen(false);
@@ -114,7 +118,7 @@ export function EvidencePopover({
       aria-label={`${label} 확인, PDF ${items.map(item => item.page).join(", ")}페이지`}
       aria-expanded={open}
       aria-controls={tooltipId}
-      aria-haspopup="true"
+      aria-haspopup="dialog"
       title="마우스를 올리거나 클릭하면 원문 근거를 확인할 수 있습니다"
       onClick={onClick}
     >i</button>
@@ -122,7 +126,8 @@ export function EvidencePopover({
       ref={popoverRef}
       id={tooltipId}
       className={`evidence-popover${open ? " is-open" : ""}`}
-      role="group"
+      role="dialog"
+      aria-modal="false"
       aria-label={label}
       aria-hidden={!open}
       style={{ left: position.left, top: position.top }}
