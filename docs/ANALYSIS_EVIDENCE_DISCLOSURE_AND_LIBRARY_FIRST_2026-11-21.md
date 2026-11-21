@@ -74,7 +74,7 @@
 
 ## 5. 검증 및 배포 상태
 
-PR #38의 최신 HEAD `423f44042f483c0b7795eea204f1867064e05c12`에 대한 [GitHub Actions #44897219683](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44897219683)이 2026-11-21 통과했다: 백엔드 247 passed/1 skipped, 프런트엔드 단위 테스트 82 passed, Playwright 9/9 passed, 일회용 PostgreSQL 마이그레이션/소유권 계약 통과. Vercel Preview도 최신 HEAD에서 READY다. Production은 아직 이전 main 버전이며 PR #38 병합 전이다.
+PR #38의 최신 HEAD `006bf66919ec0dcaed89fe04c36cfa0b273f88de`에 대한 [GitHub Actions #44897532283](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44897532283)이 2026-11-21 통과했다: 백엔드 247 passed/1 skipped, 프런트엔드 단위 테스트 82 passed, Playwright 9/9 passed, 일회용 PostgreSQL 마이그레이션/소유권 계약 통과. Vercel Preview도 최신 HEAD에서 READY다. Production은 아직 이전 main 버전이며 PR #38 병합 전이다.
 
 CI는 다음을 검증한다.
 
@@ -84,4 +84,4 @@ CI는 다음을 검증한다.
 - 라이브러리 우선, 공개 논문 탐색 후순위 DOM 순서.
 - 모바일/태블릿/데스크톱 반응형 화면.
 
-Preview: https://financial-paper-analyzer-9skqtd3nb-daegweonai-9583.vercel.app/ (READY, latest PR HEAD `423f44042f483c0b7795eea204f1867064e05c12`). PR #38은 아직 Open이며 Production에는 반영되지 않았다. 사용자/운영 배포 승인을 받은 뒤 병합하고, Vercel 및 Railway 세 서비스의 최신 SHA와 상태를 확인한다.
+Preview: https://financial-paper-analyzer-8y6w7rl06-daegweonai-9583.vercel.app/ (READY, latest PR HEAD `006bf66919ec0dcaed89fe04c36cfa0b273f88de`). PR #38은 아직 Open이며 Production에는 반영되지 않았다. 사용자/운영 배포 승인을 받은 뒤 병합하고, Vercel 및 Railway 세 서비스의 최신 SHA와 상태를 확인한다.
