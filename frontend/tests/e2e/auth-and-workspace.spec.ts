@@ -400,8 +400,11 @@ test("paper analysis opens as a full-width report with visible section navigatio
   // Keyboard focus exposes the same content; Escape dismisses it.
   await evidenceButton.focus();
   await expect(evidencePopover).toBeVisible();
+  await page.keyboard.press("Tab");
+  await expect(evidencePopover.getByRole("button", { name: "근거 팝오버 닫기" })).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(evidencePopover).toBeHidden();
+  await expect(evidenceButton).toBeFocused();
 
   // Clicking pins the preview; Escape dismisses it without leaving the trigger.
   await evidenceButton.click();

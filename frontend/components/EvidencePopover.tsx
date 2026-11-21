@@ -36,7 +36,10 @@ export function EvidencePopover({ items, sourcePdfUrl, onOpenSourcePage, classNa
       setPinned(false);
       setHovered(false);
       setFocused(false);
-      triggerRef.current?.focus();
+      if (document.activeElement !== triggerRef.current) {
+        suppressNextFocusRef.current = true;
+        triggerRef.current?.focus();
+      }
     };
     document.addEventListener("pointerdown", onPointerDown, true);
     document.addEventListener("keydown", onKeyDown);
