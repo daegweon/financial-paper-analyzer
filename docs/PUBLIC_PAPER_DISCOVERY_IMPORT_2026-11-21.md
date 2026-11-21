@@ -2,9 +2,10 @@
 
 > **작성:** 2026-11-21 KST  
 > **기능 구현 PR:** [#36](https://github.com/daegweon/financial-paper-analyzer/pull/36) · [추천/정렬 개선 PR #37](https://github.com/daegweon/financial-paper-analyzer/pull/37)  
-> **최신 검증 코드:** `1fd54cd3cb93c8e51d492b0584f5390d51590396`  
-> **최신 CI:** [Checks #44893471811](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44893471811) — 백엔드 247통과/1제외, 프런트엔드 단위 82통과, Playwright 9통과, 일회용 PostgreSQL 계약 통과  
-> **운영 반영 여부:** 문서 스냅샷 이후 바뀔 수 있으므로 GitHub `main` 커밋과 Vercel/Railway의 현재 Production 배포 SHA를 별도로 대조할 것.
+> **운영 반영 PR:** [#36](https://github.com/daegweon/financial-paper-analyzer/pull/36) · [#37](https://github.com/daegweon/financial-paper-analyzer/pull/37) — 모두 병합 완료  
+> **운영 커밋:** `96393bf434b150106389693bffd8e35da0a42fca`  
+> **최신 CI:** [Checks #44893776957](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44893776957) — 백엔드 247통과/1제외, 프런트엔드 단위 82통과, Playwright 9통과, 일회용 PostgreSQL 계약 통과  
+> **Production:** Vercel READY, Railway API/Worker SUCCESS · Online 1/1.
 
 ## 목적
 
