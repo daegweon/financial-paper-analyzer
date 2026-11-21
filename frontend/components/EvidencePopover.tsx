@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 
 export type EvidenceCitation = { page: number; quote: string };
 
@@ -28,16 +28,28 @@ export function EvidencePopover({
   const [position, setPosition] = useState<Position>({ left: 24, top: 80 });
 
   useEffect(() => {
-    if (!open || !pinned) return;
+    if (!open) return;
     const onPointerDown = (event: PointerEvent) => {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+      if (pinned && rootRef.current && !rootRef.current.contains(event.target as Node)) {
         setOpen(false);
         setPinned(false);
       }
     };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setOpen(false);
+        setPinned(false);
+        buttonRef.current?.focus();
+      }
+    };
     document.addEventListener("pointerdown", onPointerDown);
+    // Capture before the parent report dialog can interpret Escape as "close report".
+    window.addEventListener("keydown", onKeyDown, true);
     return () => {
       document.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("keydown", onKeyDown, true);
     };
   }, [open, pinned]);
 
@@ -66,15 +78,6 @@ export function EvidencePopover({
   const onPointerLeave = (event: ReactPointerEvent<HTMLSpanElement>) => {
     if (event.pointerType === "mouse" && !pinned) setOpen(false);
   };
-  const onKeyDown = (event: ReactKeyboardEvent<HTMLSpanElement>) => {
-    if (event.key === "Escape" && open) {
-      event.preventDefault();
-      event.stopPropagation();
-      setOpen(false);
-      setPinned(false);
-      buttonRef.current?.focus();
-    }
-  };
   const onClick = (event: ReactMouseEvent<HTMLButtonElement>) => {
     if (pinned) {
       setPinned(false);
@@ -93,7 +96,6 @@ export function EvidencePopover({
     onPointerEnter={onPointerEnter}
     onPointerMove={onPointerMove}
     onPointerLeave={onPointerLeave}
-    onKeyDown={onKeyDown}
     onFocus={() => setOpen(true)}
     onBlur={(event) => {
       if (!rootRef.current?.contains(event.relatedTarget as Node | null) && !pinned) setOpen(false);
