@@ -287,14 +287,6 @@ The login landing page now shows the user's own workspace first (library, analys
 
 **How to continue:** Read [Analysis evidence disclosure and library-first workspace](ANALYSIS_EVIDENCE_DISCLOSURE_AND_LIBRARY_FIRST_2026-11-21.md). The application feature is released; only address reproducible production issues or new user requests.
 
-## 9C. Inline evidence popover UX — PR #39
-
-The follow-up to PR #38 removes the remaining full-width evidence disclosure rows. Every evidence group now appears as one small inline `i` icon; desktop hover/focus shows a preview, clicking pins it, and Escape/outside click/close button dismiss it. Touch users can tap the icon. Multiple citations in one evidence group share one scrollable popover. The same component is used in the junior reading guide and table/graph visual-reading cards; duplicate page buttons were removed.
-
-The interaction was reviewed against WCAG 2.2 SC 1.4.13: dismissible, hoverable and persistent content. All evidence is still included in print/PDF output. This is a standards-based internal design review, not an external human accessibility audit or WCAG certification.
-
-**How to continue:** Read [Inline evidence popover UX](INLINE_EVIDENCE_POPOVER_UX_2026-11-21.md). Verify PR #39 CI and Preview before merging. The current production release remains PR #38 until PR #39 is merged and Vercel/Railway rollouts are verified.
-
 ## 10. Remaining work and explicit non-blockers
 
 The initial product release and final UI/UX deployment are complete. The following are follow-up quality/extension items, not reasons to reopen the completed release without a concrete need.

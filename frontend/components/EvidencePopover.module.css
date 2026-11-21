@@ -35,7 +35,7 @@
   position: absolute;
   z-index: 1000;
   top: calc(100% + 8px);
-  right: -5px;
+  left: 0;
   display: none;
   width: min(360px, calc(100vw - 36px));
   max-height: min(340px, 62vh);
@@ -108,5 +108,5 @@
   outline-offset: 2px;
 }
 @media(max-width:620px) {
-  .popover { right: -4px; width: min(330px, calc(100vw - 28px)); max-height: 55vh; }
+  .popover { left: auto; right: -4px; width: min(330px, calc(100vw - 28px)); max-height: 55vh; }
 }
