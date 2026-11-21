@@ -249,8 +249,8 @@ test("analysis API failure is surfaced and the user can retry", async ({ page })
 
 
 test("paper analysis opens as a full-width report with visible section navigation and logout", async ({ page }) => {
-  const viewport = { width: 1280, height: 900 };
-  await page.setViewportSize(viewport);
+  const desktopViewport = { width: 1280, height: 900 };
+  await page.setViewportSize(desktopViewport);
   await seedAuthenticatedSession(page);
 
   await page.unroute(`${SUPABASE_URL}/rest/v1/papers**`);
@@ -355,7 +355,26 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await expect(dialog).toBeVisible();
   const bounds = await dialog.boundingBox();
   expect(bounds).not.toBeNull();
-  expect(bounds!.width).toBeGreaterThanOrEqual(viewport.width * 0.9);
+  expect(bounds!.width).toBeGreaterThanOrEqual(desktopViewport.width * 0.9);
+
+  for (const viewport of [
+    { width: 320, height: 640 },
+    { width: 390, height: 844 },
+    { width: 768, height: 900 },
+    { width: 1280, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const responsiveBounds = await dialog.boundingBox();
+    expect(responsiveBounds).not.toBeNull();
+    expect(responsiveBounds!.width).toBeGreaterThanOrEqual(viewport.width * 0.9);
+    const logout = page.locator(".detail-sign-out");
+    await expect(logout).toBeVisible();
+    const logoutBounds = await logout.boundingBox();
+    expect(logoutBounds).not.toBeNull();
+    expect(logoutBounds!.x).toBeGreaterThanOrEqual(0);
+    expect(logoutBounds!.x + logoutBounds!.width).toBeLessThanOrEqual(viewport.width);
+  }
+  await page.setViewportSize(desktopViewport);
 
   await expect(page.getByRole("navigation", { name: "분석 보고서 목차" })).toBeVisible();
   await expect(page.locator("#analysis-summary")).toContainText("표본 기간 동안");
