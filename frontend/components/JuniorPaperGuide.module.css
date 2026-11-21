@@ -46,3 +46,23 @@
 }
 .sourcePageButton:hover { text-decoration: underline; }
 .sourcePageButton:focus-visible { outline: 2px solid #16897e; outline-offset: 3px; border-radius: 3px; }
+
+
+/* Larger type for comfortable junior-level reading. */
+.heading h3 { font-size: 20px; }
+.heading p { font-size: 14px; }
+.eyebrow { font-size: 10px !important; }
+.contextTag { font-size: 12px; }
+.card h4,.practice h4,.learning h4 { font-size: 15px; }
+.card p { font-size: 14px; line-height: 1.85; }
+.number { font-size: 11px; }
+.label { font-size: 12px; }
+.method { font-size: 13px; line-height: 1.8; }
+.card .footnote,.footnote { font-size: 12px; line-height: 1.75; }
+.findings a,.findings span { font-size: 13px; }
+.caution { font-size: 13px; line-height: 1.75; }
+.learningHeader p,.noTerms { font-size: 13px; line-height: 1.8; }
+.term summary { font-size: 14px; }
+.term p { font-size: 13px; line-height: 1.85; }
+.practice ul { font-size: 13px; line-height: 2; }
+.practice .limitations { font-size: 13px; line-height: 1.85; }

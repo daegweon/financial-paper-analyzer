@@ -302,8 +302,16 @@ test("paper analysis opens as a full-width report with visible section navigatio
               data_sources: ["공개 재무자료"],
               empirical_strategy: "고정효과 회귀",
               identification_strategy: "통제변수 및 고정효과",
-              variables: [],
-              equations: [],
+              variables: [{
+                name: "C (비용)",
+                role: "설명변수",
+                definition: "기업의 운영 비용을 나타내는 변수입니다.",
+                evidence: [{ page: 2, quote: "C denotes the operating cost." }],
+              }],
+              equations: [
+                "L(C) = a*C^b + c",
+                "-E_P[log(pass_rate(C))] = α*C^-k",
+              ],
               evidence: [{ page: 2, quote: "고정효과 모형을 추정한다." }],
             },
             findings: [{
@@ -465,6 +473,21 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await expect(juniorEvidencePopover).toBeHidden();
   await expect(page.locator("#analysis-summary")).toContainText("표본 기간 동안");
   await expect(page.locator("#analysis-findings")).toHaveCount(1);
+
+  const equationGuide = dialog.locator(".equation-explainer");
+  await expect(equationGuide).toBeVisible();
+  await expect(equationGuide).toContainText("기호별 설명");
+  await expect(equationGuide).toContainText("기업의 운영 비용을 나타내는 변수입니다.");
+  await expect(equationGuide).toContainText("계수 또는 크기 조정 파라미터");
+  await expect(equationGuide).toContainText("거듭제곱 지수 파라미터");
+  await expect(equationGuide).toContainText("상수항");
+  await expect(equationGuide).toContainText("확률분포 P 아래의 기댓값 연산자");
+  await expect(equationGuide.locator(".equation-symbol-row")).toHaveCount(10);
+  const reportText = dialog.locator(".result #analysis-summary > p");
+  await expect(reportText).toBeVisible();
+  expect(Number(await reportText.evaluate(el => getComputedStyle(el).fontSize.replace("px", "")))).toBeGreaterThanOrEqual(15);
+  const infoGap = await evidenceTrigger.evaluate(el => getComputedStyle(el).marginLeft);
+  expect(infoGap).toBe("8px");
   await expect(page.locator(".detail-sign-out")).toBeVisible();
 
   await page.getByRole("link", { name: "실증 결과", exact: true }).click();

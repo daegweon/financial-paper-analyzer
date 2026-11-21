@@ -85,3 +85,25 @@
   padding: 10px 15px;
 }
 .saveButton:hover { background: #effaf7; }
+
+
+/* Improve legibility across the workplace application guide. */
+.heading h3 { font-size: 19px; }
+.heading p { font-size: 14px; }
+.heading .eyebrow { font-size: 11px; }
+.methodSection h4,.roleSection h4,.briefSection h4 { font-size: 16px; }
+.label { font-size: 13px; line-height: 1.8; }
+.methodCard summary,.briefDetails summary,.selfCheck summary { font-size: 14px; }
+.methodCard dt { font-size: 13px; }
+.methodCard dd { font-size: 14px; line-height: 1.8; }
+.missing { font-size: 14px; line-height: 1.8; }
+.roleSelector { font-size: 13px; }
+.roleSelector select { font-size: 14px; }
+.roleSection > p { font-size: 14px; line-height: 1.8; }
+.questions { font-size: 14px; line-height: 1.95; }
+.deliverable { font-size: 13px !important; }
+.briefDetails textarea { font-size: 13px; line-height: 1.8; }
+.copyButton,.saveButton { font-size: 13px; }
+.copyStatus { font-size: 12px; }
+.selfCheck ol { font-size: 13px; line-height: 2; }
+.selfCheck p { font-size: 12px; line-height: 1.8; }

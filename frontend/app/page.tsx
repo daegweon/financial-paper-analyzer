@@ -11,6 +11,7 @@ import { JuniorPaperGuide } from "../components/JuniorPaperGuide";
 import { JuniorVisualReading } from "../components/JuniorVisualReading";
 import { JuniorWorkplaceGuide } from "../components/JuniorWorkplaceGuide";
 import { EvidencePopover } from "../components/EvidencePopover";
+import { EquationExplainer } from "../components/EquationExplainer";
 import { authCallbackError, cleanAuthErrorUrl } from "../lib/auth-feedback";
 import { AnalysisWatchStopped, findActiveAnalysisJob, startAnalysisJob, waitForAnalysisJob } from "../lib/analysis-job";
 import type { ActiveAnalysisJob } from "../lib/analysis-job";
@@ -1401,7 +1402,11 @@ export default function Home() {
                     )}
                   </>}
                   {!!analysis.result.methodology.equations?.length && <>
-                    <h4>모형 및 수식</h4>{analysis.result.methodology.equations.map((equation, index) => <pre className="equation" key={index}>{equation}</pre>)}
+                    <h4>모형 및 수식</h4>
+                    <EquationExplainer
+                      equations={analysis.result.methodology.equations}
+                      variables={analysis.result.methodology.variables ?? []}
+                    />
                   </>}
                 </section>
               )}
