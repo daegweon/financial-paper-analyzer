@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 
 export type EvidenceCitation = { page: number; quote: string };
 
@@ -35,18 +35,9 @@ export function EvidencePopover({
         setPinned(false);
       }
     };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpen(false);
-        setPinned(false);
-        buttonRef.current?.focus();
-      }
-    };
     document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
     return () => {
       document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
     };
   }, [open, pinned]);
 
@@ -75,6 +66,15 @@ export function EvidencePopover({
   const onPointerLeave = (event: ReactPointerEvent<HTMLSpanElement>) => {
     if (event.pointerType === "mouse" && !pinned) setOpen(false);
   };
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLSpanElement>) => {
+    if (event.key === "Escape" && open) {
+      event.preventDefault();
+      event.stopPropagation();
+      setOpen(false);
+      setPinned(false);
+      buttonRef.current?.focus();
+    }
+  };
   const onClick = (event: ReactMouseEvent<HTMLButtonElement>) => {
     if (pinned) {
       setPinned(false);
@@ -93,6 +93,7 @@ export function EvidencePopover({
     onPointerEnter={onPointerEnter}
     onPointerMove={onPointerMove}
     onPointerLeave={onPointerLeave}
+    onKeyDown={onKeyDown}
     onFocus={() => setOpen(true)}
     onBlur={(event) => {
       if (!rootRef.current?.contains(event.relatedTarget as Node | null) && !pinned) setOpen(false);
