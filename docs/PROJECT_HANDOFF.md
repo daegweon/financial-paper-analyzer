@@ -5,7 +5,8 @@
 > **Last verified:** 2026-11-21 (Asia/Seoul)  
 > **Repository:** [daegweon/financial-paper-analyzer](https://github.com/daegweon/financial-paper-analyzer)  
 > **Production URL:** https://financial-paper-analyzer.vercel.app  
-> **Current production/main commit:** `e71d468c445849a480fced28e8a77e84b4892d51`
+> **Application release commit (PR #35):** `e71d468c445849a480fced28e8a77e84b4892d51`  
+> The handoff document and README link were subsequently committed as documentation-only changes. Connected Vercel/Railway services deploy on main updates, so the live deployment SHA can be newer than the last application-code commit. Always fetch the current main SHA and latest deployment IDs before changing or rolling back anything.
 
 This document supersedes earlier release-status snapshots for the *current state*. Older dated documents remain useful as historical evidence and detailed runbooks; do not interpret their old deployment/PR status as current.
 
@@ -48,34 +49,37 @@ Non-negotiable quality principles:
 ### GitHub
 
 - Default branch: `main`
-- Current HEAD: `e71d468c445849a480fced28e8a77e84b4892d51`
+- Application release commit: `e71d468c445849a480fced28e8a77e84b4892d51`.
+- Documentation-only handoff commits subsequently advanced `main`; the latest main SHA must be fetched at session start rather than assumed to equal the application release SHA.
 - Final UI PR: [#35 — finalize PaperSignal workspace and analysis UX](https://github.com/daegweon/financial-paper-analyzer/pull/35)
 - PR #35 was squash-merged successfully on 2026-11-21.
 - No open PRs were returned by the repository query after release.
 - PR #35 exact-head CI: [Checks run #44867894674](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44867894674) — all three required jobs succeeded.
+- The README handoff link and this handoff document were added in subsequent documentation-only commits; these are not application feature releases.
+- **Important deployment behavior:** a main-branch documentation change triggered Vercel Production and Railway API/Worker deployments. Avoid unnecessary direct-to-main documentation commits; when a documentation update is necessary, expect the connected services to rebuild and verify their resulting status.
 
 ### Vercel frontend
 
 - Canonical domain: https://financial-paper-analyzer.vercel.app
-- Production deployment: `dpl_2XxprbUzdrRZwdNxCgH3EUpLLKhU`
-- State: `READY`
-- Production target: `production`
-- Deployed commit: `e71d468c445849a480fced28e8a77e84b4892d51`
-- Canonical domain alias is attached to this deployment.
+- Latest observed Production deployment after the README handoff link: `dpl_2hbdBCg7gcey4Nat5CPoRhgCQDd2`.
+- State: `READY`; canonical alias `financial-paper-analyzer.vercel.app` is attached.
+- This deployment was triggered by documentation-only main commit `f03b57c220a69043ec86dd3ada7c6b8337271628`; the application code is unchanged from release commit `e71d468c445849a480fced28e8a77e84b4892d51`.
+- The final handoff correction itself is another documentation-only main commit and may trigger a further identical deploy. Re-fetch the current Production deployment before operational actions.
 
 ### Railway API and Worker
 
-Both services use repository `daegweon/financial-paper-analyzer`, branch `main`, and the same production merge commit `e71d468c445849a480fced28e8a77e84b4892d51`.
+Both services use repository `daegweon/financial-paper-analyzer`, branch `main`, and were most recently observed deployed from documentation-only commit `f03b57c220a69043ec86dd3ada7c6b8337271628`. Their application runtime remains the same as release commit `e71d468c445849a480fced28e8a77e84b4892d51`. The final handoff correction may trigger another docs-only redeploy; query the current deployments before further work.
 
 | Service | Latest deployment | State | Replicas |
 |---|---|---|---:|
-| `papersignal-api` | `af6c6a55-d2a7-43a4-b9dd-5e0cbbcf3260` | SUCCESS / Online | 1/1 |
-| `papersignal-worker` | `1be6b572-ea6b-46cf-b65c-eef4b8b67948` | SUCCESS / Online | 1/1 |
+| `papersignal-api` | `4af34915-e738-4b6f-a10c-9dc7e37d71b0` | SUCCESS / Online | 1/1 |
+| `papersignal-worker` | `557e6e1d-bccb-4797-98b2-f9280978cbc8` | SUCCESS / Online | 1/1 |
 
 - API health endpoint: `GET /health` returned HTTP 200 after deployment.
 - Railway environment status showed both services online, zero crashed replicas and no current warning/critical issues.
 - The API and Worker were redeployed automatically after PR #35 merged because both Railway services track `main`.
-- PR #35 contains frontend/UI, documentation and frontend E2E changes only; it does not change the API contract, database schema, or analysis engine. Railway's automatic redeploy completed successfully; no separate manual redeploy is needed unless a fresh status check shows otherwise.
+- The later handoff/README documentation commits also triggered automatic Vercel and Railway deployments. Those documentation-only deployments succeeded; they did not change application code, API contract, database schema, or analysis engine.
+- PR #35 and the subsequent documentation commits contain no API contract, database schema, or analysis engine changes. No separate manual redeploy is needed unless a fresh status check shows otherwise.
 
 ### Administrator
 
