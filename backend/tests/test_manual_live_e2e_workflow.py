@@ -11,9 +11,6 @@ WORKFLOW = (
     / "papersignal-live-e2e.yml"
 ).read_text(encoding="utf-8")
 
-AUDITED_SHA = "431059a1116a50f39fd56d565c35a1afc081b8fc"
-
-
 def test_manual_only_main_branch_and_separate_confirmation_are_required():
     assert "on:\n  workflow_dispatch:\n" in WORKFLOW
     assert "\n  push:" not in WORKFLOW
@@ -22,7 +19,7 @@ def test_manual_only_main_branch_and_separate_confirmation_are_required():
     assert "inputs.target == 'papersignal-production'" in WORKFLOW
     assert "inputs.approve_mutations == true" in WORKFLOW
     assert "inputs.acknowledgment == 'RUN_SYNTHETIC_LIVE_E2E'" in WORKFLOW
-    assert "inputs.approved_commit == '" + AUDITED_SHA + "'" in WORKFLOW
+    assert "inputs.approved_commit == github.sha" in WORKFLOW
 
 
 def test_source_is_immutable_and_token_permissions_are_read_only():
@@ -30,8 +27,8 @@ def test_source_is_immutable_and_token_permissions_are_read_only():
     assert "persist-credentials: false" in WORKFLOW
     assert "cancel-in-progress: false" in WORKFLOW
     assert "group: papersignal-live-e2e-production" in WORKFLOW
-    assert "          ref: " + AUDITED_SHA in WORKFLOW
-    assert 'test "$(git rev-parse HEAD)" = ' + "'" + AUDITED_SHA + "'" in WORKFLOW
+    assert "          ref: ${{ github.sha }}" in WORKFLOW
+    assert 'test "$(git rev-parse HEAD)" = "$GITHUB_SHA"' in WORKFLOW
     assert "git checkout" not in WORKFLOW
     assert "git pull" not in WORKFLOW
 
