@@ -45,3 +45,44 @@
 
 .tableWrap a{color:#075e68;font-weight:700;text-decoration:underline;text-underline-offset:2px}
 .tableWrap a+a{margin-left:8px}
+
+
+/* Keep the administrator's account actions available while reviewing long reports. */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  align-items: center;
+  padding: 12px 0;
+  background: rgba(255,255,255,.97);
+  border-bottom: 1px solid #e6edef;
+  backdrop-filter: blur(12px);
+}
+.headerActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.logout {
+  min-height: 40px;
+  padding: 8px 13px;
+  border: 1px solid #c8d5da;
+  border-radius: 7px;
+  background: #fff;
+  color: #315e65;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.logout:hover:not(:disabled) { background: #f2f8f7; }
+.logout:disabled { opacity: .6; cursor: wait; }
+@media(max-width:800px) {
+  .header { flex-direction: row; align-items: center; }
+  .headerActions { flex: 0 0 auto; }
+}
+@media(max-width:560px) {
+  .header { align-items: flex-start; }
+  .headerActions { flex-direction: column; align-items: stretch; }
+  .back, .logout { min-height: 40px; }
+}

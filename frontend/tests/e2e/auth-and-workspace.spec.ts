@@ -114,7 +114,7 @@ test("Google OAuth requests the Google provider and same-origin callback", async
   expect(requestedUrl!.searchParams.get("prompt")).toBe("select_account");
 });
 
-test("mobile sign-out clears the local session and remains signed out after reload", async ({ page }) => {
+test("sign-out remains available on mobile, tablet and desktop", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await seedAuthenticatedSession(page);
   let unexpectedUserLookups = 0;
@@ -134,7 +134,20 @@ test("mobile sign-out clears the local session and remains signed out after relo
   await expect(page.getByRole("heading", { name: "나의 연구 라이브러리" })).toBeVisible();
   expect(unexpectedUserLookups).toBe(0);
   const logout = page.getByRole("button", { name: "로그아웃" });
-  await expect(logout).toBeVisible();
+  for (const viewport of [
+    { width: 320, height: 640 },
+    { width: 390, height: 844 },
+    { width: 768, height: 900 },
+    { width: 1024, height: 768 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await expect(logout).toBeVisible();
+    const box = await logout.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width);
+  }
   await logout.click();
 
   await expect(page.getByRole("heading", { name: "다시 만나서 반갑습니다." })).toBeVisible();
@@ -232,4 +245,148 @@ test("analysis API failure is surfaced and the user can retry", async ({ page })
   await expect(errorMessage).toBeVisible();
   await expect(errorMessage).toContainText("분석 작업 등록 응답이 일시적으로 실패했습니다");
   await expect(analyze).toBeEnabled();
+});
+
+
+test("paper analysis opens as a full-width report with visible section navigation and logout", async ({ page }) => {
+  const desktopViewport = { width: 1280, height: 900 };
+  await page.setViewportSize(desktopViewport);
+  await seedAuthenticatedSession(page);
+
+  await page.unroute(`${SUPABASE_URL}/rest/v1/papers**`);
+  await page.route(`${SUPABASE_URL}/rest/v1/papers**`, route => {
+    if (route.request().method() === "GET") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([{
+          id: PAPER_ID,
+          title: "E2E 금융논문",
+          status: "completed",
+          storage_path: `${USER_ID}/fixture.pdf`,
+          created_at: new Date().toISOString(),
+          page_count: 2,
+        }]),
+      });
+    }
+    return route.continue();
+  });
+  await page.unroute(`${SUPABASE_URL}/rest/v1/analyses**`);
+  await page.route(`${SUPABASE_URL}/rest/v1/analyses**`, route => {
+    if (route.request().method() === "GET") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([{
+          paper_id: PAPER_ID,
+          model: "gemini-3.5-flash-lite",
+          created_at: new Date().toISOString(),
+          result: {
+            mode: "llm",
+            analysis_version: "v6.4.2",
+            summary: "표본 기간 동안 주요 설명변수와 수익률 사이의 관계를 분석한 연구입니다.",
+            bibliographic: {
+              title: "E2E 금융논문",
+              authors: ["테스트 저자"],
+              year: "2026",
+              venue: "E2E Journal",
+              doi: "",
+              evidence: [{ page: 1, quote: "연구 목적과 데이터 설명" }],
+            },
+            research_question: "주요 설명변수가 자산 수익률과 어떤 관계를 가지는가?",
+            research_question_evidence: [{ page: 1, quote: "본 연구는 자산 수익률의 결정요인을 분석한다." }],
+            methodology: {
+              design: "패널 회귀분석",
+              sample: "기업 100개",
+              period: "2015~2024년",
+              data_sources: ["공개 재무자료"],
+              empirical_strategy: "고정효과 회귀",
+              identification_strategy: "통제변수 및 고정효과",
+              variables: [],
+              equations: [],
+              evidence: [{ page: 2, quote: "고정효과 모형을 추정한다." }],
+            },
+            findings: [{
+              claim: "주요 설명변수는 종속변수와 양(+)의 관계를 보였습니다.",
+              direction: "양(+)의 관계",
+              estimate: "0.12",
+              statistical_significance: "5% 수준",
+              table_reference: "Table 1",
+              model_or_column: "Model 1",
+              evidence: [{ page: 2, quote: "The coefficient is positive and significant." }],
+              verification: {
+                status: "screen_passed",
+                numeric_supported: true,
+                direction_consistent: true,
+                significance_supported: true,
+                unsupported_numeric_tokens: [],
+              },
+            }],
+            findings_coverage: {
+              status: "supported",
+              supported_findings_count: 1,
+              review_findings_count: 0,
+              empirical_result_signals_detected: true,
+              method: "fixture",
+            },
+            robustness_checks: [],
+            limitations: [{ description: "표본 범위가 제한적입니다." , evidence: [{ page: 2, quote: "The sample is limited." }] }],
+            implications: [],
+            hypotheses: [],
+            contributions: [],
+            keywords: ["패널", "수익률"],
+            evidence: [{ page: 1, quote: "연구 대상 및 기간" }],
+            warnings: [],
+            page_count: 2,
+          },
+        }]),
+      });
+    }
+    return route.continue();
+  });
+
+  await page.route(`${SUPABASE_URL}/auth/v1/logout**`, route =>
+    route.fulfill({ status: 204, body: "" }),
+  );
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "E2E 금융논문" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  const bounds = await dialog.boundingBox();
+  expect(bounds).not.toBeNull();
+  expect(bounds!.width).toBeGreaterThanOrEqual(desktopViewport.width * 0.9);
+
+  for (const viewport of [
+    { width: 320, height: 640 },
+    { width: 390, height: 844 },
+    { width: 768, height: 900 },
+    { width: 1280, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const responsiveBounds = await dialog.boundingBox();
+    expect(responsiveBounds).not.toBeNull();
+    expect(responsiveBounds!.width).toBeGreaterThanOrEqual(viewport.width * 0.9);
+    const logout = page.locator(".detail-sign-out");
+    await expect(logout).toBeVisible();
+    const logoutBounds = await logout.boundingBox();
+    expect(logoutBounds).not.toBeNull();
+    expect(logoutBounds!.x).toBeGreaterThanOrEqual(0);
+    expect(logoutBounds!.x + logoutBounds!.width).toBeLessThanOrEqual(viewport.width);
+  }
+  await page.setViewportSize(desktopViewport);
+
+  await expect(page.getByRole("navigation", { name: "분석 보고서 목차" })).toBeVisible();
+  await expect(page.locator("#analysis-summary")).toContainText("표본 기간 동안");
+  await expect(page.locator("#analysis-findings")).toHaveCount(1);
+  await expect(page.locator(".detail-sign-out")).toBeVisible();
+
+  await page.getByRole("link", { name: "실증 결과", exact: true }).click();
+  await expect(page.locator("#analysis-findings")).toBeInViewport();
+
+  await page.getByRole("button", { name: "원문 PDF 함께 보기" }).click();
+  await expect(page.locator("#paper-original-pdf iframe")).toBeVisible();
+
+  await page.locator(".detail-sign-out").click();
+  await expect(page.getByRole("heading", { name: "다시 만나서 반갑습니다." })).toBeVisible();
 });
