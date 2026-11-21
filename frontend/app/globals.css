@@ -797,13 +797,13 @@ button.evidence-source-link:focus-visible {
   .detail-toolbar-actions .close {
     width: 100%;
   }
-  .analysis-toc { top: 152px; }
+  .analysis-toc { top: 164px; }
   .analysis-section,
   .analysis-anchor,
   #analysis-summary,
-  #analysis-bibliography { scroll-margin-top: 205px; }
+  #analysis-bibliography { scroll-margin-top: 218px; }
 }
 @media (max-width: 760px) {
   .detail-toolbar-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px; }
-  .analysis-toc { top: 152px; }
+  .analysis-toc { top: 164px; }
 }
