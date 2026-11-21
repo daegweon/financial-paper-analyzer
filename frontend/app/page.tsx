@@ -235,22 +235,33 @@ function EvidenceList({
   return <EvidencePopover items={items} sourcePdfUrl={sourcePdfUrl} onOpenSourcePage={onOpenSourcePage}>{children}</EvidencePopover>;
 }
 
-function groupedVariableEvidence(variables: Variable[]): Evidence[] {
-  const grouped = new Map<string, Evidence & { contexts: string[] }>();
-  for (const variable of variables) {
+function consolidateVariableEvidence(variables: Variable[]) {
+  const grouped = new Map<string, Evidence & { contexts: string[]; owners: number[] }>();
+  for (const [index, variable] of variables.entries()) {
     for (const item of variable.evidence ?? []) {
       const normalizedQuote = item.quote.trim().replace(/\s+/g, " ").toLocaleLowerCase();
       const key = `${item.page}::${normalizedQuote}`;
       const existing = grouped.get(key);
       if (existing) {
         if (!existing.contexts.includes(variable.name)) existing.contexts.push(variable.name);
+        if (!existing.owners.includes(index)) existing.owners.push(index);
       } else {
-        grouped.set(key, { page: item.page, quote: item.quote, contexts: [variable.name] });
+        grouped.set(key, { page: item.page, quote: item.quote, contexts: [variable.name], owners: [index] });
       }
     }
   }
-  return Array.from(grouped.values());
+  const parentEvidence: Evidence[] = [];
+  const individualByVariable = variables.map((): Evidence[] => []);
+  for (const item of grouped.values()) {
+    if (item.owners.length > 1) {
+      parentEvidence.push({ page: item.page, quote: item.quote, contexts: item.contexts });
+    } else {
+      individualByVariable[item.owners[0]].push({ page: item.page, quote: item.quote });
+    }
+  }
+  return { parentEvidence, individualByVariable };
 }
+
 
 function ClaimList({
   items, sourcePdfUrl, onOpenSourcePage,
@@ -1057,6 +1068,10 @@ export default function Home() {
     </li>;
   }
 
+  const variableEvidenceGroups = analysis?.result.methodology?.variables
+    ? consolidateVariableEvidence(analysis.result.methodology.variables)
+    : null;
+
   return <main className="workspace">
     <a href="#workspace-content" className="skip-link">연구 공간 본문으로 이동</a>
     <aside>
@@ -1447,12 +1462,16 @@ export default function Home() {
                     <h4>주요 변수 <EvidenceList
                       sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined}
                       onOpenSourcePage={showOriginalPdfPage}
-                      items={groupedVariableEvidence(analysis.result.methodology.variables)}
+                      items={variableEvidenceGroups?.parentEvidence}
                     /></h4>
                     {analysis.result.methodology.variables.map((variable, index) =>
                       <article className="analysis-card" key={index}>
                         <b>{variable.name}</b><span className="tag">{variable.role}</span>
-                        <p>{variable.definition}</p>
+                        <p><EvidenceList
+                          sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined}
+                          onOpenSourcePage={showOriginalPdfPage}
+                          items={variableEvidenceGroups?.individualByVariable[index]}
+                        >{variable.definition}</EvidenceList></p>
                       </article>
                     )}
                   </>}

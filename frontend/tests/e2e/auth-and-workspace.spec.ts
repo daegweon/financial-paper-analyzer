@@ -312,6 +312,11 @@ test("paper analysis opens as a full-width report with visible section navigatio
                 role: "동일 변수의 별칭",
                 definition: "운영비용을 다른 이름으로 표기한 항목입니다.",
                 evidence: [{ page: 2, quote: "C denotes the operating cost." }],
+              }, {
+                name: "ROA",
+                role: "성과 변수",
+                definition: "총자산 대비 순이익 비율입니다.",
+                evidence: [{ page: 2, quote: "ROA is return on assets." }],
               }],
               equations: [
                 "L(C) = aCb + c",
@@ -487,7 +492,7 @@ test("paper analysis opens as a full-width report with visible section navigatio
   const variableHeading = methodologySection.locator("h4").filter({ hasText: "주요 변수" });
   const variableTrigger = variableHeading.locator(".evidence-info-button");
   await expect(variableTrigger).toHaveCount(1);
-  await expect(methodologySection.locator(".analysis-card .evidence-info-button")).toHaveCount(0);
+  await expect(methodologySection.locator(".analysis-card .evidence-info-button")).toHaveCount(1);
   await variableTrigger.click();
   const variablePopover = variableTrigger.locator("xpath=..").locator(".evidence-popover");
   await expect(variablePopover).toBeVisible();
