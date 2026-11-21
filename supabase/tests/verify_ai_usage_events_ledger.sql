@@ -70,7 +70,7 @@ END $$;
 ROLLBACK;
 SELECT 'PASS: service-role-only usage ledger, idempotency uniqueness, nullable usage' AS outcome;
 
-DO $$
+DO $admin_acl$
 BEGIN
   IF has_table_privilege('anon','public.ai_admin_settings','SELECT')
      OR has_table_privilege('anon','public.ai_admin_settings','INSERT')
@@ -87,7 +87,7 @@ BEGIN
      OR has_table_privilege('service_role','public.ai_admin_settings','REFERENCES')
      OR has_table_privilege('service_role','public.ai_admin_settings','TRIGGER')
   THEN RAISE EXCEPTION 'service_role has unnecessary delete or DDL-related AI settings privileges'; END IF;
-END $;
+END $admin_acl$;
 
 BEGIN;
 SET LOCAL ROLE service_role;
