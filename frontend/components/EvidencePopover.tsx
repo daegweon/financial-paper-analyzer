@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, ReactNode } from "react";
 
 export type EvidenceCitation = { page: number; quote: string };
 
@@ -10,6 +10,7 @@ type Props = {
   sourcePdfUrl?: string;
   onOpenSourcePage?: (page: number) => void;
   label?: string;
+  children?: ReactNode;
 };
 
 type Position = { left: number; top: number };
@@ -19,9 +20,11 @@ export function EvidencePopover({
   sourcePdfUrl,
   onOpenSourcePage,
   label = "원문 근거",
+  children,
 }: Props) {
   const rootRef = useRef<HTMLSpanElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
   const tooltipId = useId();
   const [open, setOpen] = useState(false);
   const [pinned, setPinned] = useState(false);
@@ -71,7 +74,7 @@ export function EvidencePopover({
   };
   const onPointerMove = (event: ReactPointerEvent<HTMLSpanElement>) => {
     if (event.pointerType === "mouse" && open && !pinned &&
-      (event.target === buttonRef.current || buttonRef.current?.contains(event.target as Node))) {
+      !popoverRef.current?.contains(event.target as Node)) {
       placeAt(event.clientX, event.clientY);
     }
   };
@@ -101,6 +104,7 @@ export function EvidencePopover({
       if (!rootRef.current?.contains(event.relatedTarget as Node | null) && !pinned) setOpen(false);
     }}
   >
+    {children != null && <span className="evidence-inline-copy">{children}</span>}
     <button
       ref={buttonRef}
       type="button"
@@ -113,6 +117,7 @@ export function EvidencePopover({
       onClick={onClick}
     >i</button>
     <div
+      ref={popoverRef}
       id={tooltipId}
       className={`evidence-popover${open ? " is-open" : ""}`}
       role="group"
