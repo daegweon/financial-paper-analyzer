@@ -19,7 +19,8 @@
 .method-grid p{font-size:12px;line-height:1.65;color:#405a6c;overflow-wrap:anywhere;margin:7px 0 0;white-space:pre-wrap}
 .finding-meta{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}
 .finding-meta span,.tag{display:inline-block;border-radius:20px;background:#eaf5f3;color:#267e78;padding:4px 8px;font-size:10px}
-.evidence-popover-anchor{display:inline-flex;vertical-align:baseline;position:relative;margin-left:4px;line-height:1}
+.evidence-popover-anchor{display:inline;vertical-align:baseline;position:relative;margin-left:4px;line-height:1}
+.evidence-inline-copy{display:inline}
 .evidence-info-button{display:inline-grid;place-items:center;width:15px;height:15px;min-width:15px;padding:0;border:1px solid #a9c9c5;border-radius:50%;background:#f8fcfb;color:#4f8580;font-size:9px;font-family:Georgia,serif;font-weight:700;line-height:1;cursor:help;vertical-align:middle;transition:background .12s,border-color .12s,color .12s}
 .evidence-info-button:hover,.evidence-info-button[aria-expanded="true"]{border-color:#318e84;background:#e8f5f2;color:#176f68}
 .evidence-info-button:focus-visible{outline:2px solid #268b82;outline-offset:2px}
