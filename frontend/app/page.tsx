@@ -271,28 +271,6 @@ export default function Home() {
   const previousUserIdRef = useRef<string | null>(null);
   const currentUserIdRef = useRef<string | null>(null);
   currentUserIdRef.current = user?.id ?? null;
-  useEffect(() => {
-    const previouslyClosedEvidence = new Set<HTMLDetailsElement>();
-    const openEvidenceForPrint = () => {
-      previouslyClosedEvidence.clear();
-      document.querySelectorAll<HTMLDetailsElement>("details.evidence:not([open])").forEach((item) => {
-        previouslyClosedEvidence.add(item);
-        item.open = true;
-      });
-    };
-    const restoreEvidenceAfterPrint = () => {
-      previouslyClosedEvidence.forEach((item) => {
-        if (item.isConnected) item.open = false;
-      });
-      previouslyClosedEvidence.clear();
-    };
-    window.addEventListener("beforeprint", openEvidenceForPrint);
-    window.addEventListener("afterprint", restoreEvidenceAfterPrint);
-    return () => {
-      window.removeEventListener("beforeprint", openEvidenceForPrint);
-      window.removeEventListener("afterprint", restoreEvidenceAfterPrint);
-    };
-  }, []);
   const visiblePapers = papersOwnerId === user?.id ? papers : [];
   const [selected, setSelected] = useState<Paper | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
