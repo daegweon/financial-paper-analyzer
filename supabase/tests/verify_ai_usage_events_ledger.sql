@@ -1,5 +1,5 @@
 -- Disposable PostgreSQL 17 contract for the AI usage ledger.
-DO $$
+DO $ledger_acl$
 BEGIN
   IF has_table_privilege('anon','public.ai_usage_events','SELECT')
      OR has_table_privilege('anon','public.ai_usage_events','INSERT')
@@ -15,7 +15,7 @@ BEGIN
      OR has_table_privilege('service_role','public.ai_usage_events','REFERENCES')
      OR has_table_privilege('service_role','public.ai_usage_events','TRIGGER')
   THEN RAISE EXCEPTION 'AI usage ledger must be append-only for service_role'; END IF;
-END $;
+END $ledger_acl$;
 
 BEGIN;
 SET LOCAL ROLE service_role;
