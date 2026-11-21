@@ -230,17 +230,25 @@ function EvidenceList({
 }) {
   if (!items?.length) return null;
   return <div className="evidence-list">{items.map((item, index) =>
-    <blockquote className="evidence" key={item.page + "-" + index}>
-      <b>PAGE {item.page}</b><p>{item.quote}</p>
-      {sourcePdfUrl && Number.isInteger(item.page) && item.page > 0 &&
-        (onOpenSourcePage
-          ? <button type="button" className="evidence-source-link" onClick={() => onOpenSourcePage(item.page)}>
-              원문 p.{item.page} 함께 보기 ↓
-            </button>
-          : <a className="evidence-source-link" href={sourcePdfUrl + "#page=" + item.page} target="_blank" rel="noreferrer">
-              원문 p.{item.page} 확인 ↗
-            </a>)}
-    </blockquote>
+    <details className="evidence" key={item.page + "-" + index}>
+      <summary className="evidence-summary" aria-label={`원문 근거 보기, PDF ${item.page}페이지`}>
+        <span className="evidence-summary-title">원문 근거 보기</span>
+        <span className="evidence-summary-page">p.{item.page}</span>
+        <span className="evidence-summary-hint">인용문 확인</span>
+      </summary>
+      <div className="evidence-content">
+        <b>원문 인용 · PAGE {item.page}</b>
+        <p className="evidence-quote">{item.quote}</p>
+        {sourcePdfUrl && Number.isInteger(item.page) && item.page > 0 &&
+          (onOpenSourcePage
+            ? <button type="button" className="evidence-source-link" onClick={() => onOpenSourcePage(item.page)}>
+                원문 p.{item.page} 함께 보기 ↓
+              </button>
+            : <a className="evidence-source-link" href={sourcePdfUrl + "#page=" + item.page} target="_blank" rel="noreferrer">
+                원문 p.{item.page} 확인 ↗
+              </a>)}
+      </div>
+    </details>
   )}</div>;
 }
 
@@ -280,6 +288,28 @@ export default function Home() {
   const previousUserIdRef = useRef<string | null>(null);
   const currentUserIdRef = useRef<string | null>(null);
   currentUserIdRef.current = user?.id ?? null;
+  useEffect(() => {
+    const previouslyClosedEvidence = new Set<HTMLDetailsElement>();
+    const openEvidenceForPrint = () => {
+      previouslyClosedEvidence.clear();
+      document.querySelectorAll<HTMLDetailsElement>("details.evidence:not([open])").forEach((item) => {
+        previouslyClosedEvidence.add(item);
+        item.open = true;
+      });
+    };
+    const restoreEvidenceAfterPrint = () => {
+      previouslyClosedEvidence.forEach((item) => {
+        if (item.isConnected) item.open = false;
+      });
+      previouslyClosedEvidence.clear();
+    };
+    window.addEventListener("beforeprint", openEvidenceForPrint);
+    window.addEventListener("afterprint", restoreEvidenceAfterPrint);
+    return () => {
+      window.removeEventListener("beforeprint", openEvidenceForPrint);
+      window.removeEventListener("afterprint", restoreEvidenceAfterPrint);
+    };
+  }, []);
   const visiblePapers = papersOwnerId === user?.id ? papers : [];
   const [selected, setSelected] = useState<Paper | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -1045,11 +1075,8 @@ export default function Home() {
       </header>
       <div className="body" id="workspace-content" tabIndex={-1}>
         {engineMode === "gemini" && <div className="provider-notice"><b>Gemini 무료 티어 데이터 안내</b><p>현재 설정에서는 업로드한 논문에서 추출한 텍스트와 AI 응답이 Google 제품 개선에 사용되거나 사람 검토자가 처리할 수 있습니다. 공개·비기밀 논문만 업로드하고, 사내 미공개 자료나 개인정보가 포함된 문서는 올리지 마세요.</p></div>}
-        <BetaGettingStarted userId={user.id} paperCount={visiblePapers.length}
-          readyCount={visiblePapers.filter(paper => paper.status === "completed").length}
-          busy={busy} onChoosePdf={choosePdfFile}/>
         <div className="heading">
-          <div><p className="eyebrow">RESEARCH LIBRARY</p><h1 id="paper-library-heading">나의 연구 라이브러리</h1><p>금융 논문을 수집하고 근거 기반 인사이트를 축적하세요.</p></div>
+          <div><p className="eyebrow">RESEARCH LIBRARY</p><h1 id="paper-library-heading">나의 연구 라이브러리</h1><p>내 논문과 분석 이력을 먼저 확인하고, 새 논문은 아래에서 찾아 추가할 수 있습니다.</p></div>
           <button type="button" className="upload-button" disabled={busy} onClick={choosePdfFile}>＋ 논문 추가</button>
           <input ref={uploadInputRef} type="file" accept=".pdf,application/pdf" hidden
             aria-label="분석할 PDF 파일 선택" disabled={busy}
@@ -1059,12 +1086,34 @@ export default function Home() {
               void upload(file);
             }}/>
         </div>
+
+        <section id="personal-research-workspace" className="personal-research-workspace" aria-label="내 작업 공간">
+        <div className="stats">
+          <div><p>전체 논문</p><strong>{visiblePapers.length.toString().padStart(2, "0")}</strong><small>보관 중인 논문</small></div>
+          <div><p>완료된 분석</p><strong>{visiblePapers.filter(paper => paper.status === "completed").length.toString().padStart(2, "0")}</strong><small>근거 기반 결과</small></div>
+          <div className="highlight"><p>RESEARCH INTELLIGENCE</p><h2>From papers<br/>to perspectives.</h2></div>
+        </div>
+        {libraryLoading && <p role="status" className="library-loading">논문 목록을 불러오는 중입니다...</p>}
+        {libraryError && <div className="library-recovery no-print" role="alert">
+          <p>{libraryError}</p>
+          <button type="button" disabled={libraryLoading} onClick={() => void refresh()}>목록 다시 불러오기</button>
+        </div>}
+        {message && <div className="message" role="status" aria-live="polite">{message}</div>}
+        {uploadIssue && <div className="recovery-actions no-print" aria-label="업로드 오류 복구">
+          <button type="button" disabled={libraryLoading} onClick={() => void refresh()}>저장된 논문 목록 확인</button>
+          <button type="button" disabled={busy} onClick={choosePdfFile}>PDF 다시 선택</button>
+        </div>}
+        <ResearchLibrary key={user.id} papers={visiblePapers} busy={busy} onOpen={open} onResume={resumeAnalysis} />
+        <BetaGettingStarted userId={user.id} paperCount={visiblePapers.length}
+          readyCount={visiblePapers.filter(paper => paper.status === "completed").length}
+          busy={busy} onChoosePdf={choosePdfFile}/>
+        </section>
         <section className="public-paper-discovery" aria-labelledby="paper-discovery-heading">
           <div className="public-paper-discovery-header">
             <div>
               <p className="eyebrow">DISCOVER & IMPORT</p>
               <h2 id="paper-discovery-heading">공개 금융 논문 찾아보기</h2>
-              <p>읽을 논문이 떠오르지 않아도 분야별 추천 논문부터 살펴볼 수 있습니다.</p>
+              <p>내 작업 공간을 확인한 뒤 새 논문을 더 분석하고 싶다면, 여기서 공개 논문을 검색하거나 PDF를 가져오세요.</p>
             </div>
           </div>
           <form className="public-paper-url-form" onSubmit={event => {
@@ -1166,22 +1215,6 @@ export default function Home() {
             </ul>
           </div>}
         </section>
-        <div className="stats">
-          <div><p>전체 논문</p><strong>{visiblePapers.length.toString().padStart(2, "0")}</strong><small>보관 중인 논문</small></div>
-          <div><p>완료된 분석</p><strong>{visiblePapers.filter(paper => paper.status === "completed").length.toString().padStart(2, "0")}</strong><small>근거 기반 결과</small></div>
-          <div className="highlight"><p>RESEARCH INTELLIGENCE</p><h2>From papers<br/>to perspectives.</h2></div>
-        </div>
-        {libraryLoading && <p role="status" className="library-loading">논문 목록을 불러오는 중입니다...</p>}
-        {libraryError && <div className="library-recovery no-print" role="alert">
-          <p>{libraryError}</p>
-          <button type="button" disabled={libraryLoading} onClick={() => void refresh()}>목록 다시 불러오기</button>
-        </div>}
-        {message && <div className="message" role="status" aria-live="polite">{message}</div>}
-        {uploadIssue && <div className="recovery-actions no-print" aria-label="업로드 오류 복구">
-          <button type="button" disabled={libraryLoading} onClick={() => void refresh()}>저장된 논문 목록 확인</button>
-          <button type="button" disabled={busy} onClick={choosePdfFile}>PDF 다시 선택</button>
-        </div>}
-        <ResearchLibrary key={user.id} papers={visiblePapers} busy={busy} onOpen={open} onResume={resumeAnalysis} />
       </div>
     </div>
 

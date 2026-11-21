@@ -273,6 +273,16 @@ Public-paper discovery/import was first shipped on [PR #36](https://github.com/d
 
 **How to continue:** Read [Public research PDF discovery/import runbook](PUBLIC_PAPER_DISCOVERY_IMPORT_2026-11-21.md) for endpoints, security boundaries, configuration and QA. Check whether PR #37 is merged and deployed before asserting that the enhancement is live. First-author sorting is performed over the currently loaded result set because OpenAlex's works list does not provide the nested first-author-name sort needed for a global server sort. OpenAlex optional server-only `OPENALEX_API_KEY` can be configured if keyless usage limits become a blocker. Do not confuse free-to-read Open Access with redistribution rights.
 
+## 9B. Analysis evidence disclosure and library-first workspace — PR #38
+
+A UI/UX follow-up is implemented in PR #38. It changes report evidence excerpts from always-visible green quote boxes into keyboard-accessible, initially collapsed disclosures; users open only the citations they want to inspect. The junior three-minute guide's direct quotes use the same disclosure. The existing table/graph learning cards were already collapsible and remain so. Print/PDF export expands closed evidence content so citations are not lost from exported reports.
+
+The login landing page is reordered to show the user's own workspace first (library, analysis jobs, stats, filters and comparison), followed by the collapsible getting-started guide, then public finance-paper discovery/import. The direct PDF upload button remains available in the library heading.
+
+**Current status (2026-11-21):** Application implementation commit `c2dff0830f4df4936555f8509d008a8f9f8e6640`; latest PR head `006bf66919ec0dcaed89fe04c36cfa0b273f88de` includes documentation-only validation updates. [CI #44897532283](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44897532283) passed: backend 247 passed/1 skipped, frontend unit 82 passed, Playwright 9/9 passed, disposable PostgreSQL contracts passed. Vercel Preview is READY at https://financial-paper-analyzer-8y6w7rl06-daegweonai-9583.vercel.app/. PR #38 remains open; Production is unchanged pending merge and rollout.
+
+**How to continue:** Read [Analysis evidence disclosure and library-first workspace](ANALYSIS_EVIDENCE_DISCLOSURE_AND_LIBRARY_FIRST_2026-11-21.md). After the PR is merged, verify the current Vercel Production and Railway API/Worker SHAs and health before telling the user the feature is live.
+
 ## 10. Remaining work and explicit non-blockers
 
 The initial product release and final UI/UX deployment are complete. The following are follow-up quality/extension items, not reasons to reopen the completed release without a concrete need.

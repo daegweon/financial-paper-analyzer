@@ -350,6 +350,12 @@ test("paper analysis opens as a full-width report with visible section navigatio
   );
 
   await page.goto("/");
+  const workspaceBeforeDiscovery = await page.locator("#personal-research-workspace").evaluate(workspace => {
+    const discovery = document.querySelector(".public-paper-discovery");
+    return Boolean(discovery && (workspace.compareDocumentPosition(discovery) & Node.DOCUMENT_POSITION_FOLLOWING));
+  });
+  expect(workspaceBeforeDiscovery).toBe(true);
+  await expect(page.getByRole("heading", { name: "나의 연구 라이브러리" })).toBeVisible();
   await page.getByRole("button", { name: "E2E 금융논문" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
@@ -377,6 +383,32 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await page.setViewportSize(desktopViewport);
 
   await expect(page.getByRole("navigation", { name: "분석 보고서 목차" })).toBeVisible();
+  const evidenceDisclosure = dialog.locator("details.evidence").first();
+  await expect(evidenceDisclosure).toBeVisible();
+  await expect(evidenceDisclosure).not.toHaveAttribute("open", "");
+  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeHidden();
+  await expect(evidenceDisclosure.locator("summary")).toContainText("원문 근거 보기");
+  await evidenceDisclosure.locator("summary").click();
+  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeVisible();
+  await expect(evidenceDisclosure.locator(".evidence-quote")).toContainText("연구 목적과 데이터 설명");
+  await evidenceDisclosure.locator("summary").click();
+  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeHidden();
+  await page.evaluate(() => window.dispatchEvent(new Event("beforeprint")));
+  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeVisible();
+  await page.emulateMedia({ media: "print" });
+  await expect(evidenceDisclosure.locator("summary")).toBeHidden();
+  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeVisible();
+  await page.emulateMedia({ media: "screen" });
+  await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
+  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeHidden();
+
+  const juniorEvidence = dialog.locator("#analysis-junior-guide details.evidence-disclosure").first();
+  await expect(juniorEvidence).toBeVisible();
+  await expect(juniorEvidence).not.toHaveAttribute("open", "");
+  await expect(juniorEvidence.locator(".evidence-quote")).toBeHidden();
+  await juniorEvidence.locator("summary").click();
+  await expect(juniorEvidence.locator(".evidence-quote")).toBeVisible();
+  await expect(juniorEvidence.locator(".evidence-quote")).toContainText("The coefficient is positive and significant.");
   await expect(page.locator("#analysis-summary")).toContainText("표본 기간 동안");
   await expect(page.locator("#analysis-findings")).toHaveCount(1);
   await expect(page.locator(".detail-sign-out")).toBeVisible();
