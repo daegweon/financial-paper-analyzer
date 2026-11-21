@@ -5,9 +5,8 @@
 > **Last verified:** 2026-11-21 (Asia/Seoul)  
 > **Repository:** [daegweon/financial-paper-analyzer](https://github.com/daegweon/financial-paper-analyzer)  
 > **Production URL:** https://financial-paper-analyzer.vercel.app  
-> **Current main / latest deployment commit:** `b218018a559842b5d319586f6fb7db3f8605cf53` (documentation-only handoff refresh after release).  
-> **Latest application feature commit:** `96393bf434b150106389693bffd8e35da0a42fca` (PR #37; includes recommendations API/UI).  
-> Connected Vercel/Railway services deploy on main updates, including documentation-only commits. Always fetch the current main SHA and latest deployment IDs before changing or rolling back anything.
+> **Latest application release commit:** `c05a47a8dc0304ff74f860485912e7003271affd` (PR #38; evidence disclosure and library-first workspace).  
+> The current `main` may advance further through documentation-only closeout commits. Connected Vercel/Railway services deploy on main updates, including documentation-only commits. Always fetch the current main SHA and latest deployment IDs before changing or rolling back anything.
 
 This document supersedes earlier release-status snapshots for the *current state*. Older dated documents remain useful as historical evidence and detailed runbooks; do not interpret their old deployment/PR status as current.
 
@@ -50,35 +49,34 @@ Non-negotiable quality principles:
 ### GitHub
 
 - Default branch: `main`
-- Current main SHA: `b218018a559842b5d319586f6fb7db3f8605cf53` (latest documentation-only handoff refresh).
-- Latest application feature commit: `96393bf434b150106389693bffd8e35da0a42fca` (PR #37).
-- PR #35 (final workspace UX), PR #36 (public PDF discovery/import), and PR #37 (recommendations/citations/sorting/pagination fix) were all squash-merged.
-- PR #37 exact-head CI: [Checks run #44893776957](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44893776957) — backend 247 passed/1 skipped, frontend 82 unit tests, Playwright 9/9, disposable PostgreSQL contracts passed.
+- Latest application release commit: `c05a47a8dc0304ff74f860485912e7003271affd` (PR #38).
+- PRs #35 (final workspace UX), #36 (public PDF discovery/import), #37 (recommendations/citations/sorting/pagination), and #38 (evidence disclosure/library-first UX) are all squash-merged.
+- PR #38 exact-head CI: [Checks run #44897801859](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44897801859) — backend 247 passed/1 skipped, frontend 82 unit tests, Playwright 9/9, disposable PostgreSQL contracts passed.
 - PR #37 merge resolved the Preview 404: the Preview frontend called `/api/public-papers/recommendations` before the Railway Production API had the route. The merged backend and frontend now ship together.
-- No open PRs remained at the last repository check.
+- No open PRs remained after PR #38.
 - Documentation-only commits can trigger Vercel and Railway deployments; avoid unnecessary direct-to-main documentation commits and verify all connected services after any such change.
 
 ### Vercel frontend
 
 - Canonical domain: https://financial-paper-analyzer.vercel.app
-- Latest observed Production deployment: `dpl_HnMtmnwF5uukd5UtqPTcndfycfFK`.
+- PR #38 application release deployment: `dpl_DAL2QkzSn3k1wAMAY2gBGon7G1wm`.
 - State: `READY`; canonical alias `financial-paper-analyzer.vercel.app` is attached.
-- Deployment commit: `b218018a559842b5d319586f6fb7db3f8605cf53` (documentation-only refresh); application features are from `96393bf434b150106389693bffd8e35da0a42fca`.
+- Deployed application commit: `c05a47a8dc0304ff74f860485912e7003271affd`. A later documentation-only closeout commit may trigger another identical application deployment; fetch the live alias/deployment before further operations.
 
 ### Railway API and Worker
 
-Both services use repository `daegweon/financial-paper-analyzer`, branch `main`, and are deployed from latest main `b218018a559842b5d319586f6fb7db3f8605cf53`. Application code (including the public recommendations API) was introduced in `96393bf434b150106389693bffd8e35da0a42fca`.
+Both services use repository `daegweon/financial-paper-analyzer`, branch `main`, and were redeployed after PR #38 on application release commit `c05a47a8dc0304ff74f860485912e7003271affd`. A documentation-only closeout commit may trigger another redeploy; fetch live deployment IDs before operational actions.
 
-| Service | Latest deployment | State | Replicas |
+| Service | Latest PR #38 release deployment | State | Replicas |
 |---|---|---|---:|
-| `papersignal-api` | `936e5a48-a8ec-4939-b441-658d263aaa97` | SUCCESS / Online | 1/1 |
-| `papersignal-worker` | `b43ec289-7450-41a5-a31f-5a15914d367e` | SUCCESS / Online | 1/1 |
+| `papersignal-api` | `a85ec587-2bcd-4da5-ae2d-113050bff09f` | SUCCESS / Online | 1/1 |
+| `papersignal-worker` | `eb406651-b7bf-43c9-befa-9c6450cd9465` | SUCCESS / Online | 1/1 |
 
 - API health endpoint: `GET /health` returned HTTP 200 after deployment.
 - Railway environment status showed both services online, zero crashed replicas and no current warning/critical issues.
-- The API and Worker were redeployed automatically after PR #37 merged because both Railway services track `main`; both are Online 1/1.
-- The later handoff documentation refresh also triggered automatic Vercel and Railway deployments. Those deployments succeeded.
-- The deployed backend includes `GET /api/public-papers/recommendations` and the extended search/citation sorting API. No schema migration or analysis engine change was needed.
+- The API and Worker were redeployed automatically after PR #38 merged because both Railway services track `main`; both are Online 1/1.
+- PR #38 is UI-only and does not change the API contract, database schema, or analysis engine. No migration was required.
+- The deployed backend continues to include `GET /api/public-papers/recommendations` and the extended search/citation sorting API.
 
 ### Administrator
 
@@ -275,13 +273,19 @@ Public-paper discovery/import was first shipped on [PR #36](https://github.com/d
 
 ## 9B. Analysis evidence disclosure and library-first workspace — PR #38
 
-A UI/UX follow-up is implemented in PR #38. It changes report evidence excerpts from always-visible green quote boxes into keyboard-accessible, initially collapsed disclosures; users open only the citations they want to inspect. The junior three-minute guide's direct quotes use the same disclosure. The existing table/graph learning cards were already collapsible and remain so. Print/PDF export expands closed evidence content so citations are not lost from exported reports.
+PR #38 is **merged and deployed**. It changes report evidence excerpts from always-visible green quote boxes into keyboard-accessible, initially collapsed disclosures; users open only the citations they want to inspect. The junior three-minute guide's direct quotes use the same disclosure. The existing table/graph learning cards were already collapsible and remain so. Print/PDF export opens previously closed evidence before printing and restores each user's original open/closed state afterward, so citations are not lost from exported reports.
 
-The login landing page is reordered to show the user's own workspace first (library, analysis jobs, stats, filters and comparison), followed by the collapsible getting-started guide, then public finance-paper discovery/import. The direct PDF upload button remains available in the library heading.
+The login landing page now shows the user's own workspace first (library, analysis jobs, stats, filters and comparison), followed by the collapsible getting-started guide, then public finance-paper discovery/import. The direct PDF upload button remains available in the library heading.
 
-**Current status (2026-11-21):** Application implementation commit `c2dff0830f4df4936555f8509d008a8f9f8e6640`; latest PR head `006bf66919ec0dcaed89fe04c36cfa0b273f88de` includes documentation-only validation updates. [CI #44897532283](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44897532283) passed: backend 247 passed/1 skipped, frontend unit 82 passed, Playwright 9/9 passed, disposable PostgreSQL contracts passed. Vercel Preview is READY at https://financial-paper-analyzer-8y6w7rl06-daegweonai-9583.vercel.app/. PR #38 remains open; Production is unchanged pending merge and rollout.
+**Release status (2026-11-21):**
+- Application merge commit: `c05a47a8dc0304ff74f860485912e7003271affd`.
+- PR #38 exact-head CI: [#44897801859](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44897801859) — backend 247 passed/1 skipped, frontend 82 passed, Playwright 9/9 passed, disposable PostgreSQL contracts passed.
+- Vercel Production: READY, deployment `dpl_DAL2QkzSn3k1wAMAY2gBGon7G1wm`.
+- Railway API: SUCCESS / Online 1/1, deployment `a85ec587-2bcd-4da5-ae2d-113050bff09f`.
+- Railway Worker: SUCCESS / Online 1/1, deployment `eb406651-b7bf-43c9-befa-9c6450cd9465`.
+- Official domain: https://financial-paper-analyzer.vercel.app
 
-**How to continue:** Read [Analysis evidence disclosure and library-first workspace](ANALYSIS_EVIDENCE_DISCLOSURE_AND_LIBRARY_FIRST_2026-11-21.md). After the PR is merged, verify the current Vercel Production and Railway API/Worker SHAs and health before telling the user the feature is live.
+**How to continue:** Read [Analysis evidence disclosure and library-first workspace](ANALYSIS_EVIDENCE_DISCLOSURE_AND_LIBRARY_FIRST_2026-11-21.md). The application feature is released; only address reproducible production issues or new user requests.
 
 ## 10. Remaining work and explicit non-blockers
 
