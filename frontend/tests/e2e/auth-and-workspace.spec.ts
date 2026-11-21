@@ -393,7 +393,7 @@ test("paper analysis opens as a full-width report with visible section navigatio
   // Hovering the claim text itself reveals a cursor-adjacent preview.
   const evidenceAnchor = evidenceTrigger.locator("xpath=..");
   const evidenceText = evidenceAnchor.locator(".evidence-inline-copy");
-  await expect(evidenceText).toContainText("연구 목적과 데이터 설명");
+  await expect(evidenceText).toContainText("테스트 저자");
   await evidenceText.hover();
   await expect(evidencePopover).toBeVisible();
   await expect(evidencePopover).toContainText("연구 목적과 데이터 설명");
