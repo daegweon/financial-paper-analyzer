@@ -413,6 +413,7 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await expect(evidenceTrigger).toBeHidden();
   await expect(evidencePopover).toBeVisible();
   await page.emulateMedia({ media: "screen" });
+  await page.mouse.move(5, 5);
   await expect(evidencePopover).toBeHidden();
 
   const juniorEvidenceTrigger = dialog.locator("#analysis-junior-guide .evidence-info-button").first();
