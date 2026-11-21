@@ -302,14 +302,21 @@ export default function Home() {
   const visiblePapers = papersOwnerId === user?.id ? papers : [];
   const [selected, setSelected] = useState<Paper | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
-  const [readingScale, setReadingScale] = useState(90);
+  const [readingScale, setReadingScale] = useState(100);
   const [readingScaleReady, setReadingScaleReady] = useState(false);
   useEffect(() => {
     try {
+      const storageVersion = window.localStorage.getItem("papersignal-reading-scale-version");
       const saved = Number(window.localStorage.getItem("papersignal-reading-scale"));
-      if ([80, 90, 100, 110, 120, 130, 140].includes(saved)) {
-        // The previous release persisted its 100% default on first load; migrate that default to 90%.
-        setReadingScale(saved === 100 ? 90 : saved);
+      if (storageVersion !== "2") {
+        // Previous values used 90 as the default. Shift the saved scale by +10 so
+        // the same visual size is retained while the new default is labeled 100%.
+        if ([80, 90, 100, 110, 120, 130, 140].includes(saved)) {
+          setReadingScale(saved + 10);
+        }
+        window.localStorage.setItem("papersignal-reading-scale-version", "2");
+      } else if ([90, 100, 110, 120, 130, 140, 150].includes(saved)) {
+        setReadingScale(saved);
       }
     } catch {
       // Reading remains usable if browser storage is unavailable.
@@ -1245,15 +1252,15 @@ export default function Home() {
             <div className="reading-size-controls" role="group" aria-label="보고서 글자 크기">
               <span className="reading-size-label">글자 크기</span>
               <button type="button" className="reading-size-button" aria-label="글자 크기 줄이기"
-                title="글자 크기 줄이기" disabled={readingScale <= 80}
-                onClick={() => setReadingScale(value => Math.max(80, value - 10))}>A−</button>
+                title="글자 크기 줄이기" disabled={readingScale <= 90}
+                onClick={() => setReadingScale(value => Math.max(90, value - 10))}>A−</button>
               <output className="reading-size-value" aria-live="polite">{readingScale}%</output>
               <button type="button" className="reading-size-button" aria-label="글자 크기 키우기"
-                title="글자 크기 키우기" disabled={readingScale >= 140}
-                onClick={() => setReadingScale(value => Math.min(140, value + 10))}>A+</button>
+                title="글자 크기 키우기" disabled={readingScale >= 150}
+                onClick={() => setReadingScale(value => Math.min(150, value + 10))}>A+</button>
               <button type="button" className="reading-size-reset" aria-label="글자 크기 기본값으로"
-                title="글자 크기 기본값으로" disabled={readingScale === 90}
-                onClick={() => setReadingScale(90)}>기본</button>
+                title="글자 크기 기본값으로" disabled={readingScale === 100}
+                onClick={() => setReadingScale(100)}>기본</button>
             </div>
           {sourcePdf?.paperId === selected.id
             ? <div className="source-pdf-actions">
@@ -1339,7 +1346,7 @@ export default function Home() {
               {busy && <p className="analysis-progress" aria-live="polite">{message}</p>}
               <button disabled={busy || Boolean(activeJob) || Boolean(jobLookupError)} className="primary" onClick={() => void analyze()}>{busy ? "작업 상태 확인 중..." : activeJob ? "기존 분석 진행 중" : jobLookupError ? "작업 확인 필요" : "분석 시작 →"}</button>
             </div>
-          : <div className="result" data-reading-scale={readingScale} style={{ "--reading-scale": readingScale / 100 } as CSSProperties}>
+          : <div className="result" data-reading-scale={readingScale} style={{ "--reading-scale": readingScale / 100 - 0.1 } as CSSProperties}>
               <p className="mode">{analysis.result.mode === "llm"
                 ? "AI 구조화 분석 · 인용 근거 검증"
                 : "텍스트 추출 분석 · AI 생성 아님"}</p>

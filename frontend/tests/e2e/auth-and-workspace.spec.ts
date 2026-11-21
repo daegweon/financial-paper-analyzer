@@ -252,6 +252,13 @@ test("paper analysis opens as a full-width report with visible section navigatio
   const desktopViewport = { width: 1280, height: 900 };
   await page.setViewportSize(desktopViewport);
   await seedAuthenticatedSession(page);
+  // Simulate the prior release's stored default (90) and verify it migrates to the new 100% baseline.
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem("papersignal-scale-migration-seeded") === "1") return;
+    localStorage.setItem("papersignal-reading-scale", "90");
+    localStorage.removeItem("papersignal-reading-scale-version");
+    sessionStorage.setItem("papersignal-scale-migration-seeded", "1");
+  });
 
   await page.unroute(`${SUPABASE_URL}/rest/v1/papers**`);
   await page.route(`${SUPABASE_URL}/rest/v1/papers**`, route => {
@@ -510,7 +517,12 @@ test("paper analysis opens as a full-width report with visible section navigatio
 
   const readingControls = dialog.getByRole("group", { name: "보고서 글자 크기" });
   await expect(readingControls).toBeVisible();
-  await expect(readingControls.locator("output")).toHaveText("90%");
+  await expect(readingControls.locator("output")).toHaveText("100%");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("papersignal-reading-scale"))).toBe("100");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("papersignal-reading-scale-version"))).toBe("2");
+  const baselineScale = await dialog.locator(".result").evaluate(el => getComputedStyle(el).getPropertyValue("--reading-scale").trim());
+  expect(baselineScale).toBe("0.9");
+
   const understandingQuiz = dialog.locator("#analysis-workplace #study-quiz-heading");
   await expect(understandingQuiz).toBeVisible();
   const quizTitleFont = await understandingQuiz.evaluate(el => getComputedStyle(el).fontSize);
@@ -519,14 +531,20 @@ test("paper analysis opens as a full-width report with visible section navigatio
   expect(Number(await quizQuestion.evaluate(el => getComputedStyle(el).fontSize.replace("px", "")))).toBeGreaterThanOrEqual(14);
   const quizOption = dialog.locator("#analysis-workplace #study-quiz fieldset label").first();
   expect(Number(await quizOption.evaluate(el => getComputedStyle(el).fontSize.replace("px", "")))).toBeGreaterThanOrEqual(13);
+
   await readingControls.getByRole("button", { name: "글자 크기 키우기" }).click();
-  await expect(readingControls.locator("output")).toHaveText("100%");
-  await expect.poll(() => page.evaluate(() => localStorage.getItem("papersignal-reading-scale"))).toBe("100");
+  await expect(readingControls.locator("output")).toHaveText("110%");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("papersignal-reading-scale"))).toBe("110");
+  const increasedScale = await dialog.locator(".result").evaluate(el => getComputedStyle(el).getPropertyValue("--reading-scale").trim());
+  expect(increasedScale).toBe("1");
   const scaledReportFont = await reportText.evaluate(el => getComputedStyle(el).fontSize);
   expect(Number(scaledReportFont.replace("px", ""))).toBeGreaterThan(14.5);
+
   await readingControls.getByRole("button", { name: "글자 크기 기본값으로" }).click();
-  await expect(readingControls.locator("output")).toHaveText("90%");
-  await expect.poll(() => page.evaluate(() => localStorage.getItem("papersignal-reading-scale"))).toBe("90");
+  await expect(readingControls.locator("output")).toHaveText("100%");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("papersignal-reading-scale"))).toBe("100");
+  const resetScale = await dialog.locator(".result").evaluate(el => getComputedStyle(el).getPropertyValue("--reading-scale").trim());
+  expect(resetScale).toBe("0.9");
   await expect(page.locator(".detail-sign-out")).toBeVisible();
 
   await page.getByRole("link", { name: "실증 결과", exact: true }).click();

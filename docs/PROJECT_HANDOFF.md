@@ -2,13 +2,20 @@
 
 > **Purpose:** This is the canonical continuity document for future ChatGPT/Codex sessions. Read it first before changing code, infrastructure, configuration, or production.
 >
-> **Last verified:** 2026-11-21 (Asia/Seoul)  
+> **Last verified:** 2026-11-22 (Asia/Seoul)  
 > **Repository:** [daegweon/financial-paper-analyzer](https://github.com/daegweon/financial-paper-analyzer)  
 > **Production URL:** https://financial-paper-analyzer.vercel.app  
-> **Latest application release commit:** `c05a47a8dc0304ff74f860485912e7003271affd` (PR #38; evidence disclosure and library-first workspace).  
-> The current `main` may advance further through documentation-only closeout commits. Connected Vercel/Railway services deploy on main updates, including documentation-only commits. Always fetch the current main SHA and latest deployment IDs before changing or rolling back anything.
+> **Latest application release:** Production is synced to the current `main` HEAD after the 2026-11-22 reader-scale correction; verify the live main SHA and Vercel deployment before operational changes.  
+> Connected Vercel/Railway services deploy on main updates, including documentation-only commits. Always fetch the current main SHA and latest deployment IDs before changing or rolling back anything.
 
 This document supersedes earlier release-status snapshots for the *current state*. Older dated documents remain useful as historical evidence and detailed runbooks; do not interpret their old deployment/PR status as current.
+
+## 0. Latest release note — 2026-11-22
+
+- Reader-size control semantics were corrected: **100% is the default label and renders at the former 90% visual size**. The effective CSS scale is `readingScale / 100 - 0.1`; controls range from 90% to 150% in 10-point steps. Existing localStorage values from the previous 80–140 scale are migrated by adding 10 and marking `papersignal-reading-scale-version=2`, preserving the user's previous visual size.
+- The change was deployed to Production from the current release source and synchronized to `main`. GitHub Actions were not run; the Checks workflow is PR/workflow_dispatch-triggered, not push-triggered.
+- The public financial-paper discovery/import feature is part of the released product. Its user flow, API routes, OpenAlex behavior, sorting/pagination, private PDF storage and SSRF/security boundaries are summarized in §9A and fully documented in [PUBLIC_PAPER_DISCOVERY_IMPORT_2026-11-21.md](PUBLIC_PAPER_DISCOVERY_IMPORT_2026-11-21.md).
+- Production URL: https://financial-paper-analyzer.vercel.app.
 
 ## 1. Start here in a new session
 
@@ -20,7 +27,7 @@ This document supersedes earlier release-status snapshots for the *current state
    - [Manual live E2E launcher](PAPERSIGNAL_MANUAL_E2E_LAUNCHER_2026-11-19.md)
    - [Pre-deploy QA and rollback](PREDEPLOY_QA_AND_ROLLBACK_2026-11-20.md)
 4. Check the live GitHub main SHA, latest Vercel Production deployment, and both Railway services before making assumptions. This document is a verified snapshot, not a substitute for a fresh status check.
-5. **Do not repeat completed deployment or migration work.** PRs #35, #36 and #37 are merged; no open PRs remained at the last check. Vercel Production and Railway API/Worker all run the latest main deployment. The public recommendations API is present in the deployed backend.
+5. **Do not repeat completed deployment or migration work.** PRs #35–#41 are included in the current Production source. Vercel Production and Railway API/Worker track `main`; verify their live deployments before operational changes. The public recommendations/search/import APIs are present in the deployed backend.
 6. Keep the analysis engine at v6.4.2 unless a reproducible quality improvement is demonstrated without regressions. The user's preference is to prioritize product completion and operational reliability over repeated minor engine tuning.
 7. Avoid asking the user to repeat facts already in this document. Make safe, reversible progress autonomously; ask only when a genuine user decision, credential, device action, or approval is required.
 
@@ -44,39 +51,28 @@ Non-negotiable quality principles:
 - Do not reduce overall analysis quality to improve a narrow metric.
 - Do not expose service-role keys, model API keys, or other server secrets in frontend code, browser storage, Git, logs, or this document.
 
-## 3. Current production state — verified 2026-11-21
+## 3. Current production state — verified 2026-11-22
 
 ### GitHub
 
-- Default branch: `main`
-- Latest application release commit: `c05a47a8dc0304ff74f860485912e7003271affd` (PR #38).
-- PRs #35 (final workspace UX), #36 (public PDF discovery/import), #37 (recommendations/citations/sorting/pagination), and #38 (evidence disclosure/library-first UX) are all squash-merged.
-- PR #38 exact-head CI: [Checks run #44897801859](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44897801859) — backend 247 passed/1 skipped, frontend 82 unit tests, Playwright 9/9, disposable PostgreSQL contracts passed.
-- PR #37 merge resolved the Preview 404: the Preview frontend called `/api/public-papers/recommendations` before the Railway Production API had the route. The merged backend and frontend now ship together.
-- No open PRs remained after PR #38.
-- Documentation-only commits can trigger Vercel and Railway deployments; avoid unnecessary direct-to-main documentation commits and verify all connected services after any such change.
+- Default branch: `main`.
+- The production release source, including PR #41's evidence/readability work and the reader-scale correction, is synchronized to the current `main` HEAD.
+- PRs #35, #36, #37, #38 and #41 are included in the production source. Verify current PR status from GitHub rather than relying on old branch snapshots.
+- GitHub Actions were **not run** for the 2026-11-22 reader-scale correction. The `checks.yml` workflow is triggered by `pull_request` and `workflow_dispatch`, not by a push to `main`; the live E2E workflow is manual-only.
+- Do not manually dispatch or rerun GitHub Actions unless the user explicitly asks.
 
 ### Vercel frontend
 
 - Canonical domain: https://financial-paper-analyzer.vercel.app
-- PR #38 application release deployment: `dpl_DAL2QkzSn3k1wAMAY2gBGon7G1wm`.
-- State: `READY`; canonical alias `financial-paper-analyzer.vercel.app` is attached.
-- Deployed application commit: `c05a47a8dc0304ff74f860485912e7003271affd`. A later documentation-only closeout commit may trigger another identical application deployment; fetch the live alias/deployment before further operations.
+- Production deployment is built from the current `main` release source and is assigned to the canonical alias.
+- Always query the live Vercel project for the current deployment ID, state and aliases before a later rollback or deployment; do not reuse deployment IDs from historical sections.
 
 ### Railway API and Worker
 
-Both services use repository `daegweon/financial-paper-analyzer`, branch `main`, and were redeployed after PR #38 on application release commit `c05a47a8dc0304ff74f860485912e7003271affd`. A documentation-only closeout commit may trigger another redeploy; fetch live deployment IDs before operational actions.
-
-| Service | Latest PR #38 release deployment | State | Replicas |
-|---|---|---|---:|
-| `papersignal-api` | `a85ec587-2bcd-4da5-ae2d-113050bff09f` | SUCCESS / Online | 1/1 |
-| `papersignal-worker` | `eb406651-b7bf-43c9-befa-9c6450cd9465` | SUCCESS / Online | 1/1 |
-
-- API health endpoint: `GET /health` returned HTTP 200 after deployment.
-- Railway environment status showed both services online, zero crashed replicas and no current warning/critical issues.
-- The API and Worker were redeployed automatically after PR #38 merged because both Railway services track `main`; both are Online 1/1.
-- PR #38 is UI-only and does not change the API contract, database schema, or analysis engine. No migration was required.
-- The deployed backend continues to include `GET /api/public-papers/recommendations` and the extended search/citation sorting API.
+- Both services are connected to repository `daegweon/financial-paper-analyzer`, branch `main`.
+- A `main` update can automatically redeploy both services even when a change is frontend/documentation focused. Verify API and Worker state after each main update.
+- Public paper discovery endpoints remain part of the backend: `GET /api/public-papers/recommendations`, `GET /api/public-papers/search`, and authenticated `POST /api/public-papers/download`.
+- The reader-scale correction is frontend-only; no database migration or backend API change is required.
 
 ### Administrator
 
@@ -90,7 +86,7 @@ Both services use repository `daegweon/financial-paper-analyzer`, branch `main`,
 
 ### Deployment automation
 
-- The one-time **PaperSignal 운영 배포 확인** automation for 2026-11-21 15:40 KST is **disabled**. The rollout it was meant to check has already been completed. Leave it disabled; do not run or re-enable it as a duplicate deployment.
+- The one-time **PaperSignal 운영 배포 확인** automation for 2026-11-21 15:40 KST is **disabled**. Leave it disabled; do not run or re-enable it as a duplicate deployment.
 - A separate daily **GitHub Actions 사용량 감시** automation exists. It is unrelated to application deployment.
 
 ## 4. Final UI/UX release (PR #35)
@@ -269,7 +265,11 @@ Public-paper discovery/import was first shipped on [PR #36](https://github.com/d
 
 **Troubleshooting note:** the earlier PR Preview displayed `404 Not Found` because its new frontend called the recommendations route while the Railway Production API still ran the previous `main` commit, which did not yet define that route. Merging PR #37 and deploying the API resolved the version mismatch. If this symptom recurs, compare the frontend commit and Railway API commit before changing the UI.
 
-**How to continue:** Read [Public research PDF discovery/import runbook](PUBLIC_PAPER_DISCOVERY_IMPORT_2026-11-21.md) for endpoints, security boundaries, configuration and QA. Check whether PR #37 is merged and deployed before asserting that the enhancement is live. First-author sorting is performed over the currently loaded result set because OpenAlex's works list does not provide the nested first-author-name sort needed for a global server sort. OpenAlex optional server-only `OPENALEX_API_KEY` can be configured if keyless usage limits become a blocker. Do not confuse free-to-read Open Access with redistribution rights.
+**Current status:** PRs #36 and #37 are merged and the feature is live in Production. After login, open **나의 연구 라이브러리 → 공개 금융 논문 찾아보기**. Users can browse no-query recommendations across asset pricing/markets, portfolio/risk, ETFs/market microstructure, and macro/rates/FX; search OpenAlex by keyword; sort by relevance, citation count, title, first author or publication date; and import a public PDF URL or a result with a PDF link into their own private library. Direct device-file upload remains available.
+
+**Implementation quick reference:** `GET /api/public-papers/recommendations`, `GET /api/public-papers/search`, and authenticated `POST /api/public-papers/download` are implemented in `backend/app/public_papers.py`; the UI and existing private upload flow are in `frontend/app/page.tsx`. Search fetches up to 100 records per API batch and renders 10 per local page. First-author sorting is local to the currently loaded result set. Imported PDFs are stored through the user's existing private Storage upload path; public search/download requires a user Bearer JWT. The download service validates HTTPS/public DNS destinations, blocks private/internal IPs and redirects, and enforces PDF signature, page-count and 30 MiB limits. Open Access does not imply redistribution rights.
+
+Read [Public research PDF discovery/import runbook](PUBLIC_PAPER_DISCOVERY_IMPORT_2026-11-21.md) for full endpoint schemas, provider behavior, security boundaries, configuration and QA. The feature currently uses OpenAlex; `OPENALEX_API_KEY` is optional and server-only.
 
 ## 9B. Analysis evidence disclosure and library-first workspace — PR #38
 
@@ -342,6 +342,6 @@ Some older documents describe a state before the final product integration and m
 
 ## 12. Final continuation instruction
 
-The next session should begin from the current production state at main commit `e71d468c445849a480fced28e8a77e84b4892d51`, not from old feature branches or pre-release snapshots.
+The next session should begin from the current Production state at the live `main` HEAD and latest Vercel/Railway deployments, not from old feature branches or pre-release snapshots.
 
 Default next-session objective: **maintain the released product, fix reproducible production defects, and avoid unnecessary scope expansion.** If no concrete bug or user-requested feature exists, report that the project is released and wait for the next product task rather than manufacturing more development work.
