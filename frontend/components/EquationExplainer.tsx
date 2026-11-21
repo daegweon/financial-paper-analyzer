@@ -26,8 +26,8 @@ type SymbolExplanation = {
 const TOKEN_PATTERN = /[A-Za-z][A-Za-z0-9_]*|[α-ωΑ-Ω]/gu;
 
 function matchesVariableName(name: string, symbol: string) {
-  const tokens = name.match(TOKEN_PATTERN) ?? [];
   // Latin letter case is significant in equations: C (input) and c (constant) are different symbols.
+  const tokens = name.split(/[^A-Za-z0-9_α-ωΑ-Ω]+/u);
   return tokens.includes(symbol);
 }
 
