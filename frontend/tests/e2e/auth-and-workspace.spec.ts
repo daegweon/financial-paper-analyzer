@@ -390,3 +390,71 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await page.locator(".detail-sign-out").click();
   await expect(page.getByRole("heading", { name: "다시 만나서 반갑습니다." })).toBeVisible();
 });
+
+
+test("public-paper search and one-click import preserve user-owned PDF upload", async ({ page }) => {
+  await seedAuthenticatedSession(page);
+  let uploaded = false;
+  let storageAuthorized = false;
+  let searchAuthorized = false;
+  let downloadAuthorized = false;
+  const paper = {
+    id: PAPER_ID, title: "ETF asset pricing", status: "pending",
+    storage_path: `${USER_ID}/imported-test.pdf`, created_at: new Date().toISOString(), page_count: null,
+  };
+
+  await page.unroute(`${SUPABASE_URL}/rest/v1/papers**`);
+  await page.route(`${SUPABASE_URL}/rest/v1/papers**`, route => {
+    if (route.request().method() === "GET") return route.fulfill({
+      status: 200, contentType: "application/json", body: JSON.stringify(uploaded ? [paper] : []),
+    });
+    if (route.request().method() === "POST") {
+      uploaded = true;
+      return route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify(paper) });
+    }
+    return route.continue();
+  });
+  await page.route(`${SUPABASE_URL}/storage/v1/object/papers/**`, route => {
+    storageAuthorized = route.request().headers()["authorization"]?.startsWith("Bearer ") ?? false;
+    return route.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({ Key: paper.storage_path }),
+    });
+  });
+  await page.route("https://api.mock.papersignal.test/api/public-papers/search**", route => {
+    searchAuthorized = route.request().headers()["authorization"]?.startsWith("Bearer ") ?? false;
+    return route.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({
+        query: "ETF", page: 1, total: 1, has_more: false,
+        results: [{
+          id: "https://openalex.org/W123", title: "ETF asset pricing", year: 2025,
+          doi: "https://doi.org/10.1234/etf", authors: ["Researcher"],
+          pdf_url: "https://journal.example.org/etf.pdf",
+          landing_url: "https://journal.example.org/etf",
+          license: "cc-by", is_open_access: true,
+        }],
+      }),
+    });
+  });
+  await page.route("https://api.mock.papersignal.test/api/public-papers/download", route => {
+    downloadAuthorized = route.request().headers()["authorization"]?.startsWith("Bearer ") ?? false;
+    expect(route.request().postDataJSON()).toEqual({ url: "https://journal.example.org/etf.pdf" });
+    return route.fulfill({
+      status: 200, contentType: "application/pdf",
+      body: Buffer.from("%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF\n"),
+    });
+  });
+
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "공개 금융 논문 찾아보기" })).toBeVisible();
+  await page.getByRole("searchbox", { name: "공개 학술 논문 검색 (OpenAlex)" }).fill("ETF");
+  await page.getByRole("button", { name: "논문 검색" }).click();
+  await expect(page.getByText("ETF asset pricing").first()).toBeVisible();
+  await page.getByRole("button", { name: "PDF 가져오기" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  expect(searchAuthorized).toBe(true);
+  expect(downloadAuthorized).toBe(true);
+  expect(storageAuthorized).toBe(true);
+  expect(uploaded).toBe(true);
+});

@@ -264,6 +264,12 @@ The manual workflow remains intentionally manual-only:
 - The latest migration recorded in the repository/production sequence is `20261121032957_restrict_ai_usage_ledger_privileges.sql`.
 - Never put service-role credentials or Gemini API keys in frontend environment variables, source control, logs, or this document.
 
+## 9A. Public finance-paper search and URL import — post-release feature
+
+A further public-paper discovery/import feature has been implemented on [PR #36](https://github.com/daegweon/financial-paper-analyzer/pull/36) and validated by [CI #44884328059](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44884328059). It adds authenticated OpenAlex search, PDF URL download with SSRF/DNS pinning protections and byte/page limits, and one-click user-owned private PDF imports through the existing frontend upload path. It does not change Gemini v6.4.2 or any schema.
+
+**How to continue:** Read [Public research PDF discovery/import runbook](PUBLIC_PAPER_DISCOVERY_IMPORT_2026-11-21.md) for endpoints, security boundaries, configuration and QA. Check whether PR #36 is merged and deployed before asserting that it is live; this snapshot records the tested implementation, not a promise about current runtime. OpenAlex optional server-only `OPENALEX_API_KEY` can be configured if keyless usage limits become a blocker. Do not confuse free-to-read Open Access with redistribution rights.
+
 ## 10. Remaining work and explicit non-blockers
 
 The initial product release and final UI/UX deployment are complete. The following are follow-up quality/extension items, not reasons to reopen the completed release without a concrete need.
