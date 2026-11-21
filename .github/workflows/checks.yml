@@ -93,6 +93,7 @@ jobs:
           apply_sql supabase/tests/verify_analysis_queue_quota.sql
           apply_sql supabase/migrations/20261120122819_ai_usage_events_ledger.sql
           apply_sql supabase/migrations/20261120122859_index_ai_usage_ledger_foreign_keys.sql
+          apply_sql supabase/migrations/20261121032300_restrict_ai_usage_ledger_privileges.sql
           apply_sql supabase/tests/verify_ai_usage_events_ledger.sql
           apply_sql supabase/tests/verify_beta_write_isolation.sql
 
