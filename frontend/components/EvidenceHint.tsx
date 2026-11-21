@@ -192,7 +192,7 @@ export function EvidenceHint({ items, sourcePdfUrl, onOpenSourcePage }: Props) {
             <div className="evidence-preview-content">
               <span className="evidence-preview-page">p.{first.page}</span>
               <p>{excerpt(first.quote)}</p>
-              <span className="evidence-preview-more">{evidence.length > 1 ? `외 ${evidence.length - 1}건 · 클릭해 전체 근거 보기` : "클릭해 원문 페이지 확인"}</span>}
+              <span className="evidence-preview-more">{evidence.length > 1 ? `외 ${evidence.length - 1}건 · 클릭해 전체 근거 보기` : "클릭해 원문 페이지 확인"}</span>
             </div>
           )}
         </div>,
