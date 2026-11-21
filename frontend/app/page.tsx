@@ -794,7 +794,7 @@ export default function Home() {
       <div className="brand">◈ Paper<span>Signal</span></div>
       <p className="eyebrow">WORKSPACE</p>
       <nav aria-label="주요 메뉴"><a className="nav" href="#workspace-content" aria-current="page">▤　논문 라이브러리</a></nav>
-      <footer><p>{user.email}</p><button type="button" onClick={() => void signOut()} disabled={signOutLoading}>{signOutLoading ? "로그아웃 중..." : "로그아웃"}</button></footer>
+      <footer><p>{user.email}</p></footer>
     </aside>
     <div className="content">
       <header className="workspace-header">
@@ -802,7 +802,8 @@ export default function Home() {
         <span className={"workspace-engine " + (engineMode === "gemini" || engineMode === "openai" ? "engine-ready" : "engine-pending")}>
           ● {engineMode === "gemini" ? "Gemini AI 분석 활성화" : engineMode === "openai" ? "OpenAI 분석 활성화" : engineMode === "extractive" ? "텍스트 추출 모드" : "API 상태 확인 중"}
         </span>
-        <button type="button" className="mobile-sign-out" onClick={() => void signOut()} disabled={signOutLoading}>{signOutLoading ? "로그아웃 중..." : "로그아웃"}</button>
+        <span className="workspace-account" title={user.email ?? ""}>{user.email}</span>
+        <button type="button" className="workspace-sign-out" onClick={() => void signOut()} disabled={signOutLoading}>{signOutLoading ? "로그아웃 중..." : "로그아웃"}</button>
       </header>
       <div className="body" id="workspace-content" tabIndex={-1}>
         {engineMode === "gemini" && <div className="provider-notice"><b>Gemini 무료 티어 데이터 안내</b><p>현재 설정에서는 업로드한 논문에서 추출한 텍스트와 AI 응답이 Google 제품 개선에 사용되거나 사람 검토자가 처리할 수 있습니다. 공개·비기밀 논문만 업로드하고, 사내 미공개 자료나 개인정보가 포함된 문서는 올리지 마세요.</p></div>}
@@ -843,6 +844,11 @@ export default function Home() {
       <section className="details" role="dialog" aria-modal="true" aria-labelledby="paper-detail-title" tabIndex={-1} ref={detailsRef}
         onClick={event => event.stopPropagation()}>
         <div className="detail-toolbar no-print">
+          <div className="detail-toolbar-left">
+            <button type="button" className="detail-back" onClick={closeDetails}>← 라이브러리</button>
+            <span className="detail-account" title={user.email ?? ""}>{user.email}</span>
+          </div>
+          <div className="detail-toolbar-actions">
           {sourcePdf?.paperId === selected.id
             ? <div className="source-pdf-actions">
                 <button type="button" className="source-pdf-button" aria-controls="paper-original-pdf" aria-expanded={sourceViewerOpen}
@@ -867,7 +873,11 @@ export default function Home() {
                 {sourcePdfError && <button type="button" className="source-pdf-button" disabled={sourcePdfRefreshing}
                   onClick={() => void renewPdfLink(selected)}>다시 연결</button>}
               </div>}
-          <button type="button" className="close" aria-label="논문 상세 화면 닫기" onClick={closeDetails}>×</button>
+
+            {analysis && <button type="button" className="detail-report-button" onClick={() => window.print()}>보고서 PDF 저장</button>}
+            <button type="button" className="detail-sign-out" onClick={() => void signOut()} disabled={signOutLoading}>{signOutLoading ? "로그아웃 중..." : "로그아웃"}</button>
+            <button type="button" className="close" aria-label="논문 상세 화면 닫기" onClick={closeDetails}>×</button>
+          </div>
         </div>
         <p className="eyebrow">PAPER INTELLIGENCE</p>
         <h2 id="paper-detail-title">{selected.title}</h2>
@@ -926,39 +936,15 @@ export default function Home() {
           : <div className="result">
               <p className="mode">{analysis.result.mode === "llm"
                 ? "AI 구조화 분석 · 인용 근거 검증"
-                : "텍스트 추출 분석 · AI 생성 아님"}</p>
-              <JuniorPaperGuide
-                result={analysis.result}
-                sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined}
-                onOpenSourcePage={showOriginalPdfPage}
-              />
-              <JuniorVisualReading result={analysis.result}
-                sourcePdfReady={sourcePdf?.paperId === selected.id}
-                onOpenSourcePage={showOriginalPdfPage}
-              />
-              <JuniorWorkplaceGuide result={analysis.result} paperTitle={selected.title}
-                userId={user?.id ?? ""} paperId={selected.id}
-                sourcePdfReady={sourcePdf?.paperId === selected.id}
-                onOpenSourcePage={showOriginalPdfPage}
-              />
-              <div className="report-toolbar no-print">
-                <div>
-                  <b>연구 분석 보고서</b>
-                  <span>인쇄 창에서 PDF로 저장을 선택하면 A4 보고서가 생성됩니다.</span>
-                </div>
-                <button type="button" className="report-button" onClick={() => window.print()}>
-                  PDF 보고서 저장 ↓
-                </button>
-              </div>
-              {analysis.result.bibliographic && (
-                <section className="analysis-section">
+                : "텍스트 추출 분석 · AI 생성 아님"}</p>              {analysis.result.bibliographic && (
+                <section id="analysis-bibliography" className="analysis-section">
                   <h3>논문 서지정보</h3>
                   <p><b>{analysis.result.bibliographic.title}</b></p>
                   <p>{analysis.result.bibliographic.authors?.join(", ") || "저자 확인 불가"} · {analysis.result.bibliographic.year} · {analysis.result.bibliographic.venue}</p>
                   <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.bibliographic.evidence}/>
                 </section>
               )}
-              <section className="analysis-section">
+              <section id="analysis-summary" className="analysis-section">
                 <h3>핵심 요약</h3><p>{analysis.result.summary}</p>
                 {analysis.result.summary_verification && <p className={analysis.result.summary_verification.status === "model_summary" ? "muted" : "verification-note"}>
                   요약 검증: {analysis.result.summary_verification.status === "model_summary" ? "원문 수치 1차 대조 통과" : analysis.result.summary_verification.status.startsWith("reconstructed") ? "검증된 방법론·실증 결과로 재구성" : "원문 근거 확인 필요"}
@@ -969,14 +955,59 @@ export default function Home() {
                   {!!analysis.result.summary_consistency.unmatched_numeric_tokens.length && <span>{" · 구조화 항목에서 찾지 못한 숫자: " + analysis.result.summary_consistency.unmatched_numeric_tokens.join(", ")}</span>}
                 </p>}
               </section>
-              <section className="analysis-section">
+
+              <section className="analysis-overview" aria-label="논문 핵심 정보">
+                <article><span>연구 질문</span><p>{analysis.result.research_question || "확인 불가"}</p></article>
+                <article><span>연구 설계</span><p>{analysis.result.methodology?.design || "확인 불가"}</p></article>
+                <article><span>표본 · 연구 기간</span><p>{[analysis.result.methodology?.sample, analysis.result.methodology?.period].filter(Boolean).join(" · ") || "확인 불가"}</p></article>
+                <article><span>페이지 근거 확인 결과</span><strong>{analysis.result.findings_coverage?.supported_findings_count ?? analysis.result.findings?.length ?? 0}건</strong><small>실증 결과 추출 기준</small></article>
+              </section>
+              <nav className="analysis-toc no-print" aria-label="분석 보고서 목차">
+                <a href="#analysis-summary">핵심 요약</a>
+                {analysis.result.bibliographic && <a href="#analysis-bibliography">서지정보</a>}
+                <a href="#analysis-junior-guide">3분 논문 읽기</a>
+                <a href="#analysis-visual-reading">표·그래프 읽기</a>
+                <a href="#analysis-workplace">직무 활용</a>
+                <a href="#analysis-research-question">연구 질문</a>
+                <a href="#analysis-hypotheses">가설</a>
+                <a href="#analysis-contributions">학술적 기여</a>
+                {analysis.result.methodology && <a href="#analysis-methodology">방법론</a>}
+                <a href="#analysis-findings">실증 결과</a>
+                <a href="#analysis-robustness">강건성</a>
+                <a href="#analysis-limitations">연구 한계</a>
+                <a href="#analysis-implications">시사점</a>
+                <a href="#analysis-keywords">키워드</a>
+                <a href="#analysis-source-evidence">원문 근거</a>
+              </nav>
+              <div id="analysis-junior-guide" className="analysis-anchor">
+                <JuniorPaperGuide
+                  result={analysis.result}
+                  sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined}
+                  onOpenSourcePage={showOriginalPdfPage}
+                />
+              </div>
+              <div id="analysis-visual-reading" className="analysis-anchor">
+                <JuniorVisualReading result={analysis.result}
+                  sourcePdfReady={sourcePdf?.paperId === selected.id}
+                  onOpenSourcePage={showOriginalPdfPage}
+                />
+              </div>
+              <div id="analysis-workplace" className="analysis-anchor">
+                <JuniorWorkplaceGuide result={analysis.result} paperTitle={selected.title}
+                  userId={user?.id ?? ""} paperId={selected.id}
+                  sourcePdfReady={sourcePdf?.paperId === selected.id}
+                  onOpenSourcePage={showOriginalPdfPage}
+                />
+              </div>
+
+              <section id="analysis-research-question" className="analysis-section">
                 <h3>연구 질문</h3><p>{analysis.result.research_question || "확인 불가"}</p>
                 <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.research_question_evidence}/>
               </section>
-              <section className="analysis-section"><h3>연구 가설</h3><ClaimList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.hypotheses}/></section>
-              <section className="analysis-section"><h3>학술적 기여</h3><ClaimList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.contributions}/></section>
+              <section id="analysis-hypotheses" className="analysis-section"><h3>연구 가설</h3><ClaimList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.hypotheses}/></section>
+              <section id="analysis-contributions" className="analysis-section"><h3>학술적 기여</h3><ClaimList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.contributions}/></section>
               {analysis.result.methodology && (
-                <section className="analysis-section">
+                <section id="analysis-methodology" className="analysis-section">
                   <h3>연구 방법론 및 데이터</h3>
                   {analysis.result.methodology_verification?.repair_attempted && <p className="muted">2차 방법론 검증: {analysis.result.methodology_verification.repair_status === "recovered" ? "누락 방법론 복구 완료" : analysis.result.methodology_verification.repair_status === "reviewed" ? "기존 방법론 재검토 완료" : analysis.result.methodology_verification.repair_status === "partial" ? "일부 항목만 복구" : analysis.result.methodology_verification.repair_status === "no_supported_methodology" ? "추가 근거 확인 불가" : "검증 미완료"}</p>}
                   <div className="method-grid">
@@ -1043,7 +1074,7 @@ export default function Home() {
                   <EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.methodology.evidence}/>
                 </section>
               )}
-              <section className="analysis-section">
+              <section id="analysis-findings" className="analysis-section">
                 <h3>주요 실증 결과 <small>{analysis.result.findings?.length ?? 0}</small></h3>
                 {!!analysis.result.findings_deduplication?.duplicates_removed && <p className="muted">유사·중복 결과 {analysis.result.findings_deduplication.duplicates_removed}개를 통합했습니다.</p>}
                 {analysis.result.findings_verification?.repair_attempted && <p className="muted">2차 실증 결과 검증: {analysis.result.findings_verification.repair_status === "recovered" || analysis.result.findings_verification.repair_status === "recovered_by_rescue" ? "누락 결과 복구 완료" : analysis.result.findings_verification.repair_status === "reviewed" ? "기존 결과 재검토 완료" : analysis.result.findings_verification.repair_status === "no_supported_findings" ? "추가 근거 확인 불가" : "검증 미완료"}</p>}
@@ -1083,23 +1114,23 @@ export default function Home() {
                     </article>
                   )}
               </section>
-              <section className="analysis-section">
+              <section id="analysis-robustness" className="analysis-section">
                 <h3>강건성 검증</h3>
                 {!analysis.result.robustness_checks?.length ? <p className="muted">본문에서 검증 가능한 강건성 검증을 찾지 못했습니다.</p>
                   : analysis.result.robustness_checks.map((item, index) =>
                     <article className="analysis-card" key={index}><b>{item.test}</b><p>{item.result}</p><EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={item.evidence}/></article>
                   )}
               </section>
-              <section className="analysis-section">
+              <section id="analysis-limitations" className="analysis-section">
                 <h3>연구 한계</h3>
                 {!analysis.result.limitations?.length ? <p className="muted">원문 근거가 확인된 한계가 없습니다.</p>
                   : analysis.result.limitations.map((item, index) =>
                     <article className="analysis-card" key={index}><p>{item.description}</p><EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={item.evidence}/></article>
                   )}
               </section>
-              <section className="analysis-section"><h3>금융·경제적 시사점</h3><ClaimList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.implications}/></section>
-              <section className="analysis-section"><h3>핵심 키워드</h3><div className="tags">{(analysis.result.keywords ?? []).map(keyword => <span key={keyword}>{keyword}</span>)}</div></section>
-              <section className="analysis-section"><h3>검증된 원문 근거 <small>{analysis.result.evidence?.length ?? 0}</small></h3><EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.evidence}/></section>
+              <section id="analysis-implications" className="analysis-section"><h3>금융·경제적 시사점</h3><ClaimList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.implications}/></section>
+              <section id="analysis-keywords" className="analysis-section"><h3>핵심 키워드</h3><div className="tags">{(analysis.result.keywords ?? []).map(keyword => <span key={keyword}>{keyword}</span>)}</div></section>
+              <section id="analysis-source-evidence" className="analysis-section"><h3>검증된 원문 근거 <small>{analysis.result.evidence?.length ?? 0}</small></h3><EvidenceList sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined} onOpenSourcePage={showOriginalPdfPage} items={analysis.result.evidence}/></section>
               {(analysis.result.warnings ?? []).map((warning, index) => <p className="warning" key={index}>{warning}</p>)}
               <p className="muted">분석 모델: {analysis.model} · 버전: {analysis.result.analysis_version ?? "legacy"}</p>
               <button disabled={busy} className="primary" onClick={() => void analyze()}>{busy ? "분석 중..." : "다시 분석하기"}</button>
