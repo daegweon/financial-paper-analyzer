@@ -1,9 +1,9 @@
 # PaperSignal — 공개 금융논문 검색 및 PDF URL 가져오기
 
 > **작성:** 2026-11-21 KST  
-> **구현 PR:** [#36](https://github.com/daegweon/financial-paper-analyzer/pull/36)  
-> **검증된 코드:** `551f6b47aaa7b65f3e5c225cee14759868eee1fe`  
-> **CI:** [Checks #44884328059](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44884328059) — 백엔드 244통과/1제외, 프런트엔드 단위 82통과, Playwright 7통과, 일회용 PostgreSQL 계약 통과  
+> **기능 구현 PR:** [#36](https://github.com/daegweon/financial-paper-analyzer/pull/36) · [추천/정렬 개선 PR #37](https://github.com/daegweon/financial-paper-analyzer/pull/37)  
+> **최신 검증 코드:** `1fd54cd3cb93c8e51d492b0584f5390d51590396`  
+> **최신 CI:** [Checks #44893471811](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44893471811) — 백엔드 247통과/1제외, 프런트엔드 단위 82통과, Playwright 9통과, 일회용 PostgreSQL 계약 통과  
 > **운영 반영 여부:** 문서 스냅샷 이후 바뀔 수 있으므로 GitHub `main` 커밋과 Vercel/Railway의 현재 Production 배포 SHA를 별도로 대조할 것.
 
 ## 목적
@@ -121,11 +121,11 @@ OpenAlex Works 정렬 문서: https://help.openalex.org/api/sorting/
 
 ## 검증과 사용 제한
 
-검증 기준: [GitHub Actions #44884328059](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44884328059).
+검증 기준: [GitHub Actions #44893471811](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44893471811).
 
-- 백엔드: 기존 회귀 포함 **244 passed, 1 skipped**.
+- 백엔드: 기존 회귀 포함 **247 passed, 1 skipped**.
 - 프런트엔드: TypeScript/Next 빌드, 단위 테스트 **82 passed**.
-- Playwright: **7 passed**, 신규 테스트는 검색 → PDF 가져오기 → 사용자 Bearer 인증 → 기존 비공개 업로드 및 논문 등록 → 보고서 열기 흐름을 모킹한 브라우저 E2E.
+- Playwright: **9 passed**. 신규 테스트는 검색 → PDF 가져오기 → 사용자 Bearer 인증 → 기존 비공개 업로드, 검색어 없는 추천 목록, 인용 수 표시, 인용/저자 정렬, 검색어를 비운 뒤 기존 검색 쿼리 스냅샷으로 다음 페이지 이동을 검증한다.
 - 일회용 PostgreSQL: 기존 마이그레이션 및 권한 계약 테스트 통과.
 - 공개 URL 목적지 검증, 사설 IP/혼합 DNS 차단, URL 정규화, PDF 서명·암호화·용량 검증, 인증 필수, 429 오류, 리디렉션과 크기 스트리밍 제한을 테스트했다.
 - **외부 OpenAlex 실서비스 호출 및 실제 출판사별 PDF 서버와의 통합은 자동 CI에서 모킹**했다. 최종 운영 확인은 공개 논문 링크로 소규모 실사용 스모크를 수행한다.
