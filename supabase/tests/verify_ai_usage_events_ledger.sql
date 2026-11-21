@@ -6,9 +6,16 @@ BEGIN
      OR has_table_privilege('authenticated','public.ai_usage_events','SELECT')
      OR has_table_privilege('authenticated','public.ai_usage_events','INSERT')
   THEN RAISE EXCEPTION 'Browser roles must not access raw AI usage events'; END IF;
-  IF NOT has_table_privilege('service_role','public.ai_usage_events','INSERT')
-  THEN RAISE EXCEPTION 'service_role cannot insert AI usage events'; END IF;
-END $$;
+  IF NOT has_table_privilege('service_role','public.ai_usage_events','SELECT')
+     OR NOT has_table_privilege('service_role','public.ai_usage_events','INSERT')
+  THEN RAISE EXCEPTION 'service_role must be able to read and insert AI usage events'; END IF;
+  IF has_table_privilege('service_role','public.ai_usage_events','UPDATE')
+     OR has_table_privilege('service_role','public.ai_usage_events','DELETE')
+     OR has_table_privilege('service_role','public.ai_usage_events','TRUNCATE')
+     OR has_table_privilege('service_role','public.ai_usage_events','REFERENCES')
+     OR has_table_privilege('service_role','public.ai_usage_events','TRIGGER')
+  THEN RAISE EXCEPTION 'AI usage ledger must be append-only for service_role'; END IF;
+END $;
 
 BEGIN;
 SET LOCAL ROLE service_role;
@@ -75,7 +82,12 @@ BEGIN
      OR NOT has_table_privilege('service_role','public.ai_admin_settings','INSERT')
      OR NOT has_table_privilege('service_role','public.ai_admin_settings','UPDATE')
   THEN RAISE EXCEPTION 'service_role cannot manage administrator AI settings'; END IF;
-END $$;
+  IF has_table_privilege('service_role','public.ai_admin_settings','DELETE')
+     OR has_table_privilege('service_role','public.ai_admin_settings','TRUNCATE')
+     OR has_table_privilege('service_role','public.ai_admin_settings','REFERENCES')
+     OR has_table_privilege('service_role','public.ai_admin_settings','TRIGGER')
+  THEN RAISE EXCEPTION 'service_role has unnecessary delete or DDL-related AI settings privileges'; END IF;
+END $;
 
 BEGIN;
 SET LOCAL ROLE service_role;
