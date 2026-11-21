@@ -112,7 +112,7 @@ export function JuniorLearningPath({ role, userId, paperId, result, sourcePdfRea
       {storageAvailable ? " 이 기기·브라우저에만 저장되며 다른 기기에 동기화되지 않습니다." : " 이 환경에서는 학습 기록이 영구 저장되지 않을 수 있습니다."}
     </p>
 
-    <div className={styles.quiz} aria-labelledby="study-quiz-heading">
+    <div id="study-quiz" className={styles.quiz} aria-labelledby="study-quiz-heading">
       <header>
         <h4 id="study-quiz-heading">논문 읽기 이해도 점검 · 4문항</h4>
         <p>금융논문을 안전하게 해석하는 기본 원칙을 확인합니다. 실제 논문 전체의 사실 검증을 대신하지 않습니다.</p>

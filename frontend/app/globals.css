@@ -942,9 +942,6 @@ button.evidence-source-link:focus-visible {
   .result .analysis-section > p,
   .result .analysis-card > p,
   .result .method-grid p { font-size: 14px; }
-  .equation-symbol-guide { padding: 12px; }
-  .equation-symbol-row { grid-template-columns: 54px minmax(0,1fr); gap: 9px; padding: 10px; }
-  .equation-symbol-copy p { font-size: 13px; }
 }
 
 
@@ -1003,15 +1000,14 @@ button.evidence-source-link:focus-visible {
   font-size: calc(14px * var(--reading-scale)) !important;
 }
 /* Make the dedicated paper-understanding quiz easier to read than surrounding helper text. */
-.result #analysis-workplace .quiz header h4 { font-size: calc(17px * var(--reading-scale)) !important; line-height: 1.5; }
-.result #analysis-workplace .quiz header p { font-size: calc(14px * var(--reading-scale)) !important; line-height: 1.8; }
-.result #analysis-workplace .quiz .question legend { font-size: calc(16px * var(--reading-scale)) !important; line-height: 1.7; }
-.result #analysis-workplace .quiz .option { font-size: calc(15px * var(--reading-scale)) !important; line-height: 1.8; }
-.result #analysis-workplace .quiz .correct,.result #analysis-workplace .quiz .incorrect { font-size: calc(14px * var(--reading-scale)) !important; line-height: 1.85; }
-.result #analysis-workplace .quiz .actions { font-size: calc(13px * var(--reading-scale)); }
-.result #analysis-workplace .quiz .submit { font-size: calc(13px * var(--reading-scale)); }
-.result #analysis-workplace .quiz .result { font-size: calc(14px * var(--reading-scale)); }
-.result #analysis-workplace .quiz .result p { font-size: calc(13px * var(--reading-scale)) !important; }
+.result #analysis-workplace #study-quiz h4 { font-size: calc(18px * var(--reading-scale)) !important; line-height: 1.5; }
+.result #analysis-workplace #study-quiz header p { font-size: calc(15px * var(--reading-scale)) !important; line-height: 1.8; }
+.result #analysis-workplace #study-quiz fieldset legend { font-size: calc(16px * var(--reading-scale)) !important; line-height: 1.7; }
+.result #analysis-workplace #study-quiz fieldset label { font-size: calc(15px * var(--reading-scale)) !important; line-height: 1.8; }
+.result #analysis-workplace #study-quiz fieldset p { font-size: calc(14px * var(--reading-scale)) !important; line-height: 1.85; }
+.result #analysis-workplace #study-quiz button { font-size: calc(13px * var(--reading-scale)); }
+.result #analysis-workplace #study-quiz [role="status"] { font-size: calc(14px * var(--reading-scale)); }
+.result #analysis-workplace #study-quiz [role="status"] p { font-size: calc(13px * var(--reading-scale)) !important; }
 
 @media(max-width:620px) {
   .reading-size-label { display: none; }

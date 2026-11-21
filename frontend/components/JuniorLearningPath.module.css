@@ -37,8 +37,8 @@
 
 
 /* The paper-understanding check is a key learning moment; give its questions more breathing room. */
-.quiz h4 { font-size: 17px; }
-.quiz header p { font-size: 14px; line-height: 1.8; }
+.quiz h4 { font-size: 18px; }
+.quiz header p { font-size: 15px; line-height: 1.8; }
 .question legend { font-size: 16px; line-height: 1.7; }
 .option { font-size: 15px; line-height: 1.8; }
 .correct,.incorrect { font-size: 14px; line-height: 1.85; }

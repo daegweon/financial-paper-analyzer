@@ -508,8 +508,12 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await expect(readingControls.locator("output")).toHaveText("90%");
   const understandingQuiz = dialog.locator("#analysis-workplace #study-quiz-heading");
   await expect(understandingQuiz).toBeVisible();
-  const quizQuestion = dialog.locator("#analysis-workplace fieldset legend").first();
+  const quizTitleFont = await understandingQuiz.evaluate(el => getComputedStyle(el).fontSize);
+  expect(Number(quizTitleFont.replace("px", ""))).toBeGreaterThanOrEqual(16);
+  const quizQuestion = dialog.locator("#analysis-workplace #study-quiz fieldset legend").first();
   expect(Number(await quizQuestion.evaluate(el => getComputedStyle(el).fontSize.replace("px", "")))).toBeGreaterThanOrEqual(14);
+  const quizOption = dialog.locator("#analysis-workplace #study-quiz fieldset label").first();
+  expect(Number(await quizOption.evaluate(el => getComputedStyle(el).fontSize.replace("px", "")))).toBeGreaterThanOrEqual(13);
   await readingControls.getByRole("button", { name: "글자 크기 키우기" }).click();
   await expect(readingControls.locator("output")).toHaveText("100%");
   await expect.poll(() => page.evaluate(() => localStorage.getItem("papersignal-reading-scale"))).toBe("100");
