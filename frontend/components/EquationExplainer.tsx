@@ -27,7 +27,8 @@ const TOKEN_PATTERN = /[A-Za-z][A-Za-z0-9_]*|[α-ωΑ-Ω]/gu;
 
 function matchesVariableName(name: string, symbol: string) {
   const tokens = name.match(TOKEN_PATTERN) ?? [];
-  return tokens.some((token) => token.toLowerCase() === symbol.toLowerCase());
+  // Latin letter case is significant in equations: C (input) and c (constant) are different symbols.
+  return tokens.includes(symbol);
 }
 
 function explainNotation(symbol: string): Omit<SymbolExplanation, "variable"> {
