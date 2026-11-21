@@ -50,9 +50,8 @@ export function JuniorPaperGuide({ result, sourcePdfUrl, onOpenSourcePage }: Pro
         <h4>어떤 결과를 근거와 함께 확인할 수 있나요?</h4>
         {guide.findings.length ? <ol className={styles.findings}>
           {guide.findings.map((finding, index) => <li key={index}>
-            <p>{finding.claim}</p>
-            <EvidencePopover items={[{ page: finding.page, quote: finding.quote }]}
-              sourcePdfUrl={sourcePdfUrl} onOpenSourcePage={onOpenSourcePage}/> 
+            <p>{finding.claim}<EvidencePopover items={[{ page: finding.page, quote: finding.quote }]}
+              sourcePdfUrl={sourcePdfUrl} onOpenSourcePage={onOpenSourcePage}/></p>
           </li>)}
         </ol> : <p className={styles.unknown}>자동 근거 대조를 통과한 실증 결과가 없습니다. 결과를 임의로 추정하지 않습니다.</p>}
         <p className={styles.footnote}>표시된 결과는 자동 페이지·수치 1차 대조를 통과한 항목입니다. 독립 연구자의 사실 검증을 뜻하지 않습니다.</p>
