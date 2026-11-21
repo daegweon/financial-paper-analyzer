@@ -273,6 +273,14 @@ Public-paper discovery/import was first shipped on [PR #36](https://github.com/d
 
 **How to continue:** Read [Public research PDF discovery/import runbook](PUBLIC_PAPER_DISCOVERY_IMPORT_2026-11-21.md) for endpoints, security boundaries, configuration and QA. Check whether PR #37 is merged and deployed before asserting that the enhancement is live. First-author sorting is performed over the currently loaded result set because OpenAlex's works list does not provide the nested first-author-name sort needed for a global server sort. OpenAlex optional server-only `OPENALEX_API_KEY` can be configured if keyless usage limits become a blocker. Do not confuse free-to-read Open Access with redistribution rights.
 
+## 9B. Analysis evidence disclosure and library-first workspace — PR #38
+
+A UI/UX follow-up is under development in PR #38. It changes report evidence excerpts from always-visible green quote boxes into keyboard-accessible, initially collapsed disclosures; users open only the citations they want to inspect. The junior three-minute guide's direct quotes use the same disclosure. The existing table/graph learning cards were already collapsible and remain so. Print/PDF export expands closed evidence content so citations are not lost from exported reports.
+
+The login landing page is reordered to show the user's own workspace first (library, analysis jobs, stats, filters and comparison), followed by the collapsible getting-started guide, then public finance-paper discovery/import. The direct PDF upload button remains available in the library heading.
+
+**How to continue:** Read [Analysis evidence disclosure and library-first workspace](ANALYSIS_EVIDENCE_DISCLOSURE_AND_LIBRARY_FIRST_2026-11-21.md). Verify PR #38 CI and Preview before merge; Production remains on the previously released version until the PR is merged and all Vercel/Railway deployments are verified.
+
 ## 10. Remaining work and explicit non-blockers
 
 The initial product release and final UI/UX deployment are complete. The following are follow-up quality/extension items, not reasons to reopen the completed release without a concrete need.
