@@ -1,0 +1,112 @@
+.root {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  align-items: center;
+  margin: 0 0 0 5px;
+  line-height: 1;
+  z-index: 2;
+}
+.trigger {
+  display: inline-grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  padding: 0;
+  border: 1px solid #a8c9c3;
+  border-radius: 50%;
+  background: #f7fbfa;
+  color: #357c73;
+  font: 700 10px/1 Arial, sans-serif;
+  cursor: pointer;
+  transition: background .12s ease, border-color .12s ease, color .12s ease;
+}
+.trigger:hover,
+.trigger[aria-expanded="true"] {
+  border-color: #398f83;
+  background: #e8f5f1;
+  color: #176b62;
+}
+.trigger:focus-visible {
+  outline: 2px solid #178b80;
+  outline-offset: 2px;
+}
+.popover {
+  position: absolute;
+  z-index: 1000;
+  top: calc(100% + 8px);
+  right: -5px;
+  display: none;
+  width: min(360px, calc(100vw - 36px));
+  max-height: min(340px, 62vh);
+  overflow: auto;
+  padding: 12px 13px;
+  border: 1px solid #d6e5e1;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(20, 48, 55, .18);
+  color: #304b56;
+  line-height: 1.6;
+  text-align: left;
+  white-space: normal;
+}
+.popover[data-open="true"] { display: block; }
+.popoverHeader {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #edf1f0;
+  color: #315d5a;
+  font-size: 11px;
+}
+.popoverHeader>span {
+  border-radius: 20px;
+  padding: 2px 6px;
+  background: #edf6f3;
+  color: #66877f;
+  font-size: 9px;
+}
+.close {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-left: auto;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #78908b;
+  font-size: 17px;
+  cursor: pointer;
+}
+.close:hover { background: #f1f6f4; color: #315d5a; }
+.items { display: grid; gap: 11px; padding-top: 9px; }
+.item { display: grid; gap: 4px; min-width: 0; }
+.page { color: #258176; font-size: 9px; font-weight: 800; letter-spacing: .35px; }
+.quote {
+  color: #4f6470;
+  font-size: 11px;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.sourceLink {
+  justify-self: start;
+  border: 0;
+  padding: 2px 0;
+  background: transparent;
+  color: #147d74;
+  font-size: 10px;
+  font-weight: 750;
+  text-decoration: none;
+  cursor: pointer;
+}
+.sourceLink:hover { text-decoration: underline; }
+.sourceLink:focus-visible,.close:focus-visible {
+  outline: 2px solid #178b80;
+  outline-offset: 2px;
+}
+@media(max-width:620px) {
+  .popover { right: -4px; width: min(330px, calc(100vw - 28px)); max-height: 55vh; }
+}

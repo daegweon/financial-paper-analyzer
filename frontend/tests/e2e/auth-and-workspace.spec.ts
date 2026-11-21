@@ -383,32 +383,70 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await page.setViewportSize(desktopViewport);
 
   await expect(page.getByRole("navigation", { name: "분석 보고서 목차" })).toBeVisible();
-  const evidenceDisclosure = dialog.locator("details.evidence").first();
-  await expect(evidenceDisclosure).toBeVisible();
-  await expect(evidenceDisclosure).not.toHaveAttribute("open", "");
-  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeHidden();
-  await expect(evidenceDisclosure.locator("summary")).toContainText("원문 근거 보기");
-  await evidenceDisclosure.locator("summary").click();
-  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeVisible();
-  await expect(evidenceDisclosure.locator(".evidence-quote")).toContainText("연구 목적과 데이터 설명");
-  await evidenceDisclosure.locator("summary").click();
-  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeHidden();
+  const evidenceTrigger = dialog.locator("[data-evidence-trigger]").first();
+  const evidenceButton = evidenceTrigger.getByRole("button", { name: /원문 근거/ });
+  const evidencePopover = evidenceTrigger.locator("[data-evidence-popover]");
+  await expect(evidenceButton).toBeVisible();
+  await expect(evidenceButton).toHaveAttribute("aria-label", /원문 근거/);
+  await expect(evidencePopover).toBeHidden();
+
+  // Desktop hover opens a pointer-traversable preview without adding a permanent row.
+  await evidenceTrigger.hover();
+  await expect(evidencePopover).toBeVisible();
+  await expect(evidencePopover).toContainText("연구 목적과 데이터 설명");
+  await evidencePopover.hover();
+  await expect(evidencePopover).toBeVisible();
+
+  // Keyboard focus exposes the same content; Escape dismisses it.
+  await evidenceButton.focus();
+  await expect(evidencePopover).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(evidencePopover).toBeHidden();
+
+  // Clicking pins the preview; Escape dismisses it without leaving the trigger.
+  await evidenceTrigger.click();
+  await page.mouse.move(10, 10);
+  await expect(evidencePopover).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(evidencePopover).toBeHidden();
+
+  // Clicking elsewhere also dismisses a pinned preview.
+  await evidenceButton.click();
+  await expect(evidencePopover).toBeVisible();
+  await page.locator("#analysis-summary").click();
+  await expect(evidencePopover).toBeHidden();
+
+  // Touch users can open the same evidence with a tap and dismiss it explicitly.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await evidenceTrigger.tap();
+  await expect(evidencePopover).toBeVisible();
+  await evidencePopover.getByRole("button", { name: "근거 팝오버 닫기" }).tap();
+  await expect(evidencePopover).toBeHidden();
+  await page.setViewportSize(desktopViewport);
+
+  // Closed evidence is still included in report print/PDF output.
   await page.evaluate(() => window.dispatchEvent(new Event("beforeprint")));
-  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeVisible();
+  await expect(evidencePopover).toBeHidden();
   await page.emulateMedia({ media: "print" });
-  await expect(evidenceDisclosure.locator("summary")).toBeHidden();
-  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeVisible();
+  await expect(evidenceButton).toBeHidden();
+  await expect(evidencePopover).toBeVisible();
   await page.emulateMedia({ media: "screen" });
   await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
-  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeHidden();
+  await expect(evidencePopover).toBeHidden();
 
-  const juniorEvidence = dialog.locator("#analysis-junior-guide details.evidence-disclosure").first();
-  await expect(juniorEvidence).toBeVisible();
-  await expect(juniorEvidence).not.toHaveAttribute("open", "");
-  await expect(juniorEvidence.locator(".evidence-quote")).toBeHidden();
-  await juniorEvidence.locator("summary").click();
-  await expect(juniorEvidence.locator(".evidence-quote")).toBeVisible();
-  await expect(juniorEvidence.locator(".evidence-quote")).toContainText("The coefficient is positive and significant.");
+  const juniorEvidenceTrigger = dialog.locator("#analysis-junior-guide [data-evidence-trigger]").first();
+  const juniorEvidenceButton = juniorEvidenceTrigger.getByRole("button", { name: /원문 근거/ });
+  const juniorEvidencePopover = juniorEvidenceTrigger.locator("[data-evidence-popover]");
+  await expect(juniorEvidenceButton).toBeVisible();
+  await expect(juniorEvidencePopover).toBeHidden();
+  await juniorEvidenceTrigger.hover();
+  await expect(juniorEvidencePopover).toBeVisible();
+  await expect(juniorEvidencePopover).toContainText("The coefficient is positive and significant.");
+  await juniorEvidenceTrigger.click();
+  await page.mouse.move(10, 10);
+  await expect(juniorEvidencePopover).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(juniorEvidencePopover).toBeHidden();
   await expect(page.locator("#analysis-summary")).toContainText("표본 기간 동안");
   await expect(page.locator("#analysis-findings")).toHaveCount(1);
   await expect(page.locator(".detail-sign-out")).toBeVisible();

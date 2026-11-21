@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { buildVisualReadingCards } from "../lib/junior-visuals";
 import type { VisualFinding } from "../lib/junior-visuals";
 import styles from "./JuniorVisualReading.module.css";
+import { EvidencePopover } from "./EvidencePopover";
 
 type Props = {
   result: { findings?: VisualFinding[] };
@@ -52,17 +53,12 @@ export function JuniorVisualReading({ result, sourcePdfReady, onOpenSourcePage }
               {card.direction && <><dt>보고된 방향</dt><dd>{card.direction}</dd></>}
               {card.significance && <><dt>보고된 유의성</dt><dd>{card.significance}</dd></>}
             </dl>
-            {card.sourceQuote ? <blockquote className={styles.quote}>
-              <b>원문 인용 발췌 · p.{card.sourcePage}</b><p>{card.sourceQuote}</p>
-            </blockquote> : <p className={styles.warning}>표·그림을 연결할 원문 인용 페이지가 없습니다. 위치를 임의로 지정하지 않습니다.</p>}
-            {card.legendQuote && <blockquote className={styles.quote}>
-              <b>통계적 유의성 표 주석 발췌 · p.{card.legendPage}</b><p>{card.legendQuote}</p>
-            </blockquote>}
-            {card.sourcePage !== null && <button type="button" className={styles.sourceButton}
-              disabled={!sourcePdfReady || !onOpenSourcePage}
-              onClick={() => { if (card.sourcePage !== null) onOpenSourcePage?.(card.sourcePage); }}>
-              {sourcePdfReady ? "원본 PDF " + card.sourcePage + "쪽에서 확인 ↗" : "원본 PDF 연결 후 페이지 이동 가능"}
-            </button>}
+            {card.sourceQuote || card.legendQuote
+              ? <EvidencePopover items={[
+                  ...(card.sourceQuote && card.sourcePage !== null ? [{ page: card.sourcePage, quote: card.sourceQuote }] : []),
+                  ...(card.legendQuote && card.legendPage !== null ? [{ page: card.legendPage, quote: card.legendQuote }] : []),
+                ]} onOpenSourcePage={sourcePdfReady ? onOpenSourcePage : undefined}/>
+              : <p className={styles.warning}>표·그림을 연결할 원문 인용 페이지가 없습니다. 위치를 임의로 지정하지 않습니다.</p>}
             <div className={styles.checks}>
               <strong>원문에서 직접 확인할 질문</strong>
               <ol>{card.kind === "chart" ? <>

@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { juniorGuideSummary } from "../lib/junior-guide";
 import type { JuniorGuideResult } from "../lib/junior-guide";
 import styles from "./JuniorPaperGuide.module.css";
+import { EvidencePopover } from "./EvidencePopover";
 
 type Props = {
   result: JuniorGuideResult;
@@ -50,22 +51,8 @@ export function JuniorPaperGuide({ result, sourcePdfUrl, onOpenSourcePage }: Pro
         {guide.findings.length ? <ol className={styles.findings}>
           {guide.findings.map((finding, index) => <li key={index}>
             <p>{finding.claim}</p>
-            <details className="evidence evidence-disclosure">
-              <summary className="evidence-summary" aria-label={`원문 근거 보기, PDF ${finding.page}페이지`}>
-                <span className="evidence-summary-title">원문 근거 보기</span>
-                <span className="evidence-summary-page">p.{finding.page}</span>
-                <span className="evidence-summary-hint">인용문 확인</span>
-              </summary>
-              <div className="evidence-content">
-                <b>원문 인용</b>
-                <p className="evidence-quote">{finding.quote}</p>
-                {sourcePdfUrl && onOpenSourcePage
-                  ? <button type="button" className="evidence-source-link" onClick={() => onOpenSourcePage(finding.page)}>원문 {finding.page}쪽을 화면에서 함께 보기 ↓</button>
-                  : sourcePdfUrl
-                    ? <a className="evidence-source-link" href={sourcePdfUrl + "#page=" + finding.page} target="_blank" rel="noreferrer">원문 {finding.page}쪽 대조 ↗</a>
-                    : <span className="evidence-summary-hint">원문 {finding.page}쪽 근거 · PDF 링크 준비 중</span>}
-              </div>
-            </details>
+            <EvidencePopover items={[{ page: finding.page, quote: finding.quote }]}
+              sourcePdfUrl={sourcePdfUrl} onOpenSourcePage={onOpenSourcePage}/> 
           </li>)}
         </ol> : <p className={styles.unknown}>자동 근거 대조를 통과한 실증 결과가 없습니다. 결과를 임의로 추정하지 않습니다.</p>}
         <p className={styles.footnote}>표시된 결과는 자동 페이지·수치 1차 대조를 통과한 항목입니다. 독립 연구자의 사실 검증을 뜻하지 않습니다.</p>
