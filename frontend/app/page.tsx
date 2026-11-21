@@ -138,6 +138,14 @@ type Paper = {
   page_count: number | null;
 };
 type Analysis = { result: AnalysisResult; model: string; created_at?: string };
+type PublicPaper = {
+  id: string; title: string; year: number | null; doi: string;
+  authors: string[]; pdf_url: string | null; landing_url: string;
+  license: string; is_open_access: boolean;
+};
+type PublicSearchResult = {
+  query: string; page: number; total: number; has_more: boolean; results: PublicPaper[];
+};
 
 function authErrorMessage(error: unknown) {
   const authError = error as { code?: string; message?: string };
@@ -272,6 +280,12 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [engineMode, setEngineMode] = useState<"gemini" | "openai" | "extractive" | "unknown">("unknown");
+  const [publicPdfUrl, setPublicPdfUrl] = useState("");
+  const [publicQuery, setPublicQuery] = useState("");
+  const [publicSearch, setPublicSearch] = useState<PublicSearchResult | null>(null);
+  const [publicSearchError, setPublicSearchError] = useState("");
+  const [publicSearchLoading, setPublicSearchLoading] = useState(false);
+  const [publicImporting, setPublicImporting] = useState(false);
 
   useEffect(() => {
     // Failed social OAuth callbacks can carry duplicate, URL-encoded errors.
@@ -512,6 +526,81 @@ export default function Home() {
       setMessage(authErrorMessage(error));
     } finally {
       setResendingConfirmation(false);
+    }
+  }
+
+  async function searchPublicPapers(page = 1) {
+    if (!user || publicSearchLoading) return;
+    const term = publicQuery.trim();
+    if (term.length < 2) {
+      setPublicSearchError("검색어를 두 글자 이상 입력해 주세요.");
+      return;
+    }
+    const ownerId = user.id;
+    setPublicSearchLoading(true);
+    setPublicSearchError("");
+    try {
+      const { data } = await db().auth.getSession();
+      if (!data.session) throw new Error("검색하려면 다시 로그인해 주세요.");
+      const api = process.env.NEXT_PUBLIC_API_URL;
+      if (!api) throw new Error("논문 검색 API가 연결되지 않았습니다.");
+      const response = await fetch(
+        api.replace(/[/]$/, "") + "/api/public-papers/search?query=" +
+        encodeURIComponent(term) + "&page=" + page,
+        { headers: { Authorization: "Bearer " + data.session.access_token }, cache: "no-store" },
+      );
+      const payload = await response.json().catch(() => ({})) as Partial<PublicSearchResult> & { detail?: string };
+      if (!response.ok) throw new Error(payload.detail || "공개 논문 검색에 실패했습니다.");
+      if (currentUserIdRef.current !== ownerId) return;
+      setPublicSearch(payload as PublicSearchResult);
+    } catch (cause) {
+      if (currentUserIdRef.current === ownerId) {
+        setPublicSearchError((cause as Error).message || "논문 검색 중 오류가 발생했습니다.");
+      }
+    } finally {
+      setPublicSearchLoading(false);
+    }
+  }
+
+  async function importPublicPdf(url: string, title?: string) {
+    if (!user || busy || publicImporting) return;
+    const ownerId = user.id;
+    setPublicImporting(true);
+    setUploadIssue(false);
+    setMessage("공개 PDF 원문을 안전하게 가져오고 있습니다...");
+    try {
+      const { data } = await db().auth.getSession();
+      if (!data.session) throw new Error("가져오려면 다시 로그인해 주세요.");
+      const api = process.env.NEXT_PUBLIC_API_URL;
+      if (!api) throw new Error("PDF 가져오기 API가 연결되지 않았습니다.");
+      const response = await fetch(api.replace(/[/]$/, "") + "/api/public-papers/download", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + data.session.access_token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url }),
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        const failure = await response.json().catch(() => ({})) as { detail?: string };
+        throw new Error(failure.detail || "공개 PDF 다운로드에 실패했습니다.");
+      }
+      const fileBlob = await response.blob();
+      if (currentUserIdRef.current !== ownerId) return;
+      const baseName = (title || "공개 금융논문").replace(/[\\/<>|?"*:]/g, "_").trim().slice(0, 150) || "public-finance-paper";
+      const file = new File([fileBlob], baseName + ".pdf", { type: "application/pdf" });
+      // Reuse the existing user's private Storage upload and owner-scoped
+      // metadata INSERT path; no privileged server-side paper write is needed.
+      await upload(file);
+      setPublicPdfUrl("");
+    } catch (cause) {
+      if (currentUserIdRef.current === ownerId) {
+        setMessage((cause as Error).message || "PDF 가져오기에 실패했습니다.");
+        setUploadIssue(true);
+      }
+    } finally {
+      setPublicImporting(false);
     }
   }
 
@@ -820,6 +909,81 @@ export default function Home() {
               void upload(file);
             }}/>
         </div>
+        <section className="public-paper-discovery" aria-labelledby="paper-discovery-heading">
+          <div className="public-paper-discovery-header">
+            <div>
+              <p className="eyebrow">DISCOVER & IMPORT</p>
+              <h2 id="paper-discovery-heading">공개 금융 논문 찾아보기</h2>
+              <p>직접 PDF를 다운로드하지 않고 공개 원문을 검색하거나 주소로 가져올 수 있습니다.</p>
+            </div>
+          </div>
+          <form className="public-paper-url-form" onSubmit={event => {
+            event.preventDefault();
+            void importPublicPdf(publicPdfUrl.trim());
+          }}>
+            <label htmlFor="public-pdf-url">공개 PDF 주소로 가져오기</label>
+            <div className="public-paper-input-row">
+              <input id="public-pdf-url" type="url" required placeholder="https://.../paper.pdf"
+                value={publicPdfUrl} onChange={event => setPublicPdfUrl(event.target.value)}
+                maxLength={2048} disabled={busy || publicImporting}/>
+              <button type="submit" disabled={busy || publicImporting || !publicPdfUrl.trim()}>
+                {publicImporting ? "가져오는 중..." : "내 라이브러리에 가져오기"}
+              </button>
+            </div>
+          </form>
+          <form className="public-paper-search-form" onSubmit={event => {
+            event.preventDefault();
+            void searchPublicPapers(1);
+          }}>
+            <label htmlFor="public-paper-search-query">공개 학술 논문 검색 (OpenAlex)</label>
+            <div className="public-paper-input-row">
+              <input id="public-paper-search-query" type="search" minLength={2} maxLength={200}
+                placeholder="예: ETF arbitrage, asset pricing, portfolio risk"
+                value={publicQuery} onChange={event => setPublicQuery(event.target.value)}
+                disabled={publicSearchLoading}/>
+              <button type="submit" disabled={publicSearchLoading || publicQuery.trim().length < 2}>
+                {publicSearchLoading ? "검색 중..." : "논문 검색"}
+              </button>
+            </div>
+          </form>
+          <p className="public-paper-disclaimer">
+            공개 열람 가능한 논문만 검색됩니다. 무료 열람과 재배포 허용은 다르므로 원문 이용 조건을 확인하세요.
+            PDF가 없는 결과는 원문 사이트에서 확인할 수 있습니다.
+          </p>
+          {publicSearchError && <p role="alert" className="public-paper-error">{publicSearchError}</p>}
+          {publicSearch && <div className="public-paper-search-results" aria-label="공개 논문 검색 결과">
+            <p className="public-paper-search-count">
+              검색 결과: {publicSearch.total.toLocaleString("ko-KR")}편 · {publicSearch.page}페이지
+            </p>
+            {publicSearch.results.length === 0 && <p>검색 결과가 없습니다. 다른 키워드를 입력해 보세요.</p>}
+            <ul className="public-paper-result-list">
+              {publicSearch.results.map(item => <li key={item.id} className="public-paper-result">
+                <div className="public-paper-result-info">
+                  <strong>{item.title}</strong>
+                  <span>{[item.year, ...item.authors].filter(Boolean).join(" · ") || "서지정보 확인 필요"}</span>
+                  <small>원문 이용 허락: {item.license}</small>
+                </div>
+                <div className="public-paper-result-actions">
+                  {item.landing_url.startsWith("https://") &&
+                    <a href={item.landing_url} target="_blank" rel="noopener noreferrer">원문 ↗</a>}
+                  {item.pdf_url
+                    ? <button type="button" onClick={() => void importPublicPdf(item.pdf_url!, item.title)}
+                        disabled={busy || publicImporting}>
+                        {publicImporting ? "가져오는 중..." : "PDF 가져오기"}
+                      </button>
+                    : <span>공개 PDF 링크 없음</span>}
+                </div>
+              </li>)}
+            </ul>
+            <div className="public-paper-pagination">
+              <button type="button" disabled={publicSearchLoading || publicSearch.page <= 1}
+                onClick={() => void searchPublicPapers(publicSearch.page - 1)}>이전</button>
+              <span>{publicSearch.page}페이지</span>
+              <button type="button" disabled={publicSearchLoading || !publicSearch.has_more}
+                onClick={() => void searchPublicPapers(publicSearch.page + 1)}>다음</button>
+            </div>
+          </div>}
+        </section>
         <div className="stats">
           <div><p>전체 논문</p><strong>{visiblePapers.length.toString().padStart(2, "0")}</strong><small>보관 중인 논문</small></div>
           <div><p>완료된 분석</p><strong>{visiblePapers.filter(paper => paper.status === "completed").length.toString().padStart(2, "0")}</strong><small>근거 기반 결과</small></div>

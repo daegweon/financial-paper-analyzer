@@ -19,6 +19,7 @@ import fitz
 import httpx
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
+from app.public_papers import router as public_papers_router
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
 SUPABASE_KEY = os.getenv("SUPABASE_PUBLISHABLE_KEY", "")
@@ -55,6 +56,8 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Authorization", "Content-Type"],
 )
+app.include_router(public_papers_router)
+
 MAX_BYTES = 30 * 1024 * 1024
 MAX_PAGES = 300
 MAX_PAGES_TO_SCAN = 50
