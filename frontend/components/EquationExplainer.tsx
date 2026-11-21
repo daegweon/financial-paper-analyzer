@@ -84,9 +84,9 @@ export function EquationExplainer({ equations, variables = [] }: Props) {
     const seen = new Set<string>();
     const tokens = equations.flatMap((equation) => equation.match(TOKEN_PATTERN) ?? []);
     return tokens.filter((token) => {
-      const key = token.toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
+      // Preserve case: C and c are different mathematical symbols.
+      if (seen.has(token)) return false;
+      seen.add(token);
       return true;
     });
   }, [equations]);
