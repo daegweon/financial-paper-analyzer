@@ -2,6 +2,10 @@
 
 Evidence-first financial research paper workspace.
 
+## Current project status and new-session handoff
+
+The canonical, continuously maintained project state, production commit/deployment IDs, architecture, completed work, known limitations, and next-session instructions are documented in [docs/PROJECT_HANDOFF.md](docs/PROJECT_HANDOFF.md). **Read this handoff first when continuing work in a new ChatGPT/Codex session.** It supersedes older dated release-status snapshots for the current state; historical runbooks remain available for their detailed procedures.
+
 ## Product architecture
 
 - Frontend: Next.js on Vercel
