@@ -266,9 +266,9 @@ The manual workflow remains intentionally manual-only:
 
 ## 9A. Public finance-paper search and URL import — post-release feature
 
-A further public-paper discovery/import feature has been implemented on [PR #36](https://github.com/daegweon/financial-paper-analyzer/pull/36) and validated by [CI #44884328059](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44884328059). It adds authenticated OpenAlex search, PDF URL download with SSRF/DNS pinning protections and byte/page limits, and one-click user-owned private PDF imports through the existing frontend upload path. It does not change Gemini v6.4.2 or any schema.
+Public-paper discovery/import was first shipped on [PR #36](https://github.com/daegweon/financial-paper-analyzer/pull/36). A follow-up enhancement is under development on [PR #37](https://github.com/daegweon/financial-paper-analyzer/pull/37): no-query recommended finance papers, OpenAlex citation counts, title/citation/first-author/year sorting, 100-record API batches with 10-record local pages, and immutable search-query snapshots for stable pagination when the search input is edited or cleared.
 
-**How to continue:** Read [Public research PDF discovery/import runbook](PUBLIC_PAPER_DISCOVERY_IMPORT_2026-11-21.md) for endpoints, security boundaries, configuration and QA. Check whether PR #36 is merged and deployed before asserting that it is live; this snapshot records the tested implementation, not a promise about current runtime. OpenAlex optional server-only `OPENALEX_API_KEY` can be configured if keyless usage limits become a blocker. Do not confuse free-to-read Open Access with redistribution rights.
+**How to continue:** Read [Public research PDF discovery/import runbook](PUBLIC_PAPER_DISCOVERY_IMPORT_2026-11-21.md) for endpoints, security boundaries, configuration and QA. Check whether PR #37 is merged and deployed before asserting the enhancement is live. OpenAlex optional server-only `OPENALEX_API_KEY` can be configured if keyless usage limits become a blocker. Do not confuse free-to-read Open Access with redistribution rights.
 
 ## 10. Remaining work and explicit non-blockers
 

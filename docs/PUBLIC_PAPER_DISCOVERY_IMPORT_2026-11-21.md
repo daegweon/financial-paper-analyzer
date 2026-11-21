@@ -37,25 +37,71 @@
 2. 제목, 연도, 최대 네 명의 저자, 원문 링크, 해당 위치에 기록된 라이선스 정보를 확인한다.
 3. `PDF 가져오기` 버튼이 있는 결과는 한 번 클릭해 개인 라이브러리에 가져온다.
 4. `공개 PDF 링크 없음` 항목은 `원문 ↗`로 제공자 페이지를 연다.
-5. `이전`/`다음`으로 페이지를 이동한다(10개/페이지, 현재 보호 설정상 최대 10페이지).
+5. 검색 결과는 한 번에 최대 100편을 가져오고 화면에는 10편씩 보여준다. 이미 가져온 페이지는 다시 API를 호출하지 않는다. 100편을 모두 탐색한 뒤 다음 페이지를 누르면 다음 100편을 추가로 가져온다.
+6. 검색어를 입력하지 않아도 로그인 직후 분야별 추천 논문을 표시한다. 현재 추천 분야는 자산가격·금융시장, 포트폴리오·위험관리, ETF·시장 미시구조, 거시경제·금리·환율이다.
+7. 검색 결과 및 추천 목록의 정렬 기준을 바꿀 수 있다: 추천/관련도순, 인용 수 높은 순, 논문 제목 가나다순, 첫 번째 저자 이름순, 최신 발표순.
 
 **공개 열람(Open Access)은 재배포 허용을 의미하지 않는다.** OpenAlex 메타데이터에 기록된 라이선스가 누락되거나 불완전할 수 있다. 사용자는 해당 저작물의 이용 조건을 확인해야 한다. 서비스는 원문 파일을 공용 재배포하지 않고 개인용 비공개 버킷에 업로드한다.
+
+## 추천 논문, 인용 수 및 정렬
+
+### 검색어 없는 추천 목록
+
+로그인한 사용자가 라이브러리에 진입하면 `GET /api/public-papers/recommendations`가 자동 호출된다. 검색창이 비어 있어도 아래 네 분야에서 공개 PDF가 확인된 논문을 추천한다.
+
+- 자산가격·금융시장: `asset pricing financial markets`
+- 포트폴리오·위험관리: `portfolio optimization investment risk`
+- ETF·시장 미시구조: `exchange traded funds market microstructure`
+- 거시경제·금리·환율: `interest rates exchange rates monetary policy`
+
+각 분야에서 OpenAlex의 인용 수 높은 공개 논문을 우선 조회하고 PDF URL이 있는 항목을 최대 3편씩 선택한다. 분야 간 중복은 OpenAlex Work ID로 제거한다. 따라서 최대 12편이 표시되며, 특정 분야에서 PDF 공개본이 충분하지 않으면 그보다 적을 수 있다. 추천 목록은 API 인메모리 캐시로 15분 동안 재사용한다.
+
+### 인용 수
+
+- OpenAlex Work의 `cited_by_count`를 논문별 인용 수로 표시한다.
+- UI에는 **OpenAlex 인용 N회**로 출처를 명시한다. Google Scholar, Scopus 등 모든 DB를 합산한 값이 아니며 각 DB의 집계는 다를 수 있다.
+- OpenAlex의 인용 관계가 갱신되면 숫자도 바뀔 수 있다.
+- 참고: https://help.openalex.org/data/works/attributes/ 및 https://help.openalex.org/data/common-attributes/
+
+### 정렬
+
+| UI 기준 | 구현 |
+|---|---|
+| 추천순/관련도순 | OpenAlex 검색 관련도 또는 분야별 추천 순서 보존 |
+| 인용 수 높은 순 | OpenAlex `sort=cited_by_count:desc` |
+| 논문 제목 가나다순 | OpenAlex `sort=display_name:asc` |
+| 첫 번째 저자 이름순 | 브라우저에서 현재 불러온 결과의 첫 저자명을 한국어 로케일 기준으로 정렬 |
+| 최신 발표순 | OpenAlex `sort=publication_date:desc` |
+
+OpenAlex Works 정렬 문서: https://help.openalex.org/api/sorting/
+
+**저자 이름순의 범위:** OpenAlex Works 목록에서 중첩된 저자 이름을 기준으로 전역 정렬하는 API 정렬 키는 사용하지 않는다. 따라서 이 기준은 현재 화면에 불러온 결과 묶음(최대 100편, 추가 페이지를 불러오면 누적된 결과) 내에서 정렬한다. 논문별 첫 번째 저자는 원문 서지정보의 제1저자와 항상 동일하다고 보장되지 않으므로, UI는 “첫 번째 저자”로 표기한다.
+
+### 검색 결과 페이지 상태
+
+- 검색 API는 한 번에 최대 100편을 요청하고, 화면은 10편씩 로컬 페이지로 표시한다.
+- 이미 받아온 100편 내에서 이전/다음 이동은 브라우저 상태만 바꾸며 API를 다시 호출하지 않는다.
+- 현재 묶음의 마지막 화면에서 다음을 누르면 다음 OpenAlex API page를 가져와 결과 배열에 추가한다.
+- 검색어를 입력창에서 수정/삭제해도 이미 표시 중인 `publicSearch.query`는 바뀌지 않는다. 페이지 이동은 검색 당시의 쿼리 스냅샷과 API page를 사용한다. 새 검색어는 검색 버튼을 눌러야 적용된다.
+- 정렬 기준을 변경하면 저장된 검색어 스냅샷으로 첫 API 페이지부터 다시 가져온다.
 
 ## API 및 코드
 
 | API | 인증 | 응답 | 역할 |
 |---|---|---|---|
-| `GET /api/public-papers/search?query=<text>&page=<1..10>` | 유효한 사용자 Bearer JWT | OpenAlex 메타데이터/페이지 상태(JSON) | 공개 학술논문 검색 |
+| `GET /api/public-papers/recommendations` | 유효한 사용자 Bearer JWT | 분야별 최대 12편의 추천 공개 PDF 논문(JSON) | 검색어 없는 추천 목록 |
+| `GET /api/public-papers/search?query=<text>&page=<1..100>&sort=<mode>` | 유효한 사용자 Bearer JWT | OpenAlex 메타데이터/페이지 상태(JSON, 100편/요청) | 공개 학술논문 검색 및 정렬 |
 | `POST /api/public-papers/download` / `{"url":"https://..." }` | 유효한 사용자 Bearer JWT | `application/pdf` 바이트, `Cache-Control: no-store` | 검증된 공개 PDF 가져오기 |
 
 - 백엔드: [`backend/app/public_papers.py`](../backend/app/public_papers.py) (공개 검색, 안전한 다운로드), [`backend/app/main.py`](../backend/app/main.py) (Router 등록).
 - 프런트엔드: [`frontend/app/page.tsx`](../frontend/app/page.tsx) (검색·가져오기 UX 및 기존 `upload(File)` 재사용), [`frontend/app/globals.css`](../frontend/app/globals.css) (반응형 UI).
-- 단위/보안 테스트: [`backend/tests/test_public_papers.py`](../backend/tests/test_public_papers.py).
-- 브라우저 회귀: [`frontend/tests/e2e/auth-and-workspace.spec.ts`](../frontend/tests/e2e/auth-and-workspace.spec.ts).
+- 단위/보안 테스트: [`backend/tests/test_public_papers.py`](../backend/tests/test_public_papers.py) (추천 분야 응답/15분 캐시/인용 수/정렬 파라미터 포함).
+- 브라우저 회귀: [`frontend/tests/e2e/auth-and-workspace.spec.ts`](../frontend/tests/e2e/auth-and-workspace.spec.ts) (검색어 없는 추천 목록, 인용 수/저자·인용 정렬, 검색어를 지운 뒤 저장된 검색 스냅샷으로 페이지 이동 포함).
 
 ### OpenAlex
 
-- API: `https://api.openalex.org/works`, `search=<query>`, `filter=is_oa:true`, `per_page=10`.
+- API: `https://api.openalex.org/works`, `search=<query>`, `filter=is_oa:true`, `per_page=100` (키워드 검색); 추천은 분야별 `per_page=25`, `sort=cited_by_count:desc`로 검색한 뒤 PDF가 있는 상위 3편을 선택한다.
+- 키워드 검색의 서버 정렬 값은 `relevance`, `citations_desc`, `title_asc`, `year_desc`, `author_asc`다. 저자 이름순은 프런트엔드 정렬이다.
 - PDF URL: 공개 위치의 `best_oa_location.pdf_url` 우선; 해당 공개 위치에 PDF가 없는 경우 `primary_location.pdf_url`을 검토한다.
 - `OPENALEX_API_KEY`: **선택적 서버 전용 Railway API 환경 변수**. 2026년 11월 OpenAlex는 키 없이 기본·소량의 API 조회를 허용하나, 실제 운영 규모의 호출에는 **무료 API 키를 권장**한다. 키를 설정하면 외부 호출에서 `Authorization: Bearer <key>`로 사용하며 브라우저에는 전달하지 않는다.
 - 검색량 또는 외부 제공자 한도로 429가 발생하면 사용자에게 재시도를 안내한다. 실제 제공자의 SLA·호출 한도는 변경될 수 있다.
