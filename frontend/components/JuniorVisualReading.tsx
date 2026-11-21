@@ -45,12 +45,7 @@ export function JuniorVisualReading({ result, sourcePdfReady, onOpenSourcePage }
             </span>
           </summary>
           <div className={styles.body}>
-            <p className={styles.factsLabel}>논문 분석 결과에서 추출한 정보 · 원문 대조 필요
-              {(card.sourceQuote || card.legendQuote) && <EvidencePopover items={[
-                ...(card.sourceQuote && card.sourcePage !== null ? [{ page: card.sourcePage, quote: card.sourceQuote }] : []),
-                ...(card.legendQuote && card.legendPage !== null ? [{ page: card.legendPage, quote: card.legendQuote }] : []),
-              ]} onOpenSourcePage={sourcePdfReady ? onOpenSourcePage : undefined}/>}
-            </p>
+            <p className={styles.factsLabel}>논문 분석 결과에서 추출한 정보 · 원문 대조 필요</p>
             {card.claim && <p className={styles.claim}>{card.claim}</p>}
             <dl className={styles.fields}>
               {card.column && <><dt>모형·열</dt><dd>{card.column}</dd></>}
@@ -58,7 +53,12 @@ export function JuniorVisualReading({ result, sourcePdfReady, onOpenSourcePage }
               {card.direction && <><dt>보고된 방향</dt><dd>{card.direction}</dd></>}
               {card.significance && <><dt>보고된 유의성</dt><dd>{card.significance}</dd></>}
             </dl>
-            {!card.sourceQuote && !card.legendQuote && <p className={styles.warning}>표·그림을 연결할 원문 인용 페이지가 없습니다. 위치를 임의로 지정하지 않습니다.</p>}
+            {card.sourceQuote || card.legendQuote
+              ? <EvidencePopover items={[
+                  ...(card.sourceQuote && card.sourcePage !== null ? [{ page: card.sourcePage, quote: card.sourceQuote }] : []),
+                  ...(card.legendQuote && card.legendPage !== null ? [{ page: card.legendPage, quote: card.legendQuote }] : []),
+                ]} onOpenSourcePage={sourcePdfReady ? onOpenSourcePage : undefined}/>
+              : <p className={styles.warning}>표·그림을 연결할 원문 인용 페이지가 없습니다. 위치를 임의로 지정하지 않습니다.</p>}
             <div className={styles.checks}>
               <strong>원문에서 직접 확인할 질문</strong>
               <ol>{card.kind === "chart" ? <>

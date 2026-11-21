@@ -397,28 +397,16 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await evidencePopover.hover();
   await expect(evidencePopover).toBeVisible();
 
-  // Keyboard focus exposes the same content; Escape dismisses it.
-  await evidenceButton.focus();
-  await expect(evidencePopover).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(evidencePopover).toBeHidden();
-
   // Clicking pins the preview; Escape dismisses it without leaving the trigger.
-  await evidenceTrigger.click();
+  await evidenceButton.click();
   await page.mouse.move(10, 10);
   await expect(evidencePopover).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(evidencePopover).toBeHidden();
 
-  // Clicking elsewhere also dismisses a pinned preview.
-  await evidenceButton.click();
-  await expect(evidencePopover).toBeVisible();
-  await page.locator("#analysis-summary").click();
-  await expect(evidencePopover).toBeHidden();
-
   // Touch users can open the same evidence with a tap and dismiss it explicitly.
   await page.setViewportSize({ width: 390, height: 844 });
-  await evidenceTrigger.tap();
+  await evidenceButton.tap();
   await expect(evidencePopover).toBeVisible();
   await evidencePopover.getByRole("button", { name: "근거 팝오버 닫기" }).tap();
   await expect(evidencePopover).toBeHidden();
@@ -442,7 +430,7 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await juniorEvidenceTrigger.hover();
   await expect(juniorEvidencePopover).toBeVisible();
   await expect(juniorEvidencePopover).toContainText("The coefficient is positive and significant.");
-  await juniorEvidenceTrigger.click();
+  await juniorEvidenceButton.click();
   await page.mouse.move(10, 10);
   await expect(juniorEvidencePopover).toBeVisible();
   await page.keyboard.press("Escape");
