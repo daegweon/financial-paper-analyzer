@@ -393,9 +393,13 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await expect(evidenceDisclosure.locator(".evidence-quote")).toContainText("연구 목적과 데이터 설명");
   await evidenceDisclosure.locator("summary").click();
   await expect(evidenceDisclosure.locator(".evidence-quote")).toBeHidden();
+  await page.evaluate(() => window.dispatchEvent(new Event("beforeprint")));
+  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeVisible();
   await page.emulateMedia({ media: "print" });
+  await expect(evidenceDisclosure.locator("summary")).toBeHidden();
   await expect(evidenceDisclosure.locator(".evidence-quote")).toBeVisible();
   await page.emulateMedia({ media: "screen" });
+  await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
   await expect(evidenceDisclosure.locator(".evidence-quote")).toBeHidden();
 
   const juniorEvidence = dialog.locator("#analysis-junior-guide details.evidence-disclosure").first();
