@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { db } from "../lib/supabase";
 import { clampPdfPage, commitPdfPageInput, originalPdfPageUrl, pdfLinkNeedsRefresh } from "../lib/pdf-viewer";
 import { ResearchLibrary } from "../components/ResearchLibrary";
@@ -275,6 +275,25 @@ export default function Home() {
   const visiblePapers = papersOwnerId === user?.id ? papers : [];
   const [selected, setSelected] = useState<Paper | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [readingScale, setReadingScale] = useState(100);
+  const [readingScaleReady, setReadingScaleReady] = useState(false);
+  useEffect(() => {
+    try {
+      const saved = Number(window.localStorage.getItem("papersignal-reading-scale"));
+      if ([80, 90, 100, 110, 120, 130, 140].includes(saved)) setReadingScale(saved);
+    } catch {
+      // Reading remains usable if browser storage is unavailable.
+    }
+    setReadingScaleReady(true);
+  }, []);
+  useEffect(() => {
+    if (!readingScaleReady) return;
+    try {
+      window.localStorage.setItem("papersignal-reading-scale", String(readingScale));
+    } catch {
+      // The selected size remains active for this page even without persistent storage.
+    }
+  }, [readingScale, readingScaleReady]);
   const [activeJob, setActiveJob] = useState<ActiveAnalysisJob | null>(null);
   const [jobLookupError, setJobLookupError] = useState("");
   const [sourcePdf, setSourcePdf] = useState<{ paperId: string; url: string; issuedAt: number } | null>(null);
@@ -1189,6 +1208,19 @@ export default function Home() {
             <span className="detail-account" title={user.email ?? ""}>{user.email}</span>
           </div>
           <div className="detail-toolbar-actions">
+            <div className="reading-size-controls" role="group" aria-label="보고서 글자 크기">
+              <span className="reading-size-label">글자 크기</span>
+              <button type="button" className="reading-size-button" aria-label="글자 크기 줄이기"
+                title="글자 크기 줄이기" disabled={readingScale <= 80}
+                onClick={() => setReadingScale(value => Math.max(80, value - 10))}>A−</button>
+              <output className="reading-size-value" aria-live="polite">{readingScale}%</output>
+              <button type="button" className="reading-size-button" aria-label="글자 크기 키우기"
+                title="글자 크기 키우기" disabled={readingScale >= 140}
+                onClick={() => setReadingScale(value => Math.min(140, value + 10))}>A+</button>
+              <button type="button" className="reading-size-reset" aria-label="글자 크기 기본값으로"
+                title="글자 크기 기본값으로" disabled={readingScale === 100}
+                onClick={() => setReadingScale(100)}>기본</button>
+            </div>
           {sourcePdf?.paperId === selected.id
             ? <div className="source-pdf-actions">
                 <button type="button" className="source-pdf-button" aria-controls="paper-original-pdf" aria-expanded={sourceViewerOpen}
@@ -1273,7 +1305,7 @@ export default function Home() {
               {busy && <p className="analysis-progress" aria-live="polite">{message}</p>}
               <button disabled={busy || Boolean(activeJob) || Boolean(jobLookupError)} className="primary" onClick={() => void analyze()}>{busy ? "작업 상태 확인 중..." : activeJob ? "기존 분석 진행 중" : jobLookupError ? "작업 확인 필요" : "분석 시작 →"}</button>
             </div>
-          : <div className="result">
+          : <div className="result" data-reading-scale={readingScale} style={{ "--reading-scale": readingScale / 100 } as CSSProperties}>
               <p className="mode">{analysis.result.mode === "llm"
                 ? "AI 구조화 분석 · 인용 근거 검증"
                 : "텍스트 추출 분석 · AI 생성 아님"}</p>
@@ -1406,6 +1438,8 @@ export default function Home() {
                     <EquationExplainer
                       equations={analysis.result.methodology.equations}
                       variables={analysis.result.methodology.variables ?? []}
+                      sourcePdfUrl={sourcePdf?.paperId === selected.id ? sourcePdf.url : undefined}
+                      onOpenSourcePage={showOriginalPdfPage}
                     />
                   </>}
                 </section>

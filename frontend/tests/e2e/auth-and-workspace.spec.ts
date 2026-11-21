@@ -309,7 +309,7 @@ test("paper analysis opens as a full-width report with visible section navigatio
                 evidence: [{ page: 2, quote: "C denotes the operating cost." }],
               }],
               equations: [
-                "L(C) = a*C^b + c",
+                "L(C) = aCb + c",
                 "-E_P[log(pass_rate(C))] = α*C^-k",
               ],
               evidence: [{ page: 2, quote: "고정효과 모형을 추정한다." }],
@@ -483,11 +483,29 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await expect(equationGuide).toContainText("상수항");
   await expect(equationGuide).toContainText("확률분포 P 아래의 기댓값 연산자");
   await expect(equationGuide.locator(".equation-symbol-row")).toHaveCount(10);
+  await expect(equationGuide.locator(".equation-symbol-row").filter({ has: dialog.locator(".equation-symbol-token", { hasText: /^c$/ }) })).toHaveCount(1);
   const reportText = dialog.locator(".result #analysis-summary > p");
   await expect(reportText).toBeVisible();
   expect(Number(await reportText.evaluate(el => getComputedStyle(el).fontSize.replace("px", "")))).toBeGreaterThanOrEqual(15);
-  const infoGap = await evidenceTrigger.evaluate(el => getComputedStyle(el).marginLeft);
-  expect(infoGap).toBe("8px");
+  const evidenceGap = evidenceAnchor.locator(".evidence-inline-gap");
+  await expect(evidenceGap).toHaveCount(1);
+  const gapWidth = await evidenceGap.evaluate(el => el.getBoundingClientRect().width);
+  expect(gapWidth).toBeGreaterThanOrEqual(8);
+
+  const equationSymbols = await equationGuide.locator(".equation-symbol-token").allTextContents();
+  expect(equationSymbols).toEqual(["L", "C", "a", "b", "c", "EP", "log", "pass_rate", "α", "k"]);
+
+  const readingControls = dialog.getByRole("group", { name: "보고서 글자 크기" });
+  await expect(readingControls).toBeVisible();
+  await expect(readingControls.locator("output")).toHaveText("100%");
+  await readingControls.getByRole("button", { name: "글자 크기 키우기" }).click();
+  await expect(readingControls.locator("output")).toHaveText("110%");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("papersignal-reading-scale"))).toBe("110");
+  const scaledReportFont = await reportText.evaluate(el => getComputedStyle(el).fontSize);
+  expect(Number(scaledReportFont.replace("px", ""))).toBeGreaterThan(15);
+  await readingControls.getByRole("button", { name: "글자 크기 기본값으로" }).click();
+  await expect(readingControls.locator("output")).toHaveText("100%");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("papersignal-reading-scale"))).toBe("100");
   await expect(page.locator(".detail-sign-out")).toBeVisible();
 
   await page.getByRole("link", { name: "실증 결과", exact: true }).click();

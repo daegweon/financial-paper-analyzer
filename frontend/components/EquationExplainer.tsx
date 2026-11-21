@@ -14,6 +14,8 @@ type Variable = {
 type Props = {
   equations: string[];
   variables?: Variable[];
+  sourcePdfUrl?: string;
+  onOpenSourcePage?: (page: number) => void;
 };
 
 type SymbolExplanation = {
@@ -24,6 +26,14 @@ type SymbolExplanation = {
 };
 
 const TOKEN_PATTERN = /[A-Za-z][A-Za-z0-9_]*|[α-ωΑ-Ω]/gu;
+
+function tokenizeEquation(equation: string) {
+  const tokens = equation.match(TOKEN_PATTERN) ?? [];
+  return tokens.flatMap((token) => {
+    // Some papers omit multiplication marks (e.g. aCb); separate coefficient, variable and exponent.
+    return /^[a-z][A-Z][a-z]$/.test(token) ? token.split("") : [token];
+  });
+}
 
 function matchesVariableName(name: string, symbol: string) {
   // Latin letter case is significant in equations: C (input) and c (constant) are different symbols.
@@ -79,10 +89,10 @@ function explainNotation(symbol: string): Omit<SymbolExplanation, "variable"> {
   };
 }
 
-export function EquationExplainer({ equations, variables = [] }: Props) {
+export function EquationExplainer({ equations, variables = [], sourcePdfUrl, onOpenSourcePage }: Props) {
   const symbols = useMemo(() => {
     const seen = new Set<string>();
-    const tokens = equations.flatMap((equation) => equation.match(TOKEN_PATTERN) ?? []);
+    const tokens = equations.flatMap(tokenizeEquation);
     return tokens.filter((token) => {
       // Preserve case: C and c are different mathematical symbols.
       if (seen.has(token)) return false;
@@ -125,7 +135,7 @@ export function EquationExplainer({ equations, variables = [] }: Props) {
               ? <div className="equation-symbol-source">
                   <span>논문에서 추출한 변수 정의</span>
                   {item.variable?.evidence?.length
-                    ? <EvidencePopover items={item.variable.evidence} label={`${symbols[index]} 변수 정의 원문 근거`}>원문 근거</EvidencePopover>
+                    ? <EvidencePopover items={item.variable.evidence} sourcePdfUrl={sourcePdfUrl} onOpenSourcePage={onOpenSourcePage} label={`${symbols[index]} 변수 정의 원문 근거`}>원문 근거</EvidencePopover>
                     : <span className="equation-source-unavailable">페이지 인용 미연결</span>}
                 </div>
               : <span className="equation-symbol-caveat">일반 표기 해설 · 논문 내 구체적 의미는 별도 확인 필요</span>}

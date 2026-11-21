@@ -958,3 +958,74 @@ button.evidence-source-link:focus-visible {
   .equation-symbol-row { grid-template-columns: 54px minmax(0,1fr); gap: 9px; padding: 10px; }
   .equation-symbol-copy p { font-size: 13px; }
 }
+
+
+/* Inline evidence: reserve a visible word-sized gap after claim text. */
+.evidence-inline-gap { display: inline-block; width: .65em; min-width: .65em; }
+.evidence-info-button { margin-left: 0 !important; }
+
+/* Compact reading-size control in the sticky report toolbar. */
+.reading-size-controls {
+  display: inline-flex; align-items: center; gap: 5px; min-height: 38px;
+  padding: 3px 6px; border: 1px solid #e0e9eb; border-radius: 8px; background: #f8fbfb;
+}
+.reading-size-label { padding: 0 4px; color: #607987; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.reading-size-button,.reading-size-reset {
+  display: inline-grid; place-items: center; min-width: 32px; min-height: 30px; padding: 4px 7px;
+  border: 1px solid #d7e4e6; border-radius: 6px; background: #fff; color: #28656a;
+  font-size: 12px; font-weight: 800;
+}
+.reading-size-button:hover:not(:disabled),.reading-size-reset:hover:not(:disabled) { background: #eaf6f3; border-color: #a9d0c9; }
+.reading-size-button:disabled,.reading-size-reset:disabled { opacity: .38; cursor: not-allowed; }
+.reading-size-value { min-width: 39px; color: #2b5961; font-size: 11px; font-weight: 800; text-align: center; font-variant-numeric: tabular-nums; }
+.reading-size-reset { min-width: 38px; font-size: 11px; }
+
+/* All report-reading surfaces inherit one user-controlled scale. */
+.result { --reading-scale: 1; font-size: calc(15px * var(--reading-scale)); }
+.result .analysis-section h3 { font-size: calc(18px * var(--reading-scale)); }
+.result .analysis-section h4 { font-size: calc(15px * var(--reading-scale)); }
+.result .analysis-section > p,.result .analysis-card > p,.result .method-grid p { font-size: calc(15px * var(--reading-scale)); }
+.result .analysis-card > b { font-size: calc(14px * var(--reading-scale)); }
+.result .method-grid b { font-size: calc(13px * var(--reading-scale)); }
+.result .finding-meta span,.result .tag,.result .verification-ok,.result .verification-review { font-size: calc(12px * var(--reading-scale)); }
+.result .muted,.result .warning,.result .verification-note { font-size: calc(13px * var(--reading-scale)); }
+.result .equation { font-size: calc(15px * var(--reading-scale)); }
+.result .evidence-preview-meta { font-size: calc(11px * var(--reading-scale)); }
+.result .evidence-preview-quote { font-size: calc(13px * var(--reading-scale)); }
+.result .evidence-preview-hint { font-size: calc(11px * var(--reading-scale)); }
+.result .evidence-popover-heading strong { font-size: calc(13px * var(--reading-scale)); }
+.result .evidence-popover-heading span,.result .evidence-popover-page { font-size: calc(11px * var(--reading-scale)); }
+.result .evidence-popover-item p { font-size: calc(13px * var(--reading-scale)); }
+.result .evidence-popover-link { font-size: calc(12px * var(--reading-scale)); }
+.result .evidence-popover-footer { font-size: calc(11px * var(--reading-scale)); }
+.result .equation-symbol-heading h5 { font-size: calc(15px * var(--reading-scale)); }
+.result .equation-symbol-heading p { font-size: calc(13px * var(--reading-scale)); }
+.result .equation-symbol-copy strong { font-size: calc(14px * var(--reading-scale)); }
+.result .equation-symbol-copy p { font-size: calc(14px * var(--reading-scale)); }
+
+/* CSS-module learning sections need explicit scaling because their base type is locally scoped. */
+.result #analysis-junior-guide p,.result #analysis-visual-reading p,.result #analysis-workplace p,
+.result #analysis-junior-guide li,.result #analysis-visual-reading li,.result #analysis-workplace li,
+.result #analysis-junior-guide dd,.result #analysis-workplace dd {
+  font-size: calc(14px * var(--reading-scale)) !important; line-height: 1.85;
+}
+.result #analysis-junior-guide h3,.result #analysis-visual-reading h3,.result #analysis-workplace h3 {
+  font-size: calc(19px * var(--reading-scale)) !important;
+}
+.result #analysis-junior-guide h4,.result #analysis-visual-reading h4,.result #analysis-workplace h4 {
+  font-size: calc(15px * var(--reading-scale)) !important;
+}
+.result #analysis-junior-guide summary,.result #analysis-visual-reading summary,.result #analysis-workplace summary {
+  font-size: calc(14px * var(--reading-scale)) !important;
+}
+@media(max-width:620px) {
+  .reading-size-label { display: none; }
+  .reading-size-controls { gap: 3px; padding: 2px 4px; }
+  .reading-size-button,.reading-size-reset { min-width: 29px; min-height: 29px; padding: 3px 5px; }
+  .result { font-size: calc(14px * var(--reading-scale)); }
+  .result .analysis-section > p,.result .analysis-card > p,.result .method-grid p { font-size: calc(14px * var(--reading-scale)); }
+}
+@media print {
+  .reading-size-controls { display: none !important; }
+  .result { --reading-scale: 1 !important; }
+}

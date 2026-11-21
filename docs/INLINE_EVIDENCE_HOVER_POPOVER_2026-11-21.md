@@ -95,3 +95,14 @@
 3. 분석 보고서 본문, 섹션 제목, 방법론, 수식, 근거 팝오버와 주니어 학습/표·그래프/직무 가이드의 폰트 크기와 줄 간격을 확대한다.
 
 회귀 테스트는 수식 두 개와 변수 C의 추출 정의를 포함해 기호 10개의 해설, 원문 정의, 본문 15px, 근거 아이콘 간격 8px를 검증한다.
+
+
+## 2026-11-22 follow-up: inline spacing, reader controls and equation symbol coverage
+
+The user's next Preview review showed that the paragraph-level evidence icon still looked crowded, the report needed user-controlled font sizing, and the symbol guide was not visible in the older Preview URL.
+
+- The claim text and info button are now separated by a dedicated inline spacer (.evidence-inline-gap, 0.65em) rather than relying on button margin. The spacing is tested by measuring its rendered width.
+- The sticky report toolbar now has A− / A+ / 기본 controls. The scale ranges from 80% to 140% in 10% steps, affects the analysis report and junior learning sections, and persists under papersignal-reading-scale in localStorage. It is hidden in print output.
+- Equation parsing now splits the common implicit-multiplication pattern aCb into a, C, and b, while preserving case so C and c remain distinct. The exact sample L(C) = aCb + c and -EP [log(pass_rate(C))] = α*C^-k are covered by the browser fixture.
+- Extracted variable definitions and their page-level source evidence are passed into the equation guide, so the guide can link back to the original PDF.
+- The browser test checks all 10 symbols, the extracted definition for C, the separate c constant, the spacer width, the A+ scale change, and localStorage persistence.

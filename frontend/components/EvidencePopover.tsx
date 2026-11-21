@@ -114,7 +114,10 @@ export function EvidencePopover({
       if (!rootRef.current?.contains(event.relatedTarget as Node | null) && !pinned) setOpen(false);
     }}
   >
-    {children != null && <span className="evidence-inline-copy">{children}</span>}
+    {children != null && <>
+      <span className="evidence-inline-copy">{children}</span>
+      <span className="evidence-inline-gap" aria-hidden="true" />
+    </>}
     <button
       ref={buttonRef}
       type="button"

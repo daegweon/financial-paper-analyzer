@@ -293,11 +293,13 @@ The PR #38 collapsible UI still left a repeated full-width "원문 근거 보기
 
 **2026-11-22 user-requested readability follow-up:** the same PR adds an 8px gap between claim text and the evidence icon, a symbol-by-symbol equation explainer (prioritizing extracted paper variable definitions and marking unknown meanings instead of guessing), and larger report/junior-guide typography. The regression test covers the formula `L(C) = a*C^b + c`, `-E_P[log(pass_rate(C))] = α*C^-k`, ten symbols, the extracted definition for C, report body type size, and icon spacing.
 
+**2026-11-22 follow-up after the user's next Preview review:** PR #41 now includes a dedicated 0.65em spacer between body claim text and its evidence icon; A−/A+/기본 reading controls with 80–140% scale and localStorage persistence; and an equation-symbol tokenizer that splits implicit multiplication aCb into a, C, b without collapsing case-distinct C/c. Equation variable definitions pass their original-PDF evidence through to the explainer. The browser regression checks 10 symbols, font scaling, persisted preference, and icon gap. The user's previous screenshot used an older Preview hostname; use only the exact-head Preview linked in the current PR after CI completes.
+
 **How to continue:** Read [Inline source-evidence hover / info popover UX](INLINE_EVIDENCE_HOVER_POPOVER_2026-11-21.md). Verify the latest PR #41 head and Preview before merge. The Preview build and full CI must pass before Production merge. This is frontend-only; no backend, schema, or analysis-engine change.
 
 ## 10. Remaining work and explicit non-blockers
 
-The initial product release and final UI/UX deployment are complete. The following are follow-up quality/extension items, not reasons to reopen the completed release without a concrete need.
+The initial product release is live; PR #41's current evidence/readability follow-up remains in Preview validation and is not yet deployed to Production. The following are follow-up quality/extension items, not reasons to reopen the completed release without a concrete need.
 
 ### Recommended lightweight post-release checks
 1. User manually opens the canonical production URL and confirms the new persistent logout/header and full-width report feel correct on their actual devices.
