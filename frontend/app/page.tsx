@@ -239,7 +239,7 @@ function groupedVariableEvidence(variables: Variable[]): Evidence[] {
   const grouped = new Map<string, Evidence & { contexts: string[] }>();
   for (const variable of variables) {
     for (const item of variable.evidence ?? []) {
-      const normalizedQuote = item.quote.trim().replace(/\\s+/g, " ").toLocaleLowerCase();
+      const normalizedQuote = item.quote.trim().replace(/\s+/g, " ").toLocaleLowerCase();
       const key = `${item.page}::${normalizedQuote}`;
       const existing = grouped.get(key);
       if (existing) {
