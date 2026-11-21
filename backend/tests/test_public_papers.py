@@ -103,11 +103,13 @@ def test_openalex_normalizes_oa_pdf_and_unknown_license():
         "title": "ETF arbitrage",
         "publication_year": 2026,
         "authorships": [{"author": {"display_name": "Researcher"}}],
+        "cited_by_count": 1234,
         "open_access": {"is_oa": True},
         "best_oa_location": {"is_oa": True, "pdf_url": "https://publisher.org/etf.pdf"},
     })
     assert item["pdf_url"] == "https://publisher.org/etf.pdf"
     assert item["authors"] == ["Researcher"]
+    assert item["cited_by_count"] == 1234
     assert item["license"] == "미확인"
     assert papers._paper_search_item({"title": "No PDF", "open_access": {"is_oa": True}})["pdf_url"] is None
 
@@ -125,17 +127,24 @@ def test_search_uses_server_optional_key_and_pagination(monkeypatch):
         async def __aexit__(self, *args): return None
         async def get(self, url, *, params, headers):
             requests.append((url, params, headers))
-            return httpx.Response(200, json={"meta": {"count": 32}, "results": [{
+            return httpx.Response(200, json={"meta": {"count": 250}, "results": [{
                 "id": "https://openalex.org/W1", "title": "Portfolio",
+                "cited_by_count": 456,
                 "best_oa_location": {"is_oa": True, "pdf_url": "https://publisher.org/a.pdf"},
                 "open_access": {"is_oa": True},
             }]})
     monkeypatch.setattr(papers.httpx, "AsyncClient", Client)
-    res = TestClient(main.app).get("/api/public-papers/search?query=ETF&page=2", headers=AUTH)
+    res = TestClient(main.app).get(
+        "/api/public-papers/search?query=ETF&page=2&sort=citations_desc", headers=AUTH
+    )
     assert res.status_code == 200
     assert res.json()["has_more"] is True
+    assert res.json()["per_page"] == 100
     assert res.json()["results"][0]["title"] == "Portfolio"
+    assert res.json()["results"][0]["cited_by_count"] == 456
     assert requests[0][1]["page"] == 2
+    assert requests[0][1]["per_page"] == 100
+    assert requests[0][1]["sort"] == "cited_by_count:desc"
     assert requests[0][2]["Authorization"] == "Bearer qa_key"
 
 
@@ -195,3 +204,77 @@ def test_streaming_content_size_limit_without_length_header(monkeypatch):
     with pytest.raises(HTTPException) as exc:
         asyncio.run(papers._download_external_pdf("https://publisher.org/p.pdf"))
     assert exc.value.status_code == 413
+
+
+def test_recommendations_return_citation_counts_and_cache_by_topic(monkeypatch):
+    async def authenticate(token):
+        assert token == "verified_mock_token"
+        return "verified-user"
+    monkeypatch.setattr(papers, "_authenticated_user", authenticate)
+    papers._RECOMMENDATION_CACHE.update({"expires_at": 0.0, "results": []})
+    calls = []
+    class Client:
+        def __init__(self, *args, **kwargs):
+            assert kwargs["trust_env"] is False
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return None
+        async def get(self, url, *, params, headers):
+            calls.append(params)
+            term = params["search"]
+            slug = str(len(calls))
+            return httpx.Response(200, json={
+                "meta": {"count": 25},
+                "results": [{
+                    "id": "https://openalex.org/W" + slug,
+                    "title": "Recommended " + term,
+                    "publication_year": 2024,
+                    "cited_by_count": 1000 - len(calls),
+                    "authorships": [{"author": {"display_name": "Research Author"}}],
+                    "best_oa_location": {
+                        "is_oa": True, "pdf_url": "https://publisher.org/" + slug + ".pdf",
+                        "landing_page_url": "https://publisher.org/" + slug,
+                        "license": "cc-by",
+                    },
+                    "open_access": {"is_oa": True},
+                }],
+            })
+    monkeypatch.setattr(papers.httpx, "AsyncClient", Client)
+    client = TestClient(main.app)
+    response = client.get("/api/public-papers/recommendations", headers=AUTH)
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body["results"]) == 4
+    assert len(calls) == 4
+    assert all(call["sort"] == "cited_by_count:desc" for call in calls)
+    assert all(call["per_page"] == 25 for call in calls)
+    assert all(item["cited_by_count"] > 0 for item in body["results"])
+    assert len({item["category"] for item in body["results"]}) == 4
+    cached = client.get("/api/public-papers/recommendations", headers=AUTH)
+    assert cached.status_code == 200
+    assert cached.json()["cached"] is True
+    assert len(calls) == 4
+
+
+def test_author_sort_is_supported_for_client_side_sorting(monkeypatch):
+    async def authenticate(token): return "verified-user"
+    monkeypatch.setattr(papers, "_authenticated_user", authenticate)
+    requests = []
+    class Client:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return None
+        async def get(self, url, *, params, headers):
+            requests.append(params)
+            return httpx.Response(200, json={"meta": {"count": 1}, "results": []})
+    monkeypatch.setattr(papers.httpx, "AsyncClient", Client)
+    response = TestClient(main.app).get(
+        "/api/public-papers/search?query=ETF&sort=author_asc", headers=AUTH
+    )
+    assert response.status_code == 200
+    assert response.json()["sort"] == "author_asc"
+    assert "sort" not in requests[0]
+
+
+def test_recommendations_require_authentication():
+    response = TestClient(main.app).get("/api/public-papers/recommendations")
+    assert response.status_code == 401

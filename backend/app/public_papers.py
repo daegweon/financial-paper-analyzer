@@ -12,6 +12,7 @@ import ipaddress
 import os
 import re
 import socket
+import time
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import fitz
@@ -25,6 +26,19 @@ MAX_PDF_PAGES = 300
 MAX_REDIRECTS = 3
 OPENALEX_URL = "https://api.openalex.org/works"
 USER_AGENT = "PaperSignal-PublicResearch/1.0"
+OPENALEX_PAGE_SIZE = 100
+RECOMMENDATION_CACHE_TTL_SECONDS = 15 * 60
+RECOMMENDATION_TOPICS = (
+    ("자산가격·금융시장", "asset pricing financial markets"),
+    ("포트폴리오·위험관리", "portfolio optimization investment risk"),
+    ("ETF·시장 미시구조", "exchange traded funds market microstructure"),
+    ("거시경제·금리·환율", "interest rates exchange rates monetary policy"),
+)
+_RECOMMENDATION_CACHE: dict = {"expires_at": 0.0, "results": []}
+OPENALEX_SELECT = (
+    "id,title,publication_year,publication_date,doi,authorships,"
+    "best_oa_location,primary_location,open_access,cited_by_count"
+)
 _HOST_PART = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 
 
@@ -190,12 +204,14 @@ def _paper_search_item(work: dict) -> dict:
         if isinstance(author, dict) and author.get("display_name"):
             authors.append(str(author["display_name"])[:100])
     oa = work.get("open_access") or {}
+    citations = work.get("cited_by_count")
     return {
         "id": str(work.get("id") or "")[:150],
         "title": str(work.get("title") or work.get("display_name") or "제목 없음")[:500],
         "year": work.get("publication_year") if isinstance(work.get("publication_year"), int) else None,
         "doi": str(work.get("doi") or "")[:250],
         "authors": authors,
+        "cited_by_count": citations if isinstance(citations, int) and not isinstance(citations, bool) else 0,
         "pdf_url": pdf_url,
         "landing_url": str((location or {}).get("landing_page_url") or work.get("doi") or work.get("id") or "")[:2048],
         "license": str((location or {}).get("license") or "미확인")[:80],
@@ -206,7 +222,8 @@ def _paper_search_item(work: dict) -> dict:
 @router.get("/search")
 async def search_papers(
     query: str = Query(min_length=2, max_length=200),
-    page: int = Query(default=1, ge=1, le=10),
+    page: int = Query(default=1, ge=1, le=100),
+    sort: str = Query(default="relevance"),
     authorization: str | None = Header(default=None),
 ) -> dict:
     token = _bearer_token(authorization)
@@ -214,13 +231,26 @@ async def search_papers(
     term = query.strip()
     if len(term) < 2:
         raise HTTPException(status_code=422, detail="검색어를 두 글자 이상 입력해 주세요.")
+    sort_options = {
+        "relevance": None,
+        "citations_desc": "cited_by_count:desc",
+        "title_asc": "display_name:asc",
+        "year_desc": "publication_date:desc",
+        # OpenAlex does not provide a work-list sort by nested author name.
+        # The frontend sorts all results already loaded in its current result set.
+        "author_asc": None,
+    }
+    if sort not in sort_options:
+        raise HTTPException(status_code=422, detail="지원하지 않는 논문 정렬 기준입니다.")
     params = {
         "search": term,
         "filter": "is_oa:true",
         "page": page,
-        "per_page": 10,
-        "select": "id,title,publication_year,doi,authorships,best_oa_location,primary_location,open_access",
+        "per_page": OPENALEX_PAGE_SIZE,
+        "select": OPENALEX_SELECT,
     }
+    if sort_options[sort]:
+        params["sort"] = sort_options[sort]
     key = os.getenv("OPENALEX_API_KEY", "").strip()
     headers = {"Accept": "application/json", "User-Agent": USER_AGENT}
     if key:
@@ -238,7 +268,7 @@ async def search_papers(
         payload = response.json()
         if not isinstance(payload, dict) or not isinstance(payload.get("results"), list):
             raise ValueError("invalid OpenAlex response")
-        items = [_paper_search_item(work) for work in payload["results"] if isinstance(work, dict)][:10]
+        items = [_paper_search_item(work) for work in payload["results"] if isinstance(work, dict)][:OPENALEX_PAGE_SIZE]
         count = (payload.get("meta") or {}).get("count", 0)
         total = max(0, count) if isinstance(count, int) and not isinstance(count, bool) else 0
     except (ValueError, TypeError, AttributeError):
@@ -247,11 +277,102 @@ async def search_papers(
         "source": "OpenAlex",
         "query": term,
         "page": page,
+        "per_page": OPENALEX_PAGE_SIZE,
+        "sort": sort,
         "total": total,
-        "has_more": page < 10 and page * 10 < total,
+        "has_more": page < 100 and page * OPENALEX_PAGE_SIZE < total,
         "results": items,
     }
 
+
+@router.get("/recommendations")
+async def recommended_papers(
+    authorization: str | None = Header(default=None),
+) -> dict:
+    token = _bearer_token(authorization)
+    await _authenticated_user(token)
+    now = time.monotonic()
+    cached = _RECOMMENDATION_CACHE
+    if cached["expires_at"] > now and cached["results"]:
+        return {"source": "OpenAlex", "results": cached["results"], "cached": True}
+
+    key = os.getenv("OPENALEX_API_KEY", "").strip()
+    headers = {"Accept": "application/json", "User-Agent": USER_AGENT}
+    if key:
+        headers["Authorization"] = "Bearer " + key
+
+    async def fetch_topic(client: httpx.AsyncClient, category: str, term: str) -> list[dict]:
+        params = {
+            "search": term,
+            "filter": "is_oa:true",
+            "sort": "cited_by_count:desc",
+            "page": 1,
+            "per_page": 25,
+            "select": OPENALEX_SELECT,
+        }
+        try:
+            response = await client.get(OPENALEX_URL, params=params, headers=headers)
+        except httpx.RequestError:
+            raise HTTPException(status_code=502, detail="공개 논문 추천 서비스를 연결할 수 없습니다.")
+        if response.status_code == 429:
+            raise HTTPException(status_code=429, detail="공개 논문 검색 한도에 도달했습니다. 잠시 후 다시 시도해 주세요.")
+        if response.status_code >= 400:
+            raise HTTPException(status_code=502, detail="공개 논문 추천 서비스 요청이 실패했습니다.")
+        try:
+            payload = response.json()
+            if not isinstance(payload, dict) or not isinstance(payload.get("results"), list):
+                raise ValueError("invalid OpenAlex recommendation response")
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=502, detail="공개 논문 추천 결과를 해석할 수 없습니다.")
+        items = []
+        for work in payload["results"]:
+            if not isinstance(work, dict):
+                continue
+            item = _paper_search_item(work)
+            if not item["is_open_access"] or not item["pdf_url"]:
+                continue
+            item["category"] = category
+            items.append(item)
+            if len(items) == 3:
+                break
+        return items
+
+    try:
+        async with httpx.AsyncClient(timeout=18, trust_env=False) as client:
+            batches = await asyncio.gather(
+                *(fetch_topic(client, category, term) for category, term in RECOMMENDATION_TOPICS),
+                return_exceptions=True,
+            )
+    except httpx.RequestError:
+        raise HTTPException(status_code=502, detail="공개 논문 추천 서비스를 연결할 수 없습니다.")
+
+    results: list[dict] = []
+    seen: set[str] = set()
+    failures = []
+    for batch in batches:
+        if isinstance(batch, BaseException):
+            failures.append(batch)
+            continue
+        for item in batch:
+            if item["id"] not in seen:
+                seen.add(item["id"])
+                results.append(item)
+
+    if not results and failures:
+        if any(isinstance(error, HTTPException) and error.status_code == 429 for error in failures):
+            raise HTTPException(status_code=429, detail="공개 논문 검색 한도에 도달했습니다. 잠시 후 다시 시도해 주세요.")
+        raise HTTPException(status_code=502, detail="공개 논문 추천 목록을 불러오지 못했습니다.")
+    if not results:
+        raise HTTPException(status_code=502, detail="현재 추천할 수 있는 공개 PDF 논문이 없습니다.")
+
+    _RECOMMENDATION_CACHE["results"] = results
+    _RECOMMENDATION_CACHE["expires_at"] = time.monotonic() + RECOMMENDATION_CACHE_TTL_SECONDS
+    return {
+        "source": "OpenAlex",
+        "results": results,
+        "cached": False,
+        "partial": bool(failures),
+    }
 
 @router.post("/download")
 async def download_paper(

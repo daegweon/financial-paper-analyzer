@@ -421,6 +421,9 @@ test("public-paper search and one-click import preserve user-owned PDF upload", 
       body: JSON.stringify({ Key: paper.storage_path }),
     });
   });
+  await page.route("https://api.mock.papersignal.test/api/public-papers/recommendations", route =>
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ results: [] }) }),
+  );
   await page.route("https://api.mock.papersignal.test/api/public-papers/search**", route => {
     searchAuthorized = route.request().headers()["authorization"]?.startsWith("Bearer ") ?? false;
     return route.fulfill({
@@ -429,6 +432,7 @@ test("public-paper search and one-click import preserve user-owned PDF upload", 
         query: "ETF", page: 1, total: 1, has_more: false,
         results: [{
           id: "https://openalex.org/W123", title: "ETF asset pricing", year: 2025,
+          cited_by_count: 87,
           doi: "https://doi.org/10.1234/etf", authors: ["Researcher"],
           pdf_url: "https://journal.example.org/etf.pdf",
           landing_url: "https://journal.example.org/etf",
@@ -457,4 +461,88 @@ test("public-paper search and one-click import preserve user-owned PDF upload", 
   expect(downloadAuthorized).toBe(true);
   expect(storageAuthorized).toBe(true);
   expect(uploaded).toBe(true);
+});
+
+
+test("shows recommended public finance papers without a search query and sorts by citations/authors", async ({ page }) => {
+  await seedAuthenticatedSession(page);
+  await page.route("https://api.mock.papersignal.test/api/public-papers/recommendations", route =>
+    route.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({
+        source: "OpenAlex",
+        results: [
+          { id: "W1", title: "Zeta Markets", year: 2023, authors: ["Zed Author"], cited_by_count: 1200,
+            category: "자산가격·금융시장", pdf_url: "https://journal.example.org/zeta.pdf",
+            landing_url: "https://journal.example.org/zeta", license: "cc-by", is_open_access: true },
+          { id: "W2", title: "Alpha Portfolio", year: 2025, authors: ["Alice Author"], cited_by_count: 45,
+            category: "포트폴리오·위험관리", pdf_url: "https://journal.example.org/alpha.pdf",
+            landing_url: "https://journal.example.org/alpha", license: "cc-by", is_open_access: true },
+          { id: "W3", title: "Beta ETF", year: 2024, authors: ["Bob Author"], cited_by_count: 430,
+            category: "ETF·시장 미시구조", pdf_url: "https://journal.example.org/beta.pdf",
+            landing_url: "https://journal.example.org/beta", license: "cc-by", is_open_access: true },
+        ],
+      }),
+    }),
+  );
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "어떤 논문을 읽을지 모르겠다면, 여기서 시작하세요" })).toBeVisible();
+  await expect(page.getByText("OpenAlex 인용 1,200회")).toBeVisible();
+
+  await page.locator("#public-paper-sort").selectOption("citations_desc");
+  let titles = await page.locator(".public-paper-result-info strong").allTextContents();
+  expect(titles).toEqual(["Zeta Markets", "Beta ETF", "Alpha Portfolio"]);
+
+  await page.locator("#public-paper-sort").selectOption("author_asc");
+  titles = await page.locator(".public-paper-result-info strong").allTextContents();
+  expect(titles).toEqual(["Alpha Portfolio", "Beta ETF", "Zeta Markets"]);
+});
+
+test("clearing the search box does not break pagination of the saved search result set", async ({ page }) => {
+  await seedAuthenticatedSession(page);
+  const requests: Array<{ query: string | null; page: string | null }> = [];
+  await page.route("https://api.mock.papersignal.test/api/public-papers/recommendations", route =>
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ results: [] }) }),
+  );
+  await page.route("https://api.mock.papersignal.test/api/public-papers/search**", route => {
+    const url = new URL(route.request().url());
+    const query = url.searchParams.get("query");
+    const pageNumber = url.searchParams.get("page");
+    requests.push({ query, page: pageNumber });
+    const secondPage = pageNumber === "2";
+    const title = secondPage ? "ETF saved-query page two" : "ETF saved-query page one";
+    const results = Array.from({ length: 10 }, (_, index) => ({
+      id: "https://openalex.org/" + (secondPage ? "W2" : "W1") + "-" + index,
+      title: title + " paper " + index,
+      year: 2025,
+      authors: ["Research Author"],
+      cited_by_count: 10 + index,
+      pdf_url: null,
+      landing_url: "https://journal.example.org/paper",
+      license: "미확인",
+      is_open_access: true,
+    }));
+    return route.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({
+        query: "ETF", page: Number(pageNumber), per_page: 100,
+        total: 200, has_more: true, results,
+      }),
+    });
+  });
+
+  await page.goto("/");
+  const search = page.getByRole("searchbox", { name: "공개 학술 논문 검색 (OpenAlex)" });
+  await search.fill("ETF");
+  await page.getByRole("button", { name: "논문 검색" }).click();
+  await expect(page.getByText("ETF saved-query page one paper 0")).toBeVisible();
+
+  await search.fill("");
+  await expect(page.getByText(/검색 당시의 결과입니다/)).toBeVisible();
+  await page.getByRole("button", { name: "다음" }).click();
+  await expect(page.getByText("ETF saved-query page two paper 0")).toBeVisible();
+  expect(requests).toEqual([
+    { query: "ETF", page: "1" },
+    { query: "ETF", page: "2" },
+  ]);
 });

@@ -138,14 +138,32 @@ type Paper = {
   page_count: number | null;
 };
 type Analysis = { result: AnalysisResult; model: string; created_at?: string };
+type PublicPaperSort = "relevance" | "citations_desc" | "title_asc" | "author_asc" | "year_desc";
 type PublicPaper = {
   id: string; title: string; year: number | null; doi: string;
-  authors: string[]; pdf_url: string | null; landing_url: string;
+  authors: string[]; cited_by_count: number; category?: string;
+  pdf_url: string | null; landing_url: string;
   license: string; is_open_access: boolean;
 };
 type PublicSearchResult = {
-  query: string; page: number; total: number; has_more: boolean; results: PublicPaper[];
+  query: string; page: number; apiPage: number; total: number;
+  has_more: boolean; results: PublicPaper[]; sort: PublicPaperSort;
 };
+
+function sortPublicPapers(items: PublicPaper[], sort: PublicPaperSort): PublicPaper[] {
+  const collator = new Intl.Collator("ko", { sensitivity: "base", numeric: true });
+  if (sort === "relevance") return [...items];
+  return [...items].sort((a, b) => {
+    if (sort === "citations_desc") {
+      return b.cited_by_count - a.cited_by_count || collator.compare(a.title, b.title);
+    }
+    if (sort === "title_asc") return collator.compare(a.title, b.title);
+    if (sort === "author_asc") {
+      return collator.compare(a.authors[0] ?? "", b.authors[0] ?? "") || collator.compare(a.title, b.title);
+    }
+    return (b.year ?? 0) - (a.year ?? 0) || collator.compare(a.title, b.title);
+  });
+}
 
 function authErrorMessage(error: unknown) {
   const authError = error as { code?: string; message?: string };
@@ -286,6 +304,10 @@ export default function Home() {
   const [publicSearchError, setPublicSearchError] = useState("");
   const [publicSearchLoading, setPublicSearchLoading] = useState(false);
   const [publicImporting, setPublicImporting] = useState(false);
+  const [publicSort, setPublicSort] = useState<PublicPaperSort>("relevance");
+  const [publicRecommendations, setPublicRecommendations] = useState<PublicPaper[]>([]);
+  const [publicRecommendationsLoading, setPublicRecommendationsLoading] = useState(false);
+  const [publicRecommendationsError, setPublicRecommendationsError] = useState("");
 
   useEffect(() => {
     // Failed social OAuth callbacks can carry duplicate, URL-encoded errors.
@@ -355,7 +377,16 @@ export default function Home() {
     setSourcePdfError("");
     setSourcePdfRefreshing(false);
     setSourceViewerOpen(false);
-    if (user?.id) void refresh();
+    if (user?.id) {
+      void refresh();
+      void loadPublicRecommendations();
+    } else {
+      setPublicQuery("");
+      setPublicSearch(null);
+      setPublicSearchError("");
+      setPublicRecommendations([]);
+      setPublicRecommendationsError("");
+    }
   }, [user?.id]);
 
   useEffect(() => { setSourcePageInput(String(sourcePage)); }, [sourcePage]);
@@ -529,9 +560,44 @@ export default function Home() {
     }
   }
 
-  async function searchPublicPapers(page = 1) {
+  async function loadPublicRecommendations() {
+    const ownerId = currentUserIdRef.current;
+    if (!ownerId) return;
+    setPublicRecommendationsLoading(true);
+    setPublicRecommendationsError("");
+    try {
+      const { data } = await db().auth.getSession();
+      if (!data.session) throw new Error("추천 논문을 불러오려면 다시 로그인해 주세요.");
+      const api = process.env.NEXT_PUBLIC_API_URL;
+      if (!api) throw new Error("논문 추천 API가 연결되지 않았습니다.");
+      const response = await fetch(api.replace(/[/]$/, "") + "/api/public-papers/recommendations", {
+        headers: { Authorization: "Bearer " + data.session.access_token },
+        cache: "no-store",
+      });
+      const payload = await response.json().catch(() => ({})) as { results?: PublicPaper[]; detail?: string };
+      if (!response.ok) throw new Error(payload.detail || "추천 논문을 불러오지 못했습니다.");
+      if (currentUserIdRef.current !== ownerId) return;
+      setPublicRecommendations(Array.isArray(payload.results) ? payload.results : []);
+    } catch (cause) {
+      if (currentUserIdRef.current === ownerId) {
+        setPublicRecommendationsError((cause as Error).message || "추천 논문을 불러오지 못했습니다.");
+      }
+    } finally {
+      if (currentUserIdRef.current === ownerId) setPublicRecommendationsLoading(false);
+    }
+  }
+
+  async function searchPublicPapers(
+    apiPage = 1,
+    queryOverride?: string,
+    sortOverride: PublicPaperSort = publicSort,
+    append = false,
+    targetUiPage = 1,
+  ) {
     if (!user || publicSearchLoading) return;
-    const term = publicQuery.trim();
+    // Pagination always uses the immutable query stored with the result set.
+    // Editing/clearing the input must not invalidate already displayed results.
+    const term = (queryOverride ?? publicQuery).trim();
     if (term.length < 2) {
       setPublicSearchError("검색어를 두 글자 이상 입력해 주세요.");
       return;
@@ -544,21 +610,75 @@ export default function Home() {
       if (!data.session) throw new Error("검색하려면 다시 로그인해 주세요.");
       const api = process.env.NEXT_PUBLIC_API_URL;
       if (!api) throw new Error("논문 검색 API가 연결되지 않았습니다.");
+      const params = new URLSearchParams({
+        query: term,
+        page: String(apiPage),
+        sort: sortOverride,
+      });
       const response = await fetch(
-        api.replace(/[/]$/, "") + "/api/public-papers/search?query=" +
-        encodeURIComponent(term) + "&page=" + page,
+        api.replace(/[/]$/, "") + "/api/public-papers/search?" + params.toString(),
         { headers: { Authorization: "Bearer " + data.session.access_token }, cache: "no-store" },
       );
-      const payload = await response.json().catch(() => ({})) as Partial<PublicSearchResult> & { detail?: string };
+      const payload = await response.json().catch(() => ({})) as {
+        query?: string; page?: number; total?: number; has_more?: boolean;
+        results?: PublicPaper[]; detail?: string;
+      };
       if (!response.ok) throw new Error(payload.detail || "공개 논문 검색에 실패했습니다.");
       if (currentUserIdRef.current !== ownerId) return;
-      setPublicSearch(payload as PublicSearchResult);
+      setPublicSearch(previous => {
+        if (append && previous && previous.query === term && previous.sort === sortOverride) {
+          const known = new Set(previous.results.map(item => item.id));
+          const additional = (payload.results ?? []).filter(item => !known.has(item.id));
+          return {
+            ...previous,
+            results: [...previous.results, ...additional],
+            apiPage: payload.page ?? apiPage,
+            total: payload.total ?? previous.total,
+            has_more: Boolean(payload.has_more),
+            page: targetUiPage,
+          };
+        }
+        return {
+          query: term,
+          page: 1,
+          apiPage: payload.page ?? apiPage,
+          total: payload.total ?? 0,
+          has_more: Boolean(payload.has_more),
+          results: Array.isArray(payload.results) ? payload.results : [],
+          sort: sortOverride,
+        };
+      });
     } catch (cause) {
       if (currentUserIdRef.current === ownerId) {
         setPublicSearchError((cause as Error).message || "논문 검색 중 오류가 발생했습니다.");
       }
     } finally {
       setPublicSearchLoading(false);
+    }
+  }
+
+  function changePublicSearchPage(nextPage: number) {
+    if (!publicSearch || publicSearchLoading || nextPage < 1) return;
+    const loadedPages = Math.ceil(publicSearch.results.length / 10);
+    if (nextPage <= loadedPages) {
+      setPublicSearch(previous => previous ? { ...previous, page: nextPage } : previous);
+      return;
+    }
+    if (nextPage === loadedPages + 1 && publicSearch.has_more) {
+      void searchPublicPapers(
+        publicSearch.apiPage + 1,
+        publicSearch.query,
+        publicSearch.sort,
+        true,
+        nextPage,
+      );
+    }
+  }
+
+  function changePublicSort(nextSort: PublicPaperSort) {
+    setPublicSort(nextSort);
+    if (publicSearch) {
+      void searchPublicPapers(1, publicSearch.query, nextSort);
     }
   }
 
@@ -877,6 +997,36 @@ export default function Home() {
     </div></section>
   </main>;
 
+  const sortedSearchResults = publicSearch
+    ? sortPublicPapers(publicSearch.results, publicSearch.sort)
+    : [];
+  const visibleSearchResults = sortedSearchResults.slice(
+    (publicSearch?.page ?? 1) * 10 - 10,
+    (publicSearch?.page ?? 1) * 10,
+  );
+  const loadedSearchPages = publicSearch ? Math.ceil(publicSearch.results.length / 10) : 0;
+
+  function renderPublicPaper(item: PublicPaper) {
+    return <li key={item.id} className="public-paper-result">
+      <div className="public-paper-result-info">
+        <strong>{item.title}</strong>
+        <span>{[item.year, ...item.authors].filter(Boolean).join(" · ") || "서지정보 확인 필요"}</span>
+        <span className="public-paper-citation">OpenAlex 인용 {item.cited_by_count.toLocaleString("ko-KR")}회</span>
+        <small>{item.category ? item.category + " · " : ""}원문 이용 허락: {item.license}</small>
+      </div>
+      <div className="public-paper-result-actions">
+        {item.landing_url.startsWith("https://") &&
+          <a href={item.landing_url} target="_blank" rel="noopener noreferrer">원문 ↗</a>}
+        {item.pdf_url
+          ? <button type="button" onClick={() => void importPublicPdf(item.pdf_url!, item.title)}
+              disabled={busy || publicImporting}>
+              {publicImporting ? "가져오는 중..." : "PDF 가져오기"}
+            </button>
+          : <span>공개 PDF 링크 없음</span>}
+      </div>
+    </li>;
+  }
+
   return <main className="workspace">
     <a href="#workspace-content" className="skip-link">연구 공간 본문으로 이동</a>
     <aside>
@@ -914,7 +1064,7 @@ export default function Home() {
             <div>
               <p className="eyebrow">DISCOVER & IMPORT</p>
               <h2 id="paper-discovery-heading">공개 금융 논문 찾아보기</h2>
-              <p>직접 PDF를 다운로드하지 않고 공개 원문을 검색하거나 주소로 가져올 수 있습니다.</p>
+              <p>읽을 논문이 떠오르지 않아도 분야별 추천 논문부터 살펴볼 수 있습니다.</p>
             </div>
           </div>
           <form className="public-paper-url-form" onSubmit={event => {
@@ -933,11 +1083,11 @@ export default function Home() {
           </form>
           <form className="public-paper-search-form" onSubmit={event => {
             event.preventDefault();
-            void searchPublicPapers(1);
+            void searchPublicPapers(1, publicQuery, publicSort);
           }}>
             <label htmlFor="public-paper-search-query">공개 학술 논문 검색 (OpenAlex)</label>
             <div className="public-paper-input-row">
-              <input id="public-paper-search-query" type="search" minLength={2} maxLength={200}
+              <input id="public-paper-search-query" type="search" maxLength={200}
                 placeholder="예: ETF arbitrage, asset pricing, portfolio risk"
                 value={publicQuery} onChange={event => setPublicQuery(event.target.value)}
                 disabled={publicSearchLoading}/>
@@ -948,40 +1098,72 @@ export default function Home() {
           </form>
           <p className="public-paper-disclaimer">
             공개 열람 가능한 논문만 검색됩니다. 무료 열람과 재배포 허용은 다르므로 원문 이용 조건을 확인하세요.
-            PDF가 없는 결과는 원문 사이트에서 확인할 수 있습니다.
+            인용 수는 OpenAlex 기준이며 다른 학술 데이터베이스와 차이가 있을 수 있습니다.
           </p>
+          <div className="public-paper-list-toolbar">
+            <label htmlFor="public-paper-sort">정렬 기준</label>
+            <select id="public-paper-sort" aria-label="논문 정렬" value={publicSort}
+              onChange={event => changePublicSort(event.target.value as PublicPaperSort)}
+              disabled={publicSearchLoading}>
+              <option value="relevance">추천순 / 관련도순</option>
+              <option value="citations_desc">인용 수 높은 순</option>
+              <option value="title_asc">논문 제목 가나다순</option>
+              <option value="author_asc">첫 번째 저자 이름순</option>
+              <option value="year_desc">최신 발표순</option>
+            </select>
+          </div>
           {publicSearchError && <p role="alert" className="public-paper-error">{publicSearchError}</p>}
-          {publicSearch && <div className="public-paper-search-results" aria-label="공개 논문 검색 결과">
-            <p className="public-paper-search-count">
-              검색 결과: {publicSearch.total.toLocaleString("ko-KR")}편 · {publicSearch.page}페이지
-            </p>
-            {publicSearch.results.length === 0 && <p>검색 결과가 없습니다. 다른 키워드를 입력해 보세요.</p>}
+          {publicSearch ? <div className="public-paper-search-results" aria-label="공개 논문 검색 결과">
+            <div className="public-paper-results-heading">
+              <p className="public-paper-search-count">
+                “{publicSearch.query}” 검색 결과 {publicSearch.total.toLocaleString("ko-KR")}편 ·
+                {publicSearch.results.length.toLocaleString("ko-KR")}편 불러옴
+              </p>
+              <button type="button" className="public-paper-reset" disabled={publicSearchLoading}
+                onClick={() => {
+                  setPublicSearch(null);
+                  setPublicQuery("");
+                  setPublicSearchError("");
+                  setPublicSort("relevance");
+                }}>추천 논문 보기</button>
+            </div>
+            {publicQuery.trim() !== publicSearch.query && <p className="public-paper-query-snapshot">
+              현재 목록은 “{publicSearch.query}” 검색 당시의 결과입니다. 검색창을 수정하거나 비워도 이 목록의 페이지 이동은 유지됩니다.
+              새 검색어를 적용하려면 검색 버튼을 눌러 주세요.
+            </p>}
+            {visibleSearchResults.length === 0 && <p>검색 결과가 없습니다. 다른 키워드를 입력해 보세요.</p>}
             <ul className="public-paper-result-list">
-              {publicSearch.results.map(item => <li key={item.id} className="public-paper-result">
-                <div className="public-paper-result-info">
-                  <strong>{item.title}</strong>
-                  <span>{[item.year, ...item.authors].filter(Boolean).join(" · ") || "서지정보 확인 필요"}</span>
-                  <small>원문 이용 허락: {item.license}</small>
-                </div>
-                <div className="public-paper-result-actions">
-                  {item.landing_url.startsWith("https://") &&
-                    <a href={item.landing_url} target="_blank" rel="noopener noreferrer">원문 ↗</a>}
-                  {item.pdf_url
-                    ? <button type="button" onClick={() => void importPublicPdf(item.pdf_url!, item.title)}
-                        disabled={busy || publicImporting}>
-                        {publicImporting ? "가져오는 중..." : "PDF 가져오기"}
-                      </button>
-                    : <span>공개 PDF 링크 없음</span>}
-                </div>
-              </li>)}
+              {visibleSearchResults.map(renderPublicPaper)}
             </ul>
             <div className="public-paper-pagination">
               <button type="button" disabled={publicSearchLoading || publicSearch.page <= 1}
-                onClick={() => void searchPublicPapers(publicSearch.page - 1)}>이전</button>
-              <span>{publicSearch.page}페이지</span>
-              <button type="button" disabled={publicSearchLoading || !publicSearch.has_more}
-                onClick={() => void searchPublicPapers(publicSearch.page + 1)}>다음</button>
+                onClick={() => changePublicSearchPage(publicSearch.page - 1)}>이전</button>
+              <span>{publicSearch.page}페이지 · {loadedSearchPages}페이지 불러옴</span>
+              <button type="button"
+                disabled={publicSearchLoading || (publicSearch.page >= loadedSearchPages && !publicSearch.has_more)}
+                onClick={() => changePublicSearchPage(publicSearch.page + 1)}>다음</button>
             </div>
+          </div> : <div className="public-paper-search-results" aria-label="추천 공개 금융 논문">
+            <div className="public-paper-results-heading">
+              <div>
+                <h3 className="public-paper-recommendation-title">어떤 논문을 읽을지 모르겠다면, 여기서 시작하세요</h3>
+                <p className="public-paper-search-count">금융·경제 분야에서 인용이 많은 공개 논문을 분야별로 추천합니다.</p>
+              </div>
+              <button type="button" className="public-paper-refresh" disabled={publicRecommendationsLoading}
+                onClick={() => void loadPublicRecommendations()}>
+                {publicRecommendationsLoading ? "불러오는 중..." : "추천 새로고침"}
+              </button>
+            </div>
+            {publicRecommendationsLoading && <p role="status">분야별 추천 논문을 불러오고 있습니다...</p>}
+            {publicRecommendationsError && <p role="alert" className="public-paper-error">
+              {publicRecommendationsError}
+              <button type="button" onClick={() => void loadPublicRecommendations()}>다시 시도</button>
+            </p>}
+            {!publicRecommendationsLoading && !publicRecommendationsError && publicRecommendations.length === 0 &&
+              <p>현재 추천할 수 있는 공개 PDF 논문이 없습니다. 검색어를 입력해 직접 찾아보세요.</p>}
+            <ul className="public-paper-result-list">
+              {sortPublicPapers(publicRecommendations, publicSort).map(renderPublicPaper)}
+            </ul>
           </div>}
         </section>
         <div className="stats">
