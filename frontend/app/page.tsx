@@ -224,7 +224,7 @@ function panelStatusLabel(value?: string) {
 }
 
 function EvidenceList({
-  items, sourcePdfUrl, onOpenSourcePage,
+  items, sourcePdfUrl, onOpenSourcePage, children,
 }: {
   items?: Evidence[];
   sourcePdfUrl?: string;
