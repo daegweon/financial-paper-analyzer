@@ -44,7 +44,7 @@ export function EvidencePopover({
         event.stopImmediatePropagation();
         setOpen(false);
         setPinned(false);
-        buttonRef.current?.focus();
+        if (popoverRef.current?.contains(document.activeElement)) buttonRef.current?.focus();
       }
     };
     document.addEventListener("pointerdown", onPointerDown);
