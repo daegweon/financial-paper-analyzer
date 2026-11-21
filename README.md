@@ -148,7 +148,7 @@ Database migrations (the reconciled production sequence):
 - `20261120122747_server_owned_analysis_quota.sql`
 - `20261120122819_ai_usage_events_ledger.sql`
 - `20261120122859_index_ai_usage_ledger_foreign_keys.sql`
-- `20261121032300_restrict_ai_usage_ledger_privileges.sql`
+- `20261121032957_restrict_ai_usage_ledger_privileges.sql`
 
 The AI usage ledger is append-only: the server role can read and insert events but cannot update, delete, truncate, or attach triggers to the ledger. The administrator settings table allows only read/insert/update for the server role.
 
