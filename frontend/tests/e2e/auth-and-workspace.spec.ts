@@ -493,7 +493,7 @@ test("paper analysis opens as a full-width report with visible section navigatio
   expect(gapWidth).toBeGreaterThanOrEqual(8);
 
   const equationSymbols = await equationGuide.locator(".equation-symbol-token").allTextContents();
-  expect(equationSymbols).toEqual(["L", "C", "a", "b", "c", "EP", "log", "pass_rate", "α", "k"]);
+  expect(equationSymbols).toEqual(["L", "C", "a", "b", "c", "E_P", "log", "pass_rate", "α", "k"]);
 
   const readingControls = dialog.getByRole("group", { name: "보고서 글자 크기" });
   await expect(readingControls).toBeVisible();

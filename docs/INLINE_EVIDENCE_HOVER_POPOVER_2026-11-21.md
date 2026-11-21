@@ -2,7 +2,7 @@
 
 > **작성:** 2026-11-21 KST  
 > **개선 PR:** #41 — hover / info popover evidence UX  
-> **상태:** 호버 미리보기·클릭 상세 팝오버 구현 및 회귀 테스트 보강 / 최신 수정 검증 대기 / Preview 배포 한도 초과
+> **상태:** 본문 간격·글자 크기 조절·수식 기호 해설 구현 / 최신 CI 및 Preview 검증 중
 
 ## 왜 PR #38의 접기 UI를 다시 바꾸는가
 
@@ -67,9 +67,9 @@
 ### 자동 검증 결과 (2026-11-21)
 
 - 최초 인라인 팝오버 구현 커밋 `ec4d95ef1bd08d58330b2e3ed16c30fd4b1d6892` 기준 GitHub Actions [#44905544098](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44905544098): 전체 3개 job 성공(Backend 247 passed/1 skipped, Frontend unit 82 passed, Playwright 9/9, PostgreSQL 계약 통과).
-- 이후 코드 리뷰에서 주니어 가이드의 중복 i 아이콘을 제거하고, 키보드 포커스 위치, tooltip/dialog 의미, 호버 미리보기와 전체 상세 보기의 분리를 보완했다. 이 후속 수정은 현재 PR #41의 최신 HEAD에 포함되어 있으며, **새 테스트 실행은 아직 확인하지 않았다**.
+- 후속 코드 리뷰에서 주니어 가이드 중복 i 아이콘 제거, 키보드 포커스, tooltip/dialog 의미, hover 미리보기와 전체 상세 보기 분리를 보완했다. 최신 2026-11-22 변경에서는 본문 간격, 읽기 크기 조절, 수식 기호 파싱을 추가했다.
 - 회귀 테스트에는 포인터 추적, 미리보기 hover 유지, Enter/ESC, 상세 팝오버 바깥 클릭, 주니어 가이드의 주장당 아이콘 1개, 인쇄 시 전체 인용문 보존을 추가했다.
-- Vercel Preview 생성 요청은 **HTTP 402 `api-deployments-free-per-day`**로 거절되었다. 일일 무료 API 배포 100회 초과로 최신 PR HEAD Preview는 아직 발급되지 않았다. Production에는 변경사항을 반영하지 않았다.
+- 이전 시점에는 Vercel 일일 배포 제한 오류가 있었으나, 이후 exact-head Preview 배포가 READY로 성공했다. 최신 변경은 GitHub 연동 Preview를 사용하며, 별도 수동 배포 요청으로 한도를 시험하지 않는다.
 
 
 1. 인용 근거가 있는 문장 옆에 작은 i 아이콘 하나만 표시되는가.

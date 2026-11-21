@@ -299,7 +299,7 @@ The PR #38 collapsible UI still left a repeated full-width "원문 근거 보기
 
 ## 10. Remaining work and explicit non-blockers
 
-The initial product release is live; PR #41's current evidence/readability follow-up remains in Preview validation and is not yet deployed to Production. The following are follow-up quality/extension items, not reasons to reopen the completed release without a concrete need.
+The initial product release is live; PR #41's current evidence/readability follow-up is undergoing latest-head Preview and CI validation and is not yet deployed to Production. The following are follow-up quality/extension items, not reasons to reopen the completed release without a concrete need.
 
 ### Recommended lightweight post-release checks
 1. User manually opens the canonical production URL and confirms the new persistent logout/header and full-width report feel correct on their actual devices.
