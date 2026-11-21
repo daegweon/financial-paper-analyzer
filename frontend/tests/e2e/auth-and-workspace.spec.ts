@@ -390,8 +390,11 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await expect(evidencePopover).toBeHidden();
   await expect(dialog.locator("details.evidence")).toHaveCount(0);
 
-  // Hover reveals a cursor-adjacent preview without adding a separate evidence row.
-  await evidenceTrigger.hover();
+  // Hovering the claim text itself reveals a cursor-adjacent preview.
+  const evidenceAnchor = evidenceTrigger.locator("xpath=..");
+  const evidenceText = evidenceAnchor.locator(".evidence-inline-copy");
+  await expect(evidenceText).toContainText("연구 목적과 데이터 설명");
+  await evidenceText.hover();
   await expect(evidencePopover).toBeVisible();
   await expect(evidencePopover).toContainText("연구 목적과 데이터 설명");
   await page.mouse.move(5, 5);
@@ -413,10 +416,11 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await expect(evidencePopover).toBeHidden();
 
   const juniorEvidenceTrigger = dialog.locator("#analysis-junior-guide .evidence-info-button").first();
-  const juniorEvidencePopover = juniorEvidenceTrigger.locator("xpath=..").locator(".evidence-popover");
+  const juniorEvidenceAnchor = juniorEvidenceTrigger.locator("xpath=..");
+  const juniorEvidencePopover = juniorEvidenceAnchor.locator(".evidence-popover");
   await expect(juniorEvidenceTrigger).toBeVisible();
   await expect(juniorEvidencePopover).toBeHidden();
-  await juniorEvidenceTrigger.hover();
+  await juniorEvidenceAnchor.locator(".evidence-inline-copy").hover();
   await expect(juniorEvidencePopover).toBeVisible();
   await expect(juniorEvidencePopover).toContainText("The coefficient is positive and significant.");
   await page.mouse.move(5, 5);

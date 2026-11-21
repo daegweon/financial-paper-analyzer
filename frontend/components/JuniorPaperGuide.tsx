@@ -50,7 +50,12 @@ export function JuniorPaperGuide({ result, sourcePdfUrl, onOpenSourcePage }: Pro
         <h4>어떤 결과를 근거와 함께 확인할 수 있나요?</h4>
         {guide.findings.length ? <ol className={styles.findings}>
           {guide.findings.map((finding, index) => <li key={index}>
-            <p>{finding.claim}</p>
+            <p><EvidencePopover
+              items={[{ page: finding.page, quote: finding.quote }]}
+              sourcePdfUrl={sourcePdfUrl}
+              onOpenSourcePage={onOpenSourcePage}
+              label="실증 결과 원문 근거"
+            >{finding.claim}</EvidencePopover></p>
             <EvidencePopover
               items={[{ page: finding.page, quote: finding.quote }]}
               sourcePdfUrl={sourcePdfUrl}
