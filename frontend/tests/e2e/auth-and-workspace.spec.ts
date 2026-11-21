@@ -390,43 +390,63 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await expect(evidencePopover).toBeHidden();
   await expect(dialog.locator("details.evidence")).toHaveCount(0);
 
-  // Keyboard focus opens the same source hint near its trigger; Escape dismisses it.
+  const evidencePreview = evidencePopover.locator(".evidence-popover-preview");
+  const evidenceDetail = evidencePopover.locator(".evidence-popover-detail");
+
+  // Keyboard focus opens a lightweight tooltip; Enter opens the full interactive dialog.
   await evidenceTrigger.focus();
-  await expect(evidencePopover).toBeVisible();
+  await expect(evidencePreview).toBeVisible();
+  await expect(evidenceDetail).toBeHidden();
+  await evidenceTrigger.press("Enter");
+  await expect(evidenceDetail).toBeVisible();
+  await expect(evidencePreview).toBeHidden();
   await page.keyboard.press("Escape");
   await expect(evidencePopover).toBeHidden();
   await expect(evidenceTrigger).toBeFocused();
 
-  // Hovering the claim text itself reveals a cursor-adjacent preview.
+  // Hovering the claim text itself reveals a cursor-adjacent quote preview.
   const evidenceAnchor = evidenceTrigger.locator("xpath=..");
   const evidenceText = evidenceAnchor.locator(".evidence-inline-copy");
   await expect(evidenceText).toContainText("테스트 저자");
   await evidenceText.hover();
-  await expect(evidencePopover).toBeVisible();
-  await expect(evidencePopover).toContainText("연구 목적과 데이터 설명");
+  await expect(evidencePreview).toBeVisible();
+  await expect(evidenceDetail).toBeHidden();
+  await expect(evidencePreview).toContainText("연구 목적과 데이터 설명");
 
-  // The popover itself remains hoverable so its quote and PDF action can be used.
+  // The preview follows the pointer over the claim, then remains hoverable itself.
+  const claimBounds = await evidenceText.boundingBox();
+  const firstPopoverBounds = await evidencePopover.boundingBox();
+  expect(claimBounds).not.toBeNull();
+  expect(firstPopoverBounds).not.toBeNull();
+  await page.mouse.move(claimBounds!.x + claimBounds!.width - 3, claimBounds!.y + claimBounds!.height / 2);
+  const movedPopoverBounds = await evidencePopover.boundingBox();
+  expect(movedPopoverBounds).not.toBeNull();
+  expect(Math.abs(movedPopoverBounds!.x - firstPopoverBounds!.x) + Math.abs(movedPopoverBounds!.y - firstPopoverBounds!.y)).toBeGreaterThan(5);
   await evidencePopover.hover();
   await expect(evidencePopover).toBeVisible();
+  await expect(evidencePreview).toBeVisible();
   await page.mouse.move(5, 5);
   await expect(evidencePopover).toBeHidden();
 
-  // Clicking pins the same popover; Escape and outside click dismiss it.
+  // Clicking the small i opens the complete citations and PDF page actions.
   await evidenceTrigger.click();
   await expect(evidenceTrigger).toHaveAttribute("aria-expanded", "true");
-  await expect(evidencePopover).toBeVisible();
+  await expect(evidenceDetail).toBeVisible();
+  await expect(evidencePreview).toBeHidden();
+  await expect(evidenceDetail).toContainText("연구 목적과 데이터 설명");
   await page.keyboard.press("Escape");
   await expect(evidencePopover).toBeHidden();
   await expect(evidenceTrigger).toBeFocused();
   await evidenceTrigger.click();
-  await expect(evidencePopover).toBeVisible();
+  await expect(evidenceDetail).toBeVisible();
   await dialog.locator("#analysis-summary").click();
   await expect(evidencePopover).toBeHidden();
 
-  // Print CSS reveals the source text without the tiny on-screen info button.
+  // Print/PDF keeps every source quote even when the screen popover is closed.
   await page.emulateMedia({ media: "print" });
   await expect(evidenceTrigger).toBeHidden();
-  await expect(evidencePopover).toBeVisible();
+  await expect(evidencePreview).toBeHidden();
+  await expect(evidenceDetail).toBeVisible();
   await page.emulateMedia({ media: "screen" });
   await page.mouse.move(5, 5);
   await expect(evidencePopover).toBeHidden();
@@ -436,10 +456,11 @@ test("paper analysis opens as a full-width report with visible section navigatio
   const juniorEvidencePopover = juniorEvidenceAnchor.locator(".evidence-popover");
   await expect(juniorEvidenceTrigger).toBeVisible();
   await expect(dialog.locator("#analysis-junior-guide .findings > li").first().locator(".evidence-info-button")).toHaveCount(1);
-  await expect(juniorEvidencePopover).toBeHidden();
+  await expect(juniorEvidencePopover.locator(".evidence-popover-preview")).toBeHidden();
   await juniorEvidenceAnchor.locator(".evidence-inline-copy").hover();
-  await expect(juniorEvidencePopover).toBeVisible();
-  await expect(juniorEvidencePopover).toContainText("The coefficient is positive and significant.");
+  await expect(juniorEvidencePopover.locator(".evidence-popover-preview")).toBeVisible();
+  await expect(juniorEvidencePopover.locator(".evidence-popover-detail")).toBeHidden();
+  await expect(juniorEvidencePopover.locator(".evidence-popover-preview")).toContainText("The coefficient is positive and significant.");
   await page.mouse.move(5, 5);
   await expect(juniorEvidencePopover).toBeHidden();
   await expect(page.locator("#analysis-summary")).toContainText("표본 기간 동안");
