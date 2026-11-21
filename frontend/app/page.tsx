@@ -794,7 +794,6 @@ export default function Home() {
       <div className="brand">◈ Paper<span>Signal</span></div>
       <p className="eyebrow">WORKSPACE</p>
       <nav aria-label="주요 메뉴"><a className="nav" href="#workspace-content" aria-current="page">▤　논문 라이브러리</a></nav>
-      <footer><p>{user.email}</p></footer>
     </aside>
     <div className="content">
       <header className="workspace-header">
@@ -936,7 +935,8 @@ export default function Home() {
           : <div className="result">
               <p className="mode">{analysis.result.mode === "llm"
                 ? "AI 구조화 분석 · 인용 근거 검증"
-                : "텍스트 추출 분석 · AI 생성 아님"}</p>              {analysis.result.bibliographic && (
+                : "텍스트 추출 분석 · AI 생성 아님"}</p>
+              {analysis.result.bibliographic && (
                 <section id="analysis-bibliography" className="analysis-section">
                   <h3>논문 서지정보</h3>
                   <p><b>{analysis.result.bibliographic.title}</b></p>
@@ -963,8 +963,8 @@ export default function Home() {
                 <article><span>페이지 근거 확인 결과</span><strong>{analysis.result.findings_coverage?.supported_findings_count ?? analysis.result.findings?.length ?? 0}건</strong><small>실증 결과 추출 기준</small></article>
               </section>
               <nav className="analysis-toc no-print" aria-label="분석 보고서 목차">
-                <a href="#analysis-summary">핵심 요약</a>
                 {analysis.result.bibliographic && <a href="#analysis-bibliography">서지정보</a>}
+                <a href="#analysis-summary">핵심 요약</a>
                 <a href="#analysis-junior-guide">3분 논문 읽기</a>
                 <a href="#analysis-visual-reading">표·그래프 읽기</a>
                 <a href="#analysis-workplace">직무 활용</a>
