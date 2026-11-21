@@ -1,14 +1,21 @@
 -- Disposable PostgreSQL 17 contract for the AI usage ledger.
-DO $$
+DO $ledger_acl$
 BEGIN
   IF has_table_privilege('anon','public.ai_usage_events','SELECT')
      OR has_table_privilege('anon','public.ai_usage_events','INSERT')
      OR has_table_privilege('authenticated','public.ai_usage_events','SELECT')
      OR has_table_privilege('authenticated','public.ai_usage_events','INSERT')
   THEN RAISE EXCEPTION 'Browser roles must not access raw AI usage events'; END IF;
-  IF NOT has_table_privilege('service_role','public.ai_usage_events','INSERT')
-  THEN RAISE EXCEPTION 'service_role cannot insert AI usage events'; END IF;
-END $$;
+  IF NOT has_table_privilege('service_role','public.ai_usage_events','SELECT')
+     OR NOT has_table_privilege('service_role','public.ai_usage_events','INSERT')
+  THEN RAISE EXCEPTION 'service_role must be able to read and insert AI usage events'; END IF;
+  IF has_table_privilege('service_role','public.ai_usage_events','UPDATE')
+     OR has_table_privilege('service_role','public.ai_usage_events','DELETE')
+     OR has_table_privilege('service_role','public.ai_usage_events','TRUNCATE')
+     OR has_table_privilege('service_role','public.ai_usage_events','REFERENCES')
+     OR has_table_privilege('service_role','public.ai_usage_events','TRIGGER')
+  THEN RAISE EXCEPTION 'AI usage ledger must be append-only for service_role'; END IF;
+END $ledger_acl$;
 
 BEGIN;
 SET LOCAL ROLE service_role;
@@ -63,7 +70,7 @@ END $$;
 ROLLBACK;
 SELECT 'PASS: service-role-only usage ledger, idempotency uniqueness, nullable usage' AS outcome;
 
-DO $$
+DO $admin_acl$
 BEGIN
   IF has_table_privilege('anon','public.ai_admin_settings','SELECT')
      OR has_table_privilege('anon','public.ai_admin_settings','INSERT')
@@ -75,7 +82,12 @@ BEGIN
      OR NOT has_table_privilege('service_role','public.ai_admin_settings','INSERT')
      OR NOT has_table_privilege('service_role','public.ai_admin_settings','UPDATE')
   THEN RAISE EXCEPTION 'service_role cannot manage administrator AI settings'; END IF;
-END $$;
+  IF has_table_privilege('service_role','public.ai_admin_settings','DELETE')
+     OR has_table_privilege('service_role','public.ai_admin_settings','TRUNCATE')
+     OR has_table_privilege('service_role','public.ai_admin_settings','REFERENCES')
+     OR has_table_privilege('service_role','public.ai_admin_settings','TRIGGER')
+  THEN RAISE EXCEPTION 'service_role has unnecessary delete or DDL-related AI settings privileges'; END IF;
+END $admin_acl$;
 
 BEGIN;
 SET LOCAL ROLE service_role;
