@@ -390,6 +390,13 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await expect(evidencePopover).toBeHidden();
   await expect(dialog.locator("details.evidence")).toHaveCount(0);
 
+  // Keyboard focus opens the same source hint near its trigger; Escape dismisses it.
+  await evidenceTrigger.focus();
+  await expect(evidencePopover).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(evidencePopover).toBeHidden();
+  await expect(evidenceTrigger).toBeFocused();
+
   // Hovering the claim text itself reveals a cursor-adjacent preview.
   const evidenceAnchor = evidenceTrigger.locator("xpath=..");
   const evidenceText = evidenceAnchor.locator(".evidence-inline-copy");
@@ -397,16 +404,24 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await evidenceText.hover();
   await expect(evidencePopover).toBeVisible();
   await expect(evidencePopover).toContainText("연구 목적과 데이터 설명");
+
+  // The popover itself remains hoverable so its quote and PDF action can be used.
+  await evidencePopover.hover();
+  await expect(evidencePopover).toBeVisible();
   await page.mouse.move(5, 5);
   await expect(evidencePopover).toBeHidden();
 
-  // Clicking pins the same popover; Escape closes it.
+  // Clicking pins the same popover; Escape and outside click dismiss it.
   await evidenceTrigger.click();
   await expect(evidenceTrigger).toHaveAttribute("aria-expanded", "true");
   await expect(evidencePopover).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(evidencePopover).toBeHidden();
   await expect(evidenceTrigger).toBeFocused();
+  await evidenceTrigger.click();
+  await expect(evidencePopover).toBeVisible();
+  await dialog.locator("#analysis-summary").click();
+  await expect(evidencePopover).toBeHidden();
 
   // Print CSS reveals the source text without the tiny on-screen info button.
   await page.emulateMedia({ media: "print" });
@@ -420,6 +435,7 @@ test("paper analysis opens as a full-width report with visible section navigatio
   const juniorEvidenceAnchor = juniorEvidenceTrigger.locator("xpath=..");
   const juniorEvidencePopover = juniorEvidenceAnchor.locator(".evidence-popover");
   await expect(juniorEvidenceTrigger).toBeVisible();
+  await expect(dialog.locator("#analysis-junior-guide .findings > li").first().locator(".evidence-info-button")).toHaveCount(1);
   await expect(juniorEvidencePopover).toBeHidden();
   await juniorEvidenceAnchor.locator(".evidence-inline-copy").hover();
   await expect(juniorEvidencePopover).toBeVisible();
