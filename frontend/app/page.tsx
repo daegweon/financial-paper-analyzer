@@ -9,6 +9,7 @@ import { isAcceptedPdf, sourcePdfFailureMessage, uploadFailureMessage } from "..
 import { JuniorPaperGuide } from "../components/JuniorPaperGuide";
 import { JuniorVisualReading } from "../components/JuniorVisualReading";
 import { JuniorWorkplaceGuide } from "../components/JuniorWorkplaceGuide";
+import { EvidencePopover } from "../components/EvidencePopover";
 import { authCallbackError, cleanAuthErrorUrl } from "../lib/auth-feedback";
 import { AnalysisWatchStopped, findActiveAnalysisJob, startAnalysisJob, waitForAnalysisJob } from "../lib/analysis-job";
 import type { ActiveAnalysisJob } from "../lib/analysis-job";
@@ -229,27 +230,7 @@ function EvidenceList({
   onOpenSourcePage?: (page: number) => void;
 }) {
   if (!items?.length) return null;
-  return <div className="evidence-list">{items.map((item, index) =>
-    <details className="evidence" key={item.page + "-" + index}>
-      <summary className="evidence-summary" aria-label={`원문 근거 보기, PDF ${item.page}페이지`}>
-        <span className="evidence-summary-title">원문 근거 보기</span>
-        <span className="evidence-summary-page">p.{item.page}</span>
-        <span className="evidence-summary-hint">인용문 확인</span>
-      </summary>
-      <div className="evidence-content">
-        <b>원문 인용 · PAGE {item.page}</b>
-        <p className="evidence-quote">{item.quote}</p>
-        {sourcePdfUrl && Number.isInteger(item.page) && item.page > 0 &&
-          (onOpenSourcePage
-            ? <button type="button" className="evidence-source-link" onClick={() => onOpenSourcePage(item.page)}>
-                원문 p.{item.page} 함께 보기 ↓
-              </button>
-            : <a className="evidence-source-link" href={sourcePdfUrl + "#page=" + item.page} target="_blank" rel="noreferrer">
-                원문 p.{item.page} 확인 ↗
-              </a>)}
-      </div>
-    </details>
-  )}</div>;
+  return <EvidencePopover items={items} sourcePdfUrl={sourcePdfUrl} onOpenSourcePage={onOpenSourcePage} />;
 }
 
 function ClaimList({

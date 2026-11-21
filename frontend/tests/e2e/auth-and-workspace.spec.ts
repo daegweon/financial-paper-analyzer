@@ -383,32 +383,44 @@ test("paper analysis opens as a full-width report with visible section navigatio
   await page.setViewportSize(desktopViewport);
 
   await expect(page.getByRole("navigation", { name: "분석 보고서 목차" })).toBeVisible();
-  const evidenceDisclosure = dialog.locator("details.evidence").first();
-  await expect(evidenceDisclosure).toBeVisible();
-  await expect(evidenceDisclosure).not.toHaveAttribute("open", "");
-  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeHidden();
-  await expect(evidenceDisclosure.locator("summary")).toContainText("원문 근거 보기");
-  await evidenceDisclosure.locator("summary").click();
-  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeVisible();
-  await expect(evidenceDisclosure.locator(".evidence-quote")).toContainText("연구 목적과 데이터 설명");
-  await evidenceDisclosure.locator("summary").click();
-  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeHidden();
-  await page.evaluate(() => window.dispatchEvent(new Event("beforeprint")));
-  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeVisible();
-  await page.emulateMedia({ media: "print" });
-  await expect(evidenceDisclosure.locator("summary")).toBeHidden();
-  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeVisible();
-  await page.emulateMedia({ media: "screen" });
-  await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
-  await expect(evidenceDisclosure.locator(".evidence-quote")).toBeHidden();
+  const evidenceTrigger = dialog.locator(".evidence-info-button").first();
+  const evidencePopover = evidenceTrigger.locator("xpath=..").locator(".evidence-popover");
+  await expect(evidenceTrigger).toBeVisible();
+  await expect(evidenceTrigger).toHaveAttribute("aria-expanded", "false");
+  await expect(evidencePopover).toBeHidden();
+  await expect(dialog.locator("details.evidence")).toHaveCount(0);
 
-  const juniorEvidence = dialog.locator("#analysis-junior-guide details.evidence-disclosure").first();
-  await expect(juniorEvidence).toBeVisible();
-  await expect(juniorEvidence).not.toHaveAttribute("open", "");
-  await expect(juniorEvidence.locator(".evidence-quote")).toBeHidden();
-  await juniorEvidence.locator("summary").click();
-  await expect(juniorEvidence.locator(".evidence-quote")).toBeVisible();
-  await expect(juniorEvidence.locator(".evidence-quote")).toContainText("The coefficient is positive and significant.");
+  // Hover reveals a cursor-adjacent preview without adding a separate evidence row.
+  await evidenceTrigger.hover();
+  await expect(evidencePopover).toBeVisible();
+  await expect(evidencePopover).toContainText("연구 목적과 데이터 설명");
+  await page.mouse.move(5, 5);
+  await expect(evidencePopover).toBeHidden();
+
+  // Clicking pins the same popover; Escape closes it.
+  await evidenceTrigger.click();
+  await expect(evidenceTrigger).toHaveAttribute("aria-expanded", "true");
+  await expect(evidencePopover).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(evidencePopover).toBeHidden();
+  await expect(evidenceTrigger).toBeFocused();
+
+  // Print CSS reveals the source text without the tiny on-screen info button.
+  await page.emulateMedia({ media: "print" });
+  await expect(evidenceTrigger).toBeHidden();
+  await expect(evidencePopover).toBeVisible();
+  await page.emulateMedia({ media: "screen" });
+  await expect(evidencePopover).toBeHidden();
+
+  const juniorEvidenceTrigger = dialog.locator("#analysis-junior-guide .evidence-info-button").first();
+  const juniorEvidencePopover = juniorEvidenceTrigger.locator("xpath=..").locator(".evidence-popover");
+  await expect(juniorEvidenceTrigger).toBeVisible();
+  await expect(juniorEvidencePopover).toBeHidden();
+  await juniorEvidenceTrigger.hover();
+  await expect(juniorEvidencePopover).toBeVisible();
+  await expect(juniorEvidencePopover).toContainText("The coefficient is positive and significant.");
+  await page.mouse.move(5, 5);
+  await expect(juniorEvidencePopover).toBeHidden();
   await expect(page.locator("#analysis-summary")).toContainText("표본 기간 동안");
   await expect(page.locator("#analysis-findings")).toHaveCount(1);
   await expect(page.locator(".detail-sign-out")).toBeVisible();

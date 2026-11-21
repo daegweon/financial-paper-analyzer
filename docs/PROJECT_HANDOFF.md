@@ -287,6 +287,12 @@ The login landing page now shows the user's own workspace first (library, analys
 
 **How to continue:** Read [Analysis evidence disclosure and library-first workspace](ANALYSIS_EVIDENCE_DISCLOSURE_AND_LIBRARY_FIRST_2026-11-21.md). The application feature is released; only address reproducible production issues or new user requests.
 
+## 9C. Inline source-evidence hover / info popover — PR #39
+
+The PR #38 collapsible UI still left a repeated full-width "원문 근거 보기" row under each claim, which users found visually noisy. PR #39 replaces those rows with one small inline `i` icon per claim/evidence group. Hover opens a cursor-adjacent quote preview that follows the pointer while it is over the trigger; clicking pins it; outside click or ESC closes it. Touch and keyboard access are supported. Multiple citations for one claim are grouped into the same popover. Print/PDF output still includes all source quotations while hiding the on-screen icon.
+
+**How to continue:** Read [Inline source-evidence hover / info popover UX](INLINE_EVIDENCE_HOVER_POPOVER_2026-11-21.md). Verify PR #39 browser tests and Preview before merge. This is frontend-only; no backend, schema, or analysis-engine change.
+
 ## 10. Remaining work and explicit non-blockers
 
 The initial product release and final UI/UX deployment are complete. The following are follow-up quality/extension items, not reasons to reopen the completed release without a concrete need.
