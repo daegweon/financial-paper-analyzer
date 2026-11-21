@@ -80,6 +80,8 @@ Every generated citation is checked against the extracted text of its stated PDF
 
 When AI mode is enabled, extracted paper text is sent from Railway to the configured model provider. Use only documents you are permitted to process with that provider.
 
+**Current Auth security limitation:** the Supabase organization is on the Free plan. Supabase's built-in leaked-password protection (HaveIBeenPwned check) is available on Pro and above, so it is not enabled in this project. Do not treat it as active or upgrade the project without explicit billing approval.
+
 ## Environment
 
 Frontend (Vercel):
@@ -153,7 +155,7 @@ A deliberately manual workflow verifies the live authentication, private PDF Sto
 
 1. Open the repository's **Actions** tab and select **PaperSignal Live E2E - Manual Approval**.
 2. Select branch `main` and click **Run workflow**.
-3. Set `target= papersignal-production`, `approve_mutations=true`, and `acknowledgment=RUN_SYNTHETIC_LIVE_E2E`.
+3. Set `target=papersignal-production`, `approve_mutations=true`, and `acknowledgment=RUN_SYNTHETIC_LIVE_E2E`.
 4. Copy the exact current `main` commit SHA into `approved_commit`. The workflow refuses a stale or different SHA.
 5. Confirm the repository Actions secrets `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `PAPERSIGNAL_API_URL` are configured.
 
