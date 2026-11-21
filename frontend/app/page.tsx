@@ -231,7 +231,7 @@ function EvidenceList({
   onOpenSourcePage?: (page: number) => void;
   children?: ReactNode;
 }) {
-  if (!items?.length) return null;
+  if (!items?.length) return children ?? null;
   return <EvidencePopover items={items} sourcePdfUrl={sourcePdfUrl} onOpenSourcePage={onOpenSourcePage}>{children}</EvidencePopover>;
 }
 
