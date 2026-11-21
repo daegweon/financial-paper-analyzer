@@ -2,7 +2,7 @@
 
 > **작성:** 2026-11-21 KST  
 > **개선 PR:** #41 — hover / info popover evidence UX  
-> **상태:** 구현 완료 / CI 통과 / Preview 배포 한도 초과로 대기
+> **상태:** 호버 미리보기·클릭 상세 팝오버 구현 및 회귀 테스트 보강 / 최신 수정 검증 대기 / Preview 배포 한도 초과
 
 ## 왜 PR #38의 접기 UI를 다시 바꾸는가
 
@@ -21,16 +21,15 @@
 
 ### 데스크톱 포인터 상호작용
 
-- 마우스 포인터가 주장/설명 문장 또는 `i` 아이콘에 들어오면 팝오버가 포인터 근처에 열린다.
-- 포인터가 주장 텍스트/아이콘 위를 이동하는 동안 팝오버가 포인터 위치를 따라간다.
-- 팝오버 안으로 포인터가 이동하면 위치를 고정해 사용자가 인용문을 읽거나 원문 링크를 클릭할 수 있게 한다.
-- 포인터가 아이콘/팝오버 영역을 벗어나면 hover 상태의 팝오버를 닫는다.
-- 아이콘 클릭은 팝오버를 고정(pinned)한다. 바깥 클릭 또는 ESC로 닫는다.
+- 주장/설명 텍스트에 마우스를 올리면 포인터 옆에 **비대화형 미리보기**가 열린다. 첫 번째 원문 인용의 일부(최대 180자)와 PDF 페이지, 추가 근거 개수를 간결하게 표시한다.
+- 포인터가 주장 텍스트 위를 움직이면 미리보기도 포인터를 따라간다. 미리보기 자체로 포인터를 이동해도 닫히지 않으며, 포인터가 주장과 미리보기 영역을 모두 벗어나면 닫힌다.
+- 작은 `i` 아이콘을 클릭하면 미리보기 대신 **상세 근거 팝오버**가 열린다. 연결된 모든 원문 인용과 PDF 페이지 이동 액션을 제공한다.
+- 상세 팝오버는 바깥 클릭 또는 ESC로 닫으며, 아이콘을 다시 누르는 동작도 닫기로 처리한다.
 
 ### 키보드 및 터치
 
-- 키보드 포커스가 아이콘에 오면 근거가 열린다. Enter/Space는 고정 표시, ESC는 닫기를 지원한다.
-- 터치 기기에는 hover가 없으므로 아이콘 탭으로 열고, 다시 탭하거나 바깥을 탭해 닫는다.
+- 키보드 포커스가 아이콘에 오면 비대화형 미리보기가 열린다. Enter/Space는 전체 근거 상세 팝오버를 열고 ESC는 닫는다.
+- 터치 기기에는 hover가 없으므로 아이콘 탭으로 상세 근거를 열고, 다시 탭하거나 바깥을 탭해 닫는다.
 - 버튼에는 설명형 accessible name, `aria-expanded`, `aria-controls`, visible focus ring을 제공한다.
 - 팝오버는 최대 높이를 제한하고 내용이 길면 내부 스크롤한다.
 
@@ -59,7 +58,7 @@
 - Progressive disclosure: 독자가 요청할 때만 원문 인용을 표시한다.
 - Low visual noise: 반복적인 full-width evidence row/card를 제거하고 inline affordance 하나로 대체한다.
 - Discoverability: 작은 i 아이콘과 hover preview가 출처 확인 기능의 존재를 알려준다.
-- User control: hover preview와 click-to-pin을 모두 제공한다.
+- User control: hover preview와 click-to-open 상세 근거를 분리해 사용자가 확인 깊이를 선택한다.
 - Accessibility: 마우스만으로 기능을 제한하지 않고 키보드·터치·스크린리더 이름을 제공한다.
 - Fidelity: 화면에서 숨겨도 인쇄/PDF에는 인용 근거를 보존한다.
 
@@ -67,13 +66,10 @@
 
 ### 자동 검증 결과 (2026-11-21)
 
-- PR #41 최신 HEAD: `ec4d95ef1bd08d58330b2e3ed16c30fd4b1d6892`.
-- GitHub Actions [#44905544098](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44905544098): 전체 3개 job 성공.
-- Backend: **247 passed, 1 skipped**.
-- Frontend unit: **82 passed**.
-- Playwright: **9/9 passed** (주장 텍스트 hover, 인용문 표시, 클릭 고정, ESC, 인쇄, 주니어 가이드, 라이브러리 우선 순서).
-- Disposable PostgreSQL migration/ownership contracts: 통과.
-- Vercel Preview 생성 요청은 **HTTP 402 `api-deployments-free-per-day`**로 거절되었다. Vercel이 일일 무료 API 배포 100회를 초과하여 24시간 후 재시도하라고 반환했다. 따라서 최신 PR HEAD의 Preview URL은 아직 발급되지 않았다. Production에는 변경사항을 반영하지 않았다.
+- 최초 인라인 팝오버 구현 커밋 `ec4d95ef1bd08d58330b2e3ed16c30fd4b1d6892` 기준 GitHub Actions [#44905544098](https://github.com/daegweon/financial-paper-analyzer/actions/runs/44905544098): 전체 3개 job 성공(Backend 247 passed/1 skipped, Frontend unit 82 passed, Playwright 9/9, PostgreSQL 계약 통과).
+- 이후 코드 리뷰에서 주니어 가이드의 중복 i 아이콘을 제거하고, 키보드 포커스 위치, tooltip/dialog 의미, 호버 미리보기와 전체 상세 보기의 분리를 보완했다. 이 후속 수정은 현재 브랜치 HEAD `ac7e6422e021a2f6520c24021b3c3f1093fdde8a`에 포함되어 있으며, **새 테스트 실행은 아직 확인하지 않았다**.
+- 회귀 테스트에는 포인터 추적, 미리보기 hover 유지, Enter/ESC, 상세 팝오버 바깥 클릭, 주니어 가이드의 주장당 아이콘 1개, 인쇄 시 전체 인용문 보존을 추가했다.
+- Vercel Preview 생성 요청은 **HTTP 402 `api-deployments-free-per-day`**로 거절되었다. 일일 무료 API 배포 100회 초과로 최신 PR HEAD Preview는 아직 발급되지 않았다. Production에는 변경사항을 반영하지 않았다.
 
 
 1. 인용 근거가 있는 문장 옆에 작은 i 아이콘 하나만 표시되는가.
@@ -87,4 +83,4 @@
 9. 인쇄/PDF 출력에는 모든 원문 인용문이 포함되는가.
 10. PDF 페이지 이동, 기존 분석·라이브러리 우선 레이아웃은 유지되는가.
 
-PR #41의 CI는 통과했다. 다만 Vercel Preview 생성은 계정의 일일 API 배포 한도(100회)를 초과해 HTTP 402로 차단되었다. 한도 복구 후 Preview를 검증하고 병합한다. 외부 백엔드, 데이터베이스, 분석 엔진 변경은 없다.
+초기 구현 CI는 통과했지만 후속 UX 보완의 테스트 결과와 최신 Preview 검증은 남아 있다. GitHub Actions 사용량 제한을 존중해 수동 재실행하지 않는다. Vercel 일일 배포 한도 복구 후 최신 HEAD의 Preview를 확인하고, 그 전에는 Production 병합/배포하지 않는다. 외부 백엔드, 데이터베이스, 분석 엔진 변경은 없다.
