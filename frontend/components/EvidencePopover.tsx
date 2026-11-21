@@ -32,20 +32,19 @@ export function EvidencePopover({
 
   useEffect(() => {
     if (!open) return;
+    const dismiss = () => {
+      setOpen(false);
+      setPinned(false);
+    };
     const onPointerDown = (event: PointerEvent) => {
-      if (pinned && rootRef.current && !rootRef.current.contains(event.target as Node)) {
-        setOpen(false);
-        setPinned(false);
-      }
+      if (pinned && rootRef.current && !rootRef.current.contains(event.target as Node)) dismiss();
     };
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        setOpen(false);
-        setPinned(false);
-        if (popoverRef.current?.contains(document.activeElement)) buttonRef.current?.focus();
-      }
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      dismiss();
+      if (popoverRef.current?.contains(document.activeElement)) buttonRef.current?.focus();
     };
     document.addEventListener("pointerdown", onPointerDown);
     // Capture before the parent report dialog can interpret Escape as "close report".
@@ -93,6 +92,11 @@ export function EvidencePopover({
     setOpen(true);
   };
 
+  const previewItem = items[0];
+  const previewQuote = previewItem.quote.length > 180
+    ? previewItem.quote.slice(0, 180).trimEnd() + "…"
+    : previewItem.quote;
+
   return <span
     ref={rootRef}
     className="evidence-popover-anchor"
@@ -100,7 +104,7 @@ export function EvidencePopover({
     onPointerMove={onPointerMove}
     onPointerLeave={onPointerLeave}
     onFocus={(event) => {
-      if (!rootRef.current?.contains(event.relatedTarget as Node | null)) {
+      if (!rootRef.current?.contains(event.relatedTarget as Node | null) && !pinned) {
         const rect = buttonRef.current?.getBoundingClientRect();
         if (rect) placeAt(rect.left + rect.width / 2, rect.bottom);
         setOpen(true);
@@ -119,38 +123,48 @@ export function EvidencePopover({
       aria-expanded={open}
       aria-controls={tooltipId}
       aria-haspopup="dialog"
-      title="마우스를 올리거나 클릭하면 원문 근거를 확인할 수 있습니다"
+      aria-describedby={open && !pinned ? tooltipId : undefined}
       onClick={onClick}
     >i</button>
     <div
       ref={popoverRef}
       id={tooltipId}
-      className={`evidence-popover${open ? " is-open" : ""}`}
-      role="dialog"
-      aria-modal="false"
+      className={`evidence-popover${open ? " is-open" : ""}${pinned ? " is-pinned" : ""}`}
+      role={pinned ? "dialog" : "tooltip"}
+      aria-modal={pinned ? "false" : undefined}
       aria-label={label}
       aria-hidden={!open}
       style={{ left: position.left, top: position.top }}
     >
-      <div className="evidence-popover-heading">
-        <strong>{label}</strong>
-        <span>{items.length}개 근거</span>
+      <div className="evidence-popover-preview">
+        <div className="evidence-preview-meta">
+          <span>원문 p.{previewItem.page}</span>
+          {items.length > 1 && <span>외 {items.length - 1}개 근거</span>}
+        </div>
+        <p className="evidence-preview-quote">{previewQuote}</p>
+        <p className="evidence-preview-hint">ⓘ 클릭하면 전체 인용문과 원문 이동을 확인할 수 있습니다</p>
       </div>
-      <div className="evidence-popover-items">
-        {items.map((item, index) => <section className="evidence-popover-item" key={item.page + "-" + index}>
-          <div className="evidence-popover-page">원문 p.{item.page}</div>
-          <p>{item.quote}</p>
-          {sourcePdfUrl && Number.isInteger(item.page) && item.page > 0 &&
-            (onOpenSourcePage
-              ? <button type="button" className="evidence-popover-link" onClick={() => onOpenSourcePage(item.page)}>
-                  원문 페이지 함께 보기 ↗
-                </button>
-              : <a className="evidence-popover-link" href={sourcePdfUrl + "#page=" + item.page} target="_blank" rel="noreferrer">
-                  원문 페이지 확인 ↗
-                </a>)}
-        </section>)}
+      <div className="evidence-popover-detail">
+        <div className="evidence-popover-heading">
+          <strong>{label}</strong>
+          <span>{items.length}개 근거</span>
+        </div>
+        <div className="evidence-popover-items">
+          {items.map((item, index) => <section className="evidence-popover-item" key={item.page + "-" + index}>
+            <div className="evidence-popover-page">원문 p.{item.page}</div>
+            <p>{item.quote}</p>
+            {sourcePdfUrl && Number.isInteger(item.page) && item.page > 0 &&
+              (onOpenSourcePage
+                ? <button type="button" className="evidence-popover-link" onClick={() => onOpenSourcePage(item.page)}>
+                    원문 페이지 함께 보기 ↗
+                  </button>
+                : <a className="evidence-popover-link" href={sourcePdfUrl + "#page=" + item.page} target="_blank" rel="noreferrer">
+                    원문 페이지 확인 ↗
+                  </a>)}
+          </section>)}
+        </div>
+        <div className="evidence-popover-footer">바깥을 클릭하거나 ESC를 누르면 닫힙니다</div>
       </div>
-      {pinned && <div className="evidence-popover-footer">바깥을 클릭하거나 ESC를 누르면 닫힙니다</div>}
     </div>
   </span>;
 }
