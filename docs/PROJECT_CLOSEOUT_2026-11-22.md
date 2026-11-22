@@ -5,12 +5,14 @@
 **Production:** https://financial-paper-analyzer.vercel.app  
 **Current main:** documentation closeout committed; query GitHub for the current HEAD (application runtime unchanged from release commit `0c2e5b10`)
 
-## Latest deployment
+## Administrator navigation feature release deployment
 
-- Vercel Production deployment: `dpl_HX8eqE5j3HXr4bxXc82kZhnTcgay` — READY, canonical alias assigned.
-- Railway API deployment: `9a89be17-5408-41a2-91d0-cc7a7ca4779c` — SUCCESS, health check passed.
-- Railway Worker deployment: `0b23b313-1cf0-468e-ab3e-f06087cd1320` — SUCCESS, worker started.
-- These deployments follow the documentation-only closeout commit; application runtime code is unchanged from the previous release.
+- Application commit: `1b543c07840e69873b74c90571226ca6a19c0b31`.
+- Vercel Production deployment: `dpl_Gqps3z6RJedj6YpDSgU78UL1SX1S` — READY, canonical alias assigned.
+- Railway API deployment: `981f77e2-51ae-49b4-84f0-214b05e1fd68` — SUCCESS, Online 1/1.
+- Railway Worker deployment: `4a6c98ea-28eb-4b58-b52e-cc9e103afe32` — SUCCESS, Online 1/1.
+- Subsequent documentation-only commits triggered automatic redeployments. Always query Vercel/Railway live state for current deployment IDs; do not treat the feature-release IDs above as necessarily the latest deployment.
+- Railway build verification for this application release: **250 passed, 1 skipped**. GitHub Actions were not run.
 
 ## Latest administrator-navigation release — 2026-11-22
 

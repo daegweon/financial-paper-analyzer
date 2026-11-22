@@ -5,7 +5,7 @@
 > **Last verified:** 2026-11-22 (Asia/Seoul)  
 > **Repository:** [daegweon/financial-paper-analyzer](https://github.com/daegweon/financial-paper-analyzer)  
 > **Production URL:** https://financial-paper-analyzer.vercel.app  
-> **Latest application release:** Production is synced to the current `main` HEAD after the 2026-11-22 reader-scale correction; verify the live main SHA and Vercel deployment before operational changes.  
+> **Latest application release:** Production includes the 2026-11-22 reader-scale correction and administrator-only workspace navigation (application release commit `1b543c07840e69873b74c90571226ca6a19c0b31`); later `main` commits are documentation closeout only. Verify the live main SHA and Vercel deployment before operational changes.  
 > Connected Vercel/Railway services deploy on main updates, including documentation-only commits. Always fetch the current main SHA and latest deployment IDs before changing or rolling back anything.
 
 This document supersedes earlier release-status snapshots for the *current state*. Older dated documents remain useful as historical evidence and detailed runbooks; do not interpret their old deployment/PR status as current.
@@ -17,7 +17,7 @@ This document supersedes earlier release-status snapshots for the *current state
 - The public financial-paper discovery/import feature is part of the released product. Its user flow, API routes, OpenAlex behavior, sorting/pagination, private PDF storage and SSRF/security boundaries are summarized in §9A and fully documented in [PUBLIC_PAPER_DISCOVERY_IMPORT_2026-11-21.md](PUBLIC_PAPER_DISCOVERY_IMPORT_2026-11-21.md).
 - Production URL: https://financial-paper-analyzer.vercel.app.
 
-## 0. Latest release note — 2026-11-22 (administrator navigation)
+### Administrator navigation release
 
 - Added an administrator-only entry to the signed-in workspace sidebar: **AI 사용량 및 비용 관리**. At mobile widths, the sidebar is hidden, so the same destination is available as a compact **관리자 대시보드** link in the workspace header.
 - The frontend does not infer admin rights from an email string. After a session is established, it calls `GET /api/admin/access` with the current Supabase access token. The API verifies the token with Supabase and compares the authenticated user UUID against the server-side `PAPERSIGNAL_ADMIN_USER_IDS` allowlist. The response contains only `{"is_admin": true|false}`.
