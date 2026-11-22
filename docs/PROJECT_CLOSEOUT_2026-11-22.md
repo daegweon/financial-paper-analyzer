@@ -25,6 +25,7 @@
 - [x] Comprehension-check typography enlarged.
 - [x] Duplicate variable evidence citations grouped under the parent icon; unique evidence remains local.
 - [x] Administrator AI usage ledger and monthly budget reporting implemented.
+- [x] Administrator-only workspace navigation added; `/api/admin/access` confirms the server allowlist before displaying the dashboard menu.
 - [x] Supabase production migration ledger checked: 14 versions applied through `20261121032957`.
 - [x] Vercel Production READY; Railway API and Worker Online 1/1 at the latest status check.
 - [x] 15 obsolete/duplicate PRs closed; branches and commit history retained.

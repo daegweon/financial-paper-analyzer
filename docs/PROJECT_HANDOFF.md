@@ -76,12 +76,12 @@ Non-negotiable quality principles:
 
 ### Administrator
 
-- The Google OAuth account that owns three papers is the designated administrator.
-- Railway API variable `PAPERSIGNAL_ADMIN_USER_IDS` is configured with that account's Supabase Auth UUID.
-- The UUID is intentionally not copied into Git or this handoff.
-- The user manually confirmed that the administrator dashboard displays normally.
+- The Google OAuth account `sseeve2@gmail.com` is the designated administrator. Its Supabase Auth UUID is configured in Railway API variable `PAPERSIGNAL_ADMIN_USER_IDS`; do not copy the UUID or secret environment values into Git.
 - Admin route: `/admin/ai-usage`.
-- Administrator allowlisting is server-side; do not add administrator checks only in the frontend.
+- Admin navigation is now visible in the authenticated workspace sidebar (and the mobile header) only after `GET /api/admin/access` confirms the current user's UUID against the server-side allowlist.
+- `GET /api/admin/access` returns only `{"is_admin": true|false}`; it does not return usage or cost data. Unauthenticated requests receive 401.
+- The usage summary and budget-write routes continue to perform their own server-side authorization. Hiding the menu is not an authorization boundary.
+- Admin dashboard capabilities: service-wide monthly AI usage/cost estimates, model/provider breakdown, success/failure and token/latency metrics, user-level internal usage aggregates, and service-wide monthly budget configuration.
 - Do not change the configured administrator account unless the user explicitly requests it.
 
 ### Deployment automation

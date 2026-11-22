@@ -1020,3 +1020,37 @@ button.evidence-source-link:focus-visible {
   .reading-size-controls { display: none !important; }
   .result { --reading-scale: 1 !important; }
 }
+
+
+/* Administrator-only navigation: server-authorized visibility in the workspace shell. */
+.workspace aside nav { display: grid; gap: 8px; }
+.workspace aside .admin-nav {
+  display: block;
+  margin-top: 4px;
+  border: 1px solid #e2ecee;
+  background: #f7fafb;
+  color: #315e65;
+}
+.workspace aside .admin-nav:hover {
+  border-color: #b9d8d3;
+  background: #edf7f5;
+}
+.workspace-admin-link {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 9px 12px;
+  border: 1px solid #b9d8d3;
+  border-radius: 8px;
+  background: #edf7f5;
+  color: #176d6a;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.workspace-admin-link:hover { background: #e1f1ee; }
+@media (max-width: 620px) {
+  .workspace-admin-link { display: inline-flex; min-height: 44px; padding: 9px 10px; font-size: 11px; }
+}

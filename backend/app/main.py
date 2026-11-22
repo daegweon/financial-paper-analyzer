@@ -3353,6 +3353,23 @@ async def analysis_job_status(
         }
 
 
+@app.get("/api/admin/access")
+async def admin_access(
+    authorization: str | None = Header(default=None),
+) -> dict[str, bool]:
+    """Return only the current user's administrator-menu visibility flag."""
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        raise HTTPException(status_code=503, detail="인증 환경이 설정되지 않았습니다.")
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="로그인이 필요합니다.")
+    token = authorization.split(" ", 1)[1].strip()
+    if not token:
+        raise HTTPException(status_code=401, detail="인증 토큰이 필요합니다.")
+    async with httpx.AsyncClient(timeout=15) as client:
+        user_id = await _verify_user(client, token)
+    return {"is_admin": _is_admin_user(user_id)}
+
+
 @app.get("/api/admin/ai-usage/summary")
 async def admin_ai_usage_summary(
     authorization: str | None = Header(default=None),

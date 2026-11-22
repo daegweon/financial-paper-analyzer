@@ -198,3 +198,35 @@ def test_admin_budget_rejects_invalid_values_without_database_write(monkeypatch,
     )
 
     assert response.status_code == 422
+
+def test_admin_access_endpoint_returns_true_for_allowlisted_user(monkeypatch):
+    configure_admin(monkeypatch)
+
+    response = TestClient(module.app).get(
+        "/api/admin/access",
+        headers={"Authorization": f"Bearer {VALID_TOKEN}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"is_admin": True}
+
+
+def test_admin_access_endpoint_returns_false_for_regular_user(monkeypatch):
+    configure_admin(monkeypatch, user_id=USER_ID)
+
+    response = TestClient(module.app).get(
+        "/api/admin/access",
+        headers={"Authorization": f"Bearer {VALID_TOKEN}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"is_admin": False}
+
+
+def test_admin_access_endpoint_requires_authentication(monkeypatch):
+    configure_admin(monkeypatch)
+
+    response = TestClient(module.app).get("/api/admin/access")
+
+    assert response.status_code == 401
+

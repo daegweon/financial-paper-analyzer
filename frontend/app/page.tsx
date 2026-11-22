@@ -280,6 +280,7 @@ function ClaimList({
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [boot, setBoot] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -393,6 +394,39 @@ export default function Home() {
       data.subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    let disposed = false;
+    setIsAdmin(false);
+    if (!user?.id) return () => { disposed = true; };
+
+    const api = process.env.NEXT_PUBLIC_API_URL;
+    if (!api) return () => { disposed = true; };
+
+    void db().auth.getSession()
+      .then(({ data, error }) => {
+        if (error) throw error;
+        const session = data.session;
+        if (!session || session.user.id !== user.id) return null;
+        return fetch(api.replace(/\/$/, "") + "/api/admin/access", {
+          headers: { Authorization: "Bearer " + session.access_token },
+          cache: "no-store",
+        });
+      })
+      .then(async response => {
+        if (!response?.ok) return false;
+        const payload = await response.json() as { is_admin?: boolean };
+        return payload.is_admin === true;
+      })
+      .then(value => {
+        if (!disposed) setIsAdmin(value);
+      })
+      .catch(() => {
+        if (!disposed) setIsAdmin(false);
+      });
+
+    return () => { disposed = true; };
+  }, [user?.id]);
 
   useEffect(() => {
     const api = process.env.NEXT_PUBLIC_API_URL;
@@ -1084,7 +1118,10 @@ export default function Home() {
     <aside>
       <div className="brand">◈ Paper<span>Signal</span></div>
       <p className="eyebrow">WORKSPACE</p>
-      <nav aria-label="주요 메뉴"><a className="nav" href="#workspace-content" aria-current="page">▤　논문 라이브러리</a></nav>
+      <nav aria-label="주요 메뉴">
+        <a className="nav" href="#workspace-content" aria-current="page">▤　논문 라이브러리</a>
+        {isAdmin && <a className="nav admin-nav" href="/admin/ai-usage">▦　AI 사용량 및 비용 관리</a>}
+      </nav>
     </aside>
     <div className="content">
       <header className="workspace-header">
@@ -1093,6 +1130,7 @@ export default function Home() {
           ● {engineMode === "gemini" ? "Gemini AI 분석 활성화" : engineMode === "openai" ? "OpenAI 분석 활성화" : engineMode === "extractive" ? "텍스트 추출 모드" : "API 상태 확인 중"}
         </span>
         <span className="workspace-account" title={user.email ?? ""}>{user.email}</span>
+        {isAdmin && <a className="workspace-admin-link" href="/admin/ai-usage">관리자 대시보드</a>}
         <button type="button" className="workspace-sign-out" onClick={() => void signOut()} disabled={signOutLoading}>{signOutLoading ? "로그아웃 중..." : "로그아웃"}</button>
       </header>
       <div className="body" id="workspace-content" tabIndex={-1}>
