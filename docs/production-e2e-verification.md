@@ -4,9 +4,9 @@
 
 This document began as a 2026-11-13 verification record. Its initial "Known gaps" and 2026-11-20 notes below are historical snapshots; use this section for current status.
 
-- Current GitHub `main`: `0c2e5b10c39eca1d6577fc36d9fcbe830dd653d2`.
+- Current GitHub `main`: `4595cd33d33c939e1490d9bd5375dec833594b10` (documentation closeout; app runtime unchanged from `0c2e5b10`).
 - Canonical Vercel domain: https://financial-paper-analyzer.vercel.app
-- Current Vercel Production deployment: `dpl_MShcWWKJSoXDLZLbtxMcZvhzvq6G`, READY, built from `main`.
+- Current Vercel Production deployment: `dpl_HX8eqE5j3HXr4bxXc82kZhnTcgay`, READY, built from the documentation closeout commit.
 - Railway API and Worker: Online 1/1, zero current service issues at the latest status check.
 - The released app uses Gemini, a durable Railway API/Worker queue, the private research library, original-PDF evidence, junior-learning UI and public finance-paper search/import. The initial synchronous extractive-only description below is not the current architecture.
 - A real two-account Production API/Worker/DB/Storage E2E passed on 2026-11-20 using synthetic email/password accounts. It verified private PDF upload, completed analysis, saved evidence, cross-user denial and fixture cleanup.

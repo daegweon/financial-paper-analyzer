@@ -3,7 +3,14 @@
 **Date:** 2026-11-22 (KST)  
 **Repository:** https://github.com/daegweon/financial-paper-analyzer  
 **Production:** https://financial-paper-analyzer.vercel.app  
-**Current main:** `0c2e5b10c39eca1d6577fc36d9fcbe830dd653d2`
+**Current main:** `4595cd33d33c939e1490d9bd5375dec833594b10` (documentation closeout; application runtime unchanged from `0c2e5b10`)
+
+## Latest deployment
+
+- Vercel Production deployment: `dpl_HX8eqE5j3HXr4bxXc82kZhnTcgay` — READY, canonical alias assigned.
+- Railway API deployment: `9a89be17-5408-41a2-91d0-cc7a7ca4779c` — SUCCESS, health check passed.
+- Railway Worker deployment: `0b23b313-1cf0-468e-ab3e-f06087cd1320` — SUCCESS, worker started.
+- These deployments follow the documentation-only closeout commit; application runtime code is unchanged from the previous release.
 
 ## Release state
 

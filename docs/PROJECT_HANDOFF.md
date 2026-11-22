@@ -298,7 +298,7 @@ PR #41 is merged. The current Production UI uses one compact inline `i` icon per
 - Duplicate variable evidence citations are consolidated under the parent "주요 변수" icon only when both PDF page and normalized quote match. Evidence unique to one variable remains beside that variable.
 - Public finance-paper discovery/import remains available from the research library; see §9A and `PUBLIC_PAPER_DISCOVERY_IMPORT_2026-11-21.md`.
 
-**Current release source:** `main` commit `0c2e5b10c39eca1d6577fc36d9fcbe830dd653d2`; Vercel Production deployment `dpl_MShcWWKJSoXDLZLbtxMcZvhzvq6G` is READY on https://financial-paper-analyzer.vercel.app. PR #41 is merged; no Preview review or further merge is required for this feature.
+**Application runtime release:** commit `0c2e5b10c39eca1d6577fc36d9fcbe830dd653d2`. The latest `main` HEAD is `4595cd33d33c939e1490d9bd5375dec833594b10` after documentation-only closeout; Vercel Production deployment `dpl_HX8eqE5j3HXr4bxXc82kZhnTcgay` is READY on https://financial-paper-analyzer.vercel.app. PR #41 is merged; no Preview review or further merge is required for this feature.
 
 **How to continue:** Treat this feature as released. Only reopen for a reproducible Production defect or a new explicit user request. No backend, database or analysis-engine change is part of the reader-scale correction.
 
@@ -321,8 +321,8 @@ These cannot be honestly marked complete by code changes alone:
 
 ### Confirmed current operational state
 
-- GitHub `main`: `0c2e5b10c39eca1d6577fc36d9fcbe830dd653d2`.
-- Vercel canonical Production: READY, `dpl_MShcWWKJSoXDLZLbtxMcZvhzvq6G`.
+- GitHub `main`: `4595cd33d33c939e1490d9bd5375dec833594b10` (documentation closeout; application runtime unchanged from `0c2e5b10`).
+- Vercel canonical Production: READY, `dpl_HX8eqE5j3HXr4bxXc82kZhnTcgay`.
 - Railway API and Worker: Online 1/1, zero current service issues at the last status check.
 - Supabase migration ledger: 14 applied versions through `20261121032957`; no pending migration was identified.
 - AI usage ledger and administrator monthly-budget reporting are implemented; cost estimates remain unknown when billing mode or token data is incomplete. This is reporting, not an invoice or automatic spend cap.
