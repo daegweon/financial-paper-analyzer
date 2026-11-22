@@ -3,7 +3,7 @@
 ## Superseding status — 2026-11-22
 
 The entries below preserve the 2026-11-20 release-closeout record. Current state:
-- `main` is `4595cd33d33c939e1490d9bd5375dec833594b10` after documentation-only closeout; application runtime is unchanged from `0c2e5b10`. Vercel Production `dpl_HX8eqE5j3HXr4bxXc82kZhnTcgay` is READY on the canonical domain; Railway API and Worker are Online 1/1.
+- `main` contains the documentation-only closeout; query GitHub for the live HEAD. Application runtime is unchanged from `0c2e5b10`. Vercel Production is READY on the canonical domain; Railway API and Worker are Online 1/1. Query live deployments for current IDs.
 - PR #41 is merged and its inline evidence UX is in Production. The 100% reader control maps to the former 90% visual size; equation parameter explanations are removed; comprehension-quiz typography is larger; duplicate evidence citations are grouped.
 - 15 stale/duplicate PRs (#2–#16, #39, #40) were closed as superseded/archived on 2026-11-22. Their branches/commit history were retained. No open PRs or GitHub Issues remain after the cleanup check.
 - GitHub Actions were not run for this closeout.

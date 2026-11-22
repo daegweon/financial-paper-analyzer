@@ -3,7 +3,7 @@
 **Date:** 2026-11-22 (KST)  
 **Repository:** https://github.com/daegweon/financial-paper-analyzer  
 **Production:** https://financial-paper-analyzer.vercel.app  
-**Current main:** `4595cd33d33c939e1490d9bd5375dec833594b10` (documentation closeout; application runtime unchanged from `0c2e5b10`)
+**Current main:** documentation closeout committed; query GitHub for the current HEAD (application runtime unchanged from release commit `0c2e5b10`)
 
 ## Latest deployment
 
