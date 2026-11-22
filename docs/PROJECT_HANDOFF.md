@@ -17,6 +17,16 @@ This document supersedes earlier release-status snapshots for the *current state
 - The public financial-paper discovery/import feature is part of the released product. Its user flow, API routes, OpenAlex behavior, sorting/pagination, private PDF storage and SSRF/security boundaries are summarized in §9A and fully documented in [PUBLIC_PAPER_DISCOVERY_IMPORT_2026-11-21.md](PUBLIC_PAPER_DISCOVERY_IMPORT_2026-11-21.md).
 - Production URL: https://financial-paper-analyzer.vercel.app.
 
+## 0. Latest release note — 2026-11-22 (administrator navigation)
+
+- Added an administrator-only entry to the signed-in workspace sidebar: **AI 사용량 및 비용 관리**. At mobile widths, the sidebar is hidden, so the same destination is available as a compact **관리자 대시보드** link in the workspace header.
+- The frontend does not infer admin rights from an email string. After a session is established, it calls `GET /api/admin/access` with the current Supabase access token. The API verifies the token with Supabase and compares the authenticated user UUID against the server-side `PAPERSIGNAL_ADMIN_USER_IDS` allowlist. The response contains only `{"is_admin": true|false}`.
+- The administrator link is shown only when the endpoint returns `is_admin: true`. On request failure, unauthenticated state, or account switch, it is hidden. The usage summary and budget-write APIs retain their own independent server-side authorization; the menu is not a security boundary.
+- Added three backend route tests: allowlisted admin receives true, regular user receives false, and unauthenticated request receives 401.
+- Application release commit: `1b543c07840e69873b74c90571226ca6a19c0b31`. Vercel Production deployment for this release: `dpl_Gqps3z6RJedj6YpDSgU78UL1SX1S` (READY, canonical alias assigned). Railway API and Worker deployments for this release completed SUCCESS/Online 1/1.
+- Railway build verification reported **250 passed, 1 skipped** for the backend test suite. GitHub Actions were not run.
+- Detailed behavior and security contract: [Administrator dashboard navigation](ADMIN_DASHBOARD_NAVIGATION_2026-11-22.md).
+
 ## 1. Start here in a new session
 
 1. Read this document completely.
@@ -78,10 +88,12 @@ Non-negotiable quality principles:
 
 - The Google OAuth account `sseeve2@gmail.com` is the designated administrator. Its Supabase Auth UUID is configured in Railway API variable `PAPERSIGNAL_ADMIN_USER_IDS`; do not copy the UUID or secret environment values into Git.
 - Admin route: `/admin/ai-usage`.
-- Admin navigation is now visible in the authenticated workspace sidebar (and the mobile header) only after `GET /api/admin/access` confirms the current user's UUID against the server-side allowlist.
-- `GET /api/admin/access` returns only `{"is_admin": true|false}`; it does not return usage or cost data. Unauthenticated requests receive 401.
-- The usage summary and budget-write routes continue to perform their own server-side authorization. Hiding the menu is not an authorization boundary.
+- In the signed-in workspace, administrators see **AI 사용량 및 비용 관리** in the left WORKSPACE navigation. On mobile, where the sidebar is hidden, **관리자 대시보드** appears in the top header.
+- Visibility is confirmed by `GET /api/admin/access`, which verifies the Supabase bearer token and compares the authenticated UUID to the server-side allowlist. The response is only `{"is_admin": true|false}`; it exposes no usage data. A non-admin gets `false`; missing/invalid authentication is rejected.
+- The usage summary and budget-write routes continue to perform their own independent server-side authorization. Hiding the menu is not an authorization boundary.
 - Admin dashboard capabilities: service-wide monthly AI usage/cost estimates, model/provider breakdown, success/failure and token/latency metrics, user-level internal usage aggregates, and service-wide monthly budget configuration.
+- Three tests cover allowlisted admin, regular user and unauthenticated access to the menu-visibility endpoint.
+- Detailed contract: [Administrator dashboard navigation](ADMIN_DASHBOARD_NAVIGATION_2026-11-22.md).
 - Do not change the configured administrator account unless the user explicitly requests it.
 
 ### Deployment automation
@@ -302,7 +314,7 @@ PR #41 is merged. The current Production UI uses one compact inline `i` icon per
 
 **How to continue:** Treat this feature as released. Only reopen for a reproducible Production defect or a new explicit user request. No backend, database or analysis-engine change is part of the reader-scale correction.
 
-## 10. Remaining work and explicit non-blockers — closeout 2026-11-22
+## 10. Remaining work and explicit non-blockers — closeout 2026-11-22 (after admin navigation release)
 
 The core PaperSignal product is released in Production. The repository housekeeping pass closed 15 obsolete/duplicate PRs (PR #39/#40 duplicates of merged #41; PR #2–#16 superseded/archived). Their branches and commit history were retained. There are no remaining open PRs or GitHub Issues after the closeout check. GitHub Actions were not run.
 
