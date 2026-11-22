@@ -1,5 +1,24 @@
 # PaperSignal beta release gate
 
+# Current operational status — 2026-11-22
+
+This runbook contains historical incident notes below. The old section stating that Google OAuth callback login was not working describes the 2026-11-15 incident and is **not current guidance**: Google OAuth was subsequently configured and a successful Preview sign-in/return-to-library flow was confirmed during project testing. A fresh Production-domain Google sign-in/sign-out after the final release remains a manual regression check.
+
+Current gates:
+- Real two-account synthetic email/password Production API/Worker/DB/Storage E2E: passed on 2026-11-20.
+- External SMTP and real external mailbox confirmation/password-reset delivery: pending custom SMTP provider and sender-domain setup.
+- Public OpenAlex and publisher PDF live integration: pending a small Production smoke; automated tests mock external providers.
+- Native iOS Safari / Android Chrome PDF and session testing: pending actual devices.
+- Finance expert sign-off on six review-flagged findings: pending.
+- Supabase leaked-password protection: Security Advisor warning remains; owner decision/configuration required.
+- Gemini billing tier: unknown until confirmed in Google AI Studio; do not infer Free/Paid from model name or usage.
+- GitHub Actions: do not manually dispatch or rerun for closeout unless the user explicitly requests it.
+
+The application is live at https://financial-paper-analyzer.vercel.app. Do not follow the historical invalid-client remediation steps below unless a new, reproducible OAuth callback failure occurs.
+
+---
+
+
 ## Current automated verification
 
 - Backend unit and contract suite: run with `cd backend && pytest`.

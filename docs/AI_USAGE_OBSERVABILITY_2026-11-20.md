@@ -1,5 +1,20 @@
 # PaperSignal — AI usage and latency observability (2026-11-20)
 
+# Current implementation status — 2026-11-22
+
+The original 2026-11-20 scope below is a historical description of the first log-only telemetry increment. The durable ledger and administrator reporting have since been implemented.
+
+- Migration `20261120122819_ai_usage_events_ledger` creates `public.ai_usage_events` for provider/model/attempt outcome, billing mode, HTTP/error metadata, token counts, latency, idempotency key and timestamp. The table is forced-RLS and browser roles have no privileges; the trusted service role has SELECT/INSERT.
+- `public.ai_admin_settings` stores the administrator's global monthly budget. It is forced-RLS and service-role-only; the server has the SELECT/INSERT/UPDATE privileges required for the admin setting.
+- Backend modules: `backend/app/cost_estimator.py`, `backend/app/cost_report.py`, and `backend/app/model_price_catalog.json`. The price catalog is date-effective and source-linked.
+- The admin reporting path groups usage by paper/provider/model/month and provides administrator-level user/paper/month summaries. Admin UI: `/admin/ai-usage`.
+- Cost statuses distinguish confirmed Free tier, estimated Paid Standard, unknown billing mode, incomplete token usage and missing price. Unknown or incomplete data remains null; it is never silently treated as zero.
+- The report is an administrator operational estimate, **not an invoice or an automatic hard spending cap**. The actual Gemini billing tier still needs confirmation in Google AI Studio before a billing-mode value is configured.
+- Production migration ledger was checked on 2026-11-22: 14 versions applied through `20261121032957`.
+
+---
+
+
 ## Scope
 
 This increment adds operational telemetry to the existing Gemini request path without changing prompts, model selection, output schemas, retry policy, database schema, user-facing paper results, or production configuration.

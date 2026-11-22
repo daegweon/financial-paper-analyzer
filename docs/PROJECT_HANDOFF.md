@@ -287,40 +287,62 @@ The login landing page now shows the user's own workspace first (library, analys
 
 **How to continue:** Read [Analysis evidence disclosure and library-first workspace](ANALYSIS_EVIDENCE_DISCLOSURE_AND_LIBRARY_FIRST_2026-11-21.md). The application feature is released; only address reproducible production issues or new user requests.
 
-## 9C. Inline source-evidence hover / info popover — PR #41
+## 9C. Inline source-evidence hover / info popover — PR #41, merged and in Production
 
-The PR #38 collapsible UI still left a repeated full-width "원문 근거 보기" row under each claim, which users found visually noisy. PR #41 replaces those rows with one small inline `i` icon per claim/evidence group. Hovering the claim/explanation text itself (not just the icon) opens a lightweight, non-interactive quote preview that follows the pointer. Clicking the adjacent i opens a separate detailed popover with every citation and original-PDF page actions; outside click or ESC closes it. Touch opens the detailed popover by tapping i; keyboard focus opens the preview and Enter/Space opens details. Multiple citations for one claim are grouped into the same popover. Print/PDF output still includes all source quotations while hiding the on-screen icon. A follow-up code review removed a duplicate icon in the junior guide and added coverage for pointer-follow, hover persistence, keyboard behavior, outside-click dismissal, and one icon per junior claim.
+PR #41 is merged. The current Production UI uses one compact inline `i` icon per evidence-backed claim/group. Hovering the claim text opens a short, non-interactive source preview; clicking `i` opens the detailed citation popover with original-PDF page actions. The interaction supports pointer hover, keyboard focus/activation, Escape/outside-click dismissal and touch tap. Multiple citations for one claim share one icon. Print/PDF output retains source quotations while hiding screen-only controls.
 
-**2026-11-22 user-requested readability follow-up:** the same PR adds an 8px gap between claim text and the evidence icon, a symbol-by-symbol equation explainer (prioritizing extracted paper variable definitions and marking unknown meanings instead of guessing), and larger report/junior-guide typography. The regression test covers the formula `L(C) = a*C^b + c`, `-E_P[log(pass_rate(C))] = α*C^-k`, ten symbols, the extracted definition for C, report body type size, and icon spacing.
+**2026-11-22 final readability decisions now in Production:**
+- The reader control displays **100% as its default**, while the actual rendered size equals the former 90% visual size. The effective scale is `readingScale / 100 - 0.1`; the label range is 90–150% in 10-point steps. Previous localStorage values are migrated by +10 with marker `papersignal-reading-scale-version=2`, preserving the prior visual size.
+- Equation parameter/symbol explanation cards were removed at the user's request; the paper's formulas remain visible.
+- The "논문 읽기 이해도 점검" title, questions, answer choices and feedback use larger typography.
+- Duplicate variable evidence citations are consolidated under the parent "주요 변수" icon only when both PDF page and normalized quote match. Evidence unique to one variable remains beside that variable.
+- Public finance-paper discovery/import remains available from the research library; see §9A and `PUBLIC_PAPER_DISCOVERY_IMPORT_2026-11-21.md`.
 
-**2026-11-22 follow-up after the user's next Preview review:** PR #41 now includes a dedicated 0.65em spacer between body claim text and its evidence icon; A−/A+/기본 reading controls with 80–140% scale and localStorage persistence; and an equation-symbol tokenizer that splits implicit multiplication aCb into a, C, b without collapsing case-distinct C/c. Equation variable definitions pass their original-PDF evidence through to the explainer. The browser regression checks 10 symbols, font scaling, persisted preference, and icon gap. The user's previous screenshot used an older Preview hostname; use only the exact-head Preview linked in the current PR after CI completes.
+**Current release source:** `main` commit `0c2e5b10c39eca1d6577fc36d9fcbe830dd653d2`; Vercel Production deployment `dpl_MShcWWKJSoXDLZLbtxMcZvhzvq6G` is READY on https://financial-paper-analyzer.vercel.app. PR #41 is merged; no Preview review or further merge is required for this feature.
 
-**How to continue:** Read [Inline source-evidence hover / info popover UX](INLINE_EVIDENCE_HOVER_POPOVER_2026-11-21.md). Verify the latest PR #41 head and Preview before merge. The Preview build and full CI must pass before Production merge. This is frontend-only; no backend, schema, or analysis-engine change.
+**How to continue:** Treat this feature as released. Only reopen for a reproducible Production defect or a new explicit user request. No backend, database or analysis-engine change is part of the reader-scale correction.
 
-## 10. Remaining work and explicit non-blockers
+## 10. Remaining work and explicit non-blockers — closeout 2026-11-22
 
-The initial product release is live; PR #41's current evidence/readability follow-up remains in Preview validation and is not yet deployed to Production. The 2026-11-22 follow-up requested by the user is prepared in detached commit objects and must not be pushed until the user's no-GitHub-Actions instruction changes. The following are follow-up quality/extension items, not reasons to reopen the completed release without a concrete need.
+The core PaperSignal product is released in Production. The repository housekeeping pass closed 15 obsolete/duplicate PRs (PR #39/#40 duplicates of merged #41; PR #2–#16 superseded/archived). Their branches and commit history were retained. There are no remaining open PRs or GitHub Issues after the closeout check. GitHub Actions were not run.
 
-### Recommended lightweight post-release checks
-1. User manually opens the canonical production URL and confirms the new persistent logout/header and full-width report feel correct on their actual devices.
-2. Perform one real Google OAuth sign-in/sign-out on the canonical domain if not already repeated after the final UI deployment.
-3. Open an existing paper, open the original PDF, follow a page-level evidence link, use report navigation, export the report, and return to the library.
-4. If a new production Gemini E2E is needed, run the manual workflow with the exact current main SHA and verify cleanup.
+### Remaining external / human-owned items
 
-### Known product limitations / future enhancements
-- OCR for scanned/image-only PDFs is not implemented.
-- Standalone extraction/rendering of PDF figures and tables as separate image assets is not implemented.
-- Per-paper interactive model/algorithm simulators are not implemented.
-- Native-device iOS Safari and Android Chrome testing has not been replaced by Playwright viewport tests; perform device testing if the user reports a device-specific issue.
-- The B01–B10 human expert review is incomplete (six findings remained review-required in the latest mixed-version snapshot).
-- README currently references `docs/analysis-v6.3.md`, but that file was not present in the repository when this handoff was prepared. Reconcile the stale link or add a real v6.3/v6.4.2 engine note in a separate documentation-only change; do not invent a missing document.
+These cannot be honestly marked complete by code changes alone:
+
+1. **Finance expert review:** six findings across five claim units in the latest mixed-version B01–B10 snapshot remain `review`. The AI second-pass audit is not expert sign-off. See `benchmark/results/assistant-second-pass-evidence-audit-2026-11-20.md`.
+2. **Public-paper live smoke:** CI mocks OpenAlex and publisher PDF servers. On Production, verify a small real OpenAlex search and a permitted public/CC-licensed PDF import through the private library flow.
+3. **Native mobile QA:** test original-PDF rendering, zoom, rotation, signed-link renewal and session expiry on actual iOS Safari and Android Chrome devices. Playwright viewport tests are not native-device verification.
+4. **External email delivery:** configure a custom SMTP provider and verified sender domain; test signup confirmation, resend and password reset in a real external mailbox. Supabase built-in SMTP is not suitable for an external beta.
+5. **Auth security decision:** Supabase Security Advisor still warns that leaked-password protection is disabled. A project owner must decide/enable it in Auth settings; connected Supabase tools used in this closeout do not expose that Auth configuration mutation.
+6. **Gemini billing mode:** confirm the actual Google AI Studio tier (Free or Paid Standard) before setting the server-side billing-mode configuration. Unknown mode must continue to produce unknown USD cost rather than an invented estimate.
+7. **GitHub Actions billing:** account-level $0 budget / stop-usage protection could not be independently verified through the repository connector. Check GitHub account billing settings if Actions spend control is required.
+8. **Production Google OAuth regression:** earlier Preview sign-in/return-to-library flow was confirmed; repeat sign-in/sign-out on the canonical Production domain after the final release.
+
+### Confirmed current operational state
+
+- GitHub `main`: `0c2e5b10c39eca1d6577fc36d9fcbe830dd653d2`.
+- Vercel canonical Production: READY, `dpl_MShcWWKJSoXDLZLbtxMcZvhzvq6G`.
+- Railway API and Worker: Online 1/1, zero current service issues at the last status check.
+- Supabase migration ledger: 14 applied versions through `20261121032957`; no pending migration was identified.
+- AI usage ledger and administrator monthly-budget reporting are implemented; cost estimates remain unknown when billing mode or token data is incomplete. This is reporting, not an invoice or automatic spend cap.
+- Supabase Advisor: two INFO notices for intentionally service-role-only accounting tables with RLS enabled/no policies; one WARN for leaked-password protection disabled; one INFO for an unused index; no health notices.
+
+### Intentionally deferred product enhancements (not release blockers)
+
+- OCR for scanned/image-only PDFs.
+- Standalone extraction/rendering of figures and tables as image assets.
+- Per-paper interactive model/algorithm simulators.
+- Additional public paper providers/DOI resolution beyond the current OpenAlex flow.
+- Structured database provenance fields for imported-paper DOI, original URL and license.
 
 ### Do not reopen without evidence
-- Do not restart engine tuning for minor cosmetic changes.
-- Do not add OCR, figure extraction or simulators to the initial release unless the user explicitly expands scope.
-- Do not repeat the completed PR #35 merge or production deployment.
-- Do not apply database migrations merely to "make sure"; inspect the exact migration ledger first.
-- Do not re-enable the paused 15:40 deployment automation.
+
+- Do not restart analysis-engine tuning for minor cosmetic changes; keep the released engine frozen.
+- Do not add deferred enhancements to the completed release unless the product scope is explicitly expanded.
+- Do not apply database migrations merely to "make sure"; inspect the live migration ledger first.
+- Do not run GitHub Actions unless the user explicitly requests it.
+- Do not create unnecessary deployments or apply unnecessary database migrations.
 
 ## 11. Historical documentation to preserve
 

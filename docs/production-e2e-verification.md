@@ -1,5 +1,23 @@
 # PaperSignal - Production Integration Verification
 
+# Current Production verification status — 2026-11-22
+
+This document began as a 2026-11-13 verification record. Its initial "Known gaps" and 2026-11-20 notes below are historical snapshots; use this section for current status.
+
+- Current GitHub `main`: `0c2e5b10c39eca1d6577fc36d9fcbe830dd653d2`.
+- Canonical Vercel domain: https://financial-paper-analyzer.vercel.app
+- Current Vercel Production deployment: `dpl_MShcWWKJSoXDLZLbtxMcZvhzvq6G`, READY, built from `main`.
+- Railway API and Worker: Online 1/1, zero current service issues at the latest status check.
+- The released app uses Gemini, a durable Railway API/Worker queue, the private research library, original-PDF evidence, junior-learning UI and public finance-paper search/import. The initial synchronous extractive-only description below is not the current architecture.
+- A real two-account Production API/Worker/DB/Storage E2E passed on 2026-11-20 using synthetic email/password accounts. It verified private PDF upload, completed analysis, saved evidence, cross-user denial and fixture cleanup.
+- That E2E did **not** test Google OAuth consent, external OpenAlex/publisher PDF integration, native iOS/Android rendering, or external SMTP delivery. Earlier Google OAuth flow was confirmed in Preview testing; a post-final-release Production-domain regression check remains manual.
+- OpenAlex and publisher PDF network calls are mocked in automated tests. A small real Production search/import smoke remains outstanding.
+- Six findings across five claim units in the B01–B10 snapshot remain pending qualified finance-domain review.
+- GitHub Actions were not run during the 2026-11-22 closeout.
+
+---
+
+
 **Run date:** 2026-11-13 (KST)  
 **Target:** `https://financial-paper-analyzer.vercel.app`  
 **API:** `https://papersignal-api-production.up.railway.app`  

@@ -1,5 +1,15 @@
 # PaperSignal — production E2E and release closeout
 
+## Superseding status — 2026-11-22
+
+The entries below preserve the 2026-11-20 release-closeout record. Current state:
+- `main` is `0c2e5b10c39eca1d6577fc36d9fcbe830dd653d2`; Vercel Production `dpl_MShcWWKJSoXDLZLbtxMcZvhzvq6G` is READY on the canonical domain; Railway API and Worker are Online 1/1.
+- PR #41 is merged and its inline evidence UX is in Production. The 100% reader control maps to the former 90% visual size; equation parameter explanations are removed; comprehension-quiz typography is larger; duplicate evidence citations are grouped.
+- 15 stale/duplicate PRs (#2–#16, #39, #40) were closed as superseded/archived on 2026-11-22. Their branches/commit history were retained. No open PRs or GitHub Issues remain after the cleanup check.
+- GitHub Actions were not run for this closeout.
+- The remaining tasks are external/human-owned: qualified review of six benchmark findings, live OpenAlex/public-PDF smoke, native iOS/Android QA, external SMTP/mailbox validation, leaked-password-protection decision, Gemini billing-tier confirmation, and account-level Actions billing verification. The current checklist is in [PROJECT_HANDOFF.md §10](PROJECT_HANDOFF.md).
+
+
 **Updated:** 2026-11-20 (Asia/Seoul)  
 **Current main:** `cec2d1a7ebdce8186a76e94b86181147eac1986c`  
 **Canonical URL:** https://financial-paper-analyzer.vercel.app

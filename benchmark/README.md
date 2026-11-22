@@ -18,7 +18,7 @@ The benchmark contains ten public/open-access candidate papers covering:
 
 ## Important status
 
-**Current status (2026-11-20): all ten B01–B10 PDFs have been uploaded and analyzed.** The v6.3.9 scorecard is a historical snapshot (71 findings, 53 screen-passed, 18 review-required). The latest stored analysis per paper is mixed-version (B01/B02/B09 v6.4.0, B10 v6.4.2, B03–B08 v6.3.9) and contains 63 findings: 57 screen-passed and 6 review. See `results/assistant-second-pass-evidence-audit-2026-11-20.md` for the read-only second-pass audit of the six current review records. This is AI-assisted triage, not human sign-off; no stored verification status was changed.
+**Current status (2026-11-22): all ten B01–B10 PDFs have been uploaded and analyzed.** The v6.3.9 scorecard is a historical snapshot (71 findings, 53 screen-passed, 18 review-required). The latest stored analysis per paper remains a mixed-version snapshot (B01/B02/B09 v6.4.0, B10 v6.4.2, B03–B08 v6.3.9) and contains 63 findings: 57 screen-passed and 6 review. The six review records represent five distinct claim units and remain unapproved by a qualified human reviewer. See `results/assistant-second-pass-evidence-audit-2026-11-20.md` for the read-only second-pass audit of the six current review records. This is AI-assisted triage, not human sign-off; no stored verification status was changed.
 
 Do not treat an article being publicly accessible as automatic permission to redistribute it. Check the license on each publisher page. The PLOS Korea paper explicitly uses the Creative Commons Attribution License. Several MDPI pages identify CC BY; verify the article footer for each paper before redistribution.
 

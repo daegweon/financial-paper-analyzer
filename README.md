@@ -56,7 +56,7 @@ New analyses use `finance-structured-v6.4.2`. In addition to the v6.2 research-d
 - a conditional table-first third-pass recovery for empirical papers whose first two passes return no supported findings;
 - explicit findings_coverage states (supported, review_required, incomplete, not_assessable) so job completion is not confused with extraction completeness.
 
-See [v6.2 architecture and limitations](docs/analysis-v6.2.md) and [v6.3 findings recovery](docs/analysis-v6.3.md). These checks are triage aids, not semantic proofs; table alignment, coefficient interpretation, sample definitions and claim-to-citation entailment still require researcher review.
+See [v6.2 architecture and limitations](docs/analysis-v6.2.md) and the [2026-11-20 second-pass evidence audit](benchmark/results/assistant-second-pass-evidence-audit-2026-11-20.md). The audit is triage, not semantic proof or expert sign-off; table alignment, coefficient interpretation, sample definitions and claim-to-citation entailment still require researcher review.
 
 ## Analysis output
 
@@ -168,6 +168,10 @@ A deliberately manual workflow verifies the live authentication, private PDF Sto
 
 The workflow checks the live API is in Gemini AI mode before creating any fixture. It then creates two short-lived QA Auth users, uploads a synthetic two-page PDF, runs a real Gemini-backed analysis, verifies original PDF bytes and owner-only access, and checks that the second user cannot access the paper, job, analysis, or private PDF. It deletes only the fixture records and QA users it created after the analysis reaches a terminal state. If a job is still running or cleanup fails, it deliberately retains the relevant QA resources for manual recovery rather than racing the Worker or deleting unrelated data.
 
+## Project release and remaining gates
+
+See the [2026-11-22 project closeout](docs/PROJECT_CLOSEOUT_2026-11-22.md) for current Production status and the remaining human/external release checks.
+
 ## Finance paper quality benchmark
 
-A ten-paper open-access candidate set, source-grounded expected facts, human-review template, and screening evaluator are available in [`benchmark/`](benchmark/README.md). The benchmark has not yet been run on all ten PDFs. Alias coverage is a screening signal only; factual accuracy and page citations require human review against the publisher PDF.
+All ten B01–B10 public/open-access papers have been uploaded and analyzed. The latest mixed-version snapshot contains 63 findings (57 screen-passed, 6 review); six records across five claim units still require qualified human review. The source-grounded expected facts, historical screening scorecards, review template and evaluator are available in [`benchmark/`](benchmark/README.md). Alias coverage is a screening signal only; it is not a model-accuracy score, and factual accuracy/page citations require review against the publisher PDF.
